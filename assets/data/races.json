@@ -1,0 +1,2599 @@
+{
+  "_meta": {
+    "description": "Seed race data for Carrera Monterrey (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped.",
+    "generatedOn": "2026-07-04",
+    "count": 114,
+    "distanceTags": [
+      "5K",
+      "10K",
+      "Half",
+      "Full",
+      "Other"
+    ],
+    "warning": "Dates/times for medium/low-confidence entries were not fully confirmed for the 2026-2027 edition. Verify against signupUrl before trusting. Fields left null were not confirmable (never guessed).",
+    "linkSweep": "2026-07-04: registration links verified via runera.mx (reliable for Trotime SPA GUIDs) and asdeporte.com. Organizer patterns: Asdeporte publishes ~5-6 months ahead; Trotime a few months. Unverified GUIDs stay in notes, not signupUrl."
+  },
+  "races": [
+    {
+      "id": "verano-monterrey-2026",
+      "name": "Circuito de las Estaciones — Verano Monterrey 2026",
+      "date": "2026-07-12",
+      "time": "06:45",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Nicolás de los Garza",
+      "state": "Nuevo León",
+      "venue": "Paseo de Alba, junto al Estadio Universitario UANL",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/verano-monterrey-2026-7wa/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/verano-monterrey-2026-7wa/datos-del-evento",
+      "confidence": "high",
+      "notes": "Asdeporte seasonal circuit. 10K 06:45 / 5K 07:05. Virtual option available. Official 10K route map shown; 5K map: https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg (Asdeporte /ruta tab).",
+      "start": {
+        "lat": 25.7226,
+        "lng": -100.3122,
+        "approx": true
+      },
+      "courseMapUrl": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832802615_Verano-MTY-26-Ruta-10k.jpg"
+    },
+    {
+      "id": "super-heroes-run-2026",
+      "name": "Super Héroes Run 5K y 10K (10ª Edición)",
+      "date": "2026-07-26",
+      "time": "07:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Museo Metropolitano (Macroplaza)",
+      "organizer": "Trotime",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=485efb72-7374-4689-b769-f61581aed474",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "medium",
+      "notes": "Registration open (runera.mx, 2026-07-04); listed there as 'Canadevi Súper Héroes Run 2026'. Venue conflicted across calendars (Fundidora/Macroplaza); Runera says Museo Metropolitano. Beware older Trotime GUID 0f56375e in stale search results.",
+      "start": {
+        "lat": 25.6692,
+        "lng": -100.3099,
+        "approx": true
+      }
+    },
+    {
+      "id": "medio-maraton-montemorelos-2026",
+      "name": "Medio Maratón Montemorelos 2026",
+      "date": "2026-08-09",
+      "time": "06:00",
+      "distances": [
+        "21K",
+        "5K"
+      ],
+      "distanceTags": [
+        "Half",
+        "5K"
+      ],
+      "city": "Montemorelos",
+      "state": "Nuevo León",
+      "venue": "Plaza Principal",
+      "organizer": "Deporte con Propósito / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/medio-marato-n-montemorelos-2026-gc9/datos-del-evento",
+      "sourceUrl": "https://www.runera.mx/carreras/detalle/medio-maratn-montemorelos-2026",
+      "confidence": "high",
+      "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course image is the official altimetry; interactive route: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
+      "start": {
+        "lat": 25.1892288,
+        "lng": -99.826321
+      },
+      "courseMapUrl": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1780343105594_Altimetr%C3%83%C2%ADa%20MMM2026.jpg"
+    },
+    {
+      "id": "carrera-saba-corre-sin-tabues-2026",
+      "name": "Carrera SABA Monterrey — Corre Sin Tabúes",
+      "date": "2026-08-09",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "3K caminata"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Parque Fundidora",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-saba--corre-sin-tabu-es-monterrey-2026-nks/datos-del-evento",
+      "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
+      "confidence": "medium",
+      "notes": "Includes a 3K walk. DATE CONFLICT: AANL + Idemsport list Aug 9; TriTour lists Aug 16. Verify before relying on the date.",
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "heroes-ocultos-bionella-2026",
+      "name": "Carrera Héroes Ocultos BioNella by Sabori (13ª Edición)",
+      "date": "2026-08-23",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "San Pedro Garza García",
+      "state": "Nuevo León",
+      "venue": "Valle Oriente",
+      "organizer": "Trotime",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=d3b659ed-d8c1-434b-a545-c1adb089e44c",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
+      "confidence": "high",
+      "notes": "13th edition road race. Venue per AANL calendar."
+    },
+    {
+      "id": "chipinque-trail-2026",
+      "name": "Chipinque Trail 6K y 10K",
+      "date": "2026-08-30",
+      "time": null,
+      "distances": [
+        "6K",
+        "10K"
+      ],
+      "distanceTags": [
+        "10K",
+        "Other"
+      ],
+      "city": "San Pedro Garza García",
+      "state": "Nuevo León",
+      "venue": "Parque Ecológico Chipinque",
+      "organizer": "Idemsport",
+      "signupUrl": "https://www.idemsport.com/",
+      "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
+      "confidence": "medium",
+      "notes": "Mountain trail race; part of fees donated to park conservation. Date from AANL calendar; dedicated 2026 event page not yet published (2025 ran Aug 24, 07:30, ~$670 MXN). Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Only the 2025 Idemsport event page exists so far."
+    },
+    {
+      "id": "carrera-cruz-roja-2026",
+      "name": "Carrera Cruz Roja 5K y 10K",
+      "date": "2026-09-06",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Macroplaza",
+      "organizer": "Cruz Roja Mexicana / Trotime",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=b652a989-29fe-434c-a048-4863ae8b015b",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "medium",
+      "notes": "Charity race ('Cruz Roja TMSV 2026'). Registration open (runera.mx, 2026-07-04). Museo Metropolitano/Macroplaza area.",
+      "start": {
+        "lat": 25.6692,
+        "lng": -100.3099,
+        "approx": true
+      }
+    },
+    {
+      "id": "carrera-terra-regia-2026",
+      "name": "Carrera Terra Regia 10K / 5K / 2.5K (5ª Edición)",
+      "date": "2026-09-20",
+      "time": null,
+      "distances": [
+        "10K",
+        "5K",
+        "2.5K"
+      ],
+      "distanceTags": [
+        "10K",
+        "5K",
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Dominio Cumbres",
+      "organizer": "Idemsport / Terra Regia",
+      "signupUrl": "https://www.idemsport.com/",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Benefit race. 2025 edition started 08:00, ~$460 MXN. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Idemsport calendar still links the stale 2025 slug."
+    },
+    {
+      "id": "bimbo-global-race-monterrey-2026",
+      "name": "Carrera Bimbo Monterrey (Bimbo Global Race)",
+      "date": "2026-09-27",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Parque Fundidora",
+      "organizer": "Grupo Bimbo",
+      "signupUrl": "https://bimboglobalrace.com/es",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "medium",
+      "notes": "Global corporate race, Monterrey a recurring host. Distances vary by source (5K/10K vs 3K/5K/10K); MTY-specific venue/registration not fully published.",
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "carrera-duendes-2026",
+      "name": "Carrera Duendes 26ª Edición (HEB)",
+      "date": "2026-10-04",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Pedro Garza García",
+      "state": "Nuevo León",
+      "venue": "Calzada del Valle / Humberto Lobo",
+      "organizer": "Club Duendes",
+      "signupUrl": "https://trotime.com.mx/listado-fichas-inscripcion?edicionEventoId=0b20b8a3-bd6e-407d-938f-018db02f3751",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Long-running community race (26th edition). Facebook (carreraduendes) announced first registration phase open via Trotime. CAVEAT: Trotime GUID could not be 100% tied to the 2026 edition (SPA); verify on open.",
+      "start": {
+        "lat": 25.6507,
+        "lng": -100.3446,
+        "approx": true
+      }
+    },
+    {
+      "id": "adidas-splits-6k-12k-2026",
+      "name": "adidas Splits 6K / 12K Monterrey 2026",
+      "date": "2026-10-11",
+      "time": "07:00",
+      "distances": [
+        "6K",
+        "12K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "San Pedro Garza García",
+      "state": "Nuevo León",
+      "venue": "Av. María Izquierdo, San Pedro Garza García",
+      "organizer": "Hub Sports (adidas, Samsung)",
+      "signupUrl": "https://www.hubsports.mx/eventos/adidas-splits-6k-12k-mty-2026",
+      "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-6k-12k-mty-2026",
+      "confidence": "high",
+      "notes": "First of two 2026 Monterrey adidas Splits events. Capacity 4,500. Kit pickup Oct 10 at Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04)."
+    },
+    {
+      "id": "ultra-nuevo-leon-larutamadre-2026",
+      "name": "Ultra Nuevo León — La Ruta Madre (UTNL)",
+      "date": "2026-10-17",
+      "time": null,
+      "distances": [
+        "8K",
+        "15K",
+        "30K",
+        "50K",
+        "80K",
+        "100K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Santiago",
+      "state": "Nuevo León",
+      "venue": "Ciénega de González, Sierra Madre",
+      "organizer": "La Ruta Madre",
+      "signupUrl": "https://boletopolis.com/es/evento/38316",
+      "sourceUrl": "https://larutamadre.mx/en/home/",
+      "confidence": "high",
+      "notes": "Mountain/trail race in the Sierra Madre. Also kids 2K/4K/6K and dog categories. Registration deadline Sep 30, 2026."
+    },
+    {
+      "id": "carrera-vivamus-merco-2026",
+      "name": "Carrera Vivamus-Merco 5K y 10K",
+      "date": "2026-10-25",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Plaza Zaragoza (Zaragoza y Ocampo, Centro)",
+      "organizer": "Superación Juvenil ABP",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-vivamus-merco-asv",
+      "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
+      "confidence": "medium",
+      "notes": "Registration open (Asdeporte, 2026-07-04). 10K 07:00 / 5K 07:20. VENUE CORRECTED: Asdeporte says Plaza Zaragoza, not Fundidora as AANL listed. Beneficiary: Superación Juvenil ABP.",
+      "start": {
+        "lat": 25.6686,
+        "lng": -100.3103,
+        "approx": true
+      }
+    },
+    {
+      "id": "tmim-triple-maraton-2026",
+      "name": "Triple Maratón Internacional Monterrey (TMIM) 2026",
+      "date": null,
+      "time": null,
+      "distances": [
+        "42K"
+      ],
+      "distanceTags": [
+        "Full"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": null,
+      "organizer": "TMIM",
+      "signupUrl": "https://tmim.com.mx/",
+      "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
+      "confidence": "low",
+      "notes": "Three-day event listed Oct 30 – Nov 1, 2026 on AANL calendar (single date not fixed). Distances beyond 42K unconfirmed on official site."
+    },
+    {
+      "id": "adidas-splits-15k-30k-2026",
+      "name": "adidas Splits 15K / 30K Monterrey 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "15K",
+        "30K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Macroplaza, Av. Ignacio Zaragoza",
+      "organizer": "Hub Sports (adidas, presented by Samsung)",
+      "signupUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-mty-2026",
+      "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-mty-2026",
+      "confidence": "high",
+      "notes": "Second of two 2026 Monterrey adidas Splits events. Staggered start blocks (7:00/7:08/7:16). Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
+      "start": {
+        "lat": 25.6692,
+        "lng": -100.3099,
+        "approx": true
+      }
+    },
+    {
+      "id": "21k-nuevo-leon-2026",
+      "name": "21K Nuevo León 2026 (24ª Edición)",
+      "date": "2026-11-15",
+      "time": null,
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Plaza Cultural, Monterrey",
+      "organizer": "Trotime",
+      "signupUrl": null,
+      "sourceUrl": "https://runmx.com/events/21k-nuevo-leon-2026/",
+      "confidence": "medium",
+      "notes": "24th edition NL half, organized by AANL, timed by Trotime. Date pending final confirmation. Candidate Trotime ficha exists (edicionEventoId=eddbd1ca-06ef-4e3d-9c75-3988be1e27ca) but could not be verified as the Nov 15 2026 edition — NOT published as signup link. Distinct from the May 2026 \"21K Trotime\"."
+    },
+    {
+      "id": "carrera-batman-2026",
+      "name": "Carrera Batman Monterrey",
+      "date": "2026-11-22",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Parque Fundidora",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/batman-run-monterrey-2026-bqy",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Registration open (Asdeporte + runera.mx, 2026-07-04). 2026 edition is co-branded 'Superman & Supergirl Run MTY'. Parque Fundidora (Grúa/Portal), from $799 MXN.",
+      "start": {
+        "lat": 25.6757067,
+        "lng": -100.2819848
+      }
+    },
+    {
+      "id": "invierno-monterrey-2026",
+      "name": "Circuito de las Estaciones — Invierno Monterrey 2026",
+      "date": "2026-11-29",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Grúa Portal, Parque Fundidora",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/invierno-monterrey-2026-9ru/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/invierno-monterrey-2026-9ru/datos-del-evento",
+      "confidence": "high",
+      "notes": "Winter edition of Asdeporte seasonal circuit. 10K 07:00 / 5K 07:20. Virtual option available.",
+      "start": {
+        "lat": 25.6757067,
+        "lng": -100.2819848
+      }
+    },
+    {
+      "id": "barbie-run-monterrey-2026",
+      "name": "Barbie Run Monterrey 10K y 5K",
+      "date": "2026-12-06",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "3K caminata"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Registration open (Asdeporte, 2026-07-04). From $869 MXN, cap 3,500 participants. VENUE TBC: Asdeporte page says salida/meta \"Por confirmar\" (Idemsport calendar had said Fundidora).",
+      "start": null
+    },
+    {
+      "id": "maraton-powerade-monterrey-2026",
+      "name": "Maratón Powerade Monterrey 2026",
+      "date": "2026-12-13",
+      "time": "06:45",
+      "distances": [
+        "42K"
+      ],
+      "distanceTags": [
+        "Full"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Parque Fundidora (salida y meta)",
+      "organizer": "Maratón Powerade Monterrey",
+      "signupUrl": "https://maratonmonterrey.mx/producto/inscripcion-al-maraton-powerade-monterrey-2026/",
+      "sourceUrl": "https://maratonmonterrey.mx/convocatoria/",
+      "confidence": "high",
+      "notes": "Flagship marathon. AIMS/World Athletics certified, Boston qualifier. 10,000 cap, 6:30 time limit. Salida y meta Parque Fundidora per convocatoria; course map/GPX not yet published (2026-07-04).",
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "ultra-trail-oso-negro-2027",
+      "name": "Ultra Trail Oso Negro 2027",
+      "date": "2027-01-23",
+      "time": "05:00",
+      "distances": [
+        "21K",
+        "30K",
+        "50K",
+        "75K",
+        "100K"
+      ],
+      "distanceTags": [
+        "Half",
+        "Other"
+      ],
+      "city": "Santiago",
+      "state": "Nuevo León",
+      "venue": "Sierra de Santiago / Hotel Hacienda Cola de Caballo",
+      "organizer": "Matacanes",
+      "signupUrl": "https://run.matacanes.com.mx/serviceN.php?lang=esp&dest=343&cia=1032",
+      "sourceUrl": "https://run.matacanes.com.mx/serviceN.php?lang=esp&dest=343",
+      "confidence": "high",
+      "notes": "Trail/ultra weekend (~41km from Monterrey), Jan 22-24, 2027. 100K starts 05:00, 22h limit, requires qualification. Other distances run the same weekend."
+    },
+    {
+      "id": "borregos-think-feel-run-2026",
+      "name": "Carrera Borregos Think Feel Run (Tec de Monterrey)",
+      "date": "2026-09-27",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "state": "Nuevo León",
+      "venue": "Estadio Banorte",
+      "organizer": "Tecnológico de Monterrey (powered by Skechers)",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=ef32a61e-1743-4b4d-ad9d-961588eb6fc0",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
+      "confidence": "high",
+      "notes": "Date confirmed 2026-09-27 (was TBD) via runera.mx; registration open. Same day as Bimbo Global Race."
+    },
+    {
+      "id": "trote-jaguar-2026",
+      "name": "5K/10K Trote Jaguar",
+      "date": "2026-07-12",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "venue": "U-ERRE Centro",
+      "organizer": "U-ERRE / Trotime",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=0bcc4da7-b5e8-4467-a895-2b9c444efa0a",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Registration open (verified via runera.mx 2026-07-04). 31st edition; on Idemsport + AANL calendars. Same day as Circuito Estaciones Verano.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "fuerza-laboral-2026",
+      "name": "Carrera Fuerza Laboral 16ª Edición",
+      "date": "2026-07-19",
+      "time": "07:00",
+      "distances": [],
+      "city": "Monterrey",
+      "venue": "Monumento al Obrero",
+      "organizer": "INDET / CTM",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=72bb03c6-4294-4cc6-98f9-628ab4ba5bae",
+      "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
+      "confidence": "medium",
+      "notes": "Only on the AANL calendar; distances not listed on the source page. Registration open (runera.mx, 2026-07-04). Venue corrected: Monumento al Obrero (CTM is the organizer, not the venue).",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "senor-expiracion-2026",
+      "name": "Carrera Señor de la Expiración",
+      "date": "2026-08-02",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "2K caminata"
+      ],
+      "city": "Guadalupe",
+      "venue": null,
+      "organizer": "Parroquia y Santuario de Nuestra Señora de Guadalupe",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "On both calendars. Edition number differs between sources (26ª Idemsport, 27ª AANL). Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. AANL lists it as 27ª edición (Idemsport says 26ª).",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "5k-nocturno-guadalupe-2026",
+      "name": "5K Nocturno de Guadalupe",
+      "date": "2026-08-28",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "city": "Guadalupe",
+      "venue": null,
+      "organizer": "Instituto Municipal del Deporte de Guadalupe",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Friday night race; on both calendars. No start time published. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. 2025 edition registered via Trotime + Gimnasio Cedereg.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "san-vicente-paul-2026",
+      "name": "Carrera San Vicente de Paul 5K/1K",
+      "date": "2026-08-30",
+      "time": null,
+      "distances": [
+        "5K",
+        "1K"
+      ],
+      "city": "Monterrey",
+      "venue": "Parque Fundidora",
+      "organizer": "Parroquia San Vicente de Paul / Trotime",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as Chipinque Trail. On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "Other"
+      ],
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "ios-offices-2026",
+      "name": "Carrera IOS Offices 5K/10K (13ª Edición)",
+      "date": "2026-09-06",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Pedro Garza García",
+      "venue": "Torre KOI, Valle Oriente",
+      "organizer": "IOS Offices / Trotime",
+      "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=9197646a-2106-42ed-93f2-71f2708bb07c",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as Carrera Cruz Roja. On both calendars. Registration open (runera.mx, 2026-07-04). Venue: Torre KOI, San Pedro (Valle Oriente).",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "fundacion-monterrey-2026",
+      "name": "Carrera Fundación de Monterrey 5K/10K (22ª Edición)",
+      "date": "2026-09-20",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "venue": null,
+      "organizer": "Dirección de Deportes Monterrey",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as Terra Regia. On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "otono-monterrey-2026",
+      "name": "Circuito de las Estaciones — Otoño Monterrey 2026",
+      "date": "2026-09-20",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Apodaca",
+      "venue": "Plaza de la Presidencia Municipal de Apodaca",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/oton-o-monterrey-2026-x9r/datos-del-evento",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Otoño edition of the Asdeporte seasonal circuit (we already list Verano and Invierno). Distances not specified on either source. Registration open (Asdeporte, 2026-07-04), from $555 MXN. Hybrid: virtual modality Sep 19-20. Distances confirmed 5K/10K.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "21k-regio-2026",
+      "name": "21K Regio (12ª Edición)",
+      "date": "2026-10-11",
+      "time": null,
+      "distances": [
+        "21K"
+      ],
+      "city": "Monterrey",
+      "venue": null,
+      "organizer": "Krono MX",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as adidas Splits 6K/12K. On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. krono.mx 2026 page 404s; only 2025 exists.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "Half"
+      ]
+    },
+    {
+      "id": "bob-esponja-2026",
+      "name": "Carrera Bob Esponja Monterrey",
+      "date": "2026-10-11",
+      "time": null,
+      "distances": [],
+      "city": "Monterrey",
+      "venue": "Ciudad Universitaria UANL",
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Themed run, on both calendars; distances not specified on either source. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Asdeporte publishes ~5-6 months out — expect the page soon.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "rosa-fuerte-benavides-2026",
+      "name": "Carrera Rosa Fuerte Benavides 5K/10K (11ª Edición)",
+      "date": "2026-10-18",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "venue": null,
+      "organizer": "Farmacias Benavides / Idemsport",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "On both calendars. Idemsport links a 2025-slug event page (idemsport.com/evento/rosafuerte2025/) — 2026 registration link not yet confirmed. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "gatorade-g15k-2026",
+      "name": "Carrera Gatorade 15K (G15K)",
+      "date": "2026-10-25",
+      "time": null,
+      "distances": [
+        "15K"
+      ],
+      "city": "Guadalupe",
+      "venue": "Estadio BBVA",
+      "organizer": "Gatorade / Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as Vivamus-Merco. Edition number differs between sources (8ª Idemsport, 9ª AANL). Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Edition count conflict: AANL 9ª vs Idemsport 8ª.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "Other"
+      ],
+      "start": {
+        "lat": 25.6699,
+        "lng": -100.2444,
+        "approx": true
+      }
+    },
+    {
+      "id": "5k-fieles-difuntos-2026",
+      "name": "5K Fieles Difuntos",
+      "date": "2026-11-02",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "city": "Monterrey",
+      "venue": "Parque Niños Héroes",
+      "organizer": "Krono MX",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "simicarrera-2026",
+      "name": "Simicarrera (10ª Edición)",
+      "date": "2026-11-08",
+      "time": null,
+      "distances": [
+        "10K",
+        "5K",
+        "3K"
+      ],
+      "city": "Monterrey",
+      "venue": null,
+      "organizer": "Farmacias Similares / Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "Same day as adidas Splits 15K/30K. Venue conflict: Fundidora (Idemsport) vs UANL (AANL); AANL lists only 10K. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "10K",
+        "5K",
+        "Other"
+      ]
+    },
+    {
+      "id": "ternium-2026",
+      "name": "Carrera Ternium 10K/3K",
+      "date": "2026-11-22",
+      "time": null,
+      "distances": [
+        "10K",
+        "3K"
+      ],
+      "city": "San Pedro Garza García",
+      "venue": null,
+      "organizer": "Ternium / Idemsport",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "medium",
+      "notes": "Same day as Carrera Batman. Only on the Idemsport calendar; its event link erroneously points to a 2025 Chipinque URL. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "san-pedro-parques-2026",
+      "name": "Carrera Soy + Parques pro Rufino Tamayo 2026",
+      "date": "2026-12-06",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Pedro Garza García",
+      "venue": "Av. Rufino Tamayo, Valle Oriente",
+      "organizer": "Municipio de San Pedro / San Pedro Parques / Idemsport",
+      "signupUrl": "https://idemsport.com/evento/carrerasoymasparques2026/",
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "medium",
+      "notes": "Official name 'Soy + Parques pro Rufino Tamayo 2026' (Idemsport calendar labels it 'San Pedro Parques 1ª Ed.'). Distances confirmed 5K/10K on the event page (calendar's '10K/75K' was a typo). General registration 'PRÓXIMAMENTE' as of 2026-07-04; only the $1,000 'Corredor con Causa' tier is open. Same day as Barbie Run.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "5k-navideno-apodaca-2026",
+      "name": "5K Navideño Apodaca",
+      "date": "2026-12-06",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "city": "Apodaca",
+      "venue": null,
+      "organizer": "Municipio de Apodaca",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "On both calendars. Same day as Barbie Run. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "run-santa-run-2026",
+      "name": "10K Run Santa Run (9ª Edición)",
+      "date": "2026-12-20",
+      "time": null,
+      "distances": [
+        "10K"
+      ],
+      "city": "Monterrey",
+      "venue": "Parque Fundidora",
+      "organizer": "Trotime",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "10K"
+      ],
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "reto-final-2026",
+      "name": "5K/10K Reto Final (13ª Edición)",
+      "date": "2026-12-31",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Monterrey",
+      "venue": "Parque Fundidora",
+      "organizer": "Trotime",
+      "signupUrl": null,
+      "sourceUrl": "https://idemsport.com/calendario-2026/",
+      "confidence": "high",
+      "notes": "New Year´s Eve race. Idemsport lists Dec 31; AANL shows a Dec 27-31 range. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
+      "state": "Nuevo León",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "start": {
+        "lat": 25.6785,
+        "lng": -100.2847,
+        "approx": true
+      }
+    },
+    {
+      "id": "medio-maraton-cdmx-2026",
+      "name": "XIX Medio Maratón de la Ciudad de México BBVA 2026",
+      "date": "2026-07-12",
+      "time": null,
+      "distances": [
+        "21.0975K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma (Ángel de la Independencia)",
+      "organizer": "Gobierno de la CDMX / Emoción Deportiva",
+      "signupUrl": "https://21k.cdmx.gob.mx",
+      "sourceUrl": "https://runmx.com/events/medio-maraton-de-la-ciudad-de-mexico-2026/",
+      "confidence": "high",
+      "notes": "Official registration via 21k.cdmx.gob.mx (opened Feb 14, 2026).",
+      "distanceTags": [
+        "Half"
+      ]
+    },
+    {
+      "id": "maraton-cdmx-telcel-2026",
+      "name": "XLIII Maratón de la Ciudad de México Telcel 2026",
+      "date": "2026-08-30",
+      "time": "07:00",
+      "distances": [
+        "42.195K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Salida Ciudad Universitaria, meta Zócalo",
+      "organizer": "Gobierno de la CDMX / Emoción Deportiva",
+      "signupUrl": "https://inscripciones.marcate.events",
+      "sourceUrl": "https://runmx.com/events/maraton-de-la-ciudad-de-mexico-2026/",
+      "confidence": "high",
+      "notes": "World Athletics Label Race.",
+      "distanceTags": [
+        "Full"
+      ]
+    },
+    {
+      "id": "adidas-split-30k-cdmx-2026",
+      "name": "adidas SPLIT 30K presentado por Samsung",
+      "date": "2026-07-26",
+      "time": "06:00",
+      "distances": [
+        "30K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Hub Sports / adidas",
+      "signupUrl": "https://inscripciones.hubsports.events/inscripciones/paso1/SPTMCAR1765485576",
+      "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-30k-cdmx-2026",
+      "confidence": "high",
+      "notes": "Final race of the 4-race adidas Splits series building to Maratón CDMX. Cap 8,000; from $690 MXN.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "liverpool-running-fest-2026",
+      "name": "Liverpool Running Fest CDMX 2026",
+      "date": "2026-08-02",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Liverpool Polanco, Calz. Mariano Escobedo 425",
+      "organizer": "Emoción Deportiva / Liverpool",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/liverpool-running-fest-cdmx-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/liverpool-running-fest-cdmx-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "$599-$799 MXN tiered; online registration closes the Friday before.",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ]
+    },
+    {
+      "id": "gatorade-g15k-cdmx-2026",
+      "name": "Gatorade G15K CDMX 2026",
+      "date": "2026-08-16",
+      "time": "06:30",
+      "distances": [
+        "15K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Asdeporte / Gatorade",
+      "signupUrl": "https://www.asdeporte.com/evento/gatorade-g15k-cdmx-2026-elk/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/gatorade-g15k-cdmx-2026-elk/datos-del-evento",
+      "confidence": "high",
+      "notes": "SOLD OUT (AGOTADAS) per Asdeporte at 2026-07-05. Waves every 6 min from 06:30; cap 8,000; was from $1,300 MXN.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "carrera-itam-2026",
+      "name": "Carrera ITAM 2026",
+      "date": "2026-08-23",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. de los Compositores, 2ª Sección Bosque de Chapultepec",
+      "organizer": "ITAM / Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-itam-2026-qsu/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-itam-2026-qsu/datos-del-evento",
+      "confidence": "high",
+      "notes": "From $600 MXN; virtual option Aug 22-23.",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "simicarrera-cdmx-2026",
+      "name": "Simicarrera CDMX 2026 (19ª Edición)",
+      "date": "2026-08-23",
+      "time": "06:00",
+      "distances": [
+        "5K",
+        "10K",
+        "15K",
+        "3K caminata"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Farmacias Similares / Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/19a--simicarrera-cdmx-2026-wcf/inscripcion",
+      "sourceUrl": "https://runmx.com/events/simicarrera-cdmx-2026/",
+      "confidence": "high",
+      "notes": "Cap 10,000; from $300 MXN; new 3K SimiPet dog walk. Distinct from Simicarrera MTY (Nov 8).",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "nike-after-dark-cdmx-2026",
+      "name": "Nike After Dark Tour Mexico City 21K",
+      "date": "2026-10-03",
+      "time": "20:00",
+      "distances": [
+        "21.1K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Monumento a la Revolución / Paseo de la Reforma",
+      "organizer": "Nike",
+      "signupUrl": "https://afterdarktour.nike.com/es/mexicocity",
+      "sourceUrl": "https://www.afterdarktour.nike.com/es/mexicocity",
+      "confidence": "high",
+      "notes": "Women-only night half (18+), 3h30 cutoff, $1,000 MXN — SOLD OUT per official page at 2026-07-05.",
+      "distanceTags": [
+        "Half"
+      ]
+    },
+    {
+      "id": "barbie-run-cdmx-2026",
+      "name": "Barbie Run CDMX 2026",
+      "date": "2026-11-22",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Mattel / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/barbie-run-cdmx-2026-49f/datos-del-evento",
+      "sourceUrl": "https://runmx.com/events/barbie-run-cdmx-2026/",
+      "confidence": "high",
+      "notes": "Distinct from Barbie Run MTY (Dec 6).",
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "san-silvestre-cdmx-2026",
+      "name": "Carrera San Silvestre 2026",
+      "date": "2026-12-31",
+      "time": "06:30",
+      "distances": [
+        "12K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Emoción Deportiva (Deportes Martí)",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-san-silvestre-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-san-silvestre-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Year-end classic; $599-$899 MXN tiered.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "minions-run-cdmx-2026",
+      "name": "Minions Run CDMX 2026",
+      "date": null,
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "3K caminata"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Asdeporte / Universal",
+      "signupUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
+      "confidence": "medium",
+      "status": "changed",
+      "statusNote": "POSPUESTO: originally Jul 5, 2026; Asdeporte says new date to be announced.",
+      "lastVerified": "2026-07-05",
+      "notes": "From $1,269 MXN.",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "medio-maraton-metepec-2026",
+      "name": "Medio Maratón Metepec 2026",
+      "date": "2026-07-05",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "city": "Metepec",
+      "state": "Estado de México",
+      "venue": "Parque Bicentenario Metepec",
+      "organizer": "Comité Organizador / Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/evento/medio-marato-n-metepec-2026-22x/datos-del-evento",
+      "confidence": "high",
+      "notes": "SOLD OUT (AGOTADO) per Asdeporte; was from $400 MXN.",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ]
+    },
+    {
+      "id": "estaciones-verano-arboledas-2026",
+      "name": "Circuito de las Estaciones — Verano Arboledas Peñafiel 2026",
+      "date": "2026-07-26",
+      "time": "07:25",
+      "distances": [
+        "5K",
+        "10K",
+        "3K caminata"
+      ],
+      "city": "Atizapán de Zaragoza",
+      "state": "Estado de México",
+      "venue": "Av. Paseo de los Gigantes, Fracc. Las Arboledas",
+      "organizer": "Asoc. Deportiva y Cultural Arboledas 2020 / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/c--de-las-estaciones-verano-arboledas---centro-2026-3p6/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/c--de-las-estaciones-verano-arboledas---centro-2026-3p6/datos-del-evento",
+      "confidence": "high",
+      "notes": "Staggered starts 07:25/07:45/07:55; from $840 MXN; virtual option.",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "carrera-abogado-2026",
+      "name": "Carrera de la y el Abogado 2026",
+      "date": "2026-07-12",
+      "time": "07:50",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Toluca",
+      "state": "Estado de México",
+      "venue": "Palacio de Justicia del PJEdoMex",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/carrera-del-abogado-2026-ys2",
+      "sourceUrl": "https://runera.mx/carreras/detalle/carrera-de-la-y-el-abogado-2026",
+      "confidence": "high",
+      "notes": "Inscripciones abiertas (runera, 2026-07-05).",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "lomitos-mundialistas-2026",
+      "name": "Lomitos Mundialistas 2026",
+      "date": "2026-07-19",
+      "time": "07:30",
+      "distances": [
+        "6K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Aragón",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/lomitos-mundialistas-2026-8fy",
+      "sourceUrl": "https://runera.mx/carreras/detalle/lomitos-mundialistas-2026",
+      "confidence": "high",
+      "notes": "Dog-friendly themed run. DATE CONFLICT: tritour lists Jul 12; runera detail (primary) says Jul 19.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "dinomilco-5k-2026",
+      "name": "Dinomilco 5K",
+      "date": "2026-07-19",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Carreras México",
+      "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=baba1a09f1cd0c40667c3f9949e4bdce&api_key=48513987f33edea8",
+      "sourceUrl": "https://tritour.org/eventos/dinomilco-5k-2026",
+      "confidence": "medium",
+      "notes": "Dinosaur-themed community 5K in Xochimilco.",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "princesas-run-2026",
+      "name": "Princesas Run 2026",
+      "date": "2026-07-19",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/princesas-run-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://tritour.org/eventos/princesas-run",
+      "confidence": "medium",
+      "notes": "Character-themed run.",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "carrera-mundialista-10k-2026",
+      "name": "Carrera Mundialista 10K",
+      "date": "2026-07-19",
+      "time": null,
+      "distances": [
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://www.entusmarcas.com/carrera-mundialista-10km-2026",
+      "sourceUrl": "https://tritour.org/eventos/carrera-mundialista-10k-2026",
+      "confidence": "medium",
+      "notes": "World Cup themed 10K; venue/time not yet published.",
+      "distanceTags": [
+        "10K"
+      ]
+    },
+    {
+      "id": "pandemia-run-5k-2026",
+      "name": "Pandemia Run 5K — Operación Rescate Animal 2026",
+      "date": "2026-07-25",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/------pandemia-run-5k---operacio-n-rescate-animal-2026-----cks/datos-del-evento",
+      "sourceUrl": "https://tritour.org/eventos/pandemia-run-5k-2026-cdmx",
+      "confidence": "medium",
+      "notes": "Zombie-themed charity run (animal rescue). DATE CONFLICT: tritour Jul 25 vs Asdeporte listing Jul 26 — verify.",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "pisadas-naturales-cani-2026",
+      "name": "Carrera Pisadas Naturales Cani Race (Pet Friendly) 2026",
+      "date": "2026-07-26",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-pisadas-naturales-cani-race-pet-friendly-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://tritour.org/eventos/carrera-pisadas-naturales-cani-race-2026",
+      "confidence": "medium",
+      "notes": "Pet-friendly canicross-style community race.",
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "troop-k9-2026",
+      "name": "1ª Carrera Troop K9 — 5K/10K y carrera con tu peludito",
+      "date": "2026-08-01",
+      "time": "07:30",
+      "distances": [
+        "2K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec, 2ª Sección",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/troop-k9---5k--10k-y-carreras-con-tu-peludito-pou",
+      "sourceUrl": "https://runera.mx/carreras/detalle/troop-k9-5k-10k-y-carreras-con-tu-peludito",
+      "confidence": "high",
+      "notes": "Dog-friendly first edition; inscripciones abiertas.",
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "snoopy-run-cdmx-2026",
+      "name": "Snoopy Run CDMX 2026",
+      "date": "2026-08-02",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/snoopy-run-club-cdmx-5kv",
+      "sourceUrl": "https://runera.mx/carreras/detalle/snoopy-run-cdmx",
+      "confidence": "high",
+      "notes": "Character run — SOLD OUT (inscripciones agotadas) at 2026-07-05.",
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "ajolotito-5k-2026",
+      "name": "Ajolotito 5K 2026",
+      "date": "2026-08-09",
+      "time": "07:00",
+      "distances": [
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "1ª Sección del Bosque de Chapultepec",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/ajolotito-5-km-2026-mqa",
+      "sourceUrl": "https://runera.mx/carreras/detalle/ajolotito-5-km-2026",
+      "confidence": "high",
+      "notes": "Axolotl-themed community 5K; inscripciones abiertas.",
+      "distanceTags": [
+        "5K"
+      ]
+    },
+    {
+      "id": "running-day-2026",
+      "name": "Running Day 2026",
+      "date": "2026-08-09",
+      "time": "06:30",
+      "distances": [
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/running-day-2026-cow",
+      "sourceUrl": "https://runera.mx/carreras/detalle/running-day-2026-2",
+      "confidence": "high",
+      "notes": "Inscripciones abiertas (runera + Asdeporte).",
+      "distanceTags": [
+        "10K"
+      ]
+    },
+    {
+      "id": "mas-arboles-mas-bosques-2026",
+      "name": "Carrera Más Árboles, Más Bosques 2026",
+      "date": "2026-08-09",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://runera.mx/carreras/ciudad-de-mexico",
+      "confidence": "medium",
+      "notes": "Environmental charity run; date agrees across runera and Asdeporte listings.",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "happy-colors-race-2026",
+      "name": "Happy Color's Race 2026",
+      "date": "2026-08-23",
+      "time": "08:00",
+      "distances": [
+        "6K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Huerto Urbano del Bosque de Aragón",
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/happy-color-s-race-2026-s2g",
+      "sourceUrl": "https://runera.mx/carreras/detalle/happy-colors-race-2026",
+      "confidence": "high",
+      "notes": "Color-run themed 6K; inscripciones abiertas.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "batman-run-cdmx-2026",
+      "name": "Batman Run CDMX 2026 (DC)",
+      "date": "2026-09-06",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://asdeporte.com/evento/batman-run-cdmx-2026-pfd",
+      "sourceUrl": "https://runera.mx/carreras/detalle/batman-run-cdmx-2026-dc",
+      "confidence": "high",
+      "notes": "'El Reto de Ciudad Gótica'; inscripciones abiertas. Distinct from Batman/Superman Run MTY (Nov 22).",
+      "distanceTags": [
+        "5K",
+        "10K"
+      ]
+    },
+    {
+      "id": "feria-pulque-nopaltepec-2026",
+      "name": "Feria y Carrera del Pulque Nopaltepec (11ª Edición)",
+      "date": "2026-10-18",
+      "time": null,
+      "distances": [],
+      "city": "Nopaltepec",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/eventos/",
+      "confidence": "medium",
+      "notes": "Food-festival themed race; distances not yet on the listing page.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "estaciones-otono-cdmx-2026",
+      "name": "Circuito de las Estaciones — Otoño Peñafiel CDMX 2026",
+      "date": "2026-10-18",
+      "time": null,
+      "distances": [],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/eventos/",
+      "confidence": "medium",
+      "notes": "Autumn leg of the series; winter leg listed Dec 6, 2026 on the same page.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "shrek-run-cdmx-2027",
+      "name": "Shrek Run CDMX 2027",
+      "date": "2027-01-17",
+      "time": null,
+      "distances": [],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/eventos/",
+      "confidence": "medium",
+      "notes": "Character run; distances/venue not yet published.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "discovery-offroad-valle-2026",
+      "name": "Discovery OffRoad Trail Valle de Bravo 2026",
+      "date": "2026-07-05",
+      "time": "08:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "city": "Valle de Bravo",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/discovery-trail---valle-de-bravo-2026-m4y/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/discovery-trail---valle-de-bravo-2026-m4y/datos-del-evento",
+      "confidence": "low",
+      "status": "changed",
+      "statusNote": "POSTPONED per Asdeporte page, pending confirmation via organizer social media.",
+      "lastVerified": "2026-07-05",
+      "notes": "Also Canitrail 5K/10K and Trail Teens 3.2K.",
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ]
+    },
+    {
+      "id": "ultra-trail-barrancas-2026",
+      "name": "Ultra Trail Barrancas 2026",
+      "date": "2026-07-18",
+      "time": "06:00",
+      "distances": [
+        "12K",
+        "26K",
+        "50K"
+      ],
+      "city": "Ixtapan de la Sal",
+      "state": "Estado de México",
+      "venue": "Plaza Maclovia (salida y meta)",
+      "organizer": "Asdeporte / organizador local",
+      "signupUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/inscripcion",
+      "sourceUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/datos-del-evento",
+      "confidence": "high",
+      "notes": "Staggered starts: 50K 06:00 / 26K 06:30 / 12K 07:00. From $760 MXN.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "trail-cdmx-2a-2026",
+      "name": "Trail Ciudad de México (2ª Edición)",
+      "date": "2026-07-19",
+      "time": null,
+      "distances": [
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": null,
+      "organizer": "Carreras México",
+      "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=36806759d992a2d8f76fbf39ba4ca7ee&api_key=48513987f33edea8",
+      "sourceUrl": "https://tritour.org/eventos/trail-ciudad-de-mexico-2a-edicion-2026",
+      "confidence": "medium",
+      "notes": "Also kids category. Confirmed on tritour + Carreras México registration page.",
+      "distanceTags": [
+        "10K"
+      ]
+    },
+    {
+      "id": "sky-iztaccihuatl-2026",
+      "name": "Sky Iztaccíhuatl (20ª Edición)",
+      "date": "2026-07-26",
+      "time": null,
+      "distances": [
+        "15K",
+        "21K"
+      ],
+      "city": "Amecameca",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://carrerasmexico.com/inscripciones.php?event=74a40be43982f484d27e1a651b16c838&api_key=48513987f33edea8",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
+      "confidence": "medium",
+      "notes": "20th-edition skyrace on the Iztaccíhuatl slopes.",
+      "distanceTags": [
+        "Other",
+        "Half"
+      ]
+    },
+    {
+      "id": "sendero-jaguar-2026",
+      "name": "El Sendero del Jaguar (3ª Edición)",
+      "date": "2026-08-08",
+      "time": null,
+      "distances": [
+        "6K",
+        "12K",
+        "21K"
+      ],
+      "city": "Malinalco",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=85bcd698780c0ce31db50e68d41ee42e&api_key=48513987f33edea8",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
+      "confidence": "medium",
+      "notes": "Tri Tour 2026 trail calendar listing.",
+      "distanceTags": [
+        "Other",
+        "Half"
+      ]
+    },
+    {
+      "id": "itza-trail-2026",
+      "name": "Itza Trail Challenge",
+      "date": "2026-09-06",
+      "time": null,
+      "distances": [
+        "12K",
+        "30K"
+      ],
+      "city": "San Rafael, Tlalmanalco",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=7c5014d8ea42782aadca366524307d92&api_key=48513987f33edea8",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
+      "confidence": "medium",
+      "notes": "Trail on the Tlalmanalco side of the Iztaccíhuatl foothills.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "terrex-hubtrail-marquesa-2026",
+      "name": "adidas Terrex HubTrail La Marquesa (3ª Edición)",
+      "date": "2026-09-20",
+      "time": "08:00",
+      "distances": [
+        "12K",
+        "22K"
+      ],
+      "city": "Ocoyoacac (La Marquesa)",
+      "state": "Estado de México",
+      "venue": "Valle del Silencio",
+      "organizer": "Hub Sports",
+      "signupUrl": "https://inscripciones.hubsports.events/inscripciones/paso1/SPTMCAR1765568394",
+      "sourceUrl": "https://www.hubsports.mx/eventos/adidas-terrex-hub-trail-12k-22k-la-marquesa",
+      "confidence": "high",
+      "notes": "Cap 2,500. Staggered starts 08:00-08:22. $810-$990 MXN; kit pickup Sep 19.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "trail-nocturno-ehecatl-2026",
+      "name": "Trail Nocturno Ehécatl 2026",
+      "date": "2026-10-24",
+      "time": null,
+      "distances": [
+        "10K",
+        "20K"
+      ],
+      "city": "Ecatepec",
+      "state": "Estado de México",
+      "venue": "Sierra de Guadalupe",
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1153",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
+      "confidence": "medium",
+      "notes": "Night trail race. Dashport page is JS-rendered, unverified directly — confirm before race week.",
+      "distanceTags": [
+        "10K",
+        "Other"
+      ]
+    },
+    {
+      "id": "ultra-valle-bravo-utms-2026",
+      "name": "Ultra Valle de Bravo (Ultra Trail México Series)",
+      "date": null,
+      "time": null,
+      "distances": [],
+      "city": "Valle de Bravo",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": "Ultra Trail México Series",
+      "signupUrl": null,
+      "sourceUrl": "https://www.ultrailmexicoseries.com/",
+      "confidence": "low",
+      "notes": "Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published.",
+      "distanceTags": [
+        "Other"
+      ]
+    },
+    {
+      "id": "3a-carrera-ibero",
+      "name": "3a Carrera Ibero",
+      "date": "2026-07-05",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "San Andrés Cholula",
+      "state": "Puebla",
+      "venue": null,
+      "organizer": "Chronostart",
+      "signupUrl": null,
+      "sourceUrl": "https://tritour.org/calendario-carreras-puebla",
+      "confidence": "low",
+      "notes": "Listed on tritour Puebla calendar (Chronostart id 513); not verified on its own event page."
+    },
+    {
+      "id": "lomitos-imparables",
+      "name": "Lomitos Imparables",
+      "date": "2026-07-19",
+      "time": null,
+      "distances": [
+        "3K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": null,
+      "organizer": "Chronostart",
+      "signupUrl": null,
+      "sourceUrl": "https://tritour.org/calendario-carreras-puebla",
+      "confidence": "low",
+      "notes": "tritour Puebla listing (Chronostart id 525); dog-friendly; not individually verified."
+    },
+    {
+      "id": "carrera-bonn-2026",
+      "name": "Carrera Bonn 2026",
+      "date": "2026-07-25",
+      "time": "19:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Geely Serdán",
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
+      "confidence": "high",
+      "notes": "Evening race, $330 MXN. tritour listed Jul 19 — conflict; registration page shows Jul 25."
+    },
+    {
+      "id": "carrera-multimedios",
+      "name": "Carrera Multimedios",
+      "date": "2026-07-26",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Sendela (Estrella de Puebla)",
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507",
+      "confidence": "high",
+      "notes": "$418 MXN main distances; also 5K Perritos ($165)."
+    },
+    {
+      "id": "snoopy-run-puebla-2026",
+      "name": "Snoopy Run Puebla 2026",
+      "date": "2026-08-16",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Ecoparque Metropolitano de Puebla",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/snoopy-run-club-puebla-2026-v19",
+      "sourceUrl": "https://asdeporte.com/evento/snoopy-run-club-puebla-2026-v19",
+      "confidence": "high",
+      "notes": "Verified via Runera detail page; registrations open."
+    },
+    {
+      "id": "leones-an-huac-2026",
+      "name": "Leones Anáhuac 2026",
+      "date": "2026-09-20",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "San Andrés Cholula",
+      "state": "Puebla",
+      "venue": null,
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/528",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/528",
+      "confidence": "high",
+      "notes": "Universidad Anáhuac Puebla race, $360-400. tritour listed Jul 19 — conflict; registration shows Sep 20."
+    },
+    {
+      "id": "bimbo-global-race-puebla-2026",
+      "name": "Bimbo Global Race Puebla 2026",
+      "date": "2026-09-27",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Jardín del Arte, Reserva Territorial Atlixcáyotl",
+      "organizer": "Grupo Bimbo / Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion",
+      "confidence": "high",
+      "notes": "10K 06:50 / 5K 07:00 / 3K walk 07:10. From $260 MXN. Cap 3,000 + 400 walk."
+    },
+    {
+      "id": "carrera-vertical-inxignia-2026-2",
+      "name": "Carrera Vertical Inxignia 2026 (2ª)",
+      "date": "2026-09-27",
+      "time": null,
+      "distances": [
+        "Vertical 999 escalones"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "San Andrés Cholula",
+      "state": "Puebla",
+      "venue": "Torre Inxignia JV",
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/calendario-carreras/mexico/puebla",
+      "confidence": "medium",
+      "notes": "Stair-climb up the tallest tower in Puebla; cap 500 + Heroes cat. Own Asdeporte URL 404'd on guess."
+    },
+    {
+      "id": "barbie-run-puebla-2026",
+      "name": "Barbie Run Puebla 2026",
+      "date": "2026-10-25",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
+      "confidence": "high",
+      "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX."
+    },
+    {
+      "id": "carrera-canacine",
+      "name": "Carrera Canacine",
+      "date": "2026-10-31",
+      "time": "19:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Zócalo de Puebla",
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/517",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/517",
+      "confidence": "high",
+      "notes": "Evening race, $385 MXN."
+    },
+    {
+      "id": "3a-carrera-pericos",
+      "name": "3a Carrera Pericos",
+      "date": "2026-12-06",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Estadio de Beisbol Hermanos Serdán",
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
+      "confidence": "high",
+      "notes": "$352 MXN per distance. Pericos de Puebla baseball club race."
+    },
+    {
+      "id": "marat-n-de-puebla-2026",
+      "name": "Maratón de Puebla 2026",
+      "date": null,
+      "time": null,
+      "distances": [],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": null,
+      "organizer": "Asociación Poblana de Atletismo / Gobierno de Puebla",
+      "signupUrl": null,
+      "sourceUrl": "https://www.milenio.com/deportes/puebla-40-carreras-atleticas-2026-calendario",
+      "confidence": "low",
+      "notes": "Flagship confirmed to return 2026 (~last Sunday of Nov per APA/Milenio), but no rendered registration page / firm date. Sources conflict (Nov 15 / Nov 29 / Dec 6). Date/distances null to avoid asserting unverified data."
+    },
+    {
+      "id": "c-de-las-estaciones-verano-guadalajara-2026",
+      "name": "C. de las Estaciones Verano Guadalajara 2026",
+      "date": "2026-07-19",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Plaza Galerías Guadalajara, Zapopan",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
+      "confidence": "high",
+      "notes": "Reg open, from $640 MXN. Staggered 06:30/06:40/06:50. Venue in Zapopan."
+    },
+    {
+      "id": "carrera-fraternidad-atl-tica-2026-6",
+      "name": "Carrera Fraternidad Atlética 2026 (6ª)",
+      "date": "2026-07-26",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Meta Deportiva",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "On tritour+runera; event page not individually rendered."
+    },
+    {
+      "id": "xxv-carrera-dolphy-2026",
+      "name": "XXV Carrera Dolphy 2026",
+      "date": "2026-08-02",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": "Av. Circunvalación Agustín Yáñez y Av. Arcos",
+      "organizer": "Asoc. Jalisciense de Clubes Atléticos / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/xxv-carrera-dolphy-2026-ofa/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/xxv-carrera-dolphy-2026-ofa/datos-del-evento",
+      "confidence": "high",
+      "notes": "Reg open, from $680 MXN, cap 5,000. 10K 06:30 / 5K 06:40."
+    },
+    {
+      "id": "carrera-de-el-occidental-2026",
+      "name": "Carrera de El Occidental 2026",
+      "date": "2026-08-09",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "On tritour+runera (asdeporte slug ...-wl7); not individually rendered."
+    },
+    {
+      "id": "10k-internacional-comude-guadalajara-2026",
+      "name": "10K Internacional COMUDE Guadalajara 2026",
+      "date": "2026-08-23",
+      "time": null,
+      "distances": [
+        "10K"
+      ],
+      "distanceTags": [
+        "10K"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "COMUDE Guadalajara / Márcate",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "tritour listing (marcate slug); event page not rendered."
+    },
+    {
+      "id": "barbie-run-guadalajara-2026",
+      "name": "Barbie Run Guadalajara 2026",
+      "date": "2026-08-30",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Paseo Andares, Zapopan",
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.runera.mx/carreras/guadalajara",
+      "confidence": "medium",
+      "notes": "On runera+tritour. Venue Andares (Zapopan). Time from calendar summary. Distinct from Barbie Run MTY/CDMX/Puebla."
+    },
+    {
+      "id": "serial-de-atletismo-tlajomulco-2026-san-miguel-c",
+      "name": "Serial de Atletismo Tlajomulco 2026 – San Miguel Coyutlán",
+      "date": "2026-08-30",
+      "time": null,
+      "distances": [
+        "5K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "Other"
+      ],
+      "city": "Tlajomulco",
+      "state": "Jalisco",
+      "venue": "San Miguel Coyutlán, Tlajomulco",
+      "organizer": "Márcate",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "tritour listing (marcate slug); not rendered."
+    },
+    {
+      "id": "37-medio-marat-n-atlas-2026-cardio-protegido",
+      "name": "37° Medio Maratón Atlas 2026 Cardio Protegido",
+      "date": "2026-09-06",
+      "time": "06:30",
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Av. Patria frente a Parque El Polvorín, Zapopan",
+      "organizer": "Club Atlas Colomos / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/37-medio-maraton-atlas-cardio-protegido-2026-kwv/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/37-medio-maraton-atlas-cardio-protegido-2026-kwv/datos-del-evento",
+      "confidence": "high",
+      "notes": "Reg open, from $660 MXN. 21.0975 km certified."
+    },
+    {
+      "id": "carrera-de-las-antorchas-edici-n-72",
+      "name": "Carrera de las Antorchas Edición 72",
+      "date": "2026-09-19",
+      "time": null,
+      "distances": [
+        "5.7K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Tlaquepaque",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Meta Deportiva",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "tritour listing; metadeportiva page didn't render enough detail."
+    },
+    {
+      "id": "bimbo-global-race-guadalajara-2026",
+      "name": "Bimbo Global Race Guadalajara 2026",
+      "date": "2026-09-27",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Centro Comercial Andares, Zapopan",
+      "organizer": "Grupo Bimbo / Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/bimbo-global-race-guadalajara-2026-c6u/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/bimbo-global-race-guadalajara-2026-c6u/datos-del-evento",
+      "confidence": "high",
+      "notes": "Reg open, from $260 MXN. 10K 06:30 / 5K 06:45 / 3K walk 07:45. Distinct from Bimbo MTY/Puebla."
+    },
+    {
+      "id": "adidas-splits-15k-30k-guadalajara-2026",
+      "name": "adidas Splits 15K/30K Guadalajara 2026",
+      "date": "2026-10-04",
+      "time": "06:30",
+      "distances": [
+        "15K",
+        "30K"
+      ],
+      "distanceTags": [
+        "Other"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Av. San Ignacio esq. Av. Vallarta, Zapopan",
+      "organizer": "Hub Sports (adidas / Samsung)",
+      "signupUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-gdl-2026",
+      "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-gdl-2026",
+      "confidence": "high",
+      "notes": "Inscripciones abiertas; cap 4,500. Staggered to 06:46. $690-$980 MXN."
+    },
+    {
+      "id": "medio-marat-n-tlajo-2026",
+      "name": "Medio Maratón Tlajo 2026",
+      "date": "2026-10-11",
+      "time": null,
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Tlajomulco",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Márcate",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "medium",
+      "notes": "tritour listing (marcate slug); event page DNS-failed."
+    },
+    {
+      "id": "c-de-las-estaciones-oto-o-guadalajara-2026",
+      "name": "C. de las Estaciones Otoño Guadalajara 2026",
+      "date": "2026-10-25",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "high",
+      "notes": "Date agrees tritour+runera (asdeporte slug oton-o-...-6r9). Venue not rendered."
+    },
+    {
+      "id": "xlii-marat-n-internacional-guadalajara-2026-elec",
+      "name": "XLII Maratón Internacional Guadalajara 2026 (Electrolit)",
+      "date": "2026-11-08",
+      "time": "06:30",
+      "distances": [
+        "42K"
+      ],
+      "distanceTags": [
+        "Full"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": "Circuito COMUDE",
+      "organizer": "COMUDE Guadalajara",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769458381/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769458381/",
+      "confidence": "high",
+      "notes": "42.195 km, $400 MXN, cap 4,000; expo Nov 6-7. CONFLICT: aggregators also list a 'Maratón Megacable Guadalajara' Nov 29 (maratonguadalajara.org, 403 — unconfirmed); unclear if distinct or renamed edition."
+    },
+    {
+      "id": "c-de-las-estaciones-invierno-guadalajara-2026",
+      "name": "C. de las Estaciones Invierno Guadalajara 2026",
+      "date": "2026-12-13",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Other"
+      ],
+      "city": "Zapopan",
+      "state": "Jalisco",
+      "venue": "Estadio Akron, Zapopan",
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+      "confidence": "high",
+      "notes": "Date agrees tritour+runera (asdeporte slug invierno-...-07h). Estadio Akron is in Zapopan."
+    },
+    {
+      "id": "shrek-run-guadalajara-2027",
+      "name": "Shrek Run Guadalajara 2027",
+      "date": "2027-01-17",
+      "time": null,
+      "distances": [
+        "5K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "Other"
+      ],
+      "city": "Guadalajara",
+      "state": "Jalisco",
+      "venue": null,
+      "organizer": "Asdeporte",
+      "signupUrl": null,
+      "sourceUrl": "https://www.runera.mx/calendario/jalisco",
+      "confidence": "medium",
+      "notes": "On runera (Jan 17) + tritour. Stale year slug on tritour — not trusted for signup. Time/venue unconfirmed."
+    },
+    {
+      "id": "carrera-gallos-2026",
+      "name": "Carrera Gallos 2026",
+      "date": "2026-07-12",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "11K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Estadio Corregidora",
+      "organizer": "Gallos Blancos / Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/inscripcion/carrera-gallos-2026/quer%C3%A9taro",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-gallos-2026/quer%C3%A9taro",
+      "confidence": "high",
+      "notes": "$500 MXN. Registration closes Friday before at 18:00. Start/finish Estadio Corregidora."
+    },
+    {
+      "id": "the-loop-jurica-2026",
+      "name": "The Loop Jurica 2026",
+      "date": "2026-08-23",
+      "time": "06:15",
+      "distances": [
+        "1K",
+        "3K",
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Arboretum, Jurica",
+      "organizer": "SIQSA / Xtrail México",
+      "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=the-loop-jurica",
+      "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=the-loop-jurica",
+      "confidence": "high",
+      "notes": "Staggered: 15K 06:15 / 5K 06:45 / 10K 07:00. Kids/grandparents Sat Aug 22. $649-$749 MXN. Signup by BBVA transfer, no direct online URL."
+    },
+    {
+      "id": "carrera-de-la-esperanza-2026-xvi",
+      "name": "Carrera de la Esperanza 2026 (XVI)",
+      "date": "2026-09-06",
+      "time": "07:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Centro Cultural Manuel Gómez Morín, Av. Constituyentes",
+      "organizer": "Fundación Merced / DIF Estatal (AQ Sports)",
+      "signupUrl": "https://www.aqsports.com.mx/inscribete/",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-y-maratones-mexico",
+      "confidence": "medium",
+      "notes": "Date/distances confirmed on tritour/carrerasmexico + AQ Sports page. Time/venue per press, not a rendered event page. $500 MXN; charity race."
+    },
+    {
+      "id": "snoopy-run-quer-taro-2026",
+      "name": "Snoopy Run Querétaro 2026",
+      "date": "2026-09-06",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": null,
+      "organizer": "Asdeporte / JUZT",
+      "signupUrl": "https://www.asdeporte.com/evento/snoopy-run-club-quere-taro-jdi/datos-del-evento",
+      "sourceUrl": "https://www.tritour.org/calendario-carreras-y-maratones-mexico",
+      "confidence": "low",
+      "notes": "DATE CONFLICT: tritour/press say Sep 6; Asdeporte page showed Sep 12 (3K/5K, from $600). Venue TBC. Dog-friendly."
+    },
+    {
+      "id": "quer-taro-marat-n-2026-16-edici-n",
+      "name": "Querétaro Maratón 2026 (16ª Edición)",
+      "date": "2026-10-04",
+      "time": "06:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K",
+        "42K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half",
+        "Full"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Av. Constituyentes, junto al CECEQ",
+      "organizer": "Querétaro Maratón",
+      "signupUrl": "https://queretaromaraton.com/",
+      "sourceUrl": "https://queretaromaraton.com/",
+      "confidence": "high",
+      "notes": "Flagship. Confirmed on official site + Finishers. Half cap 7,250; ~19,500 expected. Registration closed ~Sep 28."
+    },
+    {
+      "id": "barbie-run-quer-taro-2026",
+      "name": "Barbie Run Querétaro 2026",
+      "date": "2026-11-29",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "Other",
+        "5K",
+        "10K"
+      ],
+      "city": "El Pueblito, Corregidora",
+      "state": "Querétaro",
+      "venue": "Plaza Gran Cué, El Pueblito",
+      "organizer": "Asdeporte",
+      "signupUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
+      "sourceUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
+      "confidence": "high",
+      "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL."
+    }
+  ]
+}
