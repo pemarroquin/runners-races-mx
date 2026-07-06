@@ -4,9 +4,10 @@
 // falls back to the bundled copy offline.
 import racesJson from '@/assets/data/races.json';
 
-// Raw URL of the agent-maintained races.json. null = remote refresh disabled
-// (set once the GitHub repo exists).
-export const REMOTE_RACES_URL: string | null = null;
+// Raw URL of the agent-maintained races.json (public repo, no auth needed).
+// The Mon+Fri race-watch cloud routine commits verified status updates here.
+export const REMOTE_RACES_URL: string | null =
+  'https://raw.githubusercontent.com/pemarroquin/carrera-monterrey/main/assets/data/races.json';
 
 export type Confidence = 'high' | 'medium' | 'low';
 export type DistanceTag = '5K' | '10K' | 'Half' | 'Full' | 'Other';
