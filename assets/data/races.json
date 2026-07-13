@@ -602,6 +602,7 @@
       "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=72bb03c6-4294-4cc6-98f9-628ab4ba5bae",
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "medium",
+      "lastVerified": "2026-07-13",
       "notes": "Only on the AANL calendar; distances not listed on the source page. Registration open (runera.mx, 2026-07-04). Venue corrected: Monumento al Obrero (CTM is the organizer, not the venue).",
       "state": "Nuevo León",
       "distanceTags": [
@@ -1317,7 +1318,8 @@
       "signupUrl": "https://asdeporte.com/evento/lomitos-mundialistas-2026-8fy",
       "sourceUrl": "https://runera.mx/carreras/detalle/lomitos-mundialistas-2026",
       "confidence": "high",
-      "notes": "Dog-friendly themed run. DATE CONFLICT: tritour lists Jul 12; runera detail (primary) says Jul 19.",
+      "lastVerified": "2026-07-13",
+      "notes": "Dog-friendly themed run. DATE CONFLICT: tritour lists Jul 12; runera detail (primary) says Jul 19. Re-verified 2026-07-13: WebSearch corroboration inconclusive on which date is correct (gateway blocked direct source fetch); no cancellation/postponement signals found either way.",
       "distanceTags": [
         "Other"
       ]
@@ -1337,6 +1339,7 @@
       "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=baba1a09f1cd0c40667c3f9949e4bdce&api_key=48513987f33edea8",
       "sourceUrl": "https://tritour.org/eventos/dinomilco-5k-2026",
       "confidence": "medium",
+      "lastVerified": "2026-07-13",
       "notes": "Dinosaur-themed community 5K in Xochimilco.",
       "distanceTags": [
         "5K"
@@ -1358,6 +1361,7 @@
       "signupUrl": "https://www.emociondeportiva.com/detalle-evento/princesas-run-2026/ciudad-de-m%C3%A9xico",
       "sourceUrl": "https://tritour.org/eventos/princesas-run",
       "confidence": "medium",
+      "lastVerified": "2026-07-13",
       "notes": "Character-themed run.",
       "distanceTags": [
         "5K",
@@ -1379,7 +1383,8 @@
       "signupUrl": "https://www.entusmarcas.com/carrera-mundialista-10km-2026",
       "sourceUrl": "https://tritour.org/eventos/carrera-mundialista-10k-2026",
       "confidence": "medium",
-      "notes": "World Cup themed 10K; venue/time not yet published.",
+      "lastVerified": "2026-07-13",
+      "notes": "World Cup themed 10K; venue/time not yet published. Re-verified 2026-07-13: one WebSearch result referenced a similarly-named but likely distinct SSC-CDMX/Asdeporte race (\"Carrera Mundialista Con Tu Policía\") dated Jul 25 — could not disambiguate from this event without direct source access (gateway blocked). No confirmed change to this race's Jul 19 date.",
       "distanceTags": [
         "10K"
       ]
@@ -1678,6 +1683,7 @@
       "signupUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/inscripcion",
       "sourceUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/datos-del-evento",
       "confidence": "high",
+      "lastVerified": "2026-07-13",
       "notes": "Staggered starts: 50K 06:00 / 26K 06:30 / 12K 07:00. From $760 MXN.",
       "distanceTags": [
         "Other"
@@ -1698,6 +1704,7 @@
       "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=36806759d992a2d8f76fbf39ba4ca7ee&api_key=48513987f33edea8",
       "sourceUrl": "https://tritour.org/eventos/trail-ciudad-de-mexico-2a-edicion-2026",
       "confidence": "medium",
+      "lastVerified": "2026-07-13",
       "notes": "Also kids category. Confirmed on tritour + Carreras México registration page.",
       "distanceTags": [
         "10K"
@@ -1872,6 +1879,7 @@
       "signupUrl": null,
       "sourceUrl": "https://tritour.org/calendario-carreras-puebla",
       "confidence": "low",
+      "lastVerified": "2026-07-13",
       "notes": "tritour Puebla listing (Chronostart id 525); dog-friendly; not individually verified."
     },
     {
@@ -2120,6 +2128,7 @@
       "signupUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
       "confidence": "high",
+      "lastVerified": "2026-07-13",
       "notes": "Reg open, from $640 MXN. Staggered 06:30/06:40/06:50. Venue in Zapopan."
     },
     {
