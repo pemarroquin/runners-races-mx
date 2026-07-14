@@ -32,9 +32,17 @@ export function SavedProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const toggle = useCallback((id: string) => {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
+  // Side effects (saveRace/removeRace) run here, in the event handler itself —
+  // NOT inside the setSavedIds updater. Updater functions must be pure (React
+  // can invoke them outside a normal single-commit render), and calling a
+  // persistence side effect from inside one silently broke writes in the
+  // production web build (verified on the Porkbun deploy: the UI toggled to
+  // "Saved" — proving the updater ran — but localStorage never received the
+  // write, with no thrown error). Reading `savedIds` from the closure instead
+  // of the updater's `prev` argument means `toggle` depends on `savedIds`.
+  const toggle = useCallback(
+    (id: string) => {
+      const next = new Set(savedIds);
       try {
         if (next.has(id)) {
           next.delete(id);
@@ -46,9 +54,10 @@ export function SavedProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.warn('toggle save failed', e);
       }
-      return next;
-    });
-  }, []);
+      setSavedIds(next);
+    },
+    [savedIds],
+  );
 
   const value = useMemo<SavedValue>(
     () => ({ savedIds, isSaved: (id) => savedIds.has(id), toggle }),
