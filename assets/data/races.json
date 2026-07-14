@@ -79,8 +79,8 @@
         "5K"
       ],
       "distanceTags": [
-        "Half",
-        "5K"
+        "5K",
+        "Half"
       ],
       "city": "Montemorelos",
       "state": "Nuevo León",
@@ -107,9 +107,9 @@
         "3K caminata"
       ],
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -138,7 +138,7 @@
       "distanceTags": [
         "5K",
         "10K",
-        "Other"
+        "15K"
       ],
       "city": "San Pedro Garza García",
       "state": "Nuevo León",
@@ -159,8 +159,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "Other"
+        "5K",
+        "10K"
       ],
       "city": "San Pedro Garza García",
       "state": "Nuevo León",
@@ -209,9 +209,9 @@
         "2.5K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -233,9 +233,9 @@
         "10K"
       ],
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -288,7 +288,8 @@
         "12K"
       ],
       "distanceTags": [
-        "Other"
+        "5K",
+        "15K"
       ],
       "city": "San Pedro Garza García",
       "state": "Nuevo León",
@@ -313,7 +314,10 @@
         "100K"
       ],
       "distanceTags": [
-        "Other"
+        "10K",
+        "15K",
+        "30K",
+        "Ultra"
       ],
       "city": "Santiago",
       "state": "Nuevo León",
@@ -381,7 +385,8 @@
         "30K"
       ],
       "distanceTags": [
-        "Other"
+        "15K",
+        "30K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -428,9 +433,9 @@
         "10K"
       ],
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -482,9 +487,9 @@
         "3K caminata"
       ],
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ],
       "city": "Monterrey",
       "state": "Nuevo León",
@@ -535,7 +540,8 @@
       ],
       "distanceTags": [
         "Half",
-        "Other"
+        "30K",
+        "Ultra"
       ],
       "city": "Santiago",
       "state": "Nuevo León",
@@ -606,7 +612,7 @@
       "notes": "Only on the AANL calendar; distances not listed on the source page. Registration open (runera.mx, 2026-07-04). Venue corrected: Monumento al Obrero (CTM is the organizer, not the venue).",
       "state": "Nuevo León",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -628,9 +634,9 @@
       "notes": "On both calendars. Edition number differs between sources (26ª Idemsport, 27ª AANL). Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. AANL lists it as 27ª edición (Idemsport says 26ª).",
       "state": "Nuevo León",
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ]
     },
     {
@@ -671,8 +677,8 @@
       "notes": "Same day as Chipinque Trail. On both calendars. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
       "state": "Nuevo León",
       "distanceTags": [
-        "5K",
-        "Other"
+        "3K",
+        "5K"
       ],
       "start": {
         "lat": 25.6785,
@@ -781,7 +787,7 @@
       "notes": "Themed run, on both calendars; distances not specified on either source. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Asdeporte publishes ~5-6 months out — expect the page soon.",
       "state": "Nuevo León",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -823,7 +829,7 @@
       "notes": "Same day as Vivamus-Merco. Edition number differs between sources (8ª Idemsport, 9ª AANL). Registration not yet published as of 2026-07-04; organizer typically opens closer to race day. Edition count conflict: AANL 9ª vs Idemsport 8ª.",
       "state": "Nuevo León",
       "distanceTags": [
-        "Other"
+        "15K"
       ],
       "start": {
         "lat": 25.6699,
@@ -870,9 +876,9 @@
       "notes": "Same day as adidas Splits 15K/30K. Venue conflict: Fundidora (Idemsport) vs UANL (AANL); AANL lists only 10K. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
       "state": "Nuevo León",
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ]
     },
     {
@@ -893,8 +899,8 @@
       "notes": "Same day as Carrera Batman. Only on the Idemsport calendar; its event link erroneously points to a 2025 Chipinque URL. Registration not yet published as of 2026-07-04; organizer typically opens closer to race day.",
       "state": "Nuevo León",
       "distanceTags": [
-        "10K",
-        "Other"
+        "3K",
+        "10K"
       ]
     },
     {
@@ -1048,7 +1054,7 @@
       "confidence": "high",
       "notes": "Final race of the 4-race adidas Splits series building to Maratón CDMX. Cap 8,000; from $690 MXN.",
       "distanceTags": [
-        "Other"
+        "30K"
       ]
     },
     {
@@ -1092,7 +1098,7 @@
       "confidence": "high",
       "notes": "SOLD OUT (AGOTADAS) per Asdeporte at 2026-07-05. Waves every 6 min from 06:30; cap 8,000; was from $1,300 MXN.",
       "distanceTags": [
-        "Other"
+        "15K"
       ]
     },
     {
@@ -1137,9 +1143,10 @@
       "confidence": "high",
       "notes": "Cap 10,000; from $300 MXN; new 3K SimiPet dog walk. Distinct from Simicarrera MTY (Nov 8).",
       "distanceTags": [
+        "3K",
         "5K",
         "10K",
-        "Other"
+        "15K"
       ]
     },
     {
@@ -1181,7 +1188,7 @@
       "confidence": "high",
       "notes": "Distinct from Barbie Run MTY (Dec 6).",
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ]
@@ -1203,7 +1210,7 @@
       "confidence": "high",
       "notes": "Year-end classic; $599-$899 MXN tiered.",
       "distanceTags": [
-        "Other"
+        "15K"
       ]
     },
     {
@@ -1228,9 +1235,9 @@
       "lastVerified": "2026-07-05",
       "notes": "From $1,269 MXN.",
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ]
     },
     {
@@ -1276,9 +1283,9 @@
       "confidence": "high",
       "notes": "Staggered starts 07:25/07:45/07:55; from $840 MXN; virtual option.",
       "distanceTags": [
+        "3K",
         "5K",
-        "10K",
-        "Other"
+        "10K"
       ]
     },
     {
@@ -1321,7 +1328,7 @@
       "lastVerified": "2026-07-13",
       "notes": "Dog-friendly themed run. DATE CONFLICT: tritour lists Jul 12; runera detail (primary) says Jul 19. Re-verified 2026-07-13: WebSearch corroboration inconclusive on which date is correct (gateway blocked direct source fetch); no cancellation/postponement signals found either way.",
       "distanceTags": [
-        "Other"
+        "5K"
       ]
     },
     {
@@ -1428,7 +1435,7 @@
       "confidence": "medium",
       "notes": "Pet-friendly canicross-style community race.",
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ]
@@ -1452,7 +1459,7 @@
       "confidence": "high",
       "notes": "Dog-friendly first edition; inscripciones abiertas.",
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ]
@@ -1476,7 +1483,7 @@
       "confidence": "high",
       "notes": "Character run — SOLD OUT (inscripciones agotadas) at 2026-07-05.",
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ]
@@ -1560,7 +1567,7 @@
       "confidence": "high",
       "notes": "Color-run themed 6K; inscripciones abiertas.",
       "distanceTags": [
-        "Other"
+        "5K"
       ]
     },
     {
@@ -1600,7 +1607,7 @@
       "confidence": "medium",
       "notes": "Food-festival themed race; distances not yet on the listing page.",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -1618,7 +1625,7 @@
       "confidence": "medium",
       "notes": "Autumn leg of the series; winter leg listed Dec 6, 2026 on the same page.",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -1636,7 +1643,7 @@
       "confidence": "medium",
       "notes": "Character run; distances/venue not yet published.",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -1686,7 +1693,9 @@
       "lastVerified": "2026-07-13",
       "notes": "Staggered starts: 50K 06:00 / 26K 06:30 / 12K 07:00. From $760 MXN.",
       "distanceTags": [
-        "Other"
+        "15K",
+        "30K",
+        "Ultra"
       ]
     },
     {
@@ -1728,7 +1737,7 @@
       "confidence": "medium",
       "notes": "20th-edition skyrace on the Iztaccíhuatl slopes.",
       "distanceTags": [
-        "Other",
+        "15K",
         "Half"
       ]
     },
@@ -1751,7 +1760,8 @@
       "confidence": "medium",
       "notes": "Tri Tour 2026 trail calendar listing.",
       "distanceTags": [
-        "Other",
+        "5K",
+        "15K",
         "Half"
       ]
     },
@@ -1773,7 +1783,8 @@
       "confidence": "medium",
       "notes": "Trail on the Tlalmanalco side of the Iztaccíhuatl foothills.",
       "distanceTags": [
-        "Other"
+        "15K",
+        "30K"
       ]
     },
     {
@@ -1794,7 +1805,8 @@
       "confidence": "high",
       "notes": "Cap 2,500. Staggered starts 08:00-08:22. $810-$990 MXN; kit pickup Sep 19.",
       "distanceTags": [
-        "Other"
+        "15K",
+        "Half"
       ]
     },
     {
@@ -1816,7 +1828,7 @@
       "notes": "Night trail race. Dashport page is JS-rendered, unverified directly — confirm before race week.",
       "distanceTags": [
         "10K",
-        "Other"
+        "Half"
       ]
     },
     {
@@ -1834,7 +1846,7 @@
       "confidence": "low",
       "notes": "Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published.",
       "distanceTags": [
-        "Other"
+        "TBD"
       ]
     },
     {
@@ -1848,7 +1860,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -1870,7 +1882,7 @@
         "3K"
       ],
       "distanceTags": [
-        "Other"
+        "3K"
       ],
       "city": "Puebla",
       "state": "Puebla",
@@ -1917,7 +1929,7 @@
       "distanceTags": [
         "5K",
         "10K",
-        "Other"
+        "15K"
       ],
       "city": "Puebla",
       "state": "Puebla",
@@ -1939,7 +1951,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -1963,7 +1975,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -1987,7 +1999,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2009,7 +2021,7 @@
         "Vertical 999 escalones"
       ],
       "distanceTags": [
-        "Other"
+        "Ultra"
       ],
       "city": "San Andrés Cholula",
       "state": "Puebla",
@@ -2031,7 +2043,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2075,7 +2087,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2095,7 +2107,7 @@
       "time": null,
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Puebla",
       "state": "Puebla",
@@ -2119,7 +2131,7 @@
       "distanceTags": [
         "5K",
         "10K",
-        "Other"
+        "15K"
       ],
       "city": "Zapopan",
       "state": "Jalisco",
@@ -2226,7 +2238,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2250,7 +2262,7 @@
       ],
       "distanceTags": [
         "5K",
-        "Other"
+        "15K"
       ],
       "city": "Tlajomulco",
       "state": "Jalisco",
@@ -2290,7 +2302,7 @@
         "5.7K"
       ],
       "distanceTags": [
-        "Other"
+        "5K"
       ],
       "city": "Tlaquepaque",
       "state": "Jalisco",
@@ -2312,7 +2324,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2335,7 +2347,8 @@
         "30K"
       ],
       "distanceTags": [
-        "Other"
+        "15K",
+        "30K"
       ],
       "city": "Zapopan",
       "state": "Jalisco",
@@ -2379,7 +2392,7 @@
       "distanceTags": [
         "5K",
         "10K",
-        "Other"
+        "15K"
       ],
       "city": "Guadalajara",
       "state": "Jalisco",
@@ -2423,7 +2436,7 @@
       "distanceTags": [
         "5K",
         "10K",
-        "Other"
+        "15K"
       ],
       "city": "Zapopan",
       "state": "Jalisco",
@@ -2445,7 +2458,7 @@
       ],
       "distanceTags": [
         "5K",
-        "Other"
+        "15K"
       ],
       "city": "Guadalajara",
       "state": "Jalisco",
@@ -2467,8 +2480,9 @@
         "11K"
       ],
       "distanceTags": [
-        "Other",
-        "5K"
+        "3K",
+        "5K",
+        "10K"
       ],
       "city": "Santiago de Querétaro",
       "state": "Querétaro",
@@ -2492,9 +2506,10 @@
         "15K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
-        "10K"
+        "10K",
+        "15K"
       ],
       "city": "Santiago de Querétaro",
       "state": "Querétaro",
@@ -2517,9 +2532,10 @@
         "15K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
-        "10K"
+        "10K",
+        "15K"
       ],
       "city": "Santiago de Querétaro",
       "state": "Querétaro",
@@ -2541,7 +2557,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2591,7 +2607,7 @@
         "10K"
       ],
       "distanceTags": [
-        "Other",
+        "3K",
         "5K",
         "10K"
       ],
@@ -2614,8 +2630,8 @@
         "5K"
       ],
       "distanceTags": [
-        "5K",
-        "Other"
+        "3K",
+        "5K"
       ],
       "city": "Playas de Rosarito",
       "state": "Baja California",
@@ -2653,7 +2669,7 @@
       "time": null,
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Playas de Rosarito",
       "state": "Baja California",
@@ -2691,7 +2707,7 @@
       "time": null,
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Tijuana",
       "state": "Baja California",
@@ -2713,8 +2729,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Tijuana",
@@ -2736,8 +2752,8 @@
         "5K"
       ],
       "distanceTags": [
-        "5K",
-        "Other"
+        "3K",
+        "5K"
       ],
       "city": "Ensenada",
       "state": "Baja California",
@@ -2758,8 +2774,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Tijuana",
       "state": "Baja California",
@@ -2782,7 +2798,10 @@
         "50K"
       ],
       "distanceTags": [
-        "Other"
+        "15K",
+        "Half",
+        "30K",
+        "Ultra"
       ],
       "city": "Ensenada",
       "state": "Baja California",
@@ -2805,8 +2824,8 @@
       ],
       "distanceTags": [
         "10K",
-        "Half",
-        "Other"
+        "15K",
+        "Half"
       ],
       "city": "Tijuana",
       "state": "Baja California",
@@ -2867,8 +2886,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "León",
       "state": "Guanajuato",
@@ -2891,7 +2910,9 @@
         "46K"
       ],
       "distanceTags": [
-        "Other"
+        "10K",
+        "30K",
+        "Full"
       ],
       "city": "Guanajuato",
       "state": "Guanajuato",
@@ -2913,8 +2934,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "León",
@@ -2937,9 +2958,9 @@
         "15K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
-        "Other"
+        "10K",
+        "15K"
       ],
       "city": "León",
       "state": "Guanajuato",
@@ -2960,8 +2981,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Silao",
       "state": "Guanajuato",
@@ -2984,8 +3005,8 @@
       ],
       "distanceTags": [
         "10K",
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "León",
       "state": "Guanajuato",
@@ -3008,10 +3029,10 @@
         "42K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
-        "Full",
-        "Half"
+        "10K",
+        "Half",
+        "Full"
       ],
       "city": "Dolores Hidalgo",
       "state": "Guanajuato",
@@ -3033,8 +3054,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "León",
@@ -3057,7 +3078,8 @@
         "70K"
       ],
       "distanceTags": [
-        "Other"
+        "30K",
+        "Ultra"
       ],
       "city": "León",
       "state": "Guanajuato",
@@ -3079,8 +3101,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Irapuato",
@@ -3104,8 +3126,8 @@
       ],
       "distanceTags": [
         "10K",
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "Guanajuato",
       "state": "Guanajuato",
@@ -3128,10 +3150,10 @@
         "42K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
-        "Full",
-        "Half"
+        "10K",
+        "Half",
+        "Full"
       ],
       "city": "Celaya",
       "state": "Guanajuato",
@@ -3153,8 +3175,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Irapuato",
@@ -3180,7 +3202,9 @@
         "160K"
       ],
       "distanceTags": [
-        "Other"
+        "15K",
+        "30K",
+        "Ultra"
       ],
       "city": "Arteaga",
       "state": "Coahuila",
@@ -3221,8 +3245,8 @@
         "5K"
       ],
       "distanceTags": [
-        "5K",
-        "Other"
+        "3K",
+        "5K"
       ],
       "city": "Monclova",
       "state": "Coahuila",
@@ -3243,8 +3267,8 @@
         "5K"
       ],
       "distanceTags": [
-        "5K",
-        "Other"
+        "3K",
+        "5K"
       ],
       "city": "Piedras Negras",
       "state": "Coahuila",
@@ -3265,8 +3289,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Torreón",
       "state": "Coahuila",
@@ -3304,7 +3328,7 @@
       "time": null,
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Saltillo",
       "state": "Coahuila",
@@ -3322,7 +3346,7 @@
       "time": null,
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Monclova",
       "state": "Coahuila",
@@ -3363,8 +3387,8 @@
         "42K"
       ],
       "distanceTags": [
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "Saltillo",
       "state": "Coahuila",
@@ -3385,8 +3409,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Saltillo",
       "state": "Coahuila",
@@ -3449,10 +3473,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Aquismón",
       "state": "San Luis Potosí",
@@ -3474,7 +3498,9 @@
         "12K"
       ],
       "distanceTags": [
-        "Other"
+        "3K",
+        "5K",
+        "15K"
       ],
       "city": "San Luis Potosí",
       "state": "San Luis Potosí",
@@ -3497,10 +3523,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "San Luis Potosí",
       "state": "San Luis Potosí",
@@ -3522,8 +3548,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "San Luis Potosí",
@@ -3545,8 +3571,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Ciudad Valles",
       "state": "San Luis Potosí",
@@ -3569,10 +3595,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Villa de Pozos",
       "state": "San Luis Potosí",
@@ -3595,10 +3621,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Rioverde",
       "state": "San Luis Potosí",
@@ -3619,8 +3645,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "San Luis Potosí",
       "state": "San Luis Potosí",
@@ -3643,10 +3669,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Soledad de Graciano Sánchez",
       "state": "San Luis Potosí",
@@ -3667,8 +3693,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "San Luis Potosí",
       "state": "San Luis Potosí",
@@ -3691,10 +3717,10 @@
         "42K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
-        "Full",
-        "Half"
+        "10K",
+        "Half",
+        "Full"
       ],
       "city": "San Luis Potosí",
       "state": "San Luis Potosí",
@@ -3716,8 +3742,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Cancún",
@@ -3740,8 +3766,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Cozumel",
@@ -3760,7 +3786,7 @@
       "time": "17:00",
       "distances": [],
       "distanceTags": [
-        "Other"
+        "TBD"
       ],
       "city": "Cozumel",
       "state": "Quintana Roo",
@@ -3782,8 +3808,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Chetumal",
@@ -3807,10 +3833,10 @@
         "Infantil"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Bacalar",
       "state": "Quintana Roo",
@@ -3830,7 +3856,7 @@
         "Infantil"
       ],
       "distanceTags": [
-        "Other"
+        "3K"
       ],
       "city": "Cozumel",
       "state": "Quintana Roo",
@@ -3852,9 +3878,9 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ],
       "city": "Felipe Carrillo Puerto",
       "state": "Quintana Roo",
@@ -3876,8 +3902,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Chetumal",
@@ -3901,10 +3927,10 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Half",
-        "Other"
+        "10K",
+        "Half"
       ],
       "city": "Tulum",
       "state": "Quintana Roo",
@@ -3927,8 +3953,8 @@
       ],
       "distanceTags": [
         "10K",
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "Cozumel",
       "state": "Quintana Roo",
@@ -3951,10 +3977,10 @@
         "42K"
       ],
       "distanceTags": [
+        "3K",
         "10K",
-        "Full",
         "Half",
-        "Other"
+        "Full"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -3974,7 +4000,7 @@
         "Ultra"
       ],
       "distanceTags": [
-        "Other"
+        "Ultra"
       ],
       "city": "Progreso",
       "state": "Yucatán",
@@ -3995,8 +4021,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Chocholá",
       "state": "Yucatán",
@@ -4017,8 +4043,8 @@
         "42K"
       ],
       "distanceTags": [
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4039,8 +4065,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4062,9 +4088,9 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4085,8 +4111,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4106,7 +4132,7 @@
         "16K"
       ],
       "distanceTags": [
-        "Other"
+        "15K"
       ],
       "city": "Muna",
       "state": "Yucatán",
@@ -4127,8 +4153,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4150,9 +4176,9 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ],
       "city": "Mérida",
       "state": "Yucatán",
@@ -4174,9 +4200,9 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
+        "3K",
         "5K",
-        "Other"
+        "10K"
       ],
       "city": "Chihuahua",
       "state": "Chihuahua",
@@ -4197,8 +4223,8 @@
         "42K"
       ],
       "distanceTags": [
-        "Full",
-        "Half"
+        "Half",
+        "Full"
       ],
       "city": "Ciudad Juárez",
       "state": "Chihuahua",
@@ -4223,7 +4249,10 @@
         "135K"
       ],
       "distanceTags": [
-        "Other"
+        "10K",
+        "Half",
+        "Full",
+        "Ultra"
       ],
       "city": "Batopilas",
       "state": "Chihuahua",
@@ -4243,7 +4272,7 @@
         "250K"
       ],
       "distanceTags": [
-        "Other"
+        "Ultra"
       ],
       "city": "Creel",
       "state": "Chihuahua",
@@ -4266,9 +4295,9 @@
         "100 Mile"
       ],
       "distanceTags": [
-        "Full",
         "Half",
-        "Other"
+        "Full",
+        "Ultra"
       ],
       "city": "Urique",
       "state": "Chihuahua",
@@ -4310,8 +4339,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Chihuahua",
@@ -4337,7 +4366,7 @@
       "distanceTags": [
         "10K",
         "Half",
-        "Other"
+        "Ultra"
       ],
       "city": "Guachochi",
       "state": "Chihuahua",
@@ -4358,8 +4387,8 @@
         "10K"
       ],
       "distanceTags": [
-        "10K",
-        "5K"
+        "5K",
+        "10K"
       ],
       "city": "Hidalgo del Parral",
       "state": "Chihuahua",
@@ -4381,8 +4410,8 @@
         "21K"
       ],
       "distanceTags": [
-        "10K",
         "5K",
+        "10K",
         "Half"
       ],
       "city": "Hidalgo del Parral",
@@ -4404,7 +4433,8 @@
         "7K"
       ],
       "distanceTags": [
-        "Other"
+        "3K",
+        "5K"
       ],
       "city": "Ciudad Juárez",
       "state": "Chihuahua",
@@ -4426,7 +4456,7 @@
       ],
       "distanceTags": [
         "5K",
-        "Other"
+        "15K"
       ],
       "city": "Cuauhtémoc",
       "state": "Chihuahua",
