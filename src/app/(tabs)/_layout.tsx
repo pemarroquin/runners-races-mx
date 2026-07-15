@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { Image, StyleSheet, View, type ColorValue } from 'react-native';
+import { Image, StyleSheet, View, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useI18n } from '@/lib/i18n';
@@ -10,15 +10,25 @@ import { useI18n } from '@/lib/i18n';
 // docking at the screen edge. Height/margins are fixed rather than derived
 // from BottomTabInset (that constant sizes list content's bottom padding to
 // clear this bar + its floating gap, not the bar itself).
+//
+// BAR_WIDTH is a fixed target width, not a fraction of screen width: with
+// only 2 icons, react-navigation splits whatever width the bar has evenly
+// between them, so a wide bar (e.g. fixed side-margins on a full-width bar)
+// leaves a big awkward gap between the two icons — snug only works with
+// Instagram's 5 icons filling the same width. Side margins are computed from
+// this fixed width instead, so the pill stays compact regardless of screen
+// size.
 const BAR_HEIGHT = 56;
+const BAR_WIDTH = 140;
 const BAR_BOTTOM_MARGIN = 16;
-const BAR_SIDE_MARGIN = 90;
 const ICON_SIZE = 24;
 const ICON_WRAP_SIZE = 44;
 
 export default function TabsLayout() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const sideMargin = Math.max((windowWidth - BAR_WIDTH) / 2, 16);
 
   return (
     <Tabs
@@ -33,8 +43,8 @@ export default function TabsLayout() {
         tabBarBackground: () => <TabBarBackground />,
         tabBarStyle: {
           position: 'absolute',
-          left: BAR_SIDE_MARGIN,
-          right: BAR_SIDE_MARGIN,
+          left: sideMargin,
+          right: sideMargin,
           bottom: insets.bottom + BAR_BOTTOM_MARGIN,
           height: BAR_HEIGHT,
           borderRadius: BAR_HEIGHT / 2,
