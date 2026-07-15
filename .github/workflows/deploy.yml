@@ -1,0 +1,53 @@
+name: Deploy web preview (pmarroquin.com/runningapp)
+
+# Builds the Expo web export on every push to main and publishes the built
+# output (landing page + runningapp/) to the `deploy` branch. Porkbun's
+# Static Hosting "GitHub Connect" (Domain Management -> pmarroquin.com ->
+# Static Hosting -> GitHub Connect) watches that branch and auto-publishes
+# it — this workflow exists because Porkbun's GitHub Connect only serves a
+# branch's root as-is, with no build step of its own, and this repo's
+# source isn't the deployable output (it needs `expo export` first).
+#
+# See deploy/DEPLOY.md for the manual fallback and the history of gotchas
+# this replaced (zip-upload unwrap behavior, root-absolute asset paths).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Export web build
+        env:
+          EXPO_PUBLIC_MAPBOX_TOKEN: ${{ secrets.EXPO_PUBLIC_MAPBOX_TOKEN }}
+        run: npx expo export -p web
+
+      - name: Assemble site (landing page + runningapp/)
+        run: |
+          rm -rf site-build
+          mkdir -p site-build
+          cp web/index.html site-build/index.html
+          cp -R dist site-build/runningapp
+
+      - name: Publish to deploy branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site-build
+          publish_branch: deploy
+          force_orphan: true
