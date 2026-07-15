@@ -63,5 +63,10 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+// Clears the floating pill tab bar (see (tabs)/_layout.tsx) + its bottom
+// margin + a bit of breathing room, for scrollable screens' bottom padding.
+// Safe-area bottom inset is handled separately by the bar's own positioning
+// and by each screen's SafeAreaView, so this stays a flat number rather than
+// per-platform.
+export const BottomTabInset = 96;
 export const MaxContentWidth = 800;

@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RaceCard } from '@/components/race-card';
-import { Colors, Spacing } from '@/constants/theme';
+import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { getRaces } from '@/lib/races';
 import { useRacesVersion } from '@/lib/races-provider';
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
-  list: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1, paddingBottom: 96 },
+  list: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1, paddingBottom: BottomTabInset },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: Spacing.six },
   empty: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
 });

@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CityPicker } from '@/components/city-picker';
 import { FilterSheet } from '@/components/filter-sheet';
 import { RaceCard } from '@/components/race-card';
-import { Colors, Spacing } from '@/constants/theme';
+import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import {
   daysUntil,
@@ -298,6 +298,6 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: 20 },
   chipText: { fontSize: 13, fontWeight: '600' },
   clearAllText: { fontSize: 13, fontWeight: '600' },
-  list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: 96 },
+  list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },
   empty: { textAlign: 'center', marginTop: Spacing.six, fontSize: 15 },
 });
