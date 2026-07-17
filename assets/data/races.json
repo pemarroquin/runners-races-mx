@@ -608,7 +608,7 @@
       "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=72bb03c6-4294-4cc6-98f9-628ab4ba5bae",
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "medium",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Only on the AANL calendar; distances not listed on the source page. Registration open (runera.mx, 2026-07-04). Venue corrected: Monumento al Obrero (CTM is the organizer, not the venue).",
       "state": "Nuevo León",
       "distanceTags": [
@@ -1325,7 +1325,7 @@
       "signupUrl": "https://asdeporte.com/evento/lomitos-mundialistas-2026-8fy",
       "sourceUrl": "https://runera.mx/carreras/detalle/lomitos-mundialistas-2026",
       "confidence": "high",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Dog-friendly themed run. DATE CONFLICT: tritour lists Jul 12; runera detail (primary) says Jul 19. Re-verified 2026-07-13: WebSearch corroboration inconclusive on which date is correct (gateway blocked direct source fetch); no cancellation/postponement signals found either way.",
       "distanceTags": [
         "5K"
@@ -1346,7 +1346,7 @@
       "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=baba1a09f1cd0c40667c3f9949e4bdce&api_key=48513987f33edea8",
       "sourceUrl": "https://tritour.org/eventos/dinomilco-5k-2026",
       "confidence": "medium",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Dinosaur-themed community 5K in Xochimilco.",
       "distanceTags": [
         "5K"
@@ -1368,7 +1368,7 @@
       "signupUrl": "https://www.emociondeportiva.com/detalle-evento/princesas-run-2026/ciudad-de-m%C3%A9xico",
       "sourceUrl": "https://tritour.org/eventos/princesas-run",
       "confidence": "medium",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Character-themed run.",
       "distanceTags": [
         "5K",
@@ -1390,7 +1390,7 @@
       "signupUrl": "https://www.entusmarcas.com/carrera-mundialista-10km-2026",
       "sourceUrl": "https://tritour.org/eventos/carrera-mundialista-10k-2026",
       "confidence": "medium",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "World Cup themed 10K; venue/time not yet published. Re-verified 2026-07-13: one WebSearch result referenced a similarly-named but likely distinct SSC-CDMX/Asdeporte race (\"Carrera Mundialista Con Tu Policía\") dated Jul 25 — could not disambiguate from this event without direct source access (gateway blocked). No confirmed change to this race's Jul 19 date.",
       "distanceTags": [
         "10K"
@@ -1411,6 +1411,9 @@
       "signupUrl": "https://www.asdeporte.com/evento/------pandemia-run-5k---operacio-n-rescate-animal-2026-----cks/datos-del-evento",
       "sourceUrl": "https://tritour.org/eventos/pandemia-run-5k-2026-cdmx",
       "confidence": "medium",
+      "status": "changed",
+      "statusNote": "Date correction: Asdeporte's own signup page (the registration source) and independent listings on liebresmx.run and mundo-runner.com show Saturday, July 26, 2026 — not July 25 as this entry's tritour.org sourceUrl lists. Verified via WebSearch, 2026-07-17 (direct page fetch blocked in this environment).",
+      "lastVerified": "2026-07-17",
       "notes": "Zombie-themed charity run (animal rescue). DATE CONFLICT: tritour Jul 25 vs Asdeporte listing Jul 26 — verify.",
       "distanceTags": [
         "5K"
@@ -1690,7 +1693,7 @@
       "signupUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/inscripcion",
       "sourceUrl": "https://asdeporte.com/evento/ultra-trail-barrancas-2o5/datos-del-evento",
       "confidence": "high",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Staggered starts: 50K 06:00 / 26K 06:30 / 12K 07:00. From $760 MXN.",
       "distanceTags": [
         "15K",
@@ -1713,7 +1716,7 @@
       "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=36806759d992a2d8f76fbf39ba4ca7ee&api_key=48513987f33edea8",
       "sourceUrl": "https://tritour.org/eventos/trail-ciudad-de-mexico-2a-edicion-2026",
       "confidence": "medium",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Also kids category. Confirmed on tritour + Carreras México registration page.",
       "distanceTags": [
         "10K"
@@ -1891,7 +1894,7 @@
       "signupUrl": null,
       "sourceUrl": "https://tritour.org/calendario-carreras-puebla",
       "confidence": "low",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "tritour Puebla listing (Chronostart id 525); dog-friendly; not individually verified."
     },
     {
@@ -1914,6 +1917,7 @@
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "Evening race, $330 MXN. tritour listed Jul 19 — conflict; registration page shows Jul 25."
     },
     {
@@ -2140,7 +2144,7 @@
       "signupUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
       "confidence": "high",
-      "lastVerified": "2026-07-13",
+      "lastVerified": "2026-07-17",
       "notes": "Reg open, from $640 MXN. Staggered 06:30/06:40/06:50. Venue in Zapopan."
     },
     {
@@ -2640,6 +2644,7 @@
       "signupUrl": "https://web.rockthesport.com/es/event/kilometros-por-mexico",
       "sourceUrl": "https://running.life/es/carrera/kilometros-por-mexico",
       "confidence": "medium",
+      "lastVerified": "2026-07-17",
       "notes": "5K competitive $299 MXN, 3K family walk $199 MXN; 3x2 promo. Charity run. Single calendar + RockTheSport registration page."
     },
     {
@@ -2896,6 +2901,7 @@
       "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1777568342/",
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1777568342/",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "First-edition trail race. Adults 10K/5K $500 ($480 before Jun 1); recreational under-14 5K $250; kids' race free. Also on tritour León calendar."
     },
     {
@@ -2921,6 +2927,7 @@
       "signupUrl": "https://endurancecui.active.com/new/events/96389001/select-race",
       "sourceUrl": "https://www.ultrailmexicoseries.com/ultra-guanajuato/",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "Trail/mountain race, listed July 24-25, 2026; race day 25th. Routes: 46K Pípila (2000m+), 33K Mina, 24K Tunal, 11K Hacienda. Direct-sale registration via Active, no lottery. tritour lists July 25."
     },
     {
@@ -3213,6 +3220,7 @@
       "signupUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "Flagship Sierra de Arteaga trail/ultra. Event runs Jul 24-26 2026 with staggered starts (160/100/80K at 04:00 Sat, 50K 06:00 Sat, 30K 06:00 Sun, 12K/senderismo 07:00-08:30 Sun); date shown is the main day. From $1,490 MXN ($1,341 Plus). Registration open. Confirmed on asdeporte + runera.mx."
     },
     {
@@ -3485,6 +3493,7 @@
       "signupUrl": null,
       "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-mágico-en-aquismón/",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "Official INPODE event page. Runs Sat 18 (19:00, recreativas 3/5K) into Sun 19 (07:00, 10/21K). DATE CONFLICT: March serial-launch coverage listed Aquismón as June 18-19; INPODE's own event page shows July 18-19 — kept INPODE date, flagged. Per-leg distance split not published on the page; distances shown are the serial's overall set (3/5/10/21K). No online registration link found; contact INPODE 444-128-8465."
     },
     {
@@ -3509,6 +3518,7 @@
       "signupUrl": null,
       "sourceUrl": "https://planoinformativo.com/planodeportivo/338748/todo-listo-para-la-xvi-edicion-de-la-carrera-corriendo-por-una-vida-digna",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "Charity race, 16th edition. Cost $450 MXN; registration online and at physical points of sale (Garox Sports, Dulcería La Estrella, etc.) — no direct online URL published. Prize purse >$230,000 MXN. Multiple SLP outlets agree on date/time/distances."
     },
     {
@@ -3777,6 +3787,7 @@
       "signupUrl": "https://www.khronometraje.com/newpage/inscribeteSlim.php?id=COZUMEL26",
       "sourceUrl": "https://www.khronometraje.com/newpage/inscribeteSlim.php?id=COZUMEL26",
       "confidence": "high",
+      "lastVerified": "2026-07-17",
       "notes": "4th edition; night race ('Nocturno'). Independently corroborated by Tri Tour México and endondecorrer.com aggregator listings (same date/distances)."
     },
     {
