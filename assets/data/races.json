@@ -67,7 +67,8 @@
         "lat": 25.6692,
         "lng": -100.3099,
         "approx": true
-      }
+      },
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "medio-maraton-montemorelos-2026",
@@ -1055,7 +1056,8 @@
       "notes": "Final race of the 4-race adidas Splits series building to Maratón CDMX. Cap 8,000; from $690 MXN.",
       "distanceTags": [
         "30K"
-      ]
+      ],
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "liverpool-running-fest-2026",
@@ -1286,7 +1288,8 @@
         "3K",
         "5K",
         "10K"
-      ]
+      ],
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "carrera-abogado-2026",
@@ -1412,8 +1415,8 @@
       "sourceUrl": "https://tritour.org/eventos/pandemia-run-5k-2026-cdmx",
       "confidence": "medium",
       "status": "changed",
-      "statusNote": "Date correction: Asdeporte's own signup page (the registration source) and independent listings on liebresmx.run and mundo-runner.com show Saturday, July 26, 2026 — not July 25 as this entry's tritour.org sourceUrl lists. Verified via WebSearch, 2026-07-17 (direct page fetch blocked in this environment).",
-      "lastVerified": "2026-07-17",
+      "statusNote": "Date conflict remains unresolved: tritour.org sourceUrl lists Jul 25, 2026 while Asdeporte's own signup page and independent listings (liebresmx.run, mundo-runner.com) list Jul 26, 2026. Re-checked via WebSearch 2026-07-20 (direct fetch of both URLs blocked in this environment); no cancellation found, but exact date still needs manual confirmation against Asdeporte.",
+      "lastVerified": "2026-07-20",
       "notes": "Zombie-themed charity run (animal rescue). DATE CONFLICT: tritour Jul 25 vs Asdeporte listing Jul 26 — verify.",
       "distanceTags": [
         "5K"
@@ -1441,7 +1444,8 @@
         "3K",
         "5K",
         "10K"
-      ]
+      ],
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "troop-k9-2026",
@@ -1742,7 +1746,8 @@
       "distanceTags": [
         "15K",
         "Half"
-      ]
+      ],
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "sendero-jaguar-2026",
@@ -1917,7 +1922,7 @@
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530",
       "confidence": "high",
-      "lastVerified": "2026-07-17",
+      "lastVerified": "2026-07-20",
       "notes": "Evening race, $330 MXN. tritour listed Jul 19 — conflict; registration page shows Jul 25."
     },
     {
@@ -1942,7 +1947,8 @@
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507",
       "confidence": "high",
-      "notes": "$418 MXN main distances; also 5K Perritos ($165)."
+      "notes": "$418 MXN main distances; also 5K Perritos ($165).",
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "snoopy-run-puebla-2026",
@@ -2165,7 +2171,8 @@
       "signupUrl": null,
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
-      "notes": "On tritour+runera; event page not individually rendered."
+      "notes": "On tritour+runera; event page not individually rendered.",
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "xxv-carrera-dolphy-2026",
@@ -2665,7 +2672,8 @@
       "signupUrl": null,
       "sourceUrl": "https://imdet.tijuana.gob.mx/",
       "confidence": "high",
-      "notes": "31st edition. $270 MXN. >5,000 registered as of early July 2026. Registration via IMDET portal (imdettj.gob.mx/mediomaraton per IMDET homepage banner) — did not fetch the registration page directly, so signupUrl left null. Flagship; IMDET + TJRUN + multiple news outlets agree on date/time/venue."
+      "notes": "31st edition. $270 MXN. >5,000 registered as of early July 2026. Registration via IMDET portal (imdettj.gob.mx/mediomaraton per IMDET homepage banner) — did not fetch the registration page directly, so signupUrl left null. Flagship; IMDET + TJRUN + multiple news outlets agree on date/time/venue.",
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "serial-atletico-delegacional-rosarito-2026",
@@ -2927,7 +2935,7 @@
       "signupUrl": "https://endurancecui.active.com/new/events/96389001/select-race",
       "sourceUrl": "https://www.ultrailmexicoseries.com/ultra-guanajuato/",
       "confidence": "high",
-      "lastVerified": "2026-07-17",
+      "lastVerified": "2026-07-20",
       "notes": "Trail/mountain race, listed July 24-25, 2026; race day 25th. Routes: 46K Pípila (2000m+), 33K Mina, 24K Tunal, 11K Hacienda. Direct-sale registration via Active, no lottery. tritour lists July 25."
     },
     {
@@ -3220,7 +3228,7 @@
       "signupUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento",
       "confidence": "high",
-      "lastVerified": "2026-07-17",
+      "lastVerified": "2026-07-20",
       "notes": "Flagship Sierra de Arteaga trail/ultra. Event runs Jul 24-26 2026 with staggered starts (160/100/80K at 04:00 Sat, 50K 06:00 Sat, 30K 06:00 Sun, 12K/senderismo 07:00-08:30 Sun); date shown is the main day. From $1,490 MXN ($1,341 Plus). Registration open. Confirmed on asdeporte + runera.mx."
     },
     {
@@ -3241,7 +3249,8 @@
       "signupUrl": "https://carrerasmx.com.mx/eventos/493",
       "sourceUrl": "https://carrerasmx.com.mx/eventos/493",
       "confidence": "medium",
-      "notes": "1st edition. Listed as 'Laguna'/Torreón on Carreras Laguna platform; exact venue and price not published. Single-calendar source."
+      "notes": "1st edition. Listed as 'Laguna'/Torreón on Carreras Laguna platform; exact venue and price not published. Single-calendar source.",
+      "lastVerified": "2026-07-20"
     },
     {
       "id": "5k-nlr-2026-6a-edicion",
