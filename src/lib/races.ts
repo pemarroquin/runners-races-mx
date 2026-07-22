@@ -72,7 +72,8 @@ export interface Race {
   signupUrl: string | null;
   sourceUrl: string;
   confidence: Confidence;
-  notes: string | null;
+  notes: string | null; // user-facing description — shown in the app
+  sourceNotes?: string | null; // research/verification trail for maintainers — never shown to users
   // Route data (optional — only present when verified from a source)
   start?: StartPoint | null;
   routeCoords?: [number, number][] | null; // [lat, lng] pairs along the course
