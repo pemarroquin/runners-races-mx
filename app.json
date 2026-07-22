@@ -50,8 +50,7 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true,
-      "baseUrl": "/runningapp"
+      "reactCompiler": true
     }
   }
 }

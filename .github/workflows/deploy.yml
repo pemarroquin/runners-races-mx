@@ -1,4 +1,4 @@
-name: Deploy web preview (pmarroquin.com/runningapp)
+name: Deploy web preview (runningapp.pmarroquin.com)
 
 # Builds the Expo web export on every push to main and publishes the built
 # output (landing page + runningapp/) to the `deploy` branch. Porkbun's
@@ -7,6 +7,13 @@ name: Deploy web preview (pmarroquin.com/runningapp)
 # it — this workflow exists because Porkbun's GitHub Connect only serves a
 # branch's root as-is, with no build step of its own, and this repo's
 # source isn't the deployable output (it needs `expo export` first).
+#
+# The runningapp/ directory in the published branch is mapped to the
+# runningapp.pmarroquin.com subdomain via Porkbun's Static Hosting
+# "Subdomains" feature (points a subdomain at a directory inside the
+# shared static-hosting root) — app.json has no baseUrl, so the export's
+# asset paths are root-relative and only resolve correctly when
+# runningapp/ is served as that subdomain's own document root.
 #
 # See deploy/DEPLOY.md for the manual fallback and the history of gotchas
 # this replaced (zip-upload unwrap behavior, root-absolute asset paths).
