@@ -642,6 +642,8 @@
       "signupUrl": null,
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
+      "statusNote": "Verification inconclusive this run: idemsport.com (sourceUrl) blocked by network/proxy policy, no direct fetch possible; web search found no cancellation/postponement/date-change signals but also no independent second source reconfirming the Aug 2, 2026 date. Recommend re-check next cycle.",
+      "lastVerified": "2026-07-27",
       "notes": null,
       "state": "Nuevo León",
       "distanceTags": [
@@ -1101,6 +1103,7 @@
       "signupUrl": "https://www.emociondeportiva.com/detalle-evento/liverpool-running-fest-cdmx-2026/ciudad-de-m%C3%A9xico",
       "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/liverpool-running-fest-cdmx-2026/ciudad-de-m%C3%A9xico",
       "confidence": "high",
+      "lastVerified": "2026-07-27",
       "notes": "$599-$799 MXN tiered; online registration closes the Friday before.",
       "distanceTags": [
         "5K",
@@ -1492,13 +1495,13 @@
       "signupUrl": "https://asdeporte.com/evento/troop-k9---5k--10k-y-carreras-con-tu-peludito-pou",
       "sourceUrl": "https://runera.mx/carreras/detalle/troop-k9-5k-10k-y-carreras-con-tu-peludito",
       "confidence": "high",
+      "lastVerified": "2026-07-24",
       "notes": "Dog-friendly first edition; inscripciones abiertas.",
       "distanceTags": [
         "3K",
         "5K",
         "10K"
-      ],
-      "lastVerified": "2026-07-24"
+      ]
     },
     {
       "id": "snoopy-run-cdmx-2026",
@@ -1517,6 +1520,7 @@
       "signupUrl": "https://asdeporte.com/evento/snoopy-run-club-cdmx-5kv",
       "sourceUrl": "https://runera.mx/carreras/detalle/snoopy-run-cdmx",
       "confidence": "high",
+      "lastVerified": "2026-07-27",
       "notes": "Character run — SOLD OUT (inscripciones agotadas) at 2026-07-05.",
       "distanceTags": [
         "3K",
@@ -2233,6 +2237,7 @@
       "signupUrl": "https://asdeporte.com/evento/xxv-carrera-dolphy-2026-ofa/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/xxv-carrera-dolphy-2026-ofa/datos-del-evento",
       "confidence": "high",
+      "lastVerified": "2026-07-27",
       "notes": "Reg open, from $680 MXN, cap 5,000. 10K 06:30 / 5K 06:40."
     },
     {
@@ -3014,6 +3019,7 @@
       "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1776883262/",
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1776883262/",
       "confidence": "high",
+      "lastVerified": "2026-07-27",
       "notes": "Cap 2,500. Early (Apr 21-Jun 14) $550; standard (Jun 15-Jul 30) $650. Packet pickup by Jul 1."
     },
     {
@@ -3333,6 +3339,7 @@
       "signupUrl": "https://www.asdeporte.com/evento/5k-nlr-2026-kgi/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/5k-nlr-2026-kgi/datos-del-evento",
       "confidence": "high",
+      "lastVerified": "2026-07-27",
       "notes": "From $450 MXN ($405 Plus). Prize purse >$120,000 MXN. Registration open. Confirmed on asdeporte + runera.mx + tritour."
     },
     {
@@ -3355,6 +3362,7 @@
       "signupUrl": "https://carrerasmx.com.mx/eventos/506",
       "sourceUrl": "https://carrerasmx.com.mx/eventos/506",
       "confidence": "medium",
+      "lastVerified": "2026-07-27",
       "notes": "SpongeBob-themed run.",
       "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna)."
     },
