@@ -91,6 +91,9 @@
       "signupUrl": "https://asdeporte.com/evento/medio-marato-n-montemorelos-2026-gc9/datos-del-evento",
       "sourceUrl": "https://www.runera.mx/carreras/detalle/medio-maratn-montemorelos-2026",
       "confidence": "high",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 9, 2026 via Runera, Asdeporte, Compite.mx and Soloatletas. Plaza Principal, Montemorelos. 21K 06:00 / 5K 07:00.",
+      "lastVerified": "2026-07-27",
       "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course image is the official altimetry; interactive route: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
       "start": {
         "lat": 25.1892288,
@@ -101,7 +104,7 @@
     {
       "id": "carrera-saba-corre-sin-tabues-2026",
       "name": "Carrera SABA Monterrey — Corre Sin Tabúes",
-      "date": "2026-08-09",
+      "date": "2026-08-16",
       "time": null,
       "distances": [
         "5K",
@@ -119,14 +122,17 @@
       "organizer": "Asdeporte",
       "signupUrl": "https://www.asdeporte.com/evento/carrera-saba--corre-sin-tabu-es-monterrey-2026-nks/datos-del-evento",
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
-      "confidence": "medium",
+      "confidence": "high",
+      "status": "changed",
+      "statusNote": "CORRECCIÓN DE FECHA: la fecha correcta es 16 de agosto de 2026, no el 9. Según sdpnoticias.com, la gira 2026 'Corre Sin Tabúes' tiene: CDMX el 9 de agosto (evento distinto), Monterrey el 16 de agosto, Guadalajara el 23 de agosto — todas ya con cupo agotado. La fecha 9 de agosto que teníamos registrada se había confundido con la edición de CDMX.",
+      "lastVerified": "2026-07-27",
       "notes": "Includes a 3K walk option.",
       "start": {
         "lat": 25.6785,
         "lng": -100.2847,
         "approx": true
       },
-      "sourceNotes": "Date conflict: AANL + Idemsport list Aug 9; TriTour lists Aug 16 — used Aug 9 (two sources vs one)."
+      "sourceNotes": "Date conflict RESOLVED 2026-07-27: independent news source (sdpnoticias.com) corroborates Aug 16 as the Monterrey leg of the 2026 tour, distinct from Aug 9 CDMX and Aug 23 Guadalajara legs. TriTour's Aug 16 was correct; Aug 9 (AANL/Idemsport) was a mix-up with the CDMX date."
     },
     {
       "id": "heroes-ocultos-bionella-2026",
@@ -1543,6 +1549,9 @@
       "signupUrl": "https://asdeporte.com/evento/ajolotito-5-km-2026-mqa",
       "sourceUrl": "https://runera.mx/carreras/detalle/ajolotito-5-km-2026",
       "confidence": "high",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 9, 2026 via EnDondeCorrer posts. 7:00am runners / 7:05am walkers / 8:25am kids. Registration closes Fri Aug 7.",
+      "lastVerified": "2026-07-27",
       "notes": "Axolotl-themed community 5K; inscripciones abiertas.",
       "distanceTags": [
         "5K"
@@ -1563,6 +1572,9 @@
       "signupUrl": "https://asdeporte.com/evento/running-day-2026-cow",
       "sourceUrl": "https://runera.mx/carreras/detalle/running-day-2026-2",
       "confidence": "high",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 9, 2026, 06:30, Paseo de la Reforma, 10K — corroborated by running.life, mx-race.com, haid.app. Packet pickup Aug 8, 11am-4pm at Complejo Cultural Los Pinos.",
+      "lastVerified": "2026-07-27",
       "notes": "Inscripciones abiertas (runera + Asdeporte).",
       "distanceTags": [
         "10K"
@@ -1584,6 +1596,9 @@
       "signupUrl": null,
       "sourceUrl": "https://runera.mx/carreras/ciudad-de-mexico",
       "confidence": "medium",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 9, 2026, 07:00, 2nd Section of Bosque de Chapultepec (Fuente Xochipili), organized by Asdeporte/Reforestamos México.",
+      "lastVerified": "2026-07-27",
       "notes": "Environmental charity run; date agrees across runera and Asdeporte listings.",
       "distanceTags": [
         "5K",
@@ -1800,6 +1815,9 @@
       "signupUrl": "https://www.carrerasmexico.com/convocatoria.php?event=85bcd698780c0ce31db50e68d41ee42e&api_key=48513987f33edea8",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
       "confidence": "medium",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 8, 2026, Malinalco, Estado de México per TriTour listing search results. No cancellation/postponement signals found.",
+      "lastVerified": "2026-07-27",
       "notes": "Tri Tour 2026 trail calendar listing.",
       "distanceTags": [
         "5K",
@@ -2260,6 +2278,9 @@
       "signupUrl": null,
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
+      "status": "ok",
+      "statusNote": "Date confirmed Aug 9, 2026 via asdeporte, OEM/El Occidental news, and Milenio. Note: start/finish moved to El Occidental newspaper offices (Calz. Independencia Sur 324), routed through Centro Histórico Guadalajara — a change from the prior edition's Parque Metropolitano venue. Start time per asdeporte convocatoria: 12:30h (an older 6:30am reference in one article could not be corroborated).",
+      "lastVerified": "2026-07-27",
       "notes": null,
       "sourceNotes": "On tritour + runera (asdeporte slug ...-wl7); not individually rendered."
     },
@@ -3386,6 +3407,9 @@
       "signupUrl": "https://carrerasmx.com.mx/eventos/501",
       "sourceUrl": "https://carrerasmx.com.mx/eventos/501",
       "confidence": "medium",
+      "status": "ok",
+      "statusNote": "Confirmed 9th edition for Aug 9, 2026, 07:30, Blvd. Constitución (CANACINTRA Torreón), per El Siglo de Torreón and Vanguardia. Registration already sold out (500 slots) — does not affect the event date.",
+      "lastVerified": "2026-07-27",
       "notes": null,
       "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna). Distinct from the Monclova CANACINTRA race."
     },
@@ -3926,9 +3950,12 @@
       "organizer": null,
       "signupUrl": "https://dashport.run/proximos-eventos/evento_1199",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun",
-      "confidence": "medium",
+      "confidence": "high",
+      "status": "ok",
+      "statusNote": "Date conflict resolved in favor of Aug 9, 2026: kora180.mx and La Chispa independently confirm the 5th-anniversary edition on Aug 9, starting Blvd. Bahía, Chetumal. Could not reach TriTour's dedicated event page directly (blocked) to confirm/deny its 'Sep 8' listing, but targeted searches found no corroborating source anywhere for a Sep 8 date.",
+      "lastVerified": "2026-07-27",
       "notes": "5th edition; prior editions broke local participation records.",
-      "sourceNotes": "Date conflict: Tri Tour México's calendar listing and endondecorrer.com both give Aug 9, 2026; Tri Tour's own dedicated event page instead states Sep 8, 2026. Kept Aug 9 as the better-evidenced value (two independent listings vs. one)."
+      "sourceNotes": "Date conflict RESOLVED 2026-07-27: Aug 9, 2026 confirmed by kora180.mx and La Chispa, independent of the TriTour calendar listing. TriTour's own dedicated event page states Sep 8 but could not be directly verified (site blocked); no independent source supports Sep 8, so Aug 9 is treated as correct pending further confirmation."
     },
     {
       "id": "medio-maraton-bacalar-2026",
