@@ -16,6 +16,9 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { BuySheet } from '@/components/buy-sheet';
 import { RouteMap } from '@/components/route-map';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
 import { daysUntil, formatDate, getRace } from '@/lib/races';
@@ -149,27 +152,32 @@ export default function RaceDetailScreen() {
         </Pressable>
 
         <View style={styles.secondaryRow}>
-          <Pressable
-            onPress={() => toggle(race.id)}
-            style={[styles.secondaryBtn, { borderColor: c.text }, saved && { backgroundColor: c.backgroundElement }]}>
-            {/* Keyed cross-fade on toggle — meaningful state change, subtle
-                acknowledgment (Jakub: animate contextual swaps, never instant). */}
-            <Animated.Text
-              key={saved ? 'saved' : 'save'}
-              entering={FadeIn.duration(180)}
-              style={[styles.secondaryText, { color: c.text }]}>
-              {saved ? `♥ ${t('detail.saved')}` : `♡ ${t('detail.save')}`}
-            </Animated.Text>
+          <Pressable onPress={() => toggle(race.id)} style={styles.secondaryFlex}>
+            <GlassSurface
+              scheme={scheme}
+              radius={GlassRadii.pill}
+              style={saved && { backgroundColor: c.backgroundSelected }}
+              contentStyle={styles.secondaryBtn}>
+              {/* Keyed cross-fade on toggle — meaningful state change, subtle
+                  acknowledgment (Jakub: animate contextual swaps, never instant). */}
+              <Animated.View key={saved ? 'saved' : 'save'} entering={FadeIn.duration(180)} style={styles.secondaryRowInner}>
+                <Icon ios={saved ? 'heart.fill' : 'heart'} android={saved ? 'favorite' : 'favorite_border'} size={15} color={c.text} />
+                <Text style={[styles.secondaryText, { color: c.text }]}>
+                  {saved ? t('detail.saved') : t('detail.save')}
+                </Text>
+              </Animated.View>
+            </GlassSurface>
           </Pressable>
-          <Pressable
-            onPress={addToCalendar}
-            style={[styles.secondaryBtn, { borderColor: c.text }]}>
-            <Text style={[styles.secondaryText, { color: c.text }]}>{t('detail.addCalendar')}</Text>
+          <Pressable onPress={addToCalendar} style={styles.secondaryFlex}>
+            <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.secondaryBtn}>
+              <Text style={[styles.secondaryText, { color: c.text }]}>{t('detail.addCalendar')}</Text>
+            </GlassSurface>
           </Pressable>
         </View>
 
-        <Pressable onPress={() => Linking.openURL(race.sourceUrl)}>
-          <Text style={[styles.source, { color: c.textSecondary }]}>{t('detail.viewSource')} ↗</Text>
+        <Pressable onPress={() => Linking.openURL(race.sourceUrl)} style={styles.sourceRow}>
+          <Text style={[styles.source, { color: c.textSecondary }]}>{t('detail.viewSource')}</Text>
+          <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />
         </Pressable>
       </Animated.View>
 
@@ -214,23 +222,26 @@ const styles = StyleSheet.create({
   name: { fontSize: 24, fontWeight: '700' },
   countdown: { fontSize: 15, fontWeight: '600' },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginVertical: Spacing.two },
-  tag: { paddingHorizontal: Spacing.two, paddingVertical: 4, borderRadius: 6 },
+  tag: { paddingHorizontal: Spacing.two, paddingVertical: 4, borderRadius: GlassRadii.pill },
   tagText: { fontSize: 13, fontWeight: '600' },
   field: { gap: 2, marginTop: Spacing.two },
   fieldLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
   fieldValue: { fontSize: 16, lineHeight: 22 },
   actions: { marginTop: Spacing.four, gap: Spacing.two },
-  primaryBtn: { borderRadius: Spacing.two, paddingVertical: Spacing.three, alignItems: 'center' },
+  primaryBtn: { borderRadius: GlassRadii.pill, paddingVertical: Spacing.three, alignItems: 'center' },
   primaryText: { fontSize: 16, fontWeight: '700' },
   disabled: { opacity: 0.4 },
   secondaryRow: { flexDirection: 'row', gap: Spacing.two },
-  secondaryBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
+  secondaryFlex: { flex: 1 },
+  secondaryBtn: { paddingVertical: Spacing.three, alignItems: 'center' },
+  secondaryRowInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   secondaryText: { fontSize: 15, fontWeight: '600' },
-  source: { fontSize: 14, textAlign: 'center', marginTop: Spacing.two },
+  sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: Spacing.two,
+  },
+  source: { fontSize: 14 },
 });

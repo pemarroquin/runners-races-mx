@@ -3,6 +3,8 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Image, StyleSheet, View, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { GlassRadii } from '@/constants/glass';
 import { useI18n } from '@/lib/i18n';
 
 // Floating icon-only pill, Instagram-style — always dark chrome regardless of
@@ -87,16 +89,24 @@ export default function TabsLayout() {
   );
 }
 
-// isLiquidGlassAvailable() is false on Android, web, and pre-26 iOS — GlassView
-// itself already no-ops to a plain <View> there, but we still need to supply
-// the flat-color look those platforms actually want (Liquid Glass has no
-// equivalent, it's an Apple-only material), so we branch explicitly rather
-// than relying on GlassView's fallback rendering.
+// isLiquidGlassAvailable() is false on Android, web, and pre-26 iOS (also
+// Expo Go — GlassView is a real UIVisualEffectView, so it needs a compiled
+// dev client) — GlassView itself already no-ops to a plain <View> there, but
+// we still need real chrome those platforms actually render, so we branch
+// explicitly to our own hand-built glass material rather than relying on
+// GlassView's flat fallback.
 function TabBarBackground() {
   if (isLiquidGlassAvailable()) {
     return <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" colorScheme="dark" />;
   }
-  return <View style={[StyleSheet.absoluteFill, styles.fallbackBackground]} />;
+  return (
+    <GlassSurface
+      scheme="dark"
+      radius={GlassRadii.pill}
+      noShadow
+      style={StyleSheet.absoluteFill}
+    />
+  );
 }
 
 function TabIcon({
@@ -116,9 +126,6 @@ function TabIcon({
 }
 
 const styles = StyleSheet.create({
-  fallbackBackground: {
-    backgroundColor: 'rgba(20,20,22,0.92)',
-  },
   iconWrap: {
     width: ICON_WRAP_SIZE,
     height: ICON_WRAP_SIZE,

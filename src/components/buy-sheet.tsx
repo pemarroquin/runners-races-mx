@@ -39,6 +39,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
 
+import { GlassButton } from '@/components/ui/glass-button';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 
@@ -171,7 +175,12 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
             sheetStyle,
           ]}>
           <GestureDetector gesture={pan}>
-            <View style={[styles.header, { borderBottomColor: c.backgroundSelected }]}>
+            <GlassSurface
+              scheme={scheme}
+              radius={0}
+              noShadow
+              style={[styles.header, { borderBottomColor: c.backgroundSelected }]}
+              contentStyle={styles.headerContent}>
               <View style={[styles.grabber, { backgroundColor: c.backgroundSelected }]} />
               <View style={styles.headerRow}>
                 <Text style={[styles.title, { color: c.text }]} numberOfLines={1}>
@@ -179,24 +188,26 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
                 </Text>
                 <View style={styles.headerActions}>
                   {Platform.OS === 'web' && (
-                    <Pressable
+                    <GlassButton
+                      scheme={scheme}
                       onPress={() => Linking.openURL(url)}
-                      hitSlop={8}
-                      accessibilityLabel={t('detail.openBrowser')}
-                      style={[styles.headerBtn, { backgroundColor: c.backgroundElement }]}>
-                      <Text style={[styles.headerBtnText, { color: c.text }]}>↗</Text>
-                    </Pressable>
+                      size={32}
+                      radius={16}
+                      accessibilityLabel={t('detail.openBrowser')}>
+                      <Icon ios="arrow.up.right" android="open_in_new" size={14} color={c.text} />
+                    </GlassButton>
                   )}
-                  <Pressable
+                  <GlassButton
+                    scheme={scheme}
                     onPress={close}
-                    hitSlop={8}
-                    accessibilityLabel={t('detail.close')}
-                    style={[styles.headerBtn, { backgroundColor: c.backgroundElement }]}>
-                    <Text style={[styles.headerBtnText, { color: c.text }]}>✕</Text>
-                  </Pressable>
+                    size={32}
+                    radius={16}
+                    accessibilityLabel={t('detail.close')}>
+                    <Icon ios="xmark" android="close" size={14} color={c.text} />
+                  </GlassButton>
                 </View>
               </View>
-            </View>
+            </GlassSurface>
           </GestureDetector>
 
           {/* Slim loading bar pinned under the header. transformOrigin left so
@@ -245,15 +256,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: GlassRadii.sheet,
+    borderTopRightRadius: GlassRadii.sheet,
     overflow: 'hidden',
   },
-  header: {
+  header: { borderBottomWidth: StyleSheet.hairlineWidth },
+  headerContent: {
     paddingTop: Spacing.two,
     paddingBottom: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
     gap: Spacing.two,
   },
   grabber: {
@@ -270,14 +281,6 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, fontSize: 15, fontWeight: '600' },
   headerActions: { flexDirection: 'row', gap: Spacing.one },
-  headerBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBtnText: { fontSize: 14, fontWeight: '600' },
   progressBar: {
     height: 3,
     width: '100%',

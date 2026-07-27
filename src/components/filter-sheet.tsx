@@ -24,6 +24,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { GlassButton } from '@/components/ui/glass-button';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { DISTANCE_TAGS, distanceTagLabelKey, type DistanceTag } from '@/lib/races';
@@ -109,19 +113,25 @@ export function FilterSheet({
 
         <Animated.View
           style={[styles.sheet, { width: sheetW, backgroundColor: c.background }, sheetStyle]}>
-          <View style={[styles.header, { borderBottomColor: c.backgroundSelected }]}>
-            <Pressable
+          <GlassSurface
+            scheme={scheme}
+            radius={0}
+            noShadow
+            style={[styles.header, { borderBottomColor: c.backgroundSelected }]}
+            contentStyle={styles.headerContent}>
+            <GlassButton
+              scheme={scheme}
               onPress={close}
-              hitSlop={8}
-              accessibilityLabel={t('detail.close')}
-              style={[styles.headerBtn, { backgroundColor: c.backgroundElement }]}>
-              <Text style={[styles.headerBtnText, { color: c.text }]}>✕</Text>
-            </Pressable>
+              size={32}
+              radius={16}
+              accessibilityLabel={t('detail.close')}>
+              <Icon ios="xmark" android="close" size={14} color={c.text} />
+            </GlassButton>
             <Text style={[styles.title, { color: c.text }]}>{t('filters.title')}</Text>
             <Pressable onPress={onClear} hitSlop={8}>
               <Text style={[styles.resetText, { color: c.accent }]}>{t('filters.reset')}</Text>
             </Pressable>
-          </View>
+          </GlassSurface>
 
           <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
             <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
@@ -130,17 +140,16 @@ export function FilterSheet({
             <View style={styles.chipGrid}>
               {DISTANCE_TAGS.map((tag) => {
                 const active = distances.has(tag);
-                return (
-                  <Pressable
-                    key={tag}
-                    onPress={() => onToggleDistance(tag)}
-                    style={[
-                      styles.chip,
-                      { backgroundColor: active ? c.text : c.backgroundElement },
-                    ]}>
-                    <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>
-                      {t(distanceTagLabelKey(tag))}
-                    </Text>
+                const label = <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>{t(distanceTagLabelKey(tag))}</Text>;
+                return active ? (
+                  <Pressable key={tag} onPress={() => onToggleDistance(tag)} style={[styles.chip, { backgroundColor: c.text }]}>
+                    {label}
+                  </Pressable>
+                ) : (
+                  <Pressable key={tag} onPress={() => onToggleDistance(tag)}>
+                    <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
+                      {label}
+                    </GlassSurface>
                   </Pressable>
                 );
               })}
@@ -153,24 +162,32 @@ export function FilterSheet({
             <View style={styles.chipGrid}>
               {availableMonths.map((m) => {
                 const active = months.has(m.key);
-                return (
-                  <Pressable
-                    key={m.key}
-                    onPress={() => onToggleMonth(m.key)}
-                    style={[
-                      styles.chip,
-                      { backgroundColor: active ? c.text : c.backgroundElement },
-                    ]}>
-                    <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>
-                      {m.key === 'tbd' ? t('common.tbd') : m.label}
-                    </Text>
+                const label = (
+                  <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>
+                    {m.key === 'tbd' ? t('common.tbd') : m.label}
+                  </Text>
+                );
+                return active ? (
+                  <Pressable key={m.key} onPress={() => onToggleMonth(m.key)} style={[styles.chip, { backgroundColor: c.text }]}>
+                    {label}
+                  </Pressable>
+                ) : (
+                  <Pressable key={m.key} onPress={() => onToggleMonth(m.key)}>
+                    <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
+                      {label}
+                    </GlassSurface>
                   </Pressable>
                 );
               })}
             </View>
           </ScrollView>
 
-          <View style={[styles.footer, { borderTopColor: c.backgroundSelected }]}>
+          <GlassSurface
+            scheme={scheme}
+            radius={0}
+            noShadow
+            style={[styles.footer, { borderTopColor: c.backgroundSelected }]}
+            contentStyle={styles.footerContent}>
             <Pressable
               onPress={close}
               style={[styles.showBtn, { backgroundColor: c.text }]}>
@@ -178,7 +195,7 @@ export function FilterSheet({
                 {t('filters.showResults', { count: resultCount })}
               </Text>
             </Pressable>
-          </View>
+          </GlassSurface>
         </Animated.View>
       </View>
     </Modal>
@@ -196,23 +213,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: { height: '100%' },
-  header: {
+  header: { borderBottomWidth: StyleSheet.hairlineWidth },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBtnText: { fontSize: 14, fontWeight: '600' },
   title: { fontSize: 17, fontWeight: '700' },
   resetText: { fontSize: 14, fontWeight: '600' },
   body: { flex: 1 },
@@ -224,14 +233,12 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     marginTop: Spacing.two,
   },
-  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: 20 },
+  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: GlassRadii.chip },
   chipText: { fontSize: 13, fontWeight: '600' },
-  footer: {
-    padding: Spacing.three,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth },
+  footerContent: { padding: Spacing.three },
   showBtn: {
-    borderRadius: Spacing.two,
+    borderRadius: GlassRadii.pill,
     paddingVertical: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',

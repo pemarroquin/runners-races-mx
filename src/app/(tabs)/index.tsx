@@ -15,6 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CityPicker } from '@/components/city-picker';
 import { FilterSheet } from '@/components/filter-sheet';
 import { RaceCard } from '@/components/race-card';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -109,50 +112,56 @@ export default function FeedScreen() {
           <Pressable
             onPress={() => setPickerOpen(true)}
             hitSlop={6}
+            style={styles.subtitleRow}
             accessibilityLabel={
               locationInUse ? `${region.name} — ${t('city.locationOn')}` : region.name
             }>
-            <Text style={[styles.subtitle, { color: c.textSecondary }]}>
-              {locationInUse && <Text style={{ color: c.accent }}>◎ </Text>}
-              {region.name} ▾
-            </Text>
+            {locationInUse && <Icon ios="location.fill" android="my_location" size={12} color={c.accent} />}
+            <Text style={[styles.subtitle, { color: c.textSecondary }]}>{region.name}</Text>
+            <Icon ios="chevron.down" android="expand_more" size={12} weight="bold" color={c.textSecondary} />
           </Pressable>
         </View>
-        <View style={styles.langRow}>
+        {/* Real segmented control (iOS 27 "Tabs Mode Compact" language): one
+            glass track, active segment gets a solid filled pill inside it. */}
+        <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
           {(['es', 'en'] as const).map((l) => (
             <Pressable
               key={l}
               onPress={() => setLocale(l)}
-              style={[
-                styles.langBtn,
-                { borderColor: c.backgroundSelected },
-                locale === l && { backgroundColor: c.text, borderColor: c.text },
-              ]}>
+              style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
               <Text
                 style={[styles.langText, { color: locale === l ? c.background : c.textSecondary }]}>
                 {l.toUpperCase()}
               </Text>
             </Pressable>
           ))}
-        </View>
+        </GlassSurface>
       </View>
 
       <View style={styles.searchRow}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('feed.search')}
-          placeholderTextColor={c.textSecondary}
-          style={[styles.search, { backgroundColor: c.backgroundElement, color: c.text }]}
-        />
-        <Pressable
-          onPress={() => setFilterSheetOpen(true)}
-          style={[styles.filterBtn, { backgroundColor: c.backgroundElement }]}>
-          <Text style={[styles.filterBtnText, { color: c.text }]}>{t('filters.title')}</Text>
-          {activeFilterCount > 0 && (
-            <View style={[styles.badge, { backgroundColor: c.accent }]}>
-              <Text style={styles.badgeText}>{activeFilterCount}</Text>
-            </View>
+        <GlassSurface scheme={scheme} radius={GlassRadii.pill} style={styles.searchGlass} contentStyle={styles.searchContent}>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('feed.search')}
+            placeholderTextColor={c.textSecondary}
+            style={[styles.search, { color: c.text }]}
+          />
+        </GlassSurface>
+        <Pressable onPress={() => setFilterSheetOpen(true)}>
+          {({ pressed }) => (
+            <GlassSurface
+              scheme={scheme}
+              radius={GlassRadii.pill}
+              style={pressed && styles.pressed}
+              contentStyle={styles.filterContent}>
+              <Text style={[styles.filterBtnText, { color: c.text }]}>{t('filters.title')}</Text>
+              {activeFilterCount > 0 && (
+                <View style={[styles.badge, { backgroundColor: c.accent }]}>
+                  <Text style={styles.badgeText}>{activeFilterCount}</Text>
+                </View>
+              )}
+            </GlassSurface>
           )}
         </Pressable>
       </View>
@@ -160,31 +169,32 @@ export default function FeedScreen() {
       {hasActiveFilters && (
         <View style={styles.filterRow}>
           {query.length > 0 && (
-            <Pressable
-              onPress={() => setQuery('')}
-              style={[styles.chip, { backgroundColor: c.backgroundElement }]}>
-              <Text style={[styles.chipText, { color: c.text }]}>{query} ✕</Text>
+            <Pressable onPress={() => setQuery('')}>
+              <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
+                <Text style={[styles.chipText, { color: c.text }]}>{query}</Text>
+                <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
+              </GlassSurface>
             </Pressable>
           )}
           {Array.from(distances).map((tag) => (
-            <Pressable
-              key={tag}
-              onPress={() => toggleDistance(tag)}
-              style={[styles.chip, { backgroundColor: c.backgroundElement }]}>
-              <Text style={[styles.chipText, { color: c.text }]}>
-                {t(distanceTagLabelKey(tag))} ✕
-              </Text>
+            <Pressable key={tag} onPress={() => toggleDistance(tag)}>
+              <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
+                <Text style={[styles.chipText, { color: c.text }]}>
+                  {t(distanceTagLabelKey(tag))}
+                </Text>
+                <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
+              </GlassSurface>
             </Pressable>
           ))}
           {Array.from(months).map((key) => {
             const m = availableMonths.find((am) => am.key === key);
             const label = key === 'tbd' ? t('common.tbd') : (m?.label ?? key);
             return (
-              <Pressable
-                key={key}
-                onPress={() => toggleMonth(key)}
-                style={[styles.chip, { backgroundColor: c.backgroundElement }]}>
-                <Text style={[styles.chipText, { color: c.text }]}>{label} ✕</Text>
+              <Pressable key={key} onPress={() => toggleMonth(key)}>
+                <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
+                  <Text style={[styles.chipText, { color: c.text }]}>{label}</Text>
+                  <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
+                </GlassSurface>
               </Pressable>
             );
           })}
@@ -251,9 +261,16 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   title: { fontSize: 28, fontWeight: '700' },
-  subtitle: { fontSize: 14, marginTop: 2 },
-  langRow: { flexDirection: 'row', gap: Spacing.one },
-  langBtn: { borderWidth: 1, borderRadius: 6, paddingHorizontal: Spacing.two, paddingVertical: 4 },
+  subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  subtitle: { fontSize: 14 },
+  segmentTrack: { flexDirection: 'row', padding: 3, gap: 2 },
+  segment: {
+    borderRadius: GlassRadii.pill,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   langText: { fontSize: 12, fontWeight: '700' },
   searchRow: {
     flexDirection: 'row',
@@ -262,18 +279,16 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.three,
     marginTop: Spacing.three,
   },
+  searchGlass: { flex: 1 },
+  searchContent: { paddingHorizontal: Spacing.three },
   search: {
-    flex: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 15,
   },
-  filterBtn: {
+  filterContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
   },
@@ -295,8 +310,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
-  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: 20 },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
   chipText: { fontSize: 13, fontWeight: '600' },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   clearAllText: { fontSize: 13, fontWeight: '600' },
   list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },
   empty: { textAlign: 'center', marginTop: Spacing.six, fontSize: 15 },

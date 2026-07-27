@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { useRegion } from '@/lib/region-context';
@@ -47,9 +50,8 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
     <Modal transparent visible animationType="none" onRequestClose={onClose}>
       <Animated.View entering={FadeIn.duration(180)} style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <Animated.View
-          entering={FadeInDown.duration(300)}
-          style={[styles.card, { backgroundColor: c.background }]}>
+        <Animated.View entering={FadeInDown.duration(300)} style={styles.card}>
+          <GlassSurface scheme={scheme} radius={GlassRadii.card} style={StyleSheet.absoluteFill} noShadow />
           <Text style={[styles.title, { color: c.text }]}>{t('city.title')}</Text>
 
           <Pressable
@@ -59,9 +61,12 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
             {detecting ? (
               <ActivityIndicator size="small" color={c.background} />
             ) : (
-              <Text style={[styles.locateText, { color: c.background }]}>
-                ◎ {t('city.useLocation')}
-              </Text>
+              <View style={styles.locateRow}>
+                <Icon ios="location.fill" android="my_location" size={15} color={c.background} />
+                <Text style={[styles.locateText, { color: c.background }]}>
+                  {t('city.useLocation')}
+                </Text>
+              </View>
             )}
           </Pressable>
           {detectFailed && (
@@ -87,7 +92,11 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
                       ]}>
                       {r.name}
                     </Text>
-                    {active && <Text style={{ color: c.accent }}>●</Text>}
+                    {active && (
+                      <View style={[styles.checkDot, { backgroundColor: c.text }]}>
+                        <Icon ios="checkmark" android="check" size={11} weight="bold" color={c.background} />
+                      </View>
+                    )}
                   </Pressable>
                 </Animated.View>
               );
@@ -113,18 +122,20 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 380,
     maxHeight: '75%',
-    borderRadius: Spacing.three,
+    borderRadius: GlassRadii.card,
+    overflow: 'hidden',
     padding: Spacing.three,
     gap: Spacing.two,
   },
   title: { fontSize: 18, fontWeight: '700' },
   locateBtn: {
-    borderRadius: Spacing.two,
+    borderRadius: GlassRadii.pill,
     paddingVertical: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 40,
   },
+  locateRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   locateText: { fontSize: 14, fontWeight: '600' },
   failed: { fontSize: 13 },
   list: { flexGrow: 0 },
@@ -138,5 +149,12 @@ const styles = StyleSheet.create({
   },
   rowText: { fontSize: 15 },
   rowTextActive: { fontWeight: '700' },
+  checkDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   hint: { fontSize: 12, textAlign: 'center' },
 });
