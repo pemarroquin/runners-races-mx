@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
 import { daysUntil, formatDate, type Race } from '@/lib/races';
@@ -72,11 +73,11 @@ const styles = StyleSheet.create({
   },
   date: { fontSize: 13, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   countdown: { fontSize: 13, fontWeight: '600' },
-  statusPill: { paddingHorizontal: Spacing.two, paddingVertical: 2, borderRadius: 10 },
+  statusPill: { paddingHorizontal: Spacing.two, paddingVertical: 2, borderRadius: GlassRadii.pill },
   statusPillText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
   name: { fontSize: 17, fontWeight: '600', marginTop: Spacing.half },
   city: { fontSize: 14 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginTop: Spacing.one },
-  tag: { paddingHorizontal: Spacing.two, paddingVertical: 3, borderRadius: 6 },
+  tag: { paddingHorizontal: Spacing.two, paddingVertical: 3, borderRadius: GlassRadii.pill },
   tagText: { fontSize: 12, fontWeight: '600' },
 });

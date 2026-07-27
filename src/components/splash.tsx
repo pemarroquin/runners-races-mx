@@ -92,7 +92,7 @@ export function CinematicSplash() {
   return (
     <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
       <Animated.View style={titleStyle}>
-        <Text style={styles.title}>Running App</Text>
+        <Text style={styles.title}>Runners' Races MX</Text>
         <Animated.View
           style={[styles.bar, { backgroundColor: Colors.dark.accent }, barStyle]}
         />
@@ -115,9 +115,11 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#ffffff',
-    fontSize: 38,
+    fontSize: 30,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    maxWidth: 280,
   },
   bar: {
     height: 4,
