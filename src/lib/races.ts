@@ -7,7 +7,7 @@ import racesJson from '@/assets/data/races.json';
 // Raw URL of the agent-maintained races.json (public repo, no auth needed).
 // The Mon+Fri race-watch cloud routine commits verified status updates here.
 export const REMOTE_RACES_URL: string | null =
-  'https://raw.githubusercontent.com/pemarroquin/carrera-monterrey/main/assets/data/races.json';
+  'https://raw.githubusercontent.com/pemarroquin/runners-races-mx/main/assets/data/races.json';
 
 export type Confidence = 'high' | 'medium' | 'low';
 export type DistanceTag =
