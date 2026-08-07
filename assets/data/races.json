@@ -92,8 +92,8 @@
       "sourceUrl": "https://www.runera.mx/carreras/detalle/medio-maratn-montemorelos-2026",
       "confidence": "high",
       "status": "ok",
-      "statusNote": "Confirmed for Aug 9, 2026 via Runera, Asdeporte, Compite.mx and Soloatletas. Plaza Principal, Montemorelos. 21K 06:00 / 5K 07:00.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed for Aug 9, 2026 via Runera, Asdeporte, Compite.mx and Soloatletas. Plaza Principal, Montemorelos. 21K 06:00 / 5K 07:00. Re-checked 2026-08-07: still listed as scheduled via Compite.mx, Más Natación, Soloatletas, Runera (registration closed Aug 5). No cancellation/postponement/aviso signals found via web search.",
+      "lastVerified": "2026-08-07",
       "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course image is the official altimetry; interactive route: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
       "start": {
         "lat": 25.1892288,
@@ -1556,8 +1556,8 @@
       "sourceUrl": "https://runera.mx/carreras/detalle/ajolotito-5-km-2026",
       "confidence": "high",
       "status": "ok",
-      "statusNote": "Confirmed for Aug 9, 2026 via EnDondeCorrer posts. 7:00am runners / 7:05am walkers / 8:25am kids. Registration closes Fri Aug 7.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed for Aug 9, 2026 via EnDondeCorrer posts. 7:00am runners / 7:05am walkers / 8:25am kids. Registration closes Fri Aug 7. Re-checked 2026-08-07: still listed via Asdeporte/Compite.mx; kit pickup Aug 8 at Innovasport Polanco. No cancellation/postponement/aviso signals found via web search.",
+      "lastVerified": "2026-08-07",
       "notes": "Axolotl-themed community 5K; inscripciones abiertas.",
       "distanceTags": [
         "5K"
@@ -1579,8 +1579,8 @@
       "sourceUrl": "https://runera.mx/carreras/detalle/running-day-2026-2",
       "confidence": "high",
       "status": "ok",
-      "statusNote": "Confirmed for Aug 9, 2026, 06:30, Paseo de la Reforma, 10K — corroborated by running.life, mx-race.com, haid.app. Packet pickup Aug 8, 11am-4pm at Complejo Cultural Los Pinos.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed for Aug 9, 2026, 06:30, Paseo de la Reforma, 10K — corroborated by running.life, mx-race.com, haid.app. Packet pickup Aug 8, 11am-4pm at Complejo Cultural Los Pinos. Re-checked 2026-08-07: still listed via Asdeporte/mx-race.com; organizer notes Reforma access could shift in a World Cup year, would announce in advance. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-07",
       "notes": "Inscripciones abiertas (runera + Asdeporte).",
       "distanceTags": [
         "10K"
@@ -1603,8 +1603,8 @@
       "sourceUrl": "https://runera.mx/carreras/ciudad-de-mexico",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Confirmed for Aug 9, 2026, 07:00, 2nd Section of Bosque de Chapultepec (Fuente Xochipili), organized by Asdeporte/Reforestamos México.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed for Aug 9, 2026, 07:00, 2nd Section of Bosque de Chapultepec (Fuente Xochipili), organized by Asdeporte/Reforestamos México. Re-checked 2026-08-07: still listed via Asdeporte, Runera, Liebres MX, Solo Atletas. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-07",
       "notes": "Environmental charity run; date agrees across runera and Asdeporte listings.",
       "distanceTags": [
         "5K",
@@ -1822,8 +1822,8 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Confirmed for Aug 8, 2026, Malinalco, Estado de México per TriTour listing search results. No cancellation/postponement/aviso signals found via web search (2026-08-03).",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed for Aug 8, 2026, Malinalco, Estado de México per TriTour listing search results. No cancellation/postponement/aviso signals found via web search (2026-08-03, re-checked 2026-08-07). Direct site fetch still blocked by network policy; no independent source beyond the TriTour listing found in either pass.",
+      "lastVerified": "2026-08-07",
       "notes": "Tri Tour 2026 trail calendar listing.",
       "distanceTags": [
         "5K",
@@ -2287,8 +2287,8 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Date confirmed Aug 9, 2026 via asdeporte, OEM/El Occidental news, and Milenio. Note: start/finish moved to El Occidental newspaper offices (Calz. Independencia Sur 324), routed through Centro Histórico Guadalajara — a change from the prior edition's Parque Metropolitano venue. Start time per asdeporte convocatoria: 12:30h (an older 6:30am reference in one article could not be corroborated).",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Date confirmed Aug 9, 2026 via asdeporte, OEM/El Occidental news, and Milenio. Note: start/finish moved to El Occidental newspaper offices (Calz. Independencia Sur 324), routed through Centro Histórico Guadalajara — a change from the prior edition's Parque Metropolitano venue. Start time per asdeporte convocatoria: 12:30h (an older 6:30am reference in one article could not be corroborated). Re-checked 2026-08-07: OEM/El Occidental still confirms Aug 9, ~800 runners expected, route via Calle Héroes and Paseo Alcalde, kit pickup Aug 8 at the newspaper's offices. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-07",
       "notes": null,
       "sourceNotes": "On tritour + runera (asdeporte slug ...-wl7); not individually rendered."
     },
@@ -2774,6 +2774,8 @@
       "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-rosarito/",
       "confidence": "low",
+      "statusNote": "Verification inconclusive: direct fetch of tjrun.com.mx blocked by network/proxy policy. Web search (2026-08-07) for cancellation/postponement/aviso signals returned no relevant results — no confirmation and no contradiction found for this municipal series. Recommend re-check next cycle.",
+      "lastVerified": "2026-08-07",
       "notes": "Municipal community athletics series.",
       "sourceNotes": "Distances/time not published on the calendar listing."
     },
@@ -3421,8 +3423,8 @@
       "sourceUrl": "https://carrerasmx.com.mx/eventos/501",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Confirmed 9th edition for Aug 9, 2026, 07:30, Blvd. Constitución (CANACINTRA Torreón), per El Siglo de Torreón and Vanguardia. Registration already sold out (500 slots) — does not affect the event date.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Confirmed 9th edition for Aug 9, 2026, 07:30, Blvd. Constitución (CANACINTRA Torreón), per El Siglo de Torreón and Vanguardia. Registration already sold out (500 slots) — does not affect the event date. Re-checked 2026-08-07: web search found no cancellation/postponement/aviso signals; no new independent source surfaced beyond the prior El Siglo de Torreón/Vanguardia confirmation (direct site fetch remains blocked by network policy).",
+      "lastVerified": "2026-08-07",
       "notes": null,
       "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna). Distinct from the Monclova CANACINTRA race."
     },
@@ -3965,8 +3967,8 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun",
       "confidence": "high",
       "status": "ok",
-      "statusNote": "Date conflict resolved in favor of Aug 9, 2026: kora180.mx and La Chispa independently confirm the 5th-anniversary edition on Aug 9, starting Blvd. Bahía, Chetumal. Could not reach TriTour's dedicated event page directly (blocked) to confirm/deny its 'Sep 8' listing, but targeted searches found no corroborating source anywhere for a Sep 8 date. Re-checked 2026-08-03: kora180.mx still confirms Aug 9, no new postponement/cancellation signals.",
-      "lastVerified": "2026-08-03",
+      "statusNote": "Date conflict resolved in favor of Aug 9, 2026: kora180.mx and La Chispa independently confirm the 5th-anniversary edition on Aug 9, starting Blvd. Bahía, Chetumal. Could not reach TriTour's dedicated event page directly (blocked) to confirm/deny its 'Sep 8' listing, but targeted searches found no corroborating source anywhere for a Sep 8 date. Re-checked 2026-08-03: kora180.mx still confirms Aug 9, no new postponement/cancellation signals. Re-checked 2026-08-07: web search found no cancellation/postponement/aviso signals; 2026-specific listings did not resurface in this pass, but nothing contradicts the previously confirmed Aug 9 date.",
+      "lastVerified": "2026-08-07",
       "notes": "5th edition; prior editions broke local participation records.",
       "sourceNotes": "Date conflict RESOLVED 2026-07-27: Aug 9, 2026 confirmed by kora180.mx and La Chispa, independent of the TriTour calendar listing. TriTour's own dedicated event page states Sep 8 but could not be directly verified (site blocked); no independent source supports Sep 8, so Aug 9 is treated as correct pending further confirmation."
     },
