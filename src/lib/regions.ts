@@ -52,10 +52,15 @@ function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number): num
 
 /**
  * Nearest region to a coordinate. Mexico-bound: if the closest metro is
- * further than `maxKm` (clearly outside MX coverage), fall back to default.
+ * further than `maxKm` (clearly outside MX coverage), there is no sensible
+ * match — return `null` rather than silently substituting the default, so
+ * callers can tell "we detected you're in Monterrey" apart from "we have no
+ * idea where you are". 450km is wide enough to still resolve genuinely
+ * covered-but-far cities (e.g. Oaxaca City, ~330km from Puebla, its nearest
+ * covered metro) while rejecting locations with no nearby coverage at all.
  */
-export function nearestRegion(lat: number, lng: number, maxKm = 300): Region {
-  let best: Region = getRegion(DEFAULT_REGION_ID);
+export function nearestRegion(lat: number, lng: number, maxKm = 450): Region | null {
+  let best: Region | null = null;
   let bestD = Infinity;
   for (const r of REGIONS) {
     const d = distanceKm(lat, lng, r.lat, r.lng);
@@ -64,5 +69,5 @@ export function nearestRegion(lat: number, lng: number, maxKm = 300): Region {
       best = r;
     }
   }
-  return bestD <= maxKm ? best : getRegion(DEFAULT_REGION_ID);
+  return best && bestD <= maxKm ? best : null;
 }
