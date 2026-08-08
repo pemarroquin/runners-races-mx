@@ -1,14 +1,18 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races.",
-    "generatedOn": "2026-07-04",
-    "count": 114,
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07.",
+    "generatedOn": "2026-08-07",
+    "count": 195,
     "distanceTags": [
+      "3K",
       "5K",
       "10K",
+      "15K",
       "Half",
+      "30K",
       "Full",
-      "Other"
+      "Ultra",
+      "TBD"
     ],
     "warning": "Dates/times for medium/low-confidence entries were not fully confirmed for the 2026-2027 edition. Verify against signupUrl before trusting. Fields left null were not confirmable (never guessed).",
     "linkSweep": "2026-07-04: registration links verified via runera.mx (reliable for Trotime SPA GUIDs) and asdeporte.com. Organizer patterns: Asdeporte publishes ~5-6 months ahead; Trotime a few months. Unverified GUIDs stay in notes, not signupUrl."
@@ -35,6 +39,7 @@
       "sourceUrl": "https://www.asdeporte.com/evento/verano-monterrey-2026-7wa/datos-del-evento",
       "confidence": "high",
       "notes": "Asdeporte seasonal circuit. 10K 06:45 / 5K 07:05. Virtual option available. Official 10K route map shown; 5K map: https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg (Asdeporte /ruta tab).",
+      "notesEs": "Circuito de temporada de Asdeporte. 10K 06:45 / 5K 07:05. Opción virtual disponible. Se muestra el mapa de ruta oficial del 10K; mapa del 5K: https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg (pestaña /ruta de Asdeporte).",
       "start": {
         "lat": 25.7226,
         "lng": -100.3122,
@@ -63,6 +68,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "medium",
       "notes": "Also listed as 'Canadevi Súper Héroes Run 2026'.",
+      "notesEs": "También aparece listada como 'Canadevi Súper Héroes Run 2026'.",
       "start": {
         "lat": 25.6692,
         "lng": -100.3099,
@@ -95,6 +101,7 @@
       "statusNote": "Confirmed for Aug 9, 2026 via Runera, Asdeporte, Compite.mx and Soloatletas. Plaza Principal, Montemorelos. 21K 06:00 / 5K 07:00. Re-checked 2026-08-07: still listed as scheduled via Compite.mx, Más Natación, Soloatletas, Runera (registration closed Aug 5). No cancellation/postponement/aviso signals found via web search.",
       "lastVerified": "2026-08-07",
       "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course image is the official altimetry; interactive route: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
+      "notesEs": "Medio maratón en la 'Capital de la Naranja' de NL. Ruta urbana. La imagen de la ruta es la altimetría oficial; ruta interactiva: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Coordenadas de salida tomadas de la página de Asdeporte. 21K 06:00 / 5K 07:00.",
       "start": {
         "lat": 25.1892288,
         "lng": -99.826321
@@ -127,6 +134,7 @@
       "statusNote": "CORRECCIÓN DE FECHA (2026-07-27): la fecha correcta es 16 de agosto de 2026, no el 9. Según sdpnoticias.com, la gira 2026 'Corre Sin Tabúes' tiene: CDMX el 9 de agosto (evento distinto), Monterrey el 16 de agosto, Guadalajara el 23 de agosto — todas ya con cupo agotado. VENUE CHANGE found via web search 2026-08-10: multiple sources (asdeporte convocatoria copy, elhorizonte.mx road-closure coverage) now describe the Monterrey start/finish as Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil, Ciudad Universitaria UANL, San Nicolás de los Garza — not Parque Fundidora as previously recorded here. Registration is AGOTADA (sold out) per Asdeporte; that is not a cancellation signal. Date (Aug 16, 2026) reconfirmed, no cancellation/postponement/aviso signals found.",
       "lastVerified": "2026-08-10",
       "notes": "Includes a 3K walk option.",
+      "notesEs": "Incluye una opción de caminata de 3K.",
       "start": {
         "lat": 25.6785,
         "lng": -100.2847,
@@ -156,7 +164,8 @@
       "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=d3b659ed-d8c1-434b-a545-c1adb089e44c",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
       "confidence": "high",
-      "notes": "13th edition road race. Venue per AANL calendar."
+      "notes": "13th edition road race. Venue per AANL calendar.",
+      "notesEs": "Carrera en ruta, 13ª edición. Sede según el calendario de AANL."
     },
     {
       "id": "chipinque-trail-2026",
@@ -179,6 +188,7 @@
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "medium",
       "notes": "Mountain trail race; part of fees donated to park conservation.",
+      "notesEs": "Carrera de trail de montaña; parte de la cuota se dona a la conservación del parque.",
       "sourceNotes": "Date from AANL calendar; dedicated 2026 event page not yet published (2025 edition ran Aug 24 at 07:30, ~$670 MXN). Only the 2025 Idemsport event page exists so far."
     },
     {
@@ -202,6 +212,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "medium",
       "notes": "Charity race ('Cruz Roja TMSV 2026'). Registration open (runera.mx, 2026-07-04). Museo Metropolitano/Macroplaza area.",
+      "notesEs": "Carrera benéfica ('Cruz Roja TMSV 2026'). Registro abierto (runera.mx, 2026-07-04). Zona del Museo Metropolitano/Macroplaza.",
       "start": {
         "lat": 25.6692,
         "lng": -100.3099,
@@ -231,6 +242,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Benefit race. 2025 edition started 08:00, entry was ~$460 MXN.",
+      "notesEs": "Carrera benéfica. La edición 2025 arrancó a las 08:00, con costo de inscripción de ~$460 MXN.",
       "sourceNotes": "Registration not yet published as of 2026-07-04. Idemsport calendar still links the stale 2025 slug."
     },
     {
@@ -256,6 +268,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "medium",
       "notes": "Global corporate race, Monterrey a recurring host. Distances vary by source (5K/10K vs 3K/5K/10K); MTY-specific venue/registration not fully published.",
+      "notesEs": "Carrera corporativa global; Monterrey es sede recurrente. Las distancias varían según la fuente (5K/10K vs. 3K/5K/10K); la sede y el registro específicos de MTY aún no están publicados por completo.",
       "start": {
         "lat": 25.6785,
         "lng": -100.2847,
@@ -283,6 +296,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Long-running community race (26th edition).",
+      "notesEs": "Carrera comunitaria de larga trayectoria (26ª edición).",
       "start": {
         "lat": 25.6507,
         "lng": -100.3446,
@@ -310,7 +324,8 @@
       "signupUrl": "https://www.hubsports.mx/eventos/adidas-splits-6k-12k-mty-2026",
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-6k-12k-mty-2026",
       "confidence": "high",
-      "notes": "First of two 2026 Monterrey adidas Splits events. Capacity 4,500. Kit pickup Oct 10 at Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04)."
+      "notes": "First of two 2026 Monterrey adidas Splits events. Capacity 4,500. Kit pickup Oct 10 at Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
+      "notesEs": "Primero de los dos eventos adidas Splits 2026 en Monterrey. Cupo de 4,500. Entrega de kit el 10 de octubre en el Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04)."
     },
     {
       "id": "ultra-nuevo-leon-larutamadre-2026",
@@ -338,7 +353,8 @@
       "signupUrl": "https://boletopolis.com/es/evento/38316",
       "sourceUrl": "https://larutamadre.mx/en/home/",
       "confidence": "high",
-      "notes": "Mountain/trail race in the Sierra Madre. Also kids 2K/4K/6K and dog categories. Registration deadline Sep 30, 2026."
+      "notes": "Mountain/trail race in the Sierra Madre. Also kids 2K/4K/6K and dog categories. Registration deadline Sep 30, 2026.",
+      "notesEs": "Carrera de montaña/trail en la Sierra Madre. También hay categorías infantiles de 2K/4K/6K y de perros. Fecha límite de registro: 30 de septiembre de 2026."
     },
     {
       "id": "carrera-vivamus-merco-2026",
@@ -361,6 +377,7 @@
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "medium",
       "notes": "Registration open (Asdeporte, 2026-07-04). 10K 07:00 / 5K 07:20. VENUE CORRECTED: Asdeporte says Plaza Zaragoza, not Fundidora as AANL listed. Beneficiary: Superación Juvenil ABP.",
+      "notesEs": "Registro abierto (Asdeporte, 2026-07-04). 10K 07:00 / 5K 07:20. SEDE CORREGIDA: Asdeporte indica Plaza Zaragoza, no Fundidora como listaba AANL. Beneficiario: Superación Juvenil ABP.",
       "start": {
         "lat": 25.6686,
         "lng": -100.3103,
@@ -386,6 +403,7 @@
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "low",
       "notes": "Three-day event, Oct 30 – Nov 1, 2026.",
+      "notesEs": "Evento de tres días, del 30 de octubre al 1 de noviembre de 2026.",
       "sourceNotes": "Listed on AANL calendar (single date not fixed in the app's date field). Distances beyond 42K unconfirmed on the official site."
     },
     {
@@ -409,6 +427,7 @@
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-mty-2026",
       "confidence": "high",
       "notes": "Second of two 2026 Monterrey adidas Splits events. Staggered start blocks (7:00/7:08/7:16). Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
+      "notesEs": "Segundo de los dos eventos adidas Splits 2026 en Monterrey. Bloques de salida escalonados (7:00/7:08/7:16). Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
       "start": {
         "lat": 25.6692,
         "lng": -100.3099,
@@ -434,6 +453,7 @@
       "sourceUrl": "https://runmx.com/events/21k-nuevo-leon-2026/",
       "confidence": "medium",
       "notes": "24th edition of the Nuevo León half marathon, organized by AANL and timed by Trotime.",
+      "notesEs": "24ª edición del medio maratón de Nuevo León, organizado por AANL y cronometrado por Trotime.",
       "sourceNotes": "Date pending final confirmation. Candidate Trotime ficha exists (edicionEventoId=eddbd1ca-06ef-4e3d-9c75-3988be1e27ca) but could not be verified as the Nov 15, 2026 edition — not published as a signup link. Distinct from the May 2026 \"21K Trotime\"."
     },
     {
@@ -459,6 +479,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Registration open (Asdeporte + runera.mx, 2026-07-04). 2026 edition is co-branded 'Superman & Supergirl Run MTY'. Parque Fundidora (Grúa/Portal), from $799 MXN.",
+      "notesEs": "Registro abierto (Asdeporte + runera.mx, 2026-07-04). La edición 2026 va co-marca con 'Superman & Supergirl Run MTY'. Parque Fundidora (Grúa/Portal), desde $799 MXN.",
       "start": {
         "lat": 25.6757067,
         "lng": -100.2819848
@@ -485,6 +506,7 @@
       "sourceUrl": "https://www.asdeporte.com/evento/invierno-monterrey-2026-9ru/datos-del-evento",
       "confidence": "high",
       "notes": "Winter edition of Asdeporte seasonal circuit. 10K 07:00 / 5K 07:20. Virtual option available.",
+      "notesEs": "Edición de invierno del circuito de temporada de Asdeporte. 10K 07:00 / 5K 07:20. Opción virtual disponible.",
       "start": {
         "lat": 25.6757067,
         "lng": -100.2819848
@@ -513,6 +535,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Registration open (Asdeporte, 2026-07-04). From $869 MXN, cap 3,500 participants. VENUE TBC: Asdeporte page says salida/meta \"Por confirmar\" (Idemsport calendar had said Fundidora).",
+      "notesEs": "Registro abierto (Asdeporte, 2026-07-04). Desde $869 MXN, cupo de 3,500 participantes. SEDE POR CONFIRMAR: la página de Asdeporte indica salida/meta \"Por confirmar\" (el calendario de Idemsport había dicho Fundidora).",
       "start": null
     },
     {
@@ -534,6 +557,7 @@
       "sourceUrl": "https://maratonmonterrey.mx/convocatoria/",
       "confidence": "high",
       "notes": "Flagship marathon. AIMS/World Athletics certified, Boston qualifier. 10,000-runner cap, 6:30 time limit. Start/finish at Parque Fundidora.",
+      "notesEs": "Maratón insignia. Certificado por AIMS/World Athletics, clasificatorio para Boston. Cupo de 10,000 corredores, límite de tiempo de 6:30. Salida/meta en el Parque Fundidora.",
       "start": {
         "lat": 25.6785,
         "lng": -100.2847,
@@ -565,7 +589,8 @@
       "signupUrl": "https://run.matacanes.com.mx/serviceN.php?lang=esp&dest=343&cia=1032",
       "sourceUrl": "https://run.matacanes.com.mx/serviceN.php?lang=esp&dest=343",
       "confidence": "high",
-      "notes": "Trail/ultra weekend (~41km from Monterrey), Jan 22-24, 2027. 100K starts 05:00, 22h limit, requires qualification. Other distances run the same weekend."
+      "notes": "Trail/ultra weekend (~41km from Monterrey), Jan 22-24, 2027. 100K starts 05:00, 22h limit, requires qualification. Other distances run the same weekend.",
+      "notesEs": "Fin de semana de trail/ultra (~41 km de Monterrey), del 22 al 24 de enero de 2027. El 100K sale a las 05:00, con límite de 22 h y requiere clasificación. Las demás distancias corren el mismo fin de semana."
     },
     {
       "id": "borregos-think-feel-run-2026",
@@ -587,7 +612,8 @@
       "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=ef32a61e-1743-4b4d-ad9d-961588eb6fc0",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
       "confidence": "high",
-      "notes": "Date confirmed 2026-09-27 (was TBD) via runera.mx; registration open. Same day as Bimbo Global Race."
+      "notes": "Date confirmed 2026-09-27 (was TBD) via runera.mx; registration open. Same day as Bimbo Global Race.",
+      "notesEs": "Fecha confirmada el 2026-09-27 (antes por definir) vía runera.mx; registro abierto. Coincide con Bimbo Global Race."
     },
     {
       "id": "trote-jaguar-2026",
@@ -605,6 +631,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "31st edition. Same day as Circuito Estaciones Verano.",
+      "notesEs": "31ª edición. Coincide con el Circuito Estaciones Verano.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -626,6 +653,7 @@
       "confidence": "medium",
       "lastVerified": "2026-07-17",
       "notes": "Organized by CTM; held at Monumento al Obrero.",
+      "notesEs": "Organizada por la CTM; se realiza en el Monumento al Obrero.",
       "state": "Nuevo León",
       "distanceTags": [
         "TBD"
@@ -674,6 +702,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Friday night race.",
+      "notesEs": "Carrera nocturna de viernes.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K"
@@ -696,6 +725,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as Chipinque Trail.",
+      "notesEs": "Coincide con Chipinque Trail.",
       "state": "Nuevo León",
       "distanceTags": [
         "3K",
@@ -724,6 +754,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as Carrera Cruz Roja. On both calendars. Registration open (runera.mx, 2026-07-04). Venue: Torre KOI, San Pedro (Valle Oriente).",
+      "notesEs": "Coincide con Carrera Cruz Roja. Aparece en ambos calendarios. Registro abierto (runera.mx, 2026-07-04). Sede: Torre KOI, San Pedro (Valle Oriente).",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -746,6 +777,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as Terra Regia.",
+      "notesEs": "Coincide con Terra Regia.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -769,6 +801,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Otoño edition of the Asdeporte seasonal circuit (we already list Verano and Invierno). Distances not specified on either source. Registration open (Asdeporte, 2026-07-04), from $555 MXN. Hybrid: virtual modality Sep 19-20. Distances confirmed 5K/10K.",
+      "notesEs": "Edición Otoño del circuito de temporada de Asdeporte (ya tenemos listadas Verano e Invierno). Ninguna de las dos fuentes especifica distancias. Registro abierto (Asdeporte, 2026-07-04), desde $555 MXN. Híbrida: modalidad virtual del 19 al 20 de septiembre. Distancias confirmadas: 5K/10K.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -790,6 +823,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as adidas Splits 6K/12K.",
+      "notesEs": "Coincide con adidas Splits 6K/12K.",
       "state": "Nuevo León",
       "distanceTags": [
         "Half"
@@ -809,6 +843,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "SpongeBob-themed run.",
+      "notesEs": "Carrera temática de Bob Esponja.",
       "state": "Nuevo León",
       "distanceTags": [
         "TBD"
@@ -853,6 +888,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as Vivamus-Merco.",
+      "notesEs": "Coincide con Vivamus-Merco.",
       "state": "Nuevo León",
       "distanceTags": [
         "15K"
@@ -902,6 +938,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as adidas Splits 15K/30K.",
+      "notesEs": "Coincide con adidas Splits 15K/30K.",
       "state": "Nuevo León",
       "distanceTags": [
         "3K",
@@ -926,6 +963,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "medium",
       "notes": "Same day as Carrera Batman.",
+      "notesEs": "Coincide con Carrera Batman.",
       "state": "Nuevo León",
       "distanceTags": [
         "3K",
@@ -949,6 +987,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "medium",
       "notes": "Official name: 'Soy + Parques pro Rufino Tamayo 2026'. General registration not open yet — only the $1,000 MXN 'Corredor con Causa' tier is currently open. Same day as Barbie Run.",
+      "notesEs": "Nombre oficial: 'Soy + Parques pro Rufino Tamayo 2026'. El registro general aún no abre — por ahora solo está abierta la categoría 'Corredor con Causa' de $1,000 MXN. Coincide con Barbie Run.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -971,6 +1010,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "Same day as Barbie Run.",
+      "notesEs": "Coincide con Barbie Run.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K"
@@ -1019,6 +1059,7 @@
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": "New Year's Eve race.",
+      "notesEs": "Carrera de fin de año.",
       "state": "Nuevo León",
       "distanceTags": [
         "5K",
@@ -1047,6 +1088,7 @@
       "sourceUrl": "https://runmx.com/events/medio-maraton-de-la-ciudad-de-mexico-2026/",
       "confidence": "high",
       "notes": "Official registration via 21k.cdmx.gob.mx (opened Feb 14, 2026).",
+      "notesEs": "Registro oficial vía 21k.cdmx.gob.mx (abrió el 14 de febrero de 2026).",
       "distanceTags": [
         "Half"
       ]
@@ -1067,6 +1109,7 @@
       "sourceUrl": "https://runmx.com/events/maraton-de-la-ciudad-de-mexico-2026/",
       "confidence": "high",
       "notes": "World Athletics Label Race.",
+      "notesEs": "Carrera con Label de World Athletics.",
       "distanceTags": [
         "Full"
       ]
@@ -1087,6 +1130,7 @@
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-30k-cdmx-2026",
       "confidence": "high",
       "notes": "Final race of the 4-race adidas Splits series building to Maratón CDMX. Cap 8,000; from $690 MXN.",
+      "notesEs": "Última carrera de la serie de 4 adidas Splits rumbo al Maratón CDMX. Cupo de 8,000; desde $690 MXN.",
       "distanceTags": [
         "30K"
       ],
@@ -1113,6 +1157,7 @@
       "statusNote": "Confirmed for Aug 2, 2026 via Marcate.com.mx, Running.life and LiebresMX; kit pickup Aug 1 at Liverpool Polanco. No cancellation/postponement/aviso signals found via web search (2026-07-31).",
       "lastVerified": "2026-07-31",
       "notes": "$599-$799 MXN tiered; online registration closes the Friday before.",
+      "notesEs": "Precio escalonado de $599 a $799 MXN; el registro en línea cierra el viernes anterior.",
       "distanceTags": [
         "5K",
         "10K",
@@ -1138,6 +1183,7 @@
       "statusNote": "Confirmed for Aug 16, 2026, 06:00-06:30, Paseo de la Reforma per web search of Asdeporte listing and liebresmx.run calendar. No cancellation/postponement/aviso signals found via web search (2026-08-10). Direct fetch of asdeporte.com blocked by network policy this run.",
       "lastVerified": "2026-08-10",
       "notes": "SOLD OUT (AGOTADAS) per Asdeporte at 2026-07-05. Waves every 6 min from 06:30; cap 8,000; was from $1,300 MXN.",
+      "notesEs": "AGOTADAS según Asdeporte al 2026-07-05. Salidas por oleadas cada 6 min desde las 06:30; cupo de 8,000; costaba desde $1,300 MXN.",
       "distanceTags": [
         "15K"
       ]
@@ -1159,6 +1205,7 @@
       "sourceUrl": "https://www.asdeporte.com/evento/carrera-itam-2026-qsu/datos-del-evento",
       "confidence": "high",
       "notes": "From $600 MXN; virtual option Aug 22-23.",
+      "notesEs": "Desde $600 MXN; opción virtual del 22 al 23 de agosto.",
       "distanceTags": [
         "5K",
         "10K"
@@ -1183,6 +1230,7 @@
       "sourceUrl": "https://runmx.com/events/simicarrera-cdmx-2026/",
       "confidence": "high",
       "notes": "Cap 10,000; from $300 MXN; new 3K SimiPet dog walk. Distinct from Simicarrera MTY (Nov 8).",
+      "notesEs": "Cupo de 10,000; desde $300 MXN; nueva caminata canina SimiPet de 3K. Es distinta de Simicarrera MTY (8 de noviembre).",
       "distanceTags": [
         "3K",
         "5K",
@@ -1206,6 +1254,7 @@
       "sourceUrl": "https://www.afterdarktour.nike.com/es/mexicocity",
       "confidence": "high",
       "notes": "Women-only night half (18+), 3h30 cutoff, $1,000 MXN — SOLD OUT per official page at 2026-07-05.",
+      "notesEs": "Medio maratón nocturno solo para mujeres (18+), límite de 3h30, $1,000 MXN — AGOTADO según la página oficial al 2026-07-05.",
       "distanceTags": [
         "Half"
       ]
@@ -1228,6 +1277,7 @@
       "sourceUrl": "https://runmx.com/events/barbie-run-cdmx-2026/",
       "confidence": "high",
       "notes": "Distinct from Barbie Run MTY (Dec 6).",
+      "notesEs": "Es distinta de Barbie Run MTY (6 de diciembre).",
       "distanceTags": [
         "3K",
         "5K",
@@ -1250,6 +1300,7 @@
       "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-san-silvestre-2026/ciudad-de-m%C3%A9xico",
       "confidence": "high",
       "notes": "Year-end classic; $599-$899 MXN tiered.",
+      "notesEs": "Clásica de fin de año; precio escalonado de $599 a $899 MXN.",
       "distanceTags": [
         "15K"
       ]
@@ -1275,6 +1326,7 @@
       "statusNote": "POSPUESTO: originally Jul 5, 2026; Asdeporte says new date to be announced.",
       "lastVerified": "2026-07-05",
       "notes": "From $1,269 MXN.",
+      "notesEs": "Desde $1,269 MXN.",
       "distanceTags": [
         "3K",
         "5K",
@@ -1299,6 +1351,7 @@
       "sourceUrl": "https://www.asdeporte.com/evento/medio-marato-n-metepec-2026-22x/datos-del-evento",
       "confidence": "high",
       "notes": "SOLD OUT (AGOTADO) per Asdeporte; was from $400 MXN.",
+      "notesEs": "AGOTADO según Asdeporte; costaba desde $400 MXN.",
       "distanceTags": [
         "5K",
         "10K",
@@ -1323,6 +1376,7 @@
       "sourceUrl": "https://asdeporte.com/evento/c--de-las-estaciones-verano-arboledas---centro-2026-3p6/datos-del-evento",
       "confidence": "high",
       "notes": "Staggered starts 07:25/07:45/07:55; from $840 MXN; virtual option.",
+      "notesEs": "Salidas escalonadas 07:25/07:45/07:55; desde $840 MXN; opción virtual.",
       "distanceTags": [
         "3K",
         "5K",
@@ -1347,6 +1401,7 @@
       "sourceUrl": "https://runera.mx/carreras/detalle/carrera-de-la-y-el-abogado-2026",
       "confidence": "high",
       "notes": "Inscripciones abiertas (runera, 2026-07-05).",
+      "notesEs": "Inscripciones abiertas (runera, 2026-07-05).",
       "distanceTags": [
         "5K",
         "10K"
@@ -1369,6 +1424,7 @@
       "confidence": "high",
       "lastVerified": "2026-07-17",
       "notes": "Dog-friendly themed run.",
+      "notesEs": "Carrera temática pet friendly.",
       "distanceTags": [
         "5K"
       ],
@@ -1391,6 +1447,7 @@
       "confidence": "medium",
       "lastVerified": "2026-07-17",
       "notes": "Dinosaur-themed community 5K in Xochimilco.",
+      "notesEs": "5K comunitario de temática de dinosaurios en Xochimilco.",
       "distanceTags": [
         "5K"
       ]
@@ -1413,6 +1470,7 @@
       "confidence": "medium",
       "lastVerified": "2026-07-17",
       "notes": "Character-themed run.",
+      "notesEs": "Carrera temática de personajes.",
       "distanceTags": [
         "5K",
         "10K"
@@ -1435,6 +1493,7 @@
       "confidence": "medium",
       "lastVerified": "2026-07-17",
       "notes": "World Cup-themed 10K.",
+      "notesEs": "10K con temática del Mundial.",
       "distanceTags": [
         "10K"
       ],
@@ -1459,6 +1518,7 @@
       "statusNote": "POSSIBLE MAJOR DATE CHANGE, unresolved: earlier conflict was Jul 25 (tritour.org) vs Jul 26 (Asdeporte). Re-checked via WebSearch 2026-07-24 (direct fetch of asdeporte.com/tritour.org still blocked in this environment): multiple aggregators (mundo-runner.com, liebresmx.run, cbt.org.mx) now list the 2026 edition in fall 2026 (specific day disputed across sources: Sep 19, Sep 20, or Oct 4, 2026) at Bosque de Aragón, not July at all. No single date confirmed — do not trust any specific date here until a human directly checks https://www.asdeporte.com/evento/------pandemia-run-5k---operacio-n-rescate-animal-2026-----cks/datos-del-evento.",
       "lastVerified": "2026-07-24",
       "notes": "Zombie-themed charity run (animal rescue).",
+      "notesEs": "Carrera benéfica de temática zombi (a favor de rescate animal).",
       "distanceTags": [
         "5K"
       ],
@@ -1482,6 +1542,7 @@
       "sourceUrl": "https://tritour.org/eventos/carrera-pisadas-naturales-cani-race-2026",
       "confidence": "medium",
       "notes": "Pet-friendly canicross-style community race.",
+      "notesEs": "Carrera comunitaria pet friendly, estilo canicross.",
       "distanceTags": [
         "3K",
         "5K",
@@ -1510,6 +1571,7 @@
       "statusNote": "Confirmed for Aug 1, 2026, Bosque de Chapultepec via Compite.mx listing and Asdeporte registration page; no cancellation/postponement/aviso signals found via web search (2026-07-31).",
       "lastVerified": "2026-07-31",
       "notes": "Dog-friendly first edition; inscripciones abiertas.",
+      "notesEs": "Primera edición pet friendly; inscripciones abiertas.",
       "distanceTags": [
         "3K",
         "5K",
@@ -1537,6 +1599,7 @@
       "statusNote": "Confirmed for Aug 2, 2026 via Asdeporte, Chilango.com and LiebresMX; no cancellation/postponement/aviso signals found via web search (2026-07-31).",
       "lastVerified": "2026-07-31",
       "notes": "Character run — SOLD OUT (inscripciones agotadas) at 2026-07-05.",
+      "notesEs": "Carrera temática de personaje — AGOTADA (inscripciones agotadas) al 2026-07-05.",
       "distanceTags": [
         "3K",
         "5K",
@@ -1562,6 +1625,7 @@
       "statusNote": "Confirmed for Aug 9, 2026 via EnDondeCorrer posts. 7:00am runners / 7:05am walkers / 8:25am kids. Registration closes Fri Aug 7. Re-checked 2026-08-07: still listed via Asdeporte/Compite.mx; kit pickup Aug 8 at Innovasport Polanco. No cancellation/postponement/aviso signals found via web search.",
       "lastVerified": "2026-08-07",
       "notes": "Axolotl-themed community 5K; inscripciones abiertas.",
+      "notesEs": "5K comunitario de temática de ajolote; inscripciones abiertas.",
       "distanceTags": [
         "5K"
       ]
@@ -1585,6 +1649,7 @@
       "statusNote": "Confirmed for Aug 9, 2026, 06:30, Paseo de la Reforma, 10K — corroborated by running.life, mx-race.com, haid.app. Packet pickup Aug 8, 11am-4pm at Complejo Cultural Los Pinos. Re-checked 2026-08-07: still listed via Asdeporte/mx-race.com; organizer notes Reforma access could shift in a World Cup year, would announce in advance. No cancellation/postponement/aviso signals found.",
       "lastVerified": "2026-08-07",
       "notes": "Inscripciones abiertas (runera + Asdeporte).",
+      "notesEs": "Inscripciones abiertas (runera + Asdeporte).",
       "distanceTags": [
         "10K"
       ]
@@ -1609,6 +1674,7 @@
       "statusNote": "Confirmed for Aug 9, 2026, 07:00, 2nd Section of Bosque de Chapultepec (Fuente Xochipili), organized by Asdeporte/Reforestamos México. Re-checked 2026-08-07: still listed via Asdeporte, Runera, Liebres MX, Solo Atletas. No cancellation/postponement/aviso signals found.",
       "lastVerified": "2026-08-07",
       "notes": "Environmental charity run; date agrees across runera and Asdeporte listings.",
+      "notesEs": "Carrera benéfica ambiental; la fecha coincide entre los listados de runera y Asdeporte.",
       "distanceTags": [
         "5K",
         "10K"
@@ -1630,6 +1696,7 @@
       "sourceUrl": "https://runera.mx/carreras/detalle/happy-colors-race-2026",
       "confidence": "high",
       "notes": "Color-run themed 6K; inscripciones abiertas.",
+      "notesEs": "6K de temática color run; inscripciones abiertas.",
       "distanceTags": [
         "5K"
       ]
@@ -1651,6 +1718,7 @@
       "sourceUrl": "https://runera.mx/carreras/detalle/batman-run-cdmx-2026-dc",
       "confidence": "high",
       "notes": "'El Reto de Ciudad Gótica'; inscripciones abiertas. Distinct from Batman/Superman Run MTY (Nov 22).",
+      "notesEs": "'El Reto de Ciudad Gótica'; inscripciones abiertas. Es distinta de Batman/Superman Run MTY (22 de noviembre).",
       "distanceTags": [
         "5K",
         "10K"
@@ -1670,6 +1738,7 @@
       "sourceUrl": "https://www.asdeporte.com/eventos/",
       "confidence": "medium",
       "notes": "Food-festival themed race; distances not yet on the listing page.",
+      "notesEs": "Carrera con temática de feria gastronómica; la página del listado aún no indica distancias.",
       "distanceTags": [
         "TBD"
       ]
@@ -1688,6 +1757,7 @@
       "sourceUrl": "https://www.asdeporte.com/eventos/",
       "confidence": "medium",
       "notes": "Autumn leg of the series; winter leg listed Dec 6, 2026 on the same page.",
+      "notesEs": "Etapa de otoño de la serie; la etapa de invierno aparece el 6 de diciembre de 2026 en la misma página.",
       "distanceTags": [
         "TBD"
       ]
@@ -1706,6 +1776,7 @@
       "sourceUrl": "https://www.asdeporte.com/eventos/",
       "confidence": "medium",
       "notes": "Shrek-themed character run.",
+      "notesEs": "Carrera temática de personaje de Shrek.",
       "distanceTags": [
         "TBD"
       ],
@@ -1732,6 +1803,7 @@
       "statusNote": "POSTPONED per Asdeporte page, pending confirmation via organizer social media.",
       "lastVerified": "2026-07-05",
       "notes": "Also Canitrail 5K/10K and Trail Teens 3.2K.",
+      "notesEs": "También hay Canitrail 5K/10K y Trail Teens 3.2K.",
       "distanceTags": [
         "5K",
         "10K",
@@ -1757,6 +1829,7 @@
       "confidence": "high",
       "lastVerified": "2026-07-17",
       "notes": "Staggered starts: 50K 06:00 / 26K 06:30 / 12K 07:00. From $760 MXN.",
+      "notesEs": "Salidas escalonadas: 50K 06:00 / 26K 06:30 / 12K 07:00. Desde $760 MXN.",
       "distanceTags": [
         "15K",
         "30K",
@@ -1780,6 +1853,7 @@
       "confidence": "medium",
       "lastVerified": "2026-07-17",
       "notes": "Also kids category. Confirmed on tritour + Carreras México registration page.",
+      "notesEs": "También hay categoría infantil. Confirmada en tritour + la página de registro de Carreras México.",
       "distanceTags": [
         "10K"
       ]
@@ -1801,6 +1875,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
       "confidence": "medium",
       "notes": "20th-edition skyrace on the Iztaccíhuatl slopes.",
+      "notesEs": "Skyrace de 20ª edición en las faldas del Iztaccíhuatl.",
       "distanceTags": [
         "15K",
         "Half"
@@ -1828,6 +1903,7 @@
       "statusNote": "Confirmed for Aug 8, 2026, Malinalco, Estado de México per TriTour listing search results. No cancellation/postponement/aviso signals found via web search (2026-08-03, re-checked 2026-08-07). Direct site fetch still blocked by network policy; no independent source beyond the TriTour listing found in either pass.",
       "lastVerified": "2026-08-07",
       "notes": "Tri Tour 2026 trail calendar listing.",
+      "notesEs": "Listado del calendario de trail Tri Tour 2026.",
       "distanceTags": [
         "5K",
         "15K",
@@ -1851,6 +1927,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
       "confidence": "medium",
       "notes": "Trail on the Tlalmanalco side of the Iztaccíhuatl foothills.",
+      "notesEs": "Trail en el lado de Tlalmanalco de las faldas del Iztaccíhuatl.",
       "distanceTags": [
         "15K",
         "30K"
@@ -1873,6 +1950,7 @@
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-terrex-hub-trail-12k-22k-la-marquesa",
       "confidence": "high",
       "notes": "Cap 2,500. Staggered starts 08:00-08:22. $810-$990 MXN; kit pickup Sep 19.",
+      "notesEs": "Cupo de 2,500. Salidas escalonadas de 08:00 a 08:22. $810-$990 MXN; entrega de kit el 19 de septiembre.",
       "distanceTags": [
         "15K",
         "Half"
@@ -1895,6 +1973,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-trail-mexico",
       "confidence": "medium",
       "notes": "Night trail race.",
+      "notesEs": "Carrera de trail nocturna.",
       "distanceTags": [
         "10K",
         "Half"
@@ -1965,6 +2044,7 @@
       "confidence": "low",
       "lastVerified": "2026-07-17",
       "notes": "Dog-friendly race.",
+      "notesEs": "Carrera pet friendly.",
       "sourceNotes": "tritour Puebla listing (Chronostart id 525); not individually verified."
     },
     {
@@ -1989,6 +2069,7 @@
       "confidence": "high",
       "lastVerified": "2026-07-24",
       "notes": "Evening race, entry $330 MXN.",
+      "notesEs": "Carrera vespertina, inscripción $330 MXN.",
       "sourceNotes": "tritour listed Jul 19 — conflict; the registration page itself shows Jul 25, used here."
     },
     {
@@ -2014,6 +2095,7 @@
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507",
       "confidence": "high",
       "notes": "$418 MXN main distances; also 5K Perritos ($165).",
+      "notesEs": "$418 MXN las distancias principales; también hay 5K Perritos ($165).",
       "lastVerified": "2026-07-24"
     },
     {
@@ -2042,6 +2124,7 @@
       "statusNote": "Confirmed for Aug 16, 2026, 07:00, Ecoparque/Parque Metropolitano de Puebla per Ambas Manos (ambasmanos.mx), Runera and Asdeporte listings found via web search. Registration closes Aug 14, 2026 or at capacity. No cancellation/postponement/aviso signals found (2026-08-10). Direct fetch of asdeporte.com blocked by network policy this run.",
       "lastVerified": "2026-08-10",
       "notes": "Snoopy-themed run.",
+      "notesEs": "Carrera temática de Snoopy.",
       "sourceNotes": "Verified via Runera detail page."
     },
     {
@@ -2067,6 +2150,7 @@
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/528",
       "confidence": "high",
       "notes": "Universidad Anáhuac Puebla race, entry $360-400 MXN.",
+      "notesEs": "Carrera de la Universidad Anáhuac Puebla, inscripción $360-400 MXN.",
       "sourceNotes": "tritour listed Jul 19 — conflict; the registration page itself shows Sep 20, used here."
     },
     {
@@ -2091,7 +2175,8 @@
       "signupUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion",
       "sourceUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion",
       "confidence": "high",
-      "notes": "10K 06:50 / 5K 07:00 / 3K walk 07:10. From $260 MXN. Cap 3,000 + 400 walk."
+      "notes": "10K 06:50 / 5K 07:00 / 3K walk 07:10. From $260 MXN. Cap 3,000 + 400 walk.",
+      "notesEs": "10K 06:50 / 5K 07:00 / caminata 3K 07:10. Desde $260 MXN. Cupo de 3,000 + 400 en caminata."
     },
     {
       "id": "carrera-vertical-inxignia-2026-2",
@@ -2112,6 +2197,7 @@
       "sourceUrl": "https://running.life/calendario-carreras/mexico/puebla",
       "confidence": "medium",
       "notes": "Stair-climb up the tallest tower in Puebla; capped at 500 runners plus a 'Heroes' category.",
+      "notesEs": "Subida de escaleras en la torre más alta de Puebla; cupo de 500 corredores más una categoría 'Héroes'.",
       "sourceNotes": "Guessed Asdeporte URL for this event 404'd; signup link not independently confirmed."
     },
     {
@@ -2136,7 +2222,8 @@
       "signupUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
       "confidence": "high",
-      "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX."
+      "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX.",
+      "notesEs": "Salida/meta 'por confirmar'. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX."
     },
     {
       "id": "carrera-canacine",
@@ -2156,7 +2243,8 @@
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/517",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/517",
       "confidence": "high",
-      "notes": "Evening race, $385 MXN."
+      "notes": "Evening race, $385 MXN.",
+      "notesEs": "Carrera vespertina, $385 MXN."
     },
     {
       "id": "3a-carrera-pericos",
@@ -2180,7 +2268,8 @@
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
       "confidence": "high",
-      "notes": "$352 MXN per distance. Pericos de Puebla baseball club race."
+      "notes": "$352 MXN per distance. Pericos de Puebla baseball club race.",
+      "notesEs": "$352 MXN por distancia. Carrera del club de beisbol Pericos de Puebla."
     },
     {
       "id": "marat-n-de-puebla-2026",
@@ -2199,6 +2288,7 @@
       "sourceUrl": "https://www.milenio.com/deportes/puebla-40-carreras-atleticas-2026-calendario",
       "confidence": "low",
       "notes": "Flagship marathon, confirmed to return in 2026 (~last Sunday of November).",
+      "notesEs": "Maratón insignia, confirmado su regreso en 2026 (~último domingo de noviembre).",
       "sourceNotes": "No rendered registration page / firm date yet. Sources conflict on exact date (Nov 15 / Nov 29 / Dec 6) — date/distances left null to avoid asserting unverified data."
     },
     {
@@ -2224,7 +2314,8 @@
       "sourceUrl": "https://www.asdeporte.com/evento/verano-guadalajara-2026-8kn/datos-del-evento",
       "confidence": "high",
       "lastVerified": "2026-07-17",
-      "notes": "Reg open, from $640 MXN. Staggered 06:30/06:40/06:50. Venue in Zapopan."
+      "notes": "Reg open, from $640 MXN. Staggered 06:30/06:40/06:50. Venue in Zapopan.",
+      "notesEs": "Registro abierto, desde $640 MXN. Escalonada 06:30/06:40/06:50. Sede en Zapopan."
     },
     {
       "id": "carrera-fraternidad-atl-tica-2026-6",
@@ -2245,6 +2336,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "notes": "On tritour+runera; event page not individually rendered.",
+      "notesEs": "En tritour + runera; la página del evento no se pudo renderizar de forma individual.",
       "lastVerified": "2026-07-24"
     },
     {
@@ -2270,7 +2362,8 @@
       "status": "ok",
       "statusNote": "Confirmed for Aug 2, 2026, Guadalajara via Asdeporte registration page. No cancellation/postponement/aviso signals found via web search (2026-07-31).",
       "lastVerified": "2026-07-31",
-      "notes": "Reg open, from $680 MXN, cap 5,000. 10K 06:30 / 5K 06:40."
+      "notes": "Reg open, from $680 MXN, cap 5,000. 10K 06:30 / 5K 06:40.",
+      "notesEs": "Registro abierto, desde $680 MXN, cupo de 5,000. 10K 06:30 / 5K 06:40."
     },
     {
       "id": "carrera-de-el-occidental-2026",
@@ -2341,7 +2434,8 @@
       "signupUrl": null,
       "sourceUrl": "https://www.runera.mx/carreras/guadalajara",
       "confidence": "medium",
-      "notes": "On runera+tritour. Venue Andares (Zapopan). Time from calendar summary. Distinct from Barbie Run MTY/CDMX/Puebla."
+      "notes": "On runera+tritour. Venue Andares (Zapopan). Time from calendar summary. Distinct from Barbie Run MTY/CDMX/Puebla.",
+      "notesEs": "En runera + tritour. Sede Andares (Zapopan). Hora tomada del resumen del calendario. Es distinta de Barbie Run MTY/CDMX/Puebla."
     },
     {
       "id": "serial-de-atletismo-tlajomulco-2026-san-miguel-c",
@@ -2384,7 +2478,8 @@
       "signupUrl": "https://asdeporte.com/evento/37-medio-maraton-atlas-cardio-protegido-2026-kwv/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/37-medio-maraton-atlas-cardio-protegido-2026-kwv/datos-del-evento",
       "confidence": "high",
-      "notes": "Reg open, from $660 MXN. 21.0975 km certified."
+      "notes": "Reg open, from $660 MXN. 21.0975 km certified.",
+      "notesEs": "Registro abierto, desde $660 MXN. Certificado en 21.0975 km."
     },
     {
       "id": "carrera-de-las-antorchas-edici-n-72",
@@ -2404,7 +2499,8 @@
       "signupUrl": null,
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
-      "notes": "tritour listing; metadeportiva page didn't render enough detail."
+      "notes": "tritour listing; metadeportiva page didn't render enough detail.",
+      "notesEs": "Listado de tritour; la página de metadeportiva no renderizó suficiente detalle."
     },
     {
       "id": "bimbo-global-race-guadalajara-2026",
@@ -2428,7 +2524,8 @@
       "signupUrl": "https://asdeporte.com/evento/bimbo-global-race-guadalajara-2026-c6u/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/bimbo-global-race-guadalajara-2026-c6u/datos-del-evento",
       "confidence": "high",
-      "notes": "Reg open, from $260 MXN. 10K 06:30 / 5K 06:45 / 3K walk 07:45. Distinct from Bimbo MTY/Puebla."
+      "notes": "Reg open, from $260 MXN. 10K 06:30 / 5K 06:45 / 3K walk 07:45. Distinct from Bimbo MTY/Puebla.",
+      "notesEs": "Registro abierto, desde $260 MXN. 10K 06:30 / 5K 06:45 / caminata 3K 07:45. Es distinta de Bimbo MTY/Puebla."
     },
     {
       "id": "adidas-splits-15k-30k-guadalajara-2026",
@@ -2450,7 +2547,8 @@
       "signupUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-gdl-2026",
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-gdl-2026",
       "confidence": "high",
-      "notes": "Inscripciones abiertas; cap 4,500. Staggered to 06:46. $690-$980 MXN."
+      "notes": "Inscripciones abiertas; cap 4,500. Staggered to 06:46. $690-$980 MXN.",
+      "notesEs": "Inscripciones abiertas; cupo de 4,500. Escalonada hasta las 06:46. $690-$980 MXN."
     },
     {
       "id": "medio-marat-n-tlajo-2026",
@@ -2517,6 +2615,7 @@
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769458381/",
       "confidence": "high",
       "notes": "42.195K marathon, entry $400 MXN, 4,000-runner cap. Expo Nov 6-7.",
+      "notesEs": "Maratón de 42.195K, inscripción $400 MXN, cupo de 4,000 corredores. Expo del 6 al 7 de noviembre.",
       "sourceNotes": "Aggregators also list a 'Maratón Megacable Guadalajara' Nov 29 (maratonguadalajara.org returned 403, unconfirmed) — unclear if it's a distinct race or a renamed edition of this one."
     },
     {
@@ -2542,6 +2641,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "high",
       "notes": "Held at Estadio Akron, Zapopan.",
+      "notesEs": "Se realiza en el Estadio Akron, Zapopan.",
       "sourceNotes": "Date agrees across tritour + runera (asdeporte slug invierno-...-07h)."
     },
     {
@@ -2565,6 +2665,7 @@
       "sourceUrl": "https://www.runera.mx/calendario/jalisco",
       "confidence": "medium",
       "notes": "Shrek-themed character run.",
+      "notesEs": "Carrera temática de personaje de Shrek.",
       "sourceNotes": "On runera (Jan 17) + tritour. Stale year slug on tritour — not trusted for signup. Time/venue unconfirmed."
     },
     {
@@ -2589,7 +2690,8 @@
       "signupUrl": "https://www.emociondeportiva.com/inscripcion/carrera-gallos-2026/quer%C3%A9taro",
       "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-gallos-2026/quer%C3%A9taro",
       "confidence": "high",
-      "notes": "$500 MXN. Registration closes Friday before at 18:00. Start/finish Estadio Corregidora."
+      "notes": "$500 MXN. Registration closes Friday before at 18:00. Start/finish Estadio Corregidora.",
+      "notesEs": "$500 MXN. El registro cierra el viernes anterior a las 18:00. Salida/meta en el Estadio Corregidora."
     },
     {
       "id": "the-loop-jurica-2026",
@@ -2616,7 +2718,8 @@
       "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=the-loop-jurica",
       "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=the-loop-jurica",
       "confidence": "high",
-      "notes": "Staggered: 15K 06:15 / 5K 06:45 / 10K 07:00. Kids/grandparents Sat Aug 22. $649-$749 MXN. Signup by BBVA transfer, no direct online URL."
+      "notes": "Staggered: 15K 06:15 / 5K 06:45 / 10K 07:00. Kids/grandparents Sat Aug 22. $649-$749 MXN. Signup by BBVA transfer, no direct online URL.",
+      "notesEs": "Escalonada: 15K 06:15 / 5K 06:45 / 10K 07:00. Infantil/abuelos el sábado 22 de agosto. $649-$749 MXN. Registro por transferencia BBVA, sin URL de registro en línea directo."
     },
     {
       "id": "carrera-de-la-esperanza-2026-xvi",
@@ -2642,7 +2745,8 @@
       "signupUrl": "https://www.aqsports.com.mx/inscribete/",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-y-maratones-mexico",
       "confidence": "medium",
-      "notes": "Date/distances confirmed on tritour/carrerasmexico + AQ Sports page. Time/venue per press, not a rendered event page. $500 MXN; charity race."
+      "notes": "Date/distances confirmed on tritour/carrerasmexico + AQ Sports page. Time/venue per press, not a rendered event page. $500 MXN; charity race.",
+      "notesEs": "Fecha/distancias confirmadas en tritour/carrerasmexico + la página de AQ Sports. Hora/sede según prensa, no de una página de evento renderizada. $500 MXN; carrera benéfica."
     },
     {
       "id": "snoopy-run-quer-taro-2026",
@@ -2667,6 +2771,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-y-maratones-mexico",
       "confidence": "low",
       "notes": "Snoopy-themed, dog-friendly run. Distances 3K/5K, from $600 MXN.",
+      "notesEs": "Carrera temática de Snoopy, pet friendly. Distancias 3K/5K, desde $600 MXN.",
       "sourceNotes": "Date conflict: tritour/press say Sep 6; Asdeporte page showed Sep 12 — used Sep 6 (two sources vs one). Venue TBC."
     },
     {
@@ -2693,7 +2798,8 @@
       "signupUrl": "https://queretaromaraton.com/",
       "sourceUrl": "https://queretaromaraton.com/",
       "confidence": "high",
-      "notes": "Flagship. Confirmed on official site + Finishers. Half cap 7,250; ~19,500 expected. Registration closed ~Sep 28."
+      "notes": "Flagship. Confirmed on official site + Finishers. Half cap 7,250; ~19,500 expected. Registration closed ~Sep 28.",
+      "notesEs": "Insignia. Confirmado en el sitio oficial + Finishers. Cupo del medio maratón 7,250; se esperan ~19,500 participantes. El registro cerró ~28 de septiembre."
     },
     {
       "id": "barbie-run-quer-taro-2026",
@@ -2717,7 +2823,8 @@
       "signupUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
       "confidence": "high",
-      "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL."
+      "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL.",
+      "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL."
     },
     {
       "id": "kilometros-por-mexico-2026",
@@ -2740,7 +2847,8 @@
       "sourceUrl": "https://running.life/es/carrera/kilometros-por-mexico",
       "confidence": "medium",
       "lastVerified": "2026-07-17",
-      "notes": "5K competitive $299 MXN, 3K family walk $199 MXN; 3x2 promo. Charity run. Single calendar + RockTheSport registration page."
+      "notes": "5K competitive $299 MXN, 3K family walk $199 MXN; 3x2 promo. Charity run. Single calendar + RockTheSport registration page.",
+      "notesEs": "5K competitivo $299 MXN, caminata familiar 3K $199 MXN; promoción 3x2. Carrera benéfica. Un solo calendario + página de registro de RockTheSport."
     },
     {
       "id": "31-medio-maraton-internacional-de-tijuana-2026",
@@ -2761,6 +2869,7 @@
       "sourceUrl": "https://imdet.tijuana.gob.mx/",
       "confidence": "high",
       "notes": "31st edition, flagship half marathon. Entry $270 MXN. Over 5,000 registered as of early July 2026.",
+      "notesEs": "31ª edición, medio maratón insignia. Inscripción $270 MXN. Más de 5,000 registrados a principios de julio de 2026.",
       "lastVerified": "2026-07-24",
       "sourceNotes": "Registration via the IMDET portal (imdettj.gob.mx/mediomaraton per IMDET homepage banner) — registration page not fetched directly, so signupUrl left null. IMDET + TJRUN + multiple news outlets agree on date/time/venue."
     },
@@ -2784,6 +2893,7 @@
       "statusNote": "Date confirmed: per El Mexicano (el-mexicano.com.mx) and Semanario ZETA coverage found via web search 2026-08-10, this is the 3rd of 4 stages in the 2026 series (Mar 14 stage 1, May 23 Real de Rosarito, Aug 15 Plan Libertador, Nov 14 Primo Tapia). No cancellation/postponement/aviso signals found. Direct fetch of tjrun.com.mx still blocked by network policy this run.",
       "lastVerified": "2026-08-10",
       "notes": "Municipal community athletics series.",
+      "notesEs": "Serie atlética comunitaria municipal.",
       "sourceNotes": "Distances/time not published on the calendar listing."
     },
     {
@@ -2807,7 +2917,8 @@
       "status": "changed",
       "statusNote": "DATE ERROR CONFIRMED, RACE ALREADY HELD: the prior 'May 17 paraphrase error' theory is wrong — the XXIII Medio Maratón Internacional Ensenada FlashLyte 2026 actually ran on Sunday, May 17, 2026, per official ensenada.gob.mx coverage of the race start (arranque, ?p=29668) AND the post-race awards ceremony with full results (?p=29687: winner Ayrton Daniel Ledesma Fuentes, 1:08:47; women's winner Argentina Valdepeñas Cerna, 1:17:37; ~5,000 runners), corroborated by enlineabc.com.mx (dated 2026-05-18) and Multimedios. This event is over — the Aug 17, 2026 date carried in this record (sourced from TJRUN/noro.mx) is stale/incorrect, not a real upcoming race. Next (24th) edition date not announced; do not treat Aug 17, 2026 as a live date going forward. Found via web search 2026-08-10.",
       "lastVerified": "2026-08-10",
-      "notes": "23rd edition, ~5,000 runners. TJRUN detail page and noro.mx both give Aug 17, 2026; an ensenada.gob.mx snippet paraphrased 'May 17' — treated as a fetch/paraphrase error, not resolved silently. Registration also referenced at inmudere.com."
+      "notes": "23rd edition, ~5,000 runners. TJRUN detail page and noro.mx both give Aug 17, 2026; an ensenada.gob.mx snippet paraphrased 'May 17' — treated as a fetch/paraphrase error, not resolved silently. Registration also referenced at inmudere.com.",
+      "notesEs": "23ª edición, ~5,000 corredores. La página de detalle de TJRUN y noro.mx coinciden en 17 de agosto de 2026; un fragmento de ensenada.gob.mx parafraseó '17 de mayo' — se trató como un error de obtención/paráfrasis, no se resolvió en silencio. El registro también se menciona en inmudere.com."
     },
     {
       "id": "serial-atletico-delegacional-de-tijuana-2026",
@@ -2826,6 +2937,7 @@
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-de-tijuana/",
       "confidence": "low",
       "notes": "Municipal Saturday series with multiple 2026 stages (Aug 22, Sep 19, Oct 10).",
+      "notesEs": "Serie municipal de sábados con varias fechas en 2026 (22 de agosto, 19 de septiembre, 10 de octubre).",
       "sourceNotes": "Distances not published; single date left null because it is a multi-stage series. Source: TJRUN calendar."
     },
     {
@@ -2850,7 +2962,8 @@
       "signupUrl": "https://runpassmx.com/eventos/trail-dog-run",
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/trail-dog-run-tijuana/",
       "confidence": "medium",
-      "notes": "Trail race. Starts: 21K 7:30, 10K 7:45, 5K 8:00. Fees: 5K $600, 10K $550, 21K $650 MXN. Single calendar detail page + RunPass registration."
+      "notes": "Trail race. Starts: 21K 7:30, 10K 7:45, 5K 8:00. Fees: 5K $600, 10K $550, 21K $650 MXN. Single calendar detail page + RunPass registration.",
+      "notesEs": "Carrera de trail. Salidas: 21K 7:30, 10K 7:45, 5K 8:00. Cuotas: 5K $600, 10K $550, 21K $650 MXN. Una sola página de detalle de calendario + registro en RunPass."
     },
     {
       "id": "run-woman-run-ensenada-2026-3ra-edicion",
@@ -2872,7 +2985,8 @@
       "signupUrl": "https://web.rockthesport.com/es/event/run-woman-run-2026-ensenada-",
       "sourceUrl": "https://running.life/es/carrera/run-woman-run-ensenada",
       "confidence": "medium",
-      "notes": "Women-only, capacity 300. Adults $230-$310, kids $200 MXN (tiered). Registration Jun 12-Aug 28, 2026. running.life detail + RockTheSport."
+      "notes": "Women-only, capacity 300. Adults $230-$310, kids $200 MXN (tiered). Registration Jun 12-Aug 28, 2026. running.life detail + RockTheSport.",
+      "notesEs": "Solo para mujeres, cupo de 300. Adultos $230-$310, niños $200 MXN (escalonado). Registro del 12 de junio al 28 de agosto de 2026. Detalle en running.life + RockTheSport."
     },
     {
       "id": "carrera-agua-caliente-2026",
@@ -2894,7 +3008,8 @@
       "signupUrl": "https://www.miamigofit.com/detalles-y-registro/carrera-agua-caliente",
       "sourceUrl": "https://running.life/es/carrera/carrera-agua-caliente",
       "confidence": "medium",
-      "notes": "Urban course; also a 10K relay category. Single calendar detail page + organizer registration page."
+      "notes": "Urban course; also a 10K relay category. Single calendar detail page + organizer registration page.",
+      "notesEs": "Ruta urbana; también hay categoría de relevos 10K. Una sola página de detalle de calendario + la página de registro del organizador."
     },
     {
       "id": "trail-wine-valle-de-guadalupe-2026",
@@ -2921,6 +3036,7 @@
       "sourceUrl": "https://running.life/es/carrera/trail-wine-valle-de-guadalupe",
       "confidence": "high",
       "notes": "Trail-running + wine weekend, Sep 25-27 (main races Saturday Sep 26). Distances: 12K/23K/33K/50K. From $350 USD.",
+      "notesEs": "Fin de semana de trail running + vino, del 25 al 27 de septiembre (carreras principales el sábado 26). Distancias: 12K/23K/33K/50K. Desde $350 USD.",
       "sourceNotes": "Appears on both asdeporte.com/eventos and running.life (two calendars agree). Register via asdeporte; no verified current-edition slug captured, so signupUrl left null."
     },
     {
@@ -2945,7 +3061,8 @@
       "signupUrl": "https://raceroster.com/events/2026/111897/2026-binational-race",
       "sourceUrl": "https://running.life/es/carrera/binational-race",
       "confidence": "high",
-      "notes": "Cross-border race San Diego to Tijuana; 21K = 13.1 mi half. Passport/Global Entry/SENTRI needed for border crossing. running.life + Race Roster 2026 event page agree."
+      "notes": "Cross-border race San Diego to Tijuana; 21K = 13.1 mi half. Passport/Global Entry/SENTRI needed for border crossing. running.life + Race Roster 2026 event page agree.",
+      "notesEs": "Carrera binacional de San Diego a Tijuana; el 21K equivale al medio maratón de 13.1 mi. Se necesita pasaporte/Global Entry/SENTRI para cruzar la frontera. running.life + la página del evento 2026 en Race Roster coinciden."
     },
     {
       "id": "medio-maraton-internacional-de-tecate",
@@ -2966,6 +3083,7 @@
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/medio-maraton-internacional-de-tecate/",
       "confidence": "low",
       "notes": "Annual flagship half marathon, World Athletics course.",
+      "notesEs": "Medio maratón insignia anual, ruta homologada por World Athletics.",
       "sourceNotes": "Last confirmed edition was Oct 12, 2025 at 6:30. A 2026/2027 edition date is not yet published on TJRUN or tecate.gob.mx (gob page returned 403), so date left null. Likely ~mid-October 2026 by pattern but unconfirmed."
     },
     {
@@ -2987,6 +3105,7 @@
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/medio-maraton-ciudad-de-mexicali/",
       "confidence": "low",
       "notes": "Flagship annual half marathon tied to the city's anniversary.",
+      "notesEs": "Medio maratón insignia anual, vinculado al aniversario de la ciudad.",
       "sourceNotes": "45th edition was Mar 1, 2026, 7:00, $290 MXN — out of this app's date window. 46th edition (~early March 2027) not yet announced, so date left null. Registration link on the page is a stale 2025 slug — not published here."
     },
     {
@@ -3010,7 +3129,8 @@
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1777568342/",
       "confidence": "high",
       "lastVerified": "2026-07-17",
-      "notes": "First-edition trail race. Adults 10K/5K $500 ($480 before Jun 1); recreational under-14 5K $250; kids' race free. Also on tritour León calendar."
+      "notes": "First-edition trail race. Adults 10K/5K $500 ($480 before Jun 1); recreational under-14 5K $250; kids' race free. Also on tritour León calendar.",
+      "notesEs": "Carrera de trail en su primera edición. Adultos 10K/5K $500 ($480 antes del 1 de junio); recreativo menores de 14 años 5K $250; carrera infantil gratuita. También aparece en el calendario de tritour León."
     },
     {
       "id": "ultra-guanajuato-2026",
@@ -3036,7 +3156,8 @@
       "sourceUrl": "https://www.ultrailmexicoseries.com/ultra-guanajuato/",
       "confidence": "high",
       "lastVerified": "2026-07-24",
-      "notes": "Trail/mountain race, listed July 24-25, 2026; race day 25th. Routes: 46K Pípila (2000m+), 33K Mina, 24K Tunal, 11K Hacienda. Direct-sale registration via Active, no lottery. tritour lists July 25."
+      "notes": "Trail/mountain race, listed July 24-25, 2026; race day 25th. Routes: 46K Pípila (2000m+), 33K Mina, 24K Tunal, 11K Hacienda. Direct-sale registration via Active, no lottery. tritour lists July 25.",
+      "notesEs": "Carrera de trail/montaña, listada del 24 al 25 de julio de 2026; el día de la carrera es el 25. Rutas: 46K Pípila (2000m+ de desnivel positivo), 33K Mina, 24K Tunal, 11K Hacienda. Registro de venta directa vía Active, sin sorteo. tritour indica el 25 de julio."
     },
     {
       "id": "carrera-pirma-21k-2026",
@@ -3063,7 +3184,8 @@
       "status": "ok",
       "statusNote": "Confirmed for Aug 2, 2026, León via Marcate.com.mx and official carrerapirma.com; kit pickup deadline Aug 1. No cancellation/postponement/aviso signals found via web search (2026-07-31).",
       "lastVerified": "2026-07-31",
-      "notes": "Cap 2,500. Early (Apr 21-Jun 14) $550; standard (Jun 15-Jul 30) $650. Packet pickup by Jul 1."
+      "notes": "Cap 2,500. Early (Apr 21-Jun 14) $550; standard (Jun 15-Jul 30) $650. Packet pickup by Jul 1.",
+      "notesEs": "Cupo de 2,500. Anticipada (21 abr-14 jun) $550; estándar (15 jun-30 jul) $650. Entrega de kit a más tardar el 1 de julio."
     },
     {
       "id": "2a-carrera-atletica-con-causa-impulso-esmeralda",
@@ -3087,7 +3209,8 @@
       "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1772503233/",
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1772503233/",
       "confidence": "high",
-      "notes": "15K starts 06:30, 10K/5K 06:45. Cap 1,700. Adults early $340 (to Apr 30), $390 (May 1-Jun 30), $480 (Jul 1-Aug 22); with donation $580."
+      "notes": "15K starts 06:30, 10K/5K 06:45. Cap 1,700. Adults early $340 (to Apr 30), $390 (May 1-Jun 30), $480 (Jul 1-Aug 22); with donation $580.",
+      "notesEs": "El 15K sale a las 06:30, 10K/5K a las 06:45. Cupo de 1,700. Adultos anticipada $340 (hasta el 30 de abril), $390 (1 mayo-30 junio), $480 (1 julio-22 agosto); con donativo $580."
     },
     {
       "id": "carrera-atletica-pies-de-fuego-bomberos-de-silao",
@@ -3109,7 +3232,8 @@
       "signupUrl": null,
       "sourceUrl": "https://periodicocorreo.com.mx/municipios/2026/jul/06/bomberos-de-silao-convocan-a-carrera-atletica-para-fortalecer-su-capacidad-operativa-161231.html",
       "confidence": "medium",
-      "notes": "Fundraiser for the fire dept. Fee $350. Registration by WhatsApp / QR only — no web signup URL. Single news-source confirmation."
+      "notes": "Fundraiser for the fire dept. Fee $350. Registration by WhatsApp / QR only — no web signup URL. Single news-source confirmation.",
+      "notesEs": "Recaudación de fondos para el cuerpo de bomberos. Cuota $350. Registro solo por WhatsApp / código QR — sin URL de registro web. Confirmación de una sola fuente de noticias."
     },
     {
       "id": "maraton-leon-450-46-edicion",
@@ -3133,7 +3257,8 @@
       "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769448144/",
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769448144/",
       "confidence": "high",
-      "notes": "Flagship. PWD start 05:50; conventional 06:00. Cap 6,100. Preventa $650 (to Mar 31), $700 (Apr 1-Jul 31), $750 (Aug 1-Sep 19); 60+ $450; PWD $300. Certified 42.195/21.097/10K. Confirmed by official site maratonleon.mx and tritour."
+      "notes": "Flagship. PWD start 05:50; conventional 06:00. Cap 6,100. Preventa $650 (to Mar 31), $700 (Apr 1-Jul 31), $750 (Aug 1-Sep 19); 60+ $450; PWD $300. Certified 42.195/21.097/10K. Confirmed by official site maratonleon.mx and tritour.",
+      "notesEs": "Insignia. Salida de personas con discapacidad 05:50; convencional 06:00. Cupo de 6,100. Preventa $650 (hasta el 31 de marzo), $700 (1 abr-31 jul), $750 (1 ago-19 sep); 60+ $450; personas con discapacidad $300. Certificado en 42.195/21.097/10K. Confirmado por el sitio oficial maratonleon.mx y tritour."
     },
     {
       "id": "maraton-internacional-dolores-hidalgo-2027-2-edi",
@@ -3160,6 +3285,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-leon-guanajuato",
       "confidence": "medium",
       "notes": "2nd edition, aiming to be a Boston qualifier. 2026 (1st ed.) prices: 42K $950, 21K $850, 10K $750, 5K $650.",
+      "notesEs": "2ª edición, con la meta de ser clasificatorio para Boston. Precios de 2026 (1ª ed.): 42K $950, 21K $850, 10K $750, 5K $650.",
       "sourceNotes": "2027 confirmed by news (Periódico Correo, Jan 2026); tritour lists Jan 10, 2027. 2027 convocatoria/registration not yet published, so signupUrl left null."
     },
     {
@@ -3184,7 +3310,8 @@
       "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1776803113/",
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1776803113/",
       "confidence": "high",
-      "notes": "2027 edition page live. Preventa $700, regular $770. Half & 10K men/women; 5K recreational + 5K juvenil (<18). Distinct from Medio Maratón Irapuato/Bajío municipal event."
+      "notes": "2027 edition page live. Preventa $700, regular $770. Half & 10K men/women; 5K recreational + 5K juvenil (<18). Distinct from Medio Maratón Irapuato/Bajío municipal event.",
+      "notesEs": "Página de la edición 2027 activa. Preventa $700, regular $770. Medio maratón y 10K varonil/femenil; 5K recreativo + 5K juvenil (<18). Es distinta del evento municipal Medio Maratón Irapuato/Bajío."
     },
     {
       "id": "ultra-maraton-leon-2026",
@@ -3208,6 +3335,7 @@
       "sourceUrl": "https://deportedigital.mx/leon-la-capital-del-deporte-tendra-mas-de-70-carreras-atleticas-en-2026",
       "confidence": "low",
       "notes": "Trail ultra.",
+      "notesEs": "Ultra de trail.",
       "sourceNotes": "Listed on León's official 2026 calendar for November 2026; exact date/venue/registration not published. Aggregator/press-level source only."
     },
     {
@@ -3233,6 +3361,7 @@
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1756739183/",
       "confidence": "low",
       "notes": "Annual half marathon, part of the OEM circuit.",
+      "notesEs": "Medio maratón anual, parte del circuito OEM.",
       "sourceNotes": "Verified 2025 edition ran Nov 23, 2025 at 07:00. In-window 2026 edition (expected Nov 2026) not yet posted — date left null, no current signup URL."
     },
     {
@@ -3258,6 +3387,7 @@
       "sourceUrl": "https://rutarunning.com/noticias/maraton-capital-2026-guanajuato-se-prepara-para-una-fiesta-historica-del-running/",
       "confidence": "low",
       "notes": "Flagship marathon. Historic start/finish at Plaza de la Paz, 06:00.",
+      "notesEs": "Maratón insignia. Salida/meta histórica en la Plaza de la Paz, 06:00.",
       "sourceNotes": "III edición ran Feb 15, 2026 (out of window). IV edición (expected Feb 2027, in window) not yet announced — date left null."
     },
     {
@@ -3285,6 +3415,7 @@
       "sourceUrl": "https://www.endondecorrer.com/maraton-de-celaya",
       "confidence": "low",
       "notes": "AIMS-certified 42.195K marathon, held annually in April.",
+      "notesEs": "Maratón de 42.195K certificado por AIMS, se realiza anualmente en abril.",
       "sourceNotes": "2023 edition ran Apr 2 at Estadio Miguel Alemán Valdez. Next in-window edition (~April 2027) not yet published — date left null. Official site maratoncelaya.org/.com currently unreachable."
     },
     {
@@ -3310,6 +3441,7 @@
       "sourceUrl": "https://www.tritour.org/eventos/medio-maraton-irapuato",
       "confidence": "low",
       "notes": "Recurring municipal half marathon held in spring. 1Kids kids' race also offered.",
+      "notesEs": "Medio maratón municipal recurrente que se realiza en primavera. También se ofrece la carrera infantil 1Kids.",
       "sourceNotes": "2026 edition Apr 26 is out of window; a separate municipal 'Medio Maratón Irapuato' also listed Mar 22, 2026 — date conflict between sources, unresolved. Next in-window (spring 2027) edition not yet published — date left null."
     },
     {
@@ -3338,7 +3470,8 @@
       "sourceUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento",
       "confidence": "high",
       "lastVerified": "2026-07-24",
-      "notes": "Flagship Sierra de Arteaga trail/ultra. Event runs Jul 24-26 2026 with staggered starts (160/100/80K at 04:00 Sat, 50K 06:00 Sat, 30K 06:00 Sun, 12K/senderismo 07:00-08:30 Sun); date shown is the main day. From $1,490 MXN ($1,341 Plus). Registration open. Confirmed on asdeporte + runera.mx."
+      "notes": "Flagship Sierra de Arteaga trail/ultra. Event runs Jul 24-26 2026 with staggered starts (160/100/80K at 04:00 Sat, 50K 06:00 Sat, 30K 06:00 Sun, 12K/senderismo 07:00-08:30 Sun); date shown is the main day. From $1,490 MXN ($1,341 Plus). Registration open. Confirmed on asdeporte + runera.mx.",
+      "notesEs": "Trail/ultra insignia de la Sierra de Arteaga. El evento va del 24 al 26 de julio de 2026 con salidas escalonadas (160/100/80K a las 04:00 el sábado, 50K 06:00 el sábado, 30K 06:00 el domingo, 12K/senderismo 07:00-08:30 el domingo); la fecha mostrada es la del día principal. Desde $1,490 MXN ($1,341 Plus). Registro abierto. Confirmado en asdeporte + runera.mx."
     },
     {
       "id": "luchadores-5k-1a-edicion",
@@ -3359,6 +3492,7 @@
       "sourceUrl": "https://carrerasmx.com.mx/eventos/493",
       "confidence": "medium",
       "notes": "1st edition, in Torreón (listed as 'Laguna').",
+      "notesEs": "1ª edición, en Torreón (listada como 'Laguna').",
       "lastVerified": "2026-07-24",
       "sourceNotes": "Exact venue and price not published. Single-calendar source (Carreras Laguna)."
     },
@@ -3385,7 +3519,8 @@
       "status": "ok",
       "statusNote": "Confirmed for Aug 2, 2026, Monclova via Asdeporte (primary registration source). One AI-summarized search result referenced \"August 4\" but could not be traced to a citable primary source distinguishing it from Aug 2 — treated as noise, not a confirmed date change. No cancellation/postponement/aviso signals found (2026-07-31).",
       "lastVerified": "2026-07-31",
-      "notes": "From $450 MXN ($405 Plus). Prize purse >$120,000 MXN. Registration open. Confirmed on asdeporte + runera.mx + tritour."
+      "notes": "From $450 MXN ($405 Plus). Prize purse >$120,000 MXN. Registration open. Confirmed on asdeporte + runera.mx + tritour.",
+      "notesEs": "Desde $450 MXN ($405 Plus). Bolsa de premios >$120,000 MXN. Registro abierto. Confirmado en asdeporte + runera.mx + tritour."
     },
     {
       "id": "bob-espuma-piedras-negras",
@@ -3410,6 +3545,7 @@
       "statusNote": "No cancellation/postponement/aviso signals found via web search (2026-07-31); limited independent web coverage for this event beyond the single-calendar source (Carreras Laguna). Direct fetch of carrerasmx.com.mx blocked by network policy this run.",
       "lastVerified": "2026-07-31",
       "notes": "SpongeBob-themed run.",
+      "notesEs": "Carrera temática de Bob Esponja.",
       "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna)."
     },
     {
@@ -3457,6 +3593,7 @@
       "sourceUrl": "https://carrerasmx.com.mx/eventos/509",
       "confidence": "medium",
       "notes": "'Clásica 10K' organized by Grupo SIMSA.",
+      "notesEs": "'Clásica 10K' organizada por Grupo SIMSA.",
       "sourceNotes": "Venue and price not published. Single-calendar source."
     },
     {
@@ -3516,6 +3653,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo",
       "confidence": "medium",
       "notes": "Jurassic-themed downtown race.",
+      "notesEs": "Carrera en el centro con temática jurásica.",
       "sourceNotes": "The gotime.mx/dinorun5k link listed by tritour returned 404 (not published as signup). Venue from news coverage of prior editions. Time/price not confirmed for 2026."
     },
     {
@@ -3538,7 +3676,8 @@
       "signupUrl": "https://chronosport.dashport.run/maratonsaltillo2026",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo",
       "confidence": "high",
-      "notes": "Full marathon (42.195K) + 21K relevos; 'La Moderna Kids' the day before (Sat Oct 10, 09:00). Salida Parque Centro. Prize purse 76,000 MXN general + 20,000 MXN for Coahuila runners. Registration open. Confirmed via tritour + Municipio de Saltillo/news; individual pricing not captured."
+      "notes": "Full marathon (42.195K) + 21K relevos; 'La Moderna Kids' the day before (Sat Oct 10, 09:00). Salida Parque Centro. Prize purse 76,000 MXN general + 20,000 MXN for Coahuila runners. Registration open. Confirmed via tritour + Municipio de Saltillo/news; individual pricing not captured.",
+      "notesEs": "Maratón completo (42.195K) + 21K de relevos; 'La Moderna Kids' el día anterior (sábado 10 de octubre, 09:00). Salida en Parque Centro. Bolsa de premios de $76,000 MXN general + $20,000 MXN para corredores de Coahuila. Registro abierto. Confirmado vía tritour + Municipio de Saltillo/prensa; no se capturaron precios individuales."
     },
     {
       "id": "carrera-del-desierto-2026-museo-del-desierto-8a",
@@ -3560,7 +3699,8 @@
       "signupUrl": null,
       "sourceUrl": "https://playersoflife.com/saltillo/cuando-es-la-carrera-del-desierto-2026-saltillo-confirma-la-fecha-y-detalles-de-inscripciones/",
       "confidence": "medium",
-      "notes": "Date confirmed (Sun Nov 8 2026); registration NOT yet open and 2026 distances listed as pending — 5K/10K shown are per prior editions/announcement title. Start time and price TBA."
+      "notes": "Date confirmed (Sun Nov 8 2026); registration NOT yet open and 2026 distances listed as pending — 5K/10K shown are per prior editions/announcement title. Start time and price TBA.",
+      "notesEs": "Fecha confirmada (domingo 8 de noviembre de 2026); el registro AÚN NO abre y las distancias 2026 figuran como pendientes — el 5K/10K mostrado corresponde a ediciones anteriores/al título del anuncio. Hora de salida y precio por confirmar."
     },
     {
       "id": "maraton-internacional-lala-comarca-lagunera-edic",
@@ -3581,6 +3721,7 @@
       "sourceUrl": "https://maratonlala.org/",
       "confidence": "low",
       "notes": "Flagship Comarca Lagunera marathon, held annually in early March, 4,500-runner cap. Course starts in Gómez Palacio, Durango (Grupo Lala plant) and finishes in Torreón, Coahuila (tagged here under Coahuila for the finish/host city).",
+      "notesEs": "Maratón insignia de la Comarca Lagunera, se realiza anualmente a inicios de marzo, cupo de 4,500 corredores. La ruta arranca en Gómez Palacio, Durango (planta de Grupo Lala) y termina en Torreón, Coahuila (etiquetada aquí bajo Coahuila por ser la ciudad de meta/sede).",
       "sourceNotes": "37th edition (2026) ran Mar 1, 2026 — before this research window; the 38th (2027) edition is not yet dated/opened. Signup not published until the 2027 edition page goes live (current site still shows the past 2026 edition)."
     },
     {
@@ -3602,6 +3743,7 @@
       "sourceUrl": "https://www.21kcoahuila.org/",
       "confidence": "low",
       "notes": "Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
+      "notesEs": "Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
       "sourceNotes": "Official site shows a 'PRE 2027' teaser but no date/distances/registration published yet. 2026 edition ran May 31, 2026 — before this research window. 2027 expected ~late May but unconfirmed."
     },
     {
@@ -3630,6 +3772,7 @@
       "confidence": "high",
       "lastVerified": "2026-07-17",
       "notes": "Runs Saturday evening (19:00, 3K/5K) into Sunday morning (07:00, 10K/21K).",
+      "notesEs": "Se corre el sábado por la tarde (19:00, 3K/5K) y continúa el domingo por la mañana (07:00, 10K/21K).",
       "sourceNotes": "Official INPODE event page. Date conflict: March serial-launch coverage listed Aquismón as June 18-19; INPODE's own event page shows July 18-19 — kept the INPODE date, flagged. Per-leg distance split not published; distances shown are the serial's overall set. No online registration link found; contact INPODE 444-128-8465."
     },
     {
@@ -3655,7 +3798,8 @@
       "sourceUrl": "https://planoinformativo.com/planodeportivo/338748/todo-listo-para-la-xvi-edicion-de-la-carrera-corriendo-por-una-vida-digna",
       "confidence": "high",
       "lastVerified": "2026-07-17",
-      "notes": "Charity race, 16th edition. Cost $450 MXN; registration online and at physical points of sale (Garox Sports, Dulcería La Estrella, etc.) — no direct online URL published. Prize purse >$230,000 MXN. Multiple SLP outlets agree on date/time/distances."
+      "notes": "Charity race, 16th edition. Cost $450 MXN; registration online and at physical points of sale (Garox Sports, Dulcería La Estrella, etc.) — no direct online URL published. Prize purse >$230,000 MXN. Multiple SLP outlets agree on date/time/distances.",
+      "notesEs": "Carrera benéfica, 16ª edición. Costo $450 MXN; registro en línea y en puntos de venta físicos (Garox Sports, Dulcería La Estrella, etc.) — no se publicó una URL de registro en línea directa. Bolsa de premios >$230,000 MXN. Varios medios de SLP coinciden en fecha, hora y distancias."
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-ruta-de-los-bar",
@@ -3682,6 +3826,7 @@
       "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-de-los-barrios/",
       "confidence": "high",
       "notes": "Single evening start, 19:00.",
+      "notesEs": "Salida única vespertina, 19:00.",
       "sourceNotes": "Official INPODE event page. Distances shown are the serial's overall set (3/5/10/21K); per-leg breakdown not published for this urban leg. No online registration link found."
     },
     {
@@ -3707,6 +3852,7 @@
       "sourceUrl": "https://www.pulsoslp.com.mx/amp/meta/abren-inscripciones-para-el-medio-maraton-/2053391",
       "confidence": "high",
       "notes": "Flagship university half marathon. Cost: 21K $500, 10K $450, 5K $400 MXN. Cap 10,000 runners.",
+      "notesEs": "Medio maratón universitario insignia. Costo: 21K $500, 10K $450, 5K $400 MXN. Cupo de 10,000 corredores.",
       "sourceNotes": "Official portal mediomaraton.uaslp.mx is live (SPA countdown confirmed rendered). Start time not published yet. Multiple SLP outlets (Pulso, El Expres, LiderLife, Código San Luis) agree on the Sept 27 date and pricing."
     },
     {
@@ -3729,7 +3875,8 @@
       "signupUrl": "https://mediomaraton.uaslp.mx/",
       "sourceUrl": "https://www.pulsoslp.com.mx/amp/meta/abren-inscripciones-para-el-medio-maraton-/2053391",
       "confidence": "high",
-      "notes": "Second sede of the UASLP half in the Huasteca. Same date as SLP capital, but only 10K and 5K here; cupo 1,500. Costs 10K $450 / 5K $400 MXN. Venue not specified in sources."
+      "notes": "Second sede of the UASLP half in the Huasteca. Same date as SLP capital, but only 10K and 5K here; cupo 1,500. Costs 10K $450 / 5K $400 MXN. Venue not specified in sources.",
+      "notesEs": "Segunda sede del medio maratón UASLP, en la Huasteca. Misma fecha que la capital de SLP, pero aquí solo hay 10K y 5K; cupo de 1,500. Costos 10K $450 / 5K $400 MXN. Las fuentes no especifican la sede."
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-villa-de",
@@ -3756,6 +3903,7 @@
       "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-villa-de-pozos/",
       "confidence": "high",
       "notes": "Runs Saturday evening into Sunday noon.",
+      "notesEs": "Se corre el sábado por la tarde y continúa hasta el mediodía del domingo.",
       "sourceNotes": "Official INPODE event page. Villa de Pozos has been a municipality since 2024. Distances are the serial's overall set; per-leg split not published. No online registration link found."
     },
     {
@@ -3783,6 +3931,7 @@
       "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-rio-verde/",
       "confidence": "high",
       "notes": "Runs Saturday evening (19:00) into Sunday noon.",
+      "notesEs": "Se corre el sábado por la tarde (19:00) y continúa hasta el mediodía del domingo.",
       "sourceNotes": "Official INPODE event page. Distances are the serial's overall set; per-leg split not published. No online registration link found."
     },
     {
@@ -3805,7 +3954,8 @@
       "signupUrl": "https://www.asdeporte.com/evento/marathon-tv---tu-tiempo-a-tiempo-3po/inscripcion",
       "sourceUrl": "https://www.asdeporte.com/evento/marathon-tv---tu-tiempo-a-tiempo-3po/datos-del-evento",
       "confidence": "high",
-      "notes": "Server-rendered asdeporte event page, current edition. Cost from $300 MXN ($270 with asdeporte Plus). Venue Tangamanga II is in SLP capital; event organized by Soledad municipality."
+      "notes": "Server-rendered asdeporte event page, current edition. Cost from $300 MXN ($270 with asdeporte Plus). Venue Tangamanga II is in SLP capital; event organized by Soledad municipality.",
+      "notesEs": "Página del evento en asdeporte renderizada por servidor, edición actual. Costo desde $300 MXN ($270 con asdeporte Plus). La sede Tangamanga II está en la capital de SLP; el evento lo organiza el municipio de Soledad."
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-soledad-d",
@@ -3832,6 +3982,7 @@
       "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-soledad/",
       "confidence": "high",
       "notes": "Closing leg of the 9-race serial. Runs Saturday evening into Sunday noon.",
+      "notesEs": "Etapa de cierre de la serie de 9 carreras. Se corre el sábado por la tarde y continúa hasta el mediodía del domingo.",
       "sourceNotes": "Official INPODE event page. Distances are the serial's overall set; per-leg split not published. No online registration link found."
     },
     {
@@ -3855,6 +4006,7 @@
       "sourceUrl": "https://diariopotosi.com/la-carrera-juntos-avanzamos-2026-vuelve-a-unir-a-san-luis-en-favor-de-la-inclusion/",
       "confidence": "medium",
       "notes": "Inclusion/disability charity race. Main sponsor historically Cummins.",
+      "notesEs": "Carrera benéfica de inclusión/discapacidad. El patrocinador principal históricamente ha sido Cummins.",
       "sourceNotes": "2027 (7th) edition announced for Jan 31, 2027 at Arena Potosí with 5K/10K. Single news source (announced at close of the 2026 edition); start time and registration not yet published."
     },
     {
@@ -3882,6 +4034,7 @@
       "sourceUrl": "https://www.finishers.com/es/d/america-del-norte/mexico/estado-de-san-luis-potosi",
       "confidence": "low",
       "notes": "SLP flagship marathon, 40+ year history, held annually in late June. 2026 reference pricing: 42K $670, 21K $520, 10K $370, 5K $270 MXN + Ticketmania fees; 06:00 start.",
+      "notesEs": "Maratón insignia de SLP, con más de 40 años de historia, se realiza anualmente a fines de junio. Precios de referencia 2026: 42K $670, 21K $520, 10K $370, 5K $270 MXN + cuotas de Ticketmania; salida a las 06:00.",
       "sourceNotes": "2026 edition ran Jun 28, 2026 — before this research window. Finishers calendar lists the next edition as 'fin junio 2027' but no official date/registration is published yet — date left null; do not reuse the 2026 registration slug."
     },
     {
@@ -3907,6 +4060,7 @@
       "sourceUrl": "https://www.cancun-half-marathon.com/mx/infos.html",
       "confidence": "high",
       "notes": "2027 registration open via njuko, tiered pricing (~34-42 EUR for the half marathon). In some years branded 'Medio Maratón Internacional de la Mujer en Cancún' for a women's-emphasis start.",
+      "notesEs": "Registro 2027 abierto vía njuko, precio escalonado (~34-42 EUR para el medio maratón). En algunos años se ha llamado 'Medio Maratón Internacional de la Mujer en Cancún' para dar énfasis a una salida femenil.",
       "sourceNotes": "Official site cancun-half-marathon.com confirms date/venue and registration. The most recent women's-emphasis edition ran March 1, 2026 and sold out — before this research window, excluded here."
     },
     {
@@ -3933,6 +4087,7 @@
       "confidence": "high",
       "lastVerified": "2026-07-17",
       "notes": "4th edition, night race.",
+      "notesEs": "4ª edición, carrera nocturna.",
       "sourceNotes": "Independently corroborated by Tri Tour México and endondecorrer.com aggregator listings (same date/distances)."
     },
     {
@@ -3952,6 +4107,7 @@
       "sourceUrl": "https://www.khronometraje.com/",
       "confidence": "medium",
       "notes": "Backyard Ultra format — repeated timed loops, last runner standing wins, rather than a fixed advertised distance.",
+      "notesEs": "Formato Backyard Ultra — vueltas cronometradas y repetidas, gana el último corredor en pie, en vez de una distancia fija anunciada.",
       "sourceNotes": "Loop length/rules not shown on the fetched page. Single-source only."
     },
     {
@@ -3980,6 +4136,7 @@
       "statusNote": "Date conflict resolved in favor of Aug 9, 2026: kora180.mx and La Chispa independently confirm the 5th-anniversary edition on Aug 9, starting Blvd. Bahía, Chetumal. Could not reach TriTour's dedicated event page directly (blocked) to confirm/deny its 'Sep 8' listing, but targeted searches found no corroborating source anywhere for a Sep 8 date. Re-checked 2026-08-03: kora180.mx still confirms Aug 9, no new postponement/cancellation signals. Re-checked 2026-08-07: web search found no cancellation/postponement/aviso signals; 2026-specific listings did not resurface in this pass, but nothing contradicts the previously confirmed Aug 9 date.",
       "lastVerified": "2026-08-07",
       "notes": "5th edition; prior editions broke local participation records.",
+      "notesEs": "5ª edición; ediciones anteriores rompieron récords locales de participación.",
       "sourceNotes": "Date conflict RESOLVED 2026-07-27: Aug 9, 2026 confirmed by kora180.mx and La Chispa, independent of the TriTour calendar listing. TriTour's own dedicated event page states Sep 8 but could not be directly verified (site blocked); no independent source supports Sep 8, so Aug 9 is treated as correct pending further confirmation."
     },
     {
@@ -4027,7 +4184,8 @@
       "signupUrl": null,
       "sourceUrl": "https://asdeporte.com/eventos",
       "confidence": "medium",
-      "notes": "Children's race series, not a standard adult road race."
+      "notes": "Children's race series, not a standard adult road race.",
+      "notesEs": "Serie de carreras infantiles, no es una carrera en ruta estándar para adultos."
     },
     {
       "id": "10k-5k-aniversario-fcp-felipe-carrillo-puerto-fc",
@@ -4052,6 +4210,7 @@
       "sourceUrl": "https://www.khronometraje.com/",
       "confidence": "medium",
       "notes": "Distances are 3K/5K/10K — no 21K offered, despite the 'FCP 21k' nickname used by some aggregators.",
+      "notesEs": "Las distancias son 3K/5K/10K — no se ofrece 21K, a pesar del apodo 'FCP 21k' que usan algunos agregadores.",
       "sourceNotes": "Two independent sources (khronometraje.com + endondecorrer.com) agree on date and distances. One source mislabeled the city's state as Yucatán; Felipe Carrillo Puerto is confirmed to be in Quintana Roo."
     },
     {
@@ -4077,6 +4236,7 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun",
       "confidence": "medium",
       "notes": "A separate, second annual Chetumal half marathon — distinct from '21K Chetumal 2026'.",
+      "notesEs": "Un segundo medio maratón anual de Chetumal, independiente — distinto de '21K Chetumal 2026'.",
       "sourceNotes": "Distinct dashport event ID from '21K Chetumal 2026' (evento_1199) — not independently cross-verified beyond the one aggregator."
     },
     {
@@ -4104,6 +4264,7 @@
       "sourceUrl": "https://www.42cal.com/races/medio-marat-n-tulum",
       "confidence": "medium",
       "notes": "Wave starts (from 2025 pattern): 21K 06:30, 10K 06:40, 5K/3K 06:50.",
+      "notesEs": "Salidas por oleadas (según el patrón de 2025): 21K 06:30, 10K 06:40, 5K/3K 06:50.",
       "sourceNotes": "The fetched source page shows the prior (Dec 7, 2025) edition's venue/organizer/wave-start pattern. The Dec 6, 2026 date is corroborated by multiple independent aggregator search snippets (Ahotu, WorldsMarathons) but a live 2026 event page could not be directly fetched (tulum-marathon.com returned a TLS certificate error). Do not use the 2025 Asdeporte slug (medio-marato-n-tulum-2025-ejq) as a 2026 signup link — it is stale."
     },
     {
@@ -4128,7 +4289,8 @@
       "signupUrl": "https://www.finishers.com/book/event/2NWy2",
       "sourceUrl": "https://www.finishers.com/en/event/maya-wildmarathon-in-mexico",
       "confidence": "high",
-      "notes": "All-inclusive 5-day travel-race package (accommodation, meals, tours, medal, jacket included; flights excluded); ~€70 deposit via Finishers platform. Road/trail hybrid marathon, half, and 10K distances."
+      "notes": "All-inclusive 5-day travel-race package (accommodation, meals, tours, medal, jacket included; flights excluded); ~€70 deposit via Finishers platform. Road/trail hybrid marathon, half, and 10K distances.",
+      "notesEs": "Paquete de viaje-carrera todo incluido de 5 días (hospedaje, comidas, tours, medalla y chamarra incluidos; vuelos no incluidos); depósito de ~€70 vía la plataforma Finishers. Maratón híbrido ruta/trail, con distancias de medio maratón y 10K."
     },
     {
       "id": "marat-hon-merida-2027",
@@ -4155,6 +4317,7 @@
       "sourceUrl": "https://www.merida.gob.mx/marathon/",
       "confidence": "high",
       "notes": "2026 edition (branded 'Maratón Mérida Banorte') used tiered starts from 5:00-6:05am — not yet re-confirmed for 2027.",
+      "notesEs": "La edición 2026 (llamada 'Maratón Mérida Banorte') usó salidas escalonadas de 5:00 a 6:05 a.m. — aún no se ha reconfirmado para 2027.",
       "sourceNotes": "Two independent sources (merida.gob.mx and tritour.org) agree on the 2027-01-10 date. Prior edition held 2026-01-04 per runmx.com, outside this research window."
     },
     {
@@ -4176,6 +4339,7 @@
       "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=BACKYARD26",
       "confidence": "high",
       "notes": "Last-runner-standing timed-loop ultra format (categories: Ultra/Desafío/Xperience/Duo) — not a fixed-km race. Limited to 122 participants.",
+      "notesEs": "Formato de ultra de vueltas cronometradas, último corredor en pie (categorías: Ultra/Desafío/Xperience/Duo) — no es una carrera de kilometraje fijo. Limitado a 122 participantes.",
       "sourceNotes": "Exact beach municipality (Progreso vs. neighboring Chelem) not fully confirmed; set to Progreso as nearest listed metro city. Confirmed independently on khronometraje.com and tritour.org's Mérida calendar."
     },
     {
@@ -4198,7 +4362,8 @@
       "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=SANIGNACIO",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-merida",
       "confidence": "medium",
-      "notes": "Chocholá is ~35km south of Mérida, outside the core metro list, but it is a Mérida-organized race (Khronometraje) appearing on Mérida's own race calendar. Pricing not confirmed."
+      "notes": "Chocholá is ~35km south of Mérida, outside the core metro list, but it is a Mérida-organized race (Khronometraje) appearing on Mérida's own race calendar. Pricing not confirmed.",
+      "notesEs": "Chocholá está a ~35 km al sur de Mérida, fuera del listado metropolitano principal, pero es una carrera organizada desde Mérida (Khronometraje) que aparece en el propio calendario de carreras de Mérida. El precio no está confirmado."
     },
     {
       "id": "37-maraton-de-la-marina",
@@ -4221,6 +4386,7 @@
       "sourceUrl": "https://www.yucatan.gob.mx/saladeprensa/ver_nota.php?id=9981",
       "confidence": "medium",
       "notes": "Prize purse ~$350,000 MXN; ~3,200 runners expected.",
+      "notesEs": "Bolsa de premios ~$350,000 MXN; se esperan ~3,200 corredores.",
       "sourceNotes": "37th edition held 2026-06-07, before this research window (starts 2026-07-13) — date set to null since the only confirmed occurrence falls outside the window; flagged as a known flagship per self-audit. Next edition date not yet published."
     },
     {
@@ -4244,6 +4410,7 @@
       "sourceUrl": "https://merida.anahuac.mx/carrera-anahuac",
       "confidence": "medium",
       "notes": "Annual recurring university race.",
+      "notesEs": "Carrera universitaria anual recurrente.",
       "sourceNotes": "14th edition held 2026-02-01 (kids' race 2026-01-31), before this window — date set to null. Next edition date not yet published; the 2026 registration link (vivedeporte.mx/evento_1148) is intentionally omitted as a stale prior-edition slug."
     },
     {
@@ -4292,6 +4459,7 @@
       "sourceUrl": "https://tintapublicanoticias.com/carrera-cmic-dia-del-ingeniero-2026-reunira-a-800-corredores-con-nueva-ruta-en-merida/",
       "confidence": "medium",
       "notes": "~800 competitors expected; entry ~$390 MXN via Dashport.",
+      "notesEs": "Se esperan ~800 competidores; inscripción ~$390 MXN vía Dashport.",
       "sourceNotes": "2026 edition held 2026-07-05 (Día del Ingeniero, observed ~July 1 annually), 8 days before this research window opened (2026-07-13) — date set to null. Next edition (~July 2027) date not yet published."
     },
     {
@@ -4313,6 +4481,7 @@
       "sourceUrl": "https://kora180.mx/uxmal-muna-presentan-la-edicion-53-de-la-carrera-mas-antigua-y-tradicional-de-yucatan/",
       "confidence": "medium",
       "notes": "Yucatán's oldest continuously-run race, since 1973. No entry fee found; ~$60,000 MXN prize pool across age categories.",
+      "notesEs": "La carrera más antigua de Yucatán que se sigue corriendo sin interrupción, desde 1973. No se encontró cuota de inscripción; bolsa de premios de ~$60,000 MXN repartida entre categorías de edad.",
       "sourceNotes": "53rd edition held 2025-10-05, before this research window — next edition (~Oct 2026) unconfirmed, date set to null. Uxmal/Muna are ~80km outside the core Mérida-metro area but included as a genuine statewide flagship."
     },
     {
@@ -4336,6 +4505,7 @@
       "sourceUrl": "https://grupomuronoticias.com.mx/2026/04/14/run-coffee-merida-2026-presenta-su-tercera-edicion/",
       "confidence": "medium",
       "notes": "~600 runners expected.",
+      "notesEs": "Se esperan ~600 corredores.",
       "sourceNotes": "3rd annual edition held 2026-04-26, before this window (starts 2026-07-13) — date set to null. Next edition date not yet published."
     },
     {
@@ -4361,6 +4531,7 @@
       "sourceUrl": "https://www.posta.com.mx/yucatan/anuncian-the-yellow-run-en-merida-carrera-con-causa-bienestar-emocional-y-comunidad/v-vl2212727",
       "confidence": "low",
       "notes": "Mental-health-themed charity race, capped at 404 participants, $350 MXN entry.",
+      "notesEs": "Carrera benéfica con temática de salud mental, cupo de 404 participantes, inscripción $350 MXN.",
       "sourceNotes": "First edition held 2026-06-21, before this research window — date set to null. Confirmed as a first edition, so annual recurrence isn't established yet; next edition unconfirmed."
     },
     {
@@ -4385,7 +4556,8 @@
       "signupUrl": "https://www.asdeporte.com/evento/barbie-run-chihuahua-2026-0en/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/barbie-run-chihuahua-2026-0en/datos-del-evento",
       "confidence": "high",
-      "notes": "3km is a recreational walk (no awards); 5K/10K are competitive. Venue start/finish listed as 'por confirmar' at time of check. Price from $869 MXN regular / $782 MXN Plus. Cap 2,000 runners."
+      "notes": "3km is a recreational walk (no awards); 5K/10K are competitive. Venue start/finish listed as 'por confirmar' at time of check. Price from $869 MXN regular / $782 MXN Plus. Cap 2,000 runners.",
+      "notesEs": "El 3K es caminata recreativa (sin premiación); 5K/10K son competitivos. La sede de salida/meta figuraba como 'por confirmar' al momento de la revisión. Precio desde $869 MXN regular / $782 MXN Plus. Cupo de 2,000 corredores."
     },
     {
       "id": "maraton-internacional-de-juarez-2026-incl-medio",
@@ -4408,6 +4580,7 @@
       "sourceUrl": "https://maratondejuarez.com/",
       "confidence": "high",
       "notes": "World Athletics/AIMS-accredited.",
+      "notesEs": "Acreditado por World Athletics/AIMS.",
       "sourceNotes": "Date confirmed independently by tritour.org, finishers.com, and the World Athletics calendar listing. Start time not published on any source checked."
     },
     {
@@ -4437,6 +4610,7 @@
       "sourceUrl": "https://chihuahua.utmb.world/",
       "confidence": "high",
       "notes": "Multi-day event, Oct 1-3, 2026, with staggered distance start days. Distance names per official site: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
+      "notesEs": "Evento de varios días, del 1 al 3 de octubre de 2026, con días de salida escalonados por distancia. Nombres de las distancias según el sitio oficial: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
       "sourceNotes": "Venue conflict: official UTMB site describes the location broadly as 'Copper Canyons region'; finishers.com specifies Batopilas as the base town — kept the more specific, independently-sourced value."
     },
     {
@@ -4458,6 +4632,7 @@
       "sourceUrl": "https://www.finishers.com/en/event/ultra-x-mexico",
       "confidence": "medium",
       "notes": "5-day, 250km multi-stage trail race.",
+      "notesEs": "Carrera de trail por etapas, 5 días, 250 km.",
       "sourceNotes": "Date sourced as 'early November 2026' / Nov 2 via an aggregator search snippet, not independently cross-verified on ultra-x.co directly — treat as approximate. No registration URL confirmed for the current edition."
     },
     {
@@ -4483,7 +4658,8 @@
       "signupUrl": "https://ultrasignup.com/register.aspx?did=138112",
       "sourceUrl": "https://ultrasignup.com/register.aspx?did=138112",
       "confidence": "high",
-      "notes": "Date (March 6-7, 2027) independently confirmed by ultrasignup.com, worldsmarathons.com, ahotu.com, and ultrarunning.com. A separate, already-past 2026 edition (Feb 28-Mar 1, 2026) exists — do not confuse the two; this entry is the next upcoming edition from today (2026-07-13)."
+      "notes": "Date (March 6-7, 2027) independently confirmed by ultrasignup.com, worldsmarathons.com, ahotu.com, and ultrarunning.com. A separate, already-past 2026 edition (Feb 28-Mar 1, 2026) exists — do not confuse the two; this entry is the next upcoming edition from today (2026-07-13).",
+      "notesEs": "Fecha (6-7 de marzo de 2027) confirmada de forma independiente por ultrasignup.com, worldsmarathons.com, ahotu.com y ultrarunning.com. Existe una edición 2026 aparte, ya pasada (28 feb-1 mar de 2026) — no confundir las dos; esta ficha es la próxima edición a partir de hoy (2026-07-13)."
     },
     {
       "id": "21k-chihuahua-capital-5-edicion-projected",
@@ -4504,6 +4680,7 @@
       "sourceUrl": "https://21kchihuahuacapital.com/",
       "confidence": "low",
       "notes": "Annual early-October half marathon. Prior (4th) edition pricing was $700 MXN general / $400 MXN special categories.",
+      "notesEs": "Medio maratón anual de principios de octubre. El precio de la edición anterior (4ª) fue de $700 MXN general / $400 MXN categorías especiales.",
       "sourceNotes": "4th edition ran Oct 5, 2025 — already past. No 2026 (5th edition) date published yet; do not assume early Oct 2026 without confirmation."
     },
     {
@@ -4529,6 +4706,7 @@
       "sourceUrl": "https://www.imcfdchihuahua.com/post/presenta-municipio-nueva-edici%C3%B3n-del-medio-marat%C3%B3n-arriba-chihuahua",
       "confidence": "low",
       "notes": "Part of the FITA Chihuahua festival, held annually in mid-April. Historical price $380 MXN including kit.",
+      "notesEs": "Parte del festival FITA Chihuahua, se realiza anualmente a mediados de abril. Precio histórico $380 MXN, kit incluido.",
       "sourceNotes": "14th edition ran April 19, 2026 (already past relative to today, 2026-07-13). Next (15th) edition date not yet published."
     },
     {
@@ -4555,6 +4733,7 @@
       "sourceUrl": "https://todoendeportes.com.mx/xxix-ultra-maraton-de-los-canones-2026-sera-del-02-al-05-de-julio-en-guachochi/",
       "confidence": "low",
       "notes": "Annual early-July ultramarathon. Historical pricing: 100K $1,750 MXN, 63K $1,650 MXN, 21K $750 MXN, 10K $650 MXN.",
+      "notesEs": "Ultramaratón anual de principios de julio. Precios históricos: 100K $1,750 MXN, 63K $1,650 MXN, 21K $750 MXN, 10K $650 MXN.",
       "sourceNotes": "29th (XXIX) edition ran July 2-5, 2026, ending just before today (2026-07-13) — already past. Next (30th) edition date unpublished; likely ~July 2027 based on pattern but not confirmed."
     },
     {
@@ -4578,6 +4757,7 @@
       "sourceUrl": "https://www.eldiariodechihuahua.mx/local/2026/jul/07/invitan-a-competir-en-carrera-siete-leguas-815333.html",
       "confidence": "low",
       "notes": "Traditional annual race, part of Parral's 'Jornadas Villistas'. Historical entry fee 100 MXN.",
+      "notesEs": "Carrera tradicional anual, parte de las 'Jornadas Villistas' de Parral. Cuota de inscripción histórica de $100 MXN.",
       "sourceNotes": "Most recent edition held July 12, 2026, one day before today's research date (2026-07-13) — already past. Next edition date not yet published."
     },
     {
@@ -4603,6 +4783,7 @@
       "sourceUrl": "https://www.compite.mx/convocatoria/viva-villa-medio-maraton-parral-2026",
       "confidence": "low",
       "notes": "Nocturnal race through historic downtown Parral. Historical pricing: 5K $400, 10K $500, 21K $600 MXN.",
+      "notesEs": "Carrera nocturna por el centro histórico de Parral. Precios históricos: 5K $400, 10K $500, 21K $600 MXN.",
       "sourceNotes": "2026 edition already held May 23, 2026 — before today (2026-07-13), out of window. Next edition date unpublished; included for Parral coverage as a distinct race from Carrera Siete Leguas."
     },
     {
@@ -4626,6 +4807,7 @@
       "sourceUrl": "https://www.uacj.mx/deportes/carrera.html",
       "confidence": "low",
       "notes": "Campus community race — students, faculty, and staff only, not open to the general public.",
+      "notesEs": "Carrera comunitaria del campus — solo para estudiantes, personal académico y administrativo, no abierta al público en general.",
       "sourceNotes": "Most recent known edition (52° aniversario) held Oct 2, 2025. Next edition date/distances not yet published — some older sources describe it as 3K only, most recent as 3K+7K; flagged as a conflict, kept the more recent value."
     },
     {
@@ -4649,6 +4831,7 @@
       "sourceUrl": "https://egochihuahua.com.mx/menonita-trail-run-una-experiencia-unica-en-cd-cuauhtemoc/",
       "confidence": "low",
       "notes": "Trail race through Mennonite farmland near Cuauhtémoc. Registration historically via www.summits.com.mx.",
+      "notesEs": "Carrera de trail por tierras agrícolas menonitas cerca de Cuauhtémoc. El registro históricamente ha sido vía www.summits.com.mx.",
       "sourceNotes": "Inaugural (1st) edition held June 14, 2025; no 2026/2027 edition confirmed yet. Included as the only verified Cuauhtémoc-area race."
     }
   ]
