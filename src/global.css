@@ -7,3 +7,10 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* The web export renders TextInput as a real <input> — kill the browser's
+   default blue focus ring, since the glass pill container it sits in
+   already reads clearly as the focused element. */
+input:focus {
+  outline: none;
+}
