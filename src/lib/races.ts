@@ -3,6 +3,7 @@
 // GitHub; the app fetches it on open ("update fresh on app open", per PRD) and
 // falls back to the bundled copy offline.
 import racesJson from '@/assets/data/races.json';
+import { getPref, initDb, setPref } from '@/lib/db';
 
 // Raw URL of the agent-maintained races.json (public repo, no auth needed).
 // The Mon+Fri race-watch cloud routine commits verified status updates here.
@@ -73,6 +74,7 @@ export interface Race {
   sourceUrl: string;
   confidence: Confidence;
   notes: string | null; // user-facing description — shown in the app
+  notesEs?: string | null; // Spanish translation of `notes`; falls back to `notes` when absent
   sourceNotes?: string | null; // research/verification trail for maintainers — never shown to users
   // Route data (optional — only present when verified from a source)
   start?: StartPoint | null;
@@ -84,13 +86,40 @@ export interface Race {
   lastVerified?: string | null; // YYYY-MM-DD of the last verification pass
 }
 
-// Module-level store: starts as the bundled seed; refreshRaces() may replace
-// it with fresh remote data. Consumers re-render via RacesProvider's version.
-let ALL_RACES = (racesJson.races as Race[]).slice();
+/**
+ * Per-record shape check. The UI dereferences far more than `id`/`name`
+ * (distanceTags, distances, city, state, sourceUrl, date), so a record
+ * missing any of those would throw deep in a render — not here. Used to
+ * filter both the remote payload and the bundled seed, so nothing gets a
+ * free pass just for shipping inside the app.
+ */
+function isValidRace(r: unknown): r is Race {
+  if (typeof r !== 'object' || r === null) return false;
+  const race = r as Record<string, unknown>;
+  if (typeof race.id !== 'string' || race.id === '') return false;
+  if (typeof race.name !== 'string' || race.name === '') return false;
+  if (typeof race.city !== 'string') return false;
+  if (typeof race.state !== 'string') return false;
+  if (typeof race.sourceUrl !== 'string') return false;
+  if (!Array.isArray(race.distances)) return false;
+  if (!Array.isArray(race.distanceTags)) return false;
+  if (!race.distanceTags.every((t) => (DISTANCE_TAGS as string[]).includes(t as string))) {
+    return false;
+  }
+  if (race.date !== null && !(typeof race.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(race.date))) {
+    return false;
+  }
+  return true;
+}
 
-/** All races, sorted by date ascending; undated races sink to the bottom. */
-export function getRaces(): Race[] {
-  return ALL_RACES.slice().sort((a, b) => {
+// The bundled seed, filtered through the same validator as remote data — no
+// free pass just for shipping in the app. Consumers hold their own React
+// state seeded from this (see RacesProvider); nothing here is mutated.
+export const SEED_RACES: Race[] = (racesJson.races as unknown[]).filter(isValidRace);
+
+/** Sort by date ascending; undated races sink to the bottom, ties by name. */
+export function sortRaces(races: Race[]): Race[] {
+  return races.slice().sort((a, b) => {
     if (a.date === b.date) return a.name.localeCompare(b.name);
     if (a.date === null) return 1;
     if (b.date === null) return -1;
@@ -98,33 +127,71 @@ export function getRaces(): Race[] {
   });
 }
 
-export function getRace(id: string | undefined): Race | undefined {
-  return ALL_RACES.find((r) => r.id === id);
-}
-
 /**
- * Fetch the agent-maintained races.json and swap it in if it looks valid.
- * Returns true if data was replaced. Any failure (offline, 404, bad shape)
- * leaves the bundled data untouched — the app must always work offline.
+ * Fetch the agent-maintained races.json. Returns the validated array on
+ * success, or null on any failure (offline, 404, bad shape) — the caller
+ * must leave existing data untouched on null, since the app must always
+ * work offline.
  */
-export async function refreshRaces(): Promise<boolean> {
-  if (!REMOTE_RACES_URL) return false;
+export async function fetchRemoteRaces(): Promise<Race[] | null> {
+  if (!REMOTE_RACES_URL) return null;
   try {
-    const res = await fetch(REMOTE_RACES_URL, { headers: { 'cache-control': 'no-cache' } });
-    if (!res.ok) return false;
+    // No custom headers here: on web, any non-safelisted request header (e.g.
+    // 'cache-control') forces a CORS preflight OPTIONS request, and GitHub's
+    // raw host 403s that preflight, silently breaking every refresh on web.
+    // Cache-bust with a query param instead (no header needed), and pass
+    // `cache: 'no-store'` — a standard RequestInit option, not a header, so
+    // it never triggers a preflight either.
+    const res = await fetch(`${REMOTE_RACES_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return null;
     const json = await res.json();
     const races = json?.races;
-    if (!Array.isArray(races) || races.length === 0) return false;
-    // Minimal shape check on a sample — protects against a bad commit.
-    const ok = races.every(
-      (r: unknown) =>
-        typeof (r as Race)?.id === 'string' && typeof (r as Race)?.name === 'string',
-    );
-    if (!ok) return false;
-    ALL_RACES = races as Race[];
-    return true;
+    if (!Array.isArray(races) || races.length === 0) return null;
+    // Validate every record and drop the bad ones instead of rejecting the
+    // whole payload — a single malformed record (e.g. a renamed field on one
+    // race) shouldn't discard 194 good ones. But a payload that's MOSTLY bad
+    // records is a sign of real corruption (truncated commit, wrong schema,
+    // wrong file entirely), not a one-off typo, so guard against that with a
+    // sanity floor: if fewer than half the records survive validation, treat
+    // the whole payload as untrustworthy and keep the data we already have.
+    const valid = races.filter(isValidRace);
+    if (valid.length < races.length / 2) return null;
+    return valid;
   } catch {
-    return false;
+    return null;
+  }
+}
+
+const CACHE_KEY = 'racesCache';
+
+/**
+ * Load the last successfully-fetched remote payload from device storage, if
+ * any. Returns null on a cold device, a storage failure, or corrupt/invalid
+ * cached JSON — callers fall back to the bundled seed in that case.
+ */
+export function loadCachedRaces(): Race[] | null {
+  try {
+    initDb();
+    const raw = getPref(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const valid = parsed.filter(isValidRace);
+    if (valid.length === 0) return null;
+    return valid;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist a freshly-fetched races payload for the next cold start. */
+export function saveCachedRaces(races: Race[]): void {
+  try {
+    initDb();
+    setPref(CACHE_KEY, JSON.stringify(races));
+  } catch {
+    // Non-fatal — the in-memory state the caller already set is still
+    // correct for this session; only the next cold start misses the cache.
   }
 }
 

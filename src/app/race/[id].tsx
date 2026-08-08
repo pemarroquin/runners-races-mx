@@ -1,12 +1,13 @@
 import * as Calendar from 'expo-calendar';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -21,8 +22,8 @@ import { Icon } from '@/components/ui/icon';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
-import { daysUntil, formatDate, getRace } from '@/lib/races';
-import { useRacesVersion } from '@/lib/races-provider';
+import { daysUntil, distanceTagLabelKey, formatDate } from '@/lib/races';
+import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
 
 async function getWritableCalendarId(): Promise<string | null> {
@@ -42,14 +43,20 @@ export default function RaceDetailScreen() {
   const { t, locale } = useI18n();
   const countdown = useCountdown();
   const { isSaved, toggle } = useSaved();
+  const router = useRouter();
   const [buyOpen, setBuyOpen] = useState(false);
-  useRacesVersion(); // re-render if remote data replaces the seed mid-view
-
-  const race = getRace(id);
+  const [noteExpanded, setNoteExpanded] = useState(false);
+  const races = useRaces();
+  const race = useMemo(() => races.find((r) => r.id === id), [races, id]);
   if (!race) {
     return (
-      <View style={[styles.container, { backgroundColor: c.background }]}>
-        <Text style={{ color: c.text }}>Not found</Text>
+      <View style={[styles.container, styles.notFoundContainer, { backgroundColor: c.background }]}>
+        <Text style={[styles.notFoundText, { color: c.text }]}>{t('common.notFound')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.back()}>
+          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.secondaryBtn}>
+            <Text style={[styles.secondaryText, { color: c.text }]}>{t('common.back')}</Text>
+          </GlassSurface>
+        </Pressable>
       </View>
     );
   }
@@ -57,6 +64,13 @@ export default function RaceDetailScreen() {
   const saved = isSaved(race.id);
   const days = daysUntil(race.date);
   const dateLabel = formatDate(race.date, locale);
+  // RN's onTextLayout can't be used to detect truncation here: iOS reports
+  // only the clamped lines when numberOfLines is set, and react-native-web
+  // doesn't implement the prop at all. A length threshold is imprecise but
+  // behaves the same on every platform.
+  const noteIsLong = (race.statusNote?.length ?? 0) > 160;
+  const esNote = locale === 'es' ? race.notesEs : null;
+  const noteText = typeof esNote === 'string' && esNote !== '' ? esNote : race.notes;
 
   async function addToCalendar() {
     if (!race || !race.date) {
@@ -98,6 +112,34 @@ export default function RaceDetailScreen() {
     setBuyOpen(true);
   }
 
+  async function shareRace() {
+    if (!race) return;
+    const headline = t('detail.shareMessage', {
+      name: race.name,
+      date: dateLabel ? `${dateLabel}${race.time ? ` · ${race.time}` : ''}` : t('common.tbd'),
+    });
+    const message = `${headline}\n${race.sourceUrl}`;
+    try {
+      await Share.share({ message });
+    } catch {
+      // The user dismissing the share sheet (or any share failure) is a
+      // no-op, not an error worth surfacing.
+    }
+  }
+
+  // A canceled race must never let someone pay for it, and a changed
+  // (postponed) race must not read as a confident "buy now" even though
+  // its signup link may still be valid for the new date.
+  const ctaDisabled = race.status === 'canceled' || !race.signupUrl;
+  const ctaLabel =
+    race.status === 'canceled'
+      ? t('detail.canceled')
+      : !race.signupUrl
+        ? t('detail.noLink')
+        : race.status === 'changed'
+          ? t('detail.viewRegistration')
+          : t('detail.buy');
+
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
@@ -112,10 +154,23 @@ export default function RaceDetailScreen() {
             <Text style={styles.statusTitle}>
               {race.status === 'canceled' ? t('common.canceled') : t('common.changed')}
             </Text>
-            {race.statusNote && <Text style={styles.statusNote}>{race.statusNote}</Text>}
+            {race.statusNote && (
+              <>
+                <Text style={styles.statusNote} numberOfLines={noteExpanded ? undefined : 3}>
+                  {race.statusNote}
+                </Text>
+                {noteIsLong && (
+                  <Pressable accessibilityRole="button" onPress={() => setNoteExpanded((v) => !v)}>
+                    <Text style={styles.statusToggle}>
+                      {noteExpanded ? t('common.less') : t('common.more')}
+                    </Text>
+                  </Pressable>
+                )}
+              </>
+            )}
             {race.lastVerified && (
               <Text style={styles.statusMeta}>
-                {t('common.lastVerified')} {race.lastVerified}
+                {t('common.lastVerified')} {formatDate(race.lastVerified, locale) ?? race.lastVerified}
               </Text>
             )}
           </View>
@@ -126,7 +181,7 @@ export default function RaceDetailScreen() {
         <View style={styles.tagRow}>
           {race.distanceTags.map((tag) => (
             <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
-              <Text style={[styles.tagText, { color: c.text }]}>{tag}</Text>
+              <Text style={[styles.tagText, { color: c.text }]}>{t(distanceTagLabelKey(tag))}</Text>
             </View>
           ))}
         </View>
@@ -134,21 +189,26 @@ export default function RaceDetailScreen() {
 
       <Animated.View entering={FadeInDown.duration(400).delay(80)}>
         <Field label={t('common.when')} value={dateLabel ? `${dateLabel}${race.time ? ` · ${race.time}` : ''}` : t('common.tbd')} c={c} />
+        {race.confidence === 'low' && (
+          <Text style={[styles.unconfirmed, { color: c.textSecondary }]}>{t('common.unconfirmed')}</Text>
+        )}
         <Field label={t('common.where')} value={[race.venue, `${race.city}, ${race.state}`].filter(Boolean).join('\n')} c={c} />
-        <Field label={t('common.distances')} value={race.distances.join(' · ')} c={c} />
+        <Field
+          label={t('common.distances')}
+          value={race.distances.length > 0 ? race.distances.join(' · ') : t(distanceTagLabelKey('TBD'))}
+          c={c}
+        />
         {race.organizer && <Field label={t('common.organizer')} value={race.organizer} c={c} />}
         <RouteMap race={race} />
-        {race.notes && <Field label={t('common.notes')} value={race.notes} c={c} />}
+        {noteText && <Field label={t('common.notes')} value={noteText} c={c} />}
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(160)} style={styles.actions}>
         <Pressable
           onPress={buyTicket}
-          disabled={!race.signupUrl}
-          style={[styles.primaryBtn, { backgroundColor: c.text }, !race.signupUrl && styles.disabled]}>
-          <Text style={[styles.primaryText, { color: c.background }]}>
-            {race.signupUrl ? t('detail.buy') : t('detail.noLink')}
-          </Text>
+          disabled={ctaDisabled}
+          style={[styles.primaryBtn, { backgroundColor: c.text }, ctaDisabled && styles.disabled]}>
+          <Text style={[styles.primaryText, { color: c.background }]}>{ctaLabel}</Text>
         </Pressable>
 
         <View style={styles.secondaryRow}>
@@ -175,7 +235,13 @@ export default function RaceDetailScreen() {
           </Pressable>
         </View>
 
-        <Pressable onPress={() => Linking.openURL(race.sourceUrl)} style={styles.sourceRow}>
+        <Pressable accessibilityRole="button" onPress={shareRace}>
+          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.secondaryBtn}>
+            <Text style={[styles.secondaryText, { color: c.text }]}>{t('detail.share')}</Text>
+          </GlassSurface>
+        </Pressable>
+
+        <Pressable onPress={() => Linking.openURL(race.sourceUrl).catch(() => {})} style={styles.sourceRow}>
           <Text style={[styles.source, { color: c.textSecondary }]}>{t('detail.viewSource')}</Text>
           <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />
         </Pressable>
@@ -210,6 +276,9 @@ function Field({
 
 const styles = StyleSheet.create({
   container: { padding: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.six },
+  notFoundContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three },
+  notFoundText: { fontSize: 16, fontWeight: '600' },
+  unconfirmed: { fontSize: 12, marginTop: -2 },
   statusBanner: {
     borderRadius: Spacing.two,
     padding: Spacing.three,
@@ -219,6 +288,7 @@ const styles = StyleSheet.create({
   statusTitle: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
   statusNote: { color: '#ffffff', fontSize: 14, lineHeight: 20 },
   statusMeta: { color: 'rgba(255,255,255,0.85)', fontSize: 12 },
+  statusToggle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700' },
   name: { fontSize: 24, fontWeight: '700' },
   countdown: { fontSize: 15, fontWeight: '600' },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginVertical: Spacing.two },

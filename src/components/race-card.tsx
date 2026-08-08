@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native'
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
-import { daysUntil, formatDate, type Race } from '@/lib/races';
+import { daysUntil, distanceTagLabelKey, formatDate, type Race } from '@/lib/races';
 
 export function RaceCard({ race, onPress }: { race: Race; onPress: () => void }) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -12,10 +12,24 @@ export function RaceCard({ race, onPress }: { race: Race; onPress: () => void })
   const countdown = useCountdown();
   const days = daysUntil(race.date);
   const dateLabel = formatDate(race.date, locale);
+  const displayDate = dateLabel ?? countdown(null);
+  const statusText =
+    race.status === 'canceled'
+      ? t('common.canceled')
+      : race.status === 'changed'
+        ? t('common.changed')
+        : countdown(days);
+  const cityLabel = `${race.city}, ${race.state}`;
+  const accessibilityLabel = [race.name, displayDate, cityLabel, statusText]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: c.backgroundElement },
@@ -24,34 +38,31 @@ export function RaceCard({ race, onPress }: { race: Race; onPress: () => void })
         pressed && styles.pressed,
       ]}>
       <View style={styles.headerRow}>
-        <Text style={[styles.date, { color: c.textSecondary }]}>
-          {dateLabel ?? countdown(null)}
-        </Text>
+        <Text style={[styles.date, { color: c.textSecondary }]}>{displayDate}</Text>
         {race.status === 'changed' || race.status === 'canceled' ? (
           <View style={[styles.statusPill, { backgroundColor: c.accent }]}>
-            <Text style={styles.statusPillText}>
-              {race.status === 'canceled' ? t('common.canceled') : t('common.changed')}
-            </Text>
+            <Text style={styles.statusPillText}>{statusText}</Text>
           </View>
         ) : (
-          days !== null &&
-          days >= 0 && (
-            <Text style={[styles.countdown, { color: c.text }]}>{countdown(days)}</Text>
-          )
+          <Text
+            style={[
+              styles.countdown,
+              { color: days !== null && days < 0 ? c.textSecondary : c.text },
+            ]}>
+            {statusText}
+          </Text>
         )}
       </View>
 
       <Text style={[styles.name, { color: c.text }]} numberOfLines={2}>
         {race.name}
       </Text>
-      <Text style={[styles.city, { color: c.textSecondary }]}>
-        {race.city}, {race.state}
-      </Text>
+      <Text style={[styles.city, { color: c.textSecondary }]}>{cityLabel}</Text>
 
       <View style={styles.tagRow}>
         {race.distanceTags.map((tag) => (
           <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
-            <Text style={[styles.tagText, { color: c.text }]}>{tag}</Text>
+            <Text style={[styles.tagText, { color: c.text }]}>{t(distanceTagLabelKey(tag))}</Text>
           </View>
         ))}
       </View>
