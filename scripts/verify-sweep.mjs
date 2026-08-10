@@ -104,6 +104,8 @@ for (const r of races) {
 }
 
 // ── 3. verification-record coherence ────────────────────────────────────────
+const todayISO = new Date().toISOString().slice(0, 10);
+
 for (const r of races) {
   const id = r.id;
   // A verdict with no date can't be aged out or trusted.
@@ -114,6 +116,13 @@ for (const r of races) {
   // Never let someone pay for a canceled race. race/[id].tsx gates the CTA on
   // status === 'canceled' already; this keeps the DATA honest too.
   if (r.status === 'canceled' && r.signupUrl) err(id, 'canceled race still carries a signupUrl');
+  // `changed` conflates "the date moved, still buy it" with "postponed
+  // indefinitely". The second kind has no usable date — and the checkout gate
+  // only looks at `canceled`, so it stayed purchasable. Null the signupUrl and
+  // the CTA disables itself (race/[id].tsx gates on !race.signupUrl too).
+  if (r.status === 'changed' && r.signupUrl && (r.date === null || r.date < todayISO)) {
+    err(id, `status "changed" with ${r.date === null ? 'no date' : `a past date (${r.date})`} but still carries a signupUrl — a runner can pay for a race that is not happening`);
+  }
   if (r.statusNoteEs && !r.statusNote) warn(id, 'statusNoteEs with no statusNote');
 
   // Only changed|canceled render the banner, and the app's default locale is
@@ -135,7 +144,6 @@ const HELD = /\b(already (ran|held|took place)|race (is )?over|ya se (corrió|ce
 const POSTPONED = /\b(postponed|pospuest[oa]|posponer|aplazad[oa])\b/i;
 const CANCELED = /\b(cancel(l?ed|ada|ado)|suspendid[oa])\b/i;
 const VENUE_MOVED = /\b(venue chang|start\/finish moved|moved to|cambio de sede|nueva sede|not Parque|no Parque)\b/i;
-const todayISO = new Date().toISOString().slice(0, 10);
 
 for (const r of races) {
   const note = r.statusNote || '';

@@ -1344,7 +1344,7 @@
       "state": "Ciudad de México",
       "venue": null,
       "organizer": "Asdeporte / Universal",
-      "signupUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
+      "signupUrl": null,
       "sourceUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
       "confidence": "medium",
       "status": "changed",
@@ -1358,7 +1358,7 @@
         "10K"
       ],
       "statusNoteEs": "Pospuesta. Estaba programada para el 5 de julio de 2026 y la organización anunciará una nueva fecha.",
-      "sourceNotes": "Postponement per the Asdeporte event page."
+      "sourceNotes": "Postponement per the Asdeporte event page. signupUrl removed 2026-08-10: postponed with no announced date, so the registration link cannot be for a live edition."
     },
     {
       "id": "medio-maraton-metepec-2026",
@@ -1538,7 +1538,7 @@
       "state": "Ciudad de México",
       "venue": null,
       "organizer": "Asdeporte",
-      "signupUrl": "https://www.asdeporte.com/evento/------pandemia-run-5k---operacio-n-rescate-animal-2026-----cks/datos-del-evento",
+      "signupUrl": null,
       "sourceUrl": "https://tritour.org/eventos/pandemia-run-5k-2026-cdmx",
       "confidence": "medium",
       "status": "changed",
@@ -1549,7 +1549,7 @@
       "distanceTags": [
         "5K"
       ],
-      "sourceNotes": "Date conflict: tritour lists Jul 25 vs Asdeporte's Jul 26 — unresolved, verify before relying on it. 2026-07-24 re-check found stronger signals pointing to a fall 2026 date instead (see statusNote). Unresolved date conflict: originally Jul 25 (tritour.org) vs Jul 26 (Asdeporte). Re-checked 2026-07-24 by search (direct fetch of asdeporte.com and tritour.org blocked in this environment): mundo-runner.com, liebresmx.run and cbt.org.mx list the 2026 edition in autumn with the day disputed (Sep 19, Sep 20 or Oct 4). No single date confirmed — needs a human check of the Asdeporte event page before any date is published.",
+      "sourceNotes": "Date conflict: tritour lists Jul 25 vs Asdeporte's Jul 26 — unresolved, verify before relying on it. 2026-07-24 re-check found stronger signals pointing to a fall 2026 date instead (see statusNote). Unresolved date conflict: originally Jul 25 (tritour.org) vs Jul 26 (Asdeporte). Re-checked 2026-07-24 by search (direct fetch of asdeporte.com and tritour.org blocked in this environment): mundo-runner.com, liebresmx.run and cbt.org.mx list the 2026 edition in autumn with the day disputed (Sep 19, Sep 20 or Oct 4). No single date confirmed — needs a human check of the Asdeporte event page before any date is published. signupUrl removed 2026-08-10: the recorded date has passed and the real 2026 date is unresolved, so the link cannot be trusted as live registration.",
       "statusNoteEs": "Fecha sin confirmar. Esta carrera ya no aparece en julio de 2026 — varios calendarios ubican la edición 2026 en otoño, en el Bosque de Aragón, pero no coinciden en el día. Consulta con la organización antes de hacer planes."
     },
     {
@@ -1827,7 +1827,7 @@
       "state": "Estado de México",
       "venue": null,
       "organizer": "Asdeporte",
-      "signupUrl": "https://asdeporte.com/evento/discovery-trail---valle-de-bravo-2026-m4y/datos-del-evento",
+      "signupUrl": null,
       "sourceUrl": "https://asdeporte.com/evento/discovery-trail---valle-de-bravo-2026-m4y/datos-del-evento",
       "confidence": "low",
       "status": "changed",
@@ -1841,7 +1841,7 @@
         "Half"
       ],
       "statusNoteEs": "Pospuesta. Aún no se anuncia una nueva fecha.",
-      "sourceNotes": "Postponement per the Asdeporte page; pending confirmation via organiser social media."
+      "sourceNotes": "Postponement per the Asdeporte page; pending confirmation via organiser social media. signupUrl removed 2026-08-10: postponed with no announced date, so the registration link cannot be for a live edition."
     },
     {
       "id": "ultra-trail-barrancas-2026",
