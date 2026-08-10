@@ -217,7 +217,14 @@ export default function RaceDetailScreen() {
         </Pressable>
 
         <View style={styles.secondaryRow}>
-          <Pressable onPress={() => toggle(race.id)} style={styles.secondaryFlex}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              // A failed save used to be indistinguishable from a successful
+              // one: toggle() returned early and the tap did nothing visible.
+              if (!toggle(race.id)) Alert.alert(t('detail.saveFailed'));
+            }}
+            style={styles.secondaryFlex}>
             <GlassSurface
               scheme={scheme}
               radius={GlassRadii.pill}

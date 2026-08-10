@@ -17,28 +17,63 @@ const SCHEMA_VERSION = 1;
 // which is a blank screen instead of a degraded-but-working app.
 let db: SQLite.SQLiteDatabase | null = null;
 
+// Why storage is unavailable/degraded, for diagnostics. Every failure path
+// below records here AND logs, because the previous version swallowed every
+// error into a bare `catch {}` — which is why a completely dead saved-races
+// feature looked identical to an empty one, on device, with nothing in the
+// logs to go on.
+let lastError: string | null = null;
+
+const describe = (e: unknown): string =>
+  e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+
+function fail(stage: string, e: unknown): void {
+  lastError = `${stage}: ${describe(e)}`;
+  console.warn(`[db] ${lastError}`);
+}
+
 export function initDb(): void {
-  if (db) return; // already open (or already attempted+failed this call — see below)
+  if (db) return; // already open; a previous failure left db null, so we retry
 
   try {
     db = SQLite.openDatabaseSync('carrera.db');
+  } catch (e) {
+    db = null;
+    fail('openDatabaseSync failed', e);
+    return;
+  }
 
+  // Baseline schema, created on every open. `CREATE TABLE IF NOT EXISTS` is
+  // idempotent and cheap, so it deliberately does NOT sit behind the version
+  // read: this used to run only when `PRAGMA user_version` came back < 1, so
+  // if that read threw, the catch nulled the handle and the app was left with
+  // no tables, no storage, and no error — the save button toggled nothing and
+  // My Races stayed empty forever. Table creation must not depend on
+  // bookkeeping succeeding.
+  try {
+    db.execSync(
+      `CREATE TABLE IF NOT EXISTS saved_races (
+         id TEXT PRIMARY KEY NOT NULL,
+         saved_at INTEGER NOT NULL
+       );
+       CREATE TABLE IF NOT EXISTS prefs (
+         key TEXT PRIMARY KEY NOT NULL,
+         value TEXT NOT NULL
+       );`,
+    );
+  } catch (e) {
+    // No tables means genuinely unusable — this one does justify dropping it.
+    db = null;
+    fail('schema creation failed', e);
+    return;
+  }
+
+  // Version bookkeeping is BEST-EFFORT and must never null the handle: the
+  // tables above already exist, so reads and writes work regardless of whether
+  // we can read or stamp PRAGMA user_version.
+  try {
     const versionRow = db.getFirstSync<{ user_version: number }>('PRAGMA user_version');
     let version = versionRow?.user_version ?? 0;
-
-    if (version < 1) {
-      db.execSync(
-        `CREATE TABLE IF NOT EXISTS saved_races (
-           id TEXT PRIMARY KEY NOT NULL,
-           saved_at INTEGER NOT NULL
-         );
-         CREATE TABLE IF NOT EXISTS prefs (
-           key TEXT PRIMARY KEY NOT NULL,
-           value TEXT NOT NULL
-         );`,
-      );
-      version = 1;
-    }
 
     // Forward-only migration ladder. Add new steps here, in order, each
     // bumping `version` by exactly one. A future column addition must use
@@ -50,12 +85,27 @@ export function initDb(): void {
     //   version = 2;
     // }
 
-    db.execSync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
-  } catch {
-    // Open or migration failed — leave db null so every other function
-    // below degrades to a safe empty/no-op result instead of throwing.
-    db = null;
+    if (version !== SCHEMA_VERSION) {
+      db.execSync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      version = SCHEMA_VERSION;
+    }
+    lastError = null;
+  } catch (e) {
+    // Non-fatal: saving still works. The cost is that a FUTURE migration step
+    // can't sequence itself off user_version on this device, so if this ever
+    // starts appearing in logs it must be fixed before shipping migration 2.
+    fail('version bookkeeping failed (non-fatal, storage still works)', e);
   }
+}
+
+/** Why storage is unavailable or degraded, or null when healthy. */
+export function getStorageError(): string | null {
+  return lastError;
+}
+
+/** True when the store is open and writable — used to surface save failures. */
+export function isStorageReady(): boolean {
+  return db !== null;
 }
 
 export function getPref(key: string): string | null {
@@ -63,7 +113,8 @@ export function getPref(key: string): string | null {
   try {
     const row = db.getFirstSync<{ value: string }>('SELECT value FROM prefs WHERE key = ?', key);
     return row?.value ?? null;
-  } catch {
+  } catch (e) {
+    fail('getPref failed', e);
     return null;
   }
 }
@@ -73,7 +124,8 @@ export function setPref(key: string, value: string): boolean {
   try {
     db.runSync('INSERT OR REPLACE INTO prefs (key, value) VALUES (?, ?)', key, value);
     return true;
-  } catch {
+  } catch (e) {
+    fail('setPref failed', e);
     return false;
   }
 }
@@ -85,7 +137,8 @@ export function getSavedIds(): string[] {
       'SELECT id FROM saved_races ORDER BY saved_at DESC',
     );
     return rows.map((r) => r.id);
-  } catch {
+  } catch (e) {
+    fail('getSavedIds failed', e);
     return [];
   }
 }
@@ -95,7 +148,8 @@ export function saveRace(id: string): boolean {
   try {
     db.runSync('INSERT OR REPLACE INTO saved_races (id, saved_at) VALUES (?, ?)', id, Date.now());
     return true;
-  } catch {
+  } catch (e) {
+    fail('saveRace failed', e);
     return false;
   }
 }
@@ -105,7 +159,8 @@ export function removeRace(id: string): boolean {
   try {
     db.runSync('DELETE FROM saved_races WHERE id = ?', id);
     return true;
-  } catch {
+  } catch (e) {
+    fail('removeRace failed', e);
     return false;
   }
 }
