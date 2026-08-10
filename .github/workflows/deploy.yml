@@ -39,6 +39,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Type-check
+        run: npx tsc --noEmit
+
       - name: Export web build
         env:
           EXPO_PUBLIC_MAPBOX_TOKEN: ${{ secrets.EXPO_PUBLIC_MAPBOX_TOKEN }}

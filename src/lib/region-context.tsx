@@ -17,6 +17,12 @@ import { DEFAULT_REGION_ID, getRegion, type Region } from '@/lib/regions';
 
 const PREF_KEY = 'regionId';
 const PREF_METHOD = 'regionMethod';
+// Records that a first-launch AUTOMATIC detection was attempted, regardless
+// of outcome, so a denied permission or an offline device doesn't re-prompt
+// (and re-hit ipapi.co) on every cold start. Only gates the silent
+// first-launch attempt below — the picker's "use my location" button always
+// calls detect() directly and bypasses this.
+const PREF_DETECT_ATTEMPTED = 'regionDetectAttempted';
 
 /** How the current region was set — drives the "location in use" signifier. */
 export type RegionMethod = 'gps' | 'ip' | 'manual';
@@ -62,10 +68,12 @@ export function RegionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let stored: string | null = null;
     let storedMethod: string | null = null;
+    let attempted: string | null = null;
     try {
       initDb(); // idempotent — removes any provider-ordering dependency
       stored = getPref(PREF_KEY);
       storedMethod = getPref(PREF_METHOD);
+      attempted = getPref(PREF_DETECT_ATTEMPTED);
     } catch (e) {
       console.warn('read region pref failed', e);
     }
@@ -74,9 +82,18 @@ export function RegionProvider({ children }: { children: ReactNode }) {
       if (storedMethod === 'gps' || storedMethod === 'ip' || storedMethod === 'manual') {
         setMethodState(storedMethod);
       }
-    } else {
-      // First launch: detect (GPS prompt → IP), keep default if both fail.
-      detect();
+    } else if (attempted !== '1') {
+      // First launch, never attempted before: detect (GPS prompt → IP),
+      // keep default if both fail. Record the attempt regardless of outcome
+      // so a denial/offline result doesn't re-prompt on every cold start —
+      // the picker's "use my location" button can still always retry.
+      detect().finally(() => {
+        try {
+          setPref(PREF_DETECT_ATTEMPTED, '1');
+        } catch (e) {
+          console.warn('persist region-detect-attempted failed', e);
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

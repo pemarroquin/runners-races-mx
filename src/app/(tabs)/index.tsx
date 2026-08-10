@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -24,11 +25,10 @@ import {
   daysUntil,
   distanceTagLabelKey,
   getAvailableMonths,
-  getRaces,
   monthKey,
   type DistanceTag,
 } from '@/lib/races';
-import { useRacesVersion } from '@/lib/races-provider';
+import { useRaces, useRacesStatus } from '@/lib/races-provider';
 import { useRegion } from '@/lib/region-context';
 import { raceInRegion } from '@/lib/regions';
 
@@ -48,35 +48,67 @@ export default function FeedScreen() {
   const [query, setQuery] = useState('');
   const [distances, setDistances] = useState<Set<DistanceTag>>(new Set());
   const [months, setMonths] = useState<Set<string>>(new Set());
+  const [showPast, setShowPast] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const racesVersion = useRacesVersion();
+  const [pulling, setPulling] = useState(false);
+  const allRaces = useRaces();
+  const { status, refresh } = useRacesStatus();
   const { region, method } = useRegion();
   const locationInUse = method === 'gps' || method === 'ip';
 
+  // A month picked in one region rarely exists in another — drop the
+  // selection on region change so a stray key can never survive into a
+  // filter that silently prunes results with no visible way to clear it.
+  useEffect(() => {
+    setMonths(new Set());
+  }, [region.id]);
+
   const races = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return getRaces().filter((r) => {
+    return allRaces.filter((r) => {
       if (!raceInRegion(r, region)) return false;
-      const days = daysUntil(r.date);
-      if (!(r.date === null || (days !== null && days >= 0))) return false;
+      if (!showPast) {
+        const days = daysUntil(r.date);
+        if (!(r.date === null || (days !== null && days >= 0))) return false;
+      }
       const matchesQuery =
         !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     });
-  }, [query, distances, months, racesVersion, region]);
+  }, [query, distances, months, allRaces, region, showPast]);
 
   // Distinguish "region has no data at all" from "filters matched nothing".
   const regionHasData = useMemo(
-    () => getRaces().some((r) => raceInRegion(r, region)),
-    [racesVersion, region],
+    () => allRaces.some((r) => raceInRegion(r, region)),
+    [allRaces, region],
   );
 
+  // Search is otherwise silently region-scoped: a real race in another city
+  // reads as "not found". When the current region+filters produced nothing
+  // and the user actually typed a query, count matches outside the region so
+  // the empty state can point them at the city picker instead of a dead end.
+  const otherRegionsCount = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (races.length !== 0 || !q) return 0;
+    return allRaces.filter((r) => {
+      if (raceInRegion(r, region)) return false;
+      if (!showPast) {
+        const days = daysUntil(r.date);
+        if (!(r.date === null || (days !== null && days >= 0))) return false;
+      }
+      const matchesQuery = r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
+      const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
+      const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
+      return matchesQuery && matchesDistance && matchesMonth;
+    }).length;
+  }, [races.length, query, distances, months, allRaces, region, showPast]);
+
   const availableMonths = useMemo(
-    () => getAvailableMonths(getRaces().filter((r) => raceInRegion(r, region)), locale),
-    [racesVersion, region, locale],
+    () => getAvailableMonths(allRaces.filter((r) => raceInRegion(r, region)), locale),
+    [allRaces, region, locale],
   );
 
   const toggleDistance = useCallback(
@@ -98,6 +130,20 @@ export default function FeedScreen() {
 
   const activeFilterCount = distances.size + months.size;
   const hasActiveFilters = Boolean(query) || activeFilterCount > 0;
+
+  // The provider auto-refreshes on mount, so `status` alone would flash the
+  // pull-to-refresh spinner on every cold start. Only reflect it once the
+  // user has actually pulled.
+  const onRefresh = useCallback(() => {
+    setPulling(true);
+    refresh();
+  }, [refresh]);
+  useEffect(() => {
+    if (status !== 'loading') setPulling(false);
+  }, [status]);
+
+  const filterButtonLabel =
+    activeFilterCount > 0 ? `${t('filters.title')} (${activeFilterCount})` : t('filters.title');
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -128,6 +174,8 @@ export default function FeedScreen() {
             <Pressable
               key={l}
               onPress={() => setLocale(l)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: locale === l }}
               style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
               <Text
                 style={[styles.langText, { color: locale === l ? c.background : c.textSecondary }]}>
@@ -148,7 +196,10 @@ export default function FeedScreen() {
             style={[styles.search, { color: c.text }]}
           />
         </GlassSurface>
-        <Pressable onPress={() => setFilterSheetOpen(true)}>
+        <Pressable
+          onPress={() => setFilterSheetOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={filterButtonLabel}>
           {({ pressed }) => (
             <GlassSurface
               scheme={scheme}
@@ -164,12 +215,27 @@ export default function FeedScreen() {
             </GlassSurface>
           )}
         </Pressable>
+        <Pressable
+          onPress={() => setShowPast((v) => !v)}
+          accessibilityRole="button">
+          {({ pressed }) => (
+            <GlassSurface
+              scheme={scheme}
+              radius={GlassRadii.pill}
+              style={pressed && styles.pressed}
+              contentStyle={styles.filterContent}>
+              <Text style={[styles.filterBtnText, { color: c.text }]}>
+                {showPast ? t('feed.hidePast') : t('feed.showPast')}
+              </Text>
+            </GlassSurface>
+          )}
+        </Pressable>
       </View>
 
       {hasActiveFilters && (
         <View style={styles.filterRow}>
           {query.length > 0 && (
-            <Pressable onPress={() => setQuery('')}>
+            <Pressable onPress={() => setQuery('')} accessibilityRole="button">
               <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                 <Text style={[styles.chipText, { color: c.text }]}>{query}</Text>
                 <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
@@ -177,7 +243,7 @@ export default function FeedScreen() {
             </Pressable>
           )}
           {Array.from(distances).map((tag) => (
-            <Pressable key={tag} onPress={() => toggleDistance(tag)}>
+            <Pressable key={tag} onPress={() => toggleDistance(tag)} accessibilityRole="button">
               <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                 <Text style={[styles.chipText, { color: c.text }]}>
                   {t(distanceTagLabelKey(tag))}
@@ -188,9 +254,10 @@ export default function FeedScreen() {
           ))}
           {Array.from(months).map((key) => {
             const m = availableMonths.find((am) => am.key === key);
-            const label = key === 'tbd' ? t('common.tbd') : (m?.label ?? key);
+            const label = key === 'tbd' ? t('common.tbd') : m?.label;
+            if (!label) return null;
             return (
-              <Pressable key={key} onPress={() => toggleMonth(key)}>
+              <Pressable key={key} onPress={() => toggleMonth(key)} accessibilityRole="button">
                 <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                   <Text style={[styles.chipText, { color: c.text }]}>{label}</Text>
                   <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
@@ -210,6 +277,9 @@ export default function FeedScreen() {
         keyExtractor={(r) => r.id}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={pulling && status === 'loading'} onRefresh={onRefresh} />
+        }
         renderItem={({ item, index }) => (
           // Staggered reveal, capped at the first 8 rows so rows mounted while
           // scrolling (or while typing in search) get a quick plain fade
@@ -223,9 +293,21 @@ export default function FeedScreen() {
           </Animated.View>
         )}
         ListEmptyComponent={
-          <Text style={[styles.empty, { color: c.textSecondary }]}>
-            {regionHasData ? t('feed.empty') : t('city.emptyRegion', { city: region.name })}
-          </Text>
+          <View>
+            <Text style={[styles.empty, { color: c.textSecondary }]}>
+              {regionHasData ? t('feed.empty') : t('city.emptyRegion', { city: region.name })}
+            </Text>
+            {otherRegionsCount > 0 && (
+              <Pressable
+                onPress={() => setPickerOpen(true)}
+                accessibilityRole="button"
+                hitSlop={6}>
+                <Text style={[styles.otherCitiesText, { color: c.accent }]}>
+                  {t('feed.otherCities', { count: otherRegionsCount })}
+                </Text>
+              </Pressable>
+            )}
+          </View>
         }
       />
 
@@ -283,7 +365,10 @@ const styles = StyleSheet.create({
   searchContent: { paddingHorizontal: Spacing.three },
   search: {
     paddingVertical: Spacing.two,
-    fontSize: 15,
+    // 16px is the iOS Safari threshold — anything smaller triggers an
+    // auto-zoom on focus that leaves the whole page zoomed in until the
+    // user manually pinches back out.
+    fontSize: 16,
   },
   filterContent: {
     flexDirection: 'row',
@@ -322,4 +407,10 @@ const styles = StyleSheet.create({
   clearAllText: { fontSize: 13, fontWeight: '600' },
   list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },
   empty: { textAlign: 'center', marginTop: Spacing.six, fontSize: 15 },
+  otherCitiesText: {
+    textAlign: 'center',
+    marginTop: Spacing.two,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });

@@ -24,11 +24,17 @@ function readSaved(): SavedRow[] {
   }
 }
 
-function writeSaved(rows: SavedRow[]): void {
+function writeSaved(rows: SavedRow[]): boolean {
   try {
     globalThis.localStorage?.setItem('carrera:saved_races', JSON.stringify(rows));
+    return true;
   } catch {
-    // non-fatal: save won't persist this session
+    // Storage threw (Safari private browsing, quota exceeded, etc). The
+    // caller has usually already optimistically updated in-memory state, so
+    // report failure back rather than discarding it — otherwise the UI
+    // shows "Saved" for a write that silently vanished on reload, which is
+    // exactly the symptom chased down before on the live web deploy.
+    return false;
   }
 }
 
@@ -40,14 +46,14 @@ export function getSavedIds(): string[] {
     .map((r) => r.id);
 }
 
-export function saveRace(id: string): void {
+export function saveRace(id: string): boolean {
   const rows = readSaved().filter((r) => r.id !== id);
   rows.push({ id, saved_at: Date.now() });
-  writeSaved(rows);
+  return writeSaved(rows);
 }
 
-export function removeRace(id: string): void {
-  writeSaved(readSaved().filter((r) => r.id !== id));
+export function removeRace(id: string): boolean {
+  return writeSaved(readSaved().filter((r) => r.id !== id));
 }
 
 // Prefs persist via localStorage on web (available in every browser target).
@@ -59,10 +65,13 @@ export function getPref(key: string): string | null {
   }
 }
 
-export function setPref(key: string, value: string): void {
+export function setPref(key: string, value: string): boolean {
   try {
     globalThis.localStorage?.setItem(`carrera:${key}`, value);
+    return true;
   } catch {
-    // non-fatal: preference just won't persist
+    // non-fatal to the app (caller still gets a definitive result back),
+    // but the preference itself will not persist
+    return false;
   }
 }
