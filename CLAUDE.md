@@ -32,7 +32,7 @@ So, when a sweep finds something:
 | Venue moved | `venue`, and `city`/`start` if the municipality or coordinates changed | note it |
 | Date wrong / race already run | `date` | note it |
 | Race canceled | `status: 'canceled'` **and** `signupUrl: null` | note it |
-| Postponed, new date unknown | `date: null`, `status: 'changed'` | note it |
+| Postponed, new date unknown | `date: null`, `status: 'changed'` **and** `signupUrl: null` | note it |
 | Start time found or corrected | `time` | note it |
 | Current-edition registration found | `signupUrl` | note it |
 | Nothing changed | `status: 'ok'` | short note |
