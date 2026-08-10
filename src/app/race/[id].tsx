@@ -64,13 +64,18 @@ export default function RaceDetailScreen() {
   const saved = isSaved(race.id);
   const days = daysUntil(race.date);
   const dateLabel = formatDate(race.date, locale);
+  const esNote = locale === 'es' ? race.notesEs : null;
+  const noteText = typeof esNote === 'string' && esNote !== '' ? esNote : race.notes;
+  // Same locale fallback for the status banner. Sweeps write statusNote in
+  // English, so without this a Spanish-default app shows an English banner.
+  const esStatusNote = locale === 'es' ? race.statusNoteEs : null;
+  const statusNoteText =
+    typeof esStatusNote === 'string' && esStatusNote !== '' ? esStatusNote : race.statusNote;
   // RN's onTextLayout can't be used to detect truncation here: iOS reports
   // only the clamped lines when numberOfLines is set, and react-native-web
   // doesn't implement the prop at all. A length threshold is imprecise but
   // behaves the same on every platform.
-  const noteIsLong = (race.statusNote?.length ?? 0) > 160;
-  const esNote = locale === 'es' ? race.notesEs : null;
-  const noteText = typeof esNote === 'string' && esNote !== '' ? esNote : race.notes;
+  const noteIsLong = (statusNoteText?.length ?? 0) > 160;
 
   async function addToCalendar() {
     if (!race || !race.date) {
@@ -154,10 +159,10 @@ export default function RaceDetailScreen() {
             <Text style={styles.statusTitle}>
               {race.status === 'canceled' ? t('common.canceled') : t('common.changed')}
             </Text>
-            {race.statusNote && (
+            {statusNoteText && (
               <>
                 <Text style={styles.statusNote} numberOfLines={noteExpanded ? undefined : 3}>
-                  {race.statusNote}
+                  {statusNoteText}
                 </Text>
                 {noteIsLong && (
                   <Pressable accessibilityRole="button" onPress={() => setNoteExpanded((v) => !v)}>

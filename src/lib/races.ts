@@ -83,6 +83,7 @@ export interface Race {
   // Pre-race verification (written by the weekly race-watch agent; absent = ok)
   status?: 'ok' | 'changed' | 'canceled' | null;
   statusNote?: string | null; // what changed, with source — shown to the user
+  statusNoteEs?: string | null; // Spanish translation of `statusNote`; falls back to `statusNote`
   lastVerified?: string | null; // YYYY-MM-DD of the last verification pass
 }
 

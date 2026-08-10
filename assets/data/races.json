@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07.",
-    "generatedOn": "2026-08-07",
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose.",
+    "generatedOn": "2026-08-10",
     "count": 195,
     "distanceTags": [
       "3K",
@@ -123,30 +123,31 @@
         "5K",
         "10K"
       ],
-      "city": "Monterrey",
+      "city": "San Nicolás de los Garza",
       "state": "Nuevo León",
-      "venue": "Parque Fundidora",
+      "venue": "Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil, Ciudad Universitaria UANL",
       "organizer": "Asdeporte",
       "signupUrl": "https://www.asdeporte.com/evento/carrera-saba--corre-sin-tabu-es-monterrey-2026-nks/datos-del-evento",
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "high",
       "status": "changed",
-      "statusNote": "CORRECCIÓN DE FECHA (2026-07-27): la fecha correcta es 16 de agosto de 2026, no el 9. Según sdpnoticias.com, la gira 2026 'Corre Sin Tabúes' tiene: CDMX el 9 de agosto (evento distinto), Monterrey el 16 de agosto, Guadalajara el 23 de agosto — todas ya con cupo agotado. VENUE CHANGE found via web search 2026-08-10: multiple sources (asdeporte convocatoria copy, elhorizonte.mx road-closure coverage) now describe the Monterrey start/finish as Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil, Ciudad Universitaria UANL, San Nicolás de los Garza — not Parque Fundidora as previously recorded here. Registration is AGOTADA (sold out) per Asdeporte; that is not a cancellation signal. Date (Aug 16, 2026) reconfirmed, no cancellation/postponement/aviso signals found.",
+      "statusNote": "The start and finish have moved: this race now starts on Av. Pedro de Alba, in front of the Facultad de Ingeniería Civil at Ciudad Universitaria UANL, San Nicolás — not Parque Fundidora. The date, 16 August 2026, is confirmed. Registration is sold out.",
       "lastVerified": "2026-08-10",
       "notes": "Includes a 3K walk option.",
       "notesEs": "Incluye una opción de caminata de 3K.",
       "start": {
-        "lat": 25.6785,
-        "lng": -100.2847,
+        "lat": 25.7226,
+        "lng": -100.3122,
         "approx": true
       },
-      "sourceNotes": "Date conflict RESOLVED 2026-07-27: independent news source (sdpnoticias.com) corroborates Aug 16 as the Monterrey leg of the 2026 tour, distinct from Aug 9 CDMX and Aug 23 Guadalajara legs. TriTour's Aug 16 was correct; Aug 9 (AANL/Idemsport) was a mix-up with the CDMX date."
+      "sourceNotes": "Date conflict RESOLVED 2026-07-27: independent news source (sdpnoticias.com) corroborates Aug 16 as the Monterrey leg of the 2026 tour, distinct from Aug 9 CDMX and Aug 23 Guadalajara legs. TriTour's Aug 16 was correct; Aug 9 (AANL/Idemsport) was a mix-up with the CDMX date. Date corrected 2026-07-27: the correct date is 16 Aug 2026, not 9 Aug — per sdpnoticias.com the 2026 \"Corre Sin Tabúes\" tour runs CDMX 9 Aug (a distinct event), Monterrey 16 Aug, Guadalajara 23 Aug. Venue change found 2026-08-10 via the Asdeporte convocatoria copy and elhorizonte.mx road-closure coverage. Sold out per Asdeporte — not a cancellation signal. Venue, city and start coordinates back-filled 2026-08-10 (were still Parque Fundidora).",
+      "statusNoteEs": "Cambiaron la salida y la meta: la carrera ahora arranca en Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil de Ciudad Universitaria UANL, San Nicolás — ya no en el Parque Fundidora. La fecha, 16 de agosto de 2026, está confirmada. Las inscripciones están agotadas."
     },
     {
       "id": "heroes-ocultos-bionella-2026",
       "name": "Carrera Héroes Ocultos BioNella by Sabori (13ª Edición)",
       "date": "2026-08-23",
-      "time": null,
+      "time": "06:45",
       "distances": [
         "5K",
         "10K",
@@ -159,13 +160,18 @@
       ],
       "city": "San Pedro Garza García",
       "state": "Nuevo León",
-      "venue": "Valle Oriente",
+      "venue": "Circuito Valle Oriente",
       "organizer": "Trotime",
       "signupUrl": "https://www.trotime.com.mx/convocatoria?edicionEventoId=d3b659ed-d8c1-434b-a545-c1adb089e44c",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
       "confidence": "high",
       "notes": "13th edition road race. Venue per AANL calendar.",
-      "notesEs": "Carrera en ruta, 13ª edición. Sede según el calendario de AANL."
+      "notesEs": "Carrera en ruta, 13ª edición. Sede según el calendario de AANL.",
+      "status": "changed",
+      "statusNote": "Start time confirmed: 06:45 at Circuito Valle Oriente, San Pedro Garza García. The date, 23 August 2026, is confirmed.",
+      "sourceNotes": "Date conflict recorded: the AANL rutas calendar lists \"Héroes Ocultos 13° edición\" on BOTH 16 and 23 Aug 2026. Kept 23 Aug — the organizer (Trotime), Runera and Compite.mx all agree on it; the 16 Aug row looks like a duplicate calendar artifact. Start time and venue confirmed 2026-08-10 via the Trotime convocatoria (organiser/timer), Runera and Compite.mx.",
+      "lastVerified": "2026-08-10",
+      "statusNoteEs": "Hora de salida confirmada: 06:45 en Circuito Valle Oriente, San Pedro Garza García. La fecha, 23 de agosto de 2026, está confirmada."
     },
     {
       "id": "chipinque-trail-2026",
@@ -189,7 +195,10 @@
       "confidence": "medium",
       "notes": "Mountain trail race; part of fees donated to park conservation.",
       "notesEs": "Carrera de trail de montaña; parte de la cuota se dona a la conservación del parque.",
-      "sourceNotes": "Date from AANL calendar; dedicated 2026 event page not yet published (2025 edition ran Aug 24 at 07:30, ~$670 MXN). Only the 2025 Idemsport event page exists so far."
+      "sourceNotes": "Date from AANL calendar; dedicated 2026 event page not yet published (2025 edition ran Aug 24 at 07:30, ~$670 MXN). Only the 2025 Idemsport event page exists so far.",
+      "status": "ok",
+      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Ecológico Chipinque, 6K and 10K. Start time still unpublished for this edition (the 2025 edition started 07:30). No cancellation signals found.",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "carrera-cruz-roja-2026",
@@ -676,7 +685,6 @@
       "signupUrl": null,
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
-      "statusNote": "Verification inconclusive again this run: idemsport.com (sourceUrl) still blocked by network/proxy policy (403), no direct fetch possible. Web search (2026-07-31) found no cancellation/postponement/aviso signals for this race, but also no independent second source reconfirming the Aug 2, 2026 date. Recommend re-check next cycle.",
       "lastVerified": "2026-07-31",
       "notes": null,
       "state": "Nuevo León",
@@ -685,7 +693,7 @@
         "5K",
         "10K"
       ],
-      "sourceNotes": "On both AANL and Idemsport calendars. Edition number differs between sources (26ª Idemsport, 27ª AANL)."
+      "sourceNotes": "On both AANL and Idemsport calendars. Edition number differs between sources (26ª Idemsport, 27ª AANL). Verification inconclusive again this run: idemsport.com (sourceUrl) still blocked by network/proxy policy (403), no direct fetch possible. Web search (2026-07-31) found no cancellation/postponement/aviso signals for this race, but also no independent second source reconfirming the Aug 2, 2026 date. Recommend re-check next cycle."
     },
     {
       "id": "5k-nocturno-guadalupe-2026",
@@ -707,7 +715,10 @@
       "distanceTags": [
         "5K"
       ],
-      "sourceNotes": "On both calendars. No start time published yet. 2025 edition registered via Trotime + Gimnasio Cedereg."
+      "sourceNotes": "On both calendars. No start time published yet. 2025 edition registered via Trotime + Gimnasio Cedereg.",
+      "status": "ok",
+      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for Fri 28 Aug 2026 in Guadalupe, 5K. Start time and venue are still unpublished on the calendar. No cancellation signals found.",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "san-vicente-paul-2026",
@@ -736,7 +747,10 @@
         "lng": -100.2847,
         "approx": true
       },
-      "sourceNotes": "On both calendars. Registration not yet published as of 2026-07-04."
+      "sourceNotes": "On both calendars. Registration not yet published as of 2026-07-04.",
+      "status": "ok",
+      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Fundidora, 5K and 1K. Start time still unpublished. No cancellation signals found.",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "ios-offices-2026",
@@ -1097,7 +1111,7 @@
       "id": "maraton-cdmx-telcel-2026",
       "name": "XLIII Maratón de la Ciudad de México Telcel 2026",
       "date": "2026-08-30",
-      "time": "07:00",
+      "time": "05:50",
       "distances": [
         "42.195K"
       ],
@@ -1105,14 +1119,19 @@
       "state": "Ciudad de México",
       "venue": "Salida Ciudad Universitaria, meta Zócalo",
       "organizer": "Gobierno de la CDMX / Emoción Deportiva",
-      "signupUrl": "https://inscripciones.marcate.events",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1770827883/",
       "sourceUrl": "https://runmx.com/events/maraton-de-la-ciudad-de-mexico-2026/",
       "confidence": "high",
-      "notes": "World Athletics Label Race.",
-      "notesEs": "Carrera con Label de World Athletics.",
+      "notes": "World Athletics Gold Label race. ~30,000 runners. Start blocks are staggered from 05:45 (wheelchair) to 06:30. From $870 MXN; online registration closes 26 Aug.",
+      "notesEs": "Carrera con Etiqueta Oro de World Athletics. ~30,000 corredores. Los bloques de salida son escalonados, de 05:45 (silla de ruedas) a 06:30. Desde $870 MXN; las inscripciones en línea cierran el 26 de agosto.",
       "distanceTags": [
         "Full"
-      ]
+      ],
+      "status": "changed",
+      "statusNote": "Start time corrected to 05:50 — this listing previously said 07:00, which is not a start block for this race. Blocks are staggered from 05:45 (wheelchair) to 06:30, starting on Av. Insurgentes by the Estadio Olímpico Universitario and finishing at the Zócalo. Online registration closes 26 August.",
+      "sourceNotes": "Start-time conflict recorded, not resolved silently: Marcate (registrar) says 05:50; emociondeportiva.com and tritour.org describe staggered blocks from 05:45 (wheelchair) to 06:30. Kept 05:50 as the registrar-published mass start. Start time corrected 2026-08-10 from Marcate, the official registrar. Date, route and venue reconfirmed; signupUrl repointed from the generic inscripciones.marcate.events to the current-edition page.",
+      "lastVerified": "2026-08-10",
+      "statusNoteEs": "Corregimos la hora de salida a 05:50 — antes aparecía 07:00, que no es un bloque de salida de esta carrera. Los bloques son escalonados, de 05:45 (silla de ruedas) a 06:30, con salida en Av. Insurgentes junto al Estadio Olímpico Universitario y meta en el Zócalo. Las inscripciones en línea cierran el 26 de agosto."
     },
     {
       "id": "adidas-split-30k-cdmx-2026",
@@ -1204,12 +1223,15 @@
       "signupUrl": "https://www.asdeporte.com/evento/carrera-itam-2026-qsu/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/carrera-itam-2026-qsu/datos-del-evento",
       "confidence": "high",
-      "notes": "From $600 MXN; virtual option Aug 22-23.",
-      "notesEs": "Desde $600 MXN; opción virtual del 22 al 23 de agosto.",
+      "notes": "80th-anniversary edition, benefiting student housing and maintenance grants. From $600 MXN; cap 2,000. Virtual option Aug 22-23. Cut-off 45 min (5K) / 90 min (10K).",
+      "notesEs": "Edición del 80 aniversario, a beneficio de becas de manutención y hospedaje. Desde $600 MXN; cupo 2,000. Opción virtual del 22 al 23 de agosto. Tiempo límite 45 min (5K) / 90 min (10K).",
       "distanceTags": [
         "5K",
         "10K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Confirmed for 23 Aug 2026, 06:30, Av. de los Compositores at Fuente Xochipilli, 2ª Sección Bosque de Chapultepec, per itam.mx and the Asdeporte convocatoria. Cap 2,000; marks the ITAM 80th anniversary; virtual 5/10K option runs 22-23 Aug. Cut-offs 45 min (5K) / 90 min (10K). No cancellation signals found (2026-08-10).",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "simicarrera-cdmx-2026",
@@ -1236,7 +1258,10 @@
         "5K",
         "10K",
         "15K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Confirmed for 23 Aug 2026, 06:00, Paseo de la Reforma, per the Asdeporte convocatoria and simicarreras.com.mx. Cap 10,000; 3K SimiPet walk plus 5/10/15K. Online registration is code-redemption only; general registration is in person at Farmacias Similares. No cancellation/postponement signals found (2026-08-10).",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "nike-after-dark-cdmx-2026",
@@ -1323,7 +1348,7 @@
       "sourceUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
       "confidence": "medium",
       "status": "changed",
-      "statusNote": "POSPUESTO: originally Jul 5, 2026; Asdeporte says new date to be announced.",
+      "statusNote": "Postponed. It was scheduled for 5 July 2026 and the organiser says a new date will be announced.",
       "lastVerified": "2026-07-05",
       "notes": "From $1,269 MXN.",
       "notesEs": "Desde $1,269 MXN.",
@@ -1331,7 +1356,9 @@
         "3K",
         "5K",
         "10K"
-      ]
+      ],
+      "statusNoteEs": "Pospuesta. Estaba programada para el 5 de julio de 2026 y la organización anunciará una nueva fecha.",
+      "sourceNotes": "Postponement per the Asdeporte event page."
     },
     {
       "id": "medio-maraton-metepec-2026",
@@ -1515,14 +1542,15 @@
       "sourceUrl": "https://tritour.org/eventos/pandemia-run-5k-2026-cdmx",
       "confidence": "medium",
       "status": "changed",
-      "statusNote": "POSSIBLE MAJOR DATE CHANGE, unresolved: earlier conflict was Jul 25 (tritour.org) vs Jul 26 (Asdeporte). Re-checked via WebSearch 2026-07-24 (direct fetch of asdeporte.com/tritour.org still blocked in this environment): multiple aggregators (mundo-runner.com, liebresmx.run, cbt.org.mx) now list the 2026 edition in fall 2026 (specific day disputed across sources: Sep 19, Sep 20, or Oct 4, 2026) at Bosque de Aragón, not July at all. No single date confirmed — do not trust any specific date here until a human directly checks https://www.asdeporte.com/evento/------pandemia-run-5k---operacio-n-rescate-animal-2026-----cks/datos-del-evento.",
+      "statusNote": "Date unconfirmed. This race is no longer listed for July 2026 — several calendars now place the 2026 edition in the autumn at Bosque de Aragón, but they disagree on the day. Check with the organiser before making plans.",
       "lastVerified": "2026-07-24",
       "notes": "Zombie-themed charity run (animal rescue).",
       "notesEs": "Carrera benéfica de temática zombi (a favor de rescate animal).",
       "distanceTags": [
         "5K"
       ],
-      "sourceNotes": "Date conflict: tritour lists Jul 25 vs Asdeporte's Jul 26 — unresolved, verify before relying on it. 2026-07-24 re-check found stronger signals pointing to a fall 2026 date instead (see statusNote)."
+      "sourceNotes": "Date conflict: tritour lists Jul 25 vs Asdeporte's Jul 26 — unresolved, verify before relying on it. 2026-07-24 re-check found stronger signals pointing to a fall 2026 date instead (see statusNote). Unresolved date conflict: originally Jul 25 (tritour.org) vs Jul 26 (Asdeporte). Re-checked 2026-07-24 by search (direct fetch of asdeporte.com and tritour.org blocked in this environment): mundo-runner.com, liebresmx.run and cbt.org.mx list the 2026 edition in autumn with the day disputed (Sep 19, Sep 20 or Oct 4). No single date confirmed — needs a human check of the Asdeporte event page before any date is published.",
+      "statusNoteEs": "Fecha sin confirmar. Esta carrera ya no aparece en julio de 2026 — varios calendarios ubican la edición 2026 en otoño, en el Bosque de Aragón, pero no coinciden en el día. Consulta con la organización antes de hacer planes."
     },
     {
       "id": "pisadas-naturales-cani-2026",
@@ -1658,14 +1686,14 @@
       "id": "mas-arboles-mas-bosques-2026",
       "name": "Carrera Más Árboles, Más Bosques 2026",
       "date": "2026-08-09",
-      "time": null,
+      "time": "07:00",
       "distances": [
         "5K",
         "10K"
       ],
       "city": "Ciudad de México",
       "state": "Ciudad de México",
-      "venue": null,
+      "venue": "2ª Sección del Bosque de Chapultepec (Fuente Xochipilli)",
       "organizer": null,
       "signupUrl": null,
       "sourceUrl": "https://runera.mx/carreras/ciudad-de-mexico",
@@ -1699,7 +1727,10 @@
       "notesEs": "6K de temática color run; inscripciones abiertas.",
       "distanceTags": [
         "5K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Confirmed for 23 Aug 2026, 08:00, Huerto Urbano del Bosque de Aragón, 6K, per the Asdeporte convocatoria and Runera. Pet-friendly. No cancellation/postponement signals found (2026-08-10).",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "batman-run-cdmx-2026",
@@ -1800,7 +1831,7 @@
       "sourceUrl": "https://asdeporte.com/evento/discovery-trail---valle-de-bravo-2026-m4y/datos-del-evento",
       "confidence": "low",
       "status": "changed",
-      "statusNote": "POSTPONED per Asdeporte page, pending confirmation via organizer social media.",
+      "statusNote": "Postponed. A new date has not been announced.",
       "lastVerified": "2026-07-05",
       "notes": "Also Canitrail 5K/10K and Trail Teens 3.2K.",
       "notesEs": "También hay Canitrail 5K/10K y Trail Teens 3.2K.",
@@ -1808,7 +1839,9 @@
         "5K",
         "10K",
         "Half"
-      ]
+      ],
+      "statusNoteEs": "Pospuesta. Aún no se anuncia una nueva fecha.",
+      "sourceNotes": "Postponement per the Asdeporte page; pending confirmation via organiser social media."
     },
     {
       "id": "ultra-trail-barrancas-2026",
@@ -2380,7 +2413,7 @@
       ],
       "city": "Guadalajara",
       "state": "Jalisco",
-      "venue": null,
+      "venue": "Calz. Independencia Sur 324 (oficinas de El Occidental), Centro Histórico",
       "organizer": "Asdeporte",
       "signupUrl": null,
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
@@ -2393,9 +2426,9 @@
     },
     {
       "id": "10k-internacional-comude-guadalajara-2026",
-      "name": "10K Internacional COMUDE Guadalajara 2026",
+      "name": "XXII 10K Internacional COMUDE Guadalajara y Bomberos 2026",
       "date": "2026-08-23",
-      "time": null,
+      "time": "06:00",
       "distances": [
         "10K"
       ],
@@ -2404,13 +2437,18 @@
       ],
       "city": "Guadalajara",
       "state": "Jalisco",
-      "venue": null,
+      "venue": "Av. Circunvalación Agustín Yáñez, entre la Glorieta Minerva y la calle Aurelio Aceves",
       "organizer": "COMUDE Guadalajara / Márcate",
-      "signupUrl": null,
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769457716",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
-      "confidence": "medium",
-      "notes": null,
-      "sourceNotes": "tritour listing (marcate slug); event page not rendered."
+      "confidence": "high",
+      "notes": "22nd edition, run in honour of Guadalajara's firefighters. $350 MXN; cap 10,000; registration closes Aug 22. Separate registration category for firefighters.",
+      "sourceNotes": "tritour listing (marcate slug); event page not rendered. Name, start time, venue and signupUrl filled in from Marcate (official registrar) 2026-08-10; confidence raised medium→high.",
+      "status": "changed",
+      "statusNote": "Details confirmed with the official registrar: 23 August 2026 at 06:00, starting on Av. Circunvalación Agustín Yáñez between the Glorieta Minerva and Aurelio Aceves. Registration closes 22 August, or earlier if the 10,000 places fill.",
+      "notesEs": "22ª edición, en honor a los bomberos de Guadalajara. $350 MXN; cupo 10,000; las inscripciones cierran el 22 de agosto. Hay una categoría de registro aparte para bomberos.",
+      "lastVerified": "2026-08-10",
+      "statusNoteEs": "Datos confirmados con el registro oficial: 23 de agosto de 2026 a las 06:00, con salida en Av. Circunvalación Agustín Yáñez, entre la Glorieta Minerva y Aurelio Aceves. Las inscripciones cierran el 22 de agosto, o antes si se llenan los 10,000 lugares."
     },
     {
       "id": "barbie-run-guadalajara-2026",
@@ -2431,11 +2469,14 @@
       "state": "Jalisco",
       "venue": "Paseo Andares, Zapopan",
       "organizer": "Asdeporte",
-      "signupUrl": null,
+      "signupUrl": "https://www.asdeporte.com/evento/barbie-run-guadalajara-2026-lnu/inscripciones-y-precios",
       "sourceUrl": "https://www.runera.mx/carreras/guadalajara",
-      "confidence": "medium",
-      "notes": "On runera+tritour. Venue Andares (Zapopan). Time from calendar summary. Distinct from Barbie Run MTY/CDMX/Puebla.",
-      "notesEs": "En runera + tritour. Sede Andares (Zapopan). Hora tomada del resumen del calendario. Es distinta de Barbie Run MTY/CDMX/Puebla."
+      "confidence": "high",
+      "notes": "Barbie-themed run: 3K walk plus 5K and 10K. From $999 MXN ($899 PLUS). Online registration closes Aug 28 at 17:00. Awards ~08:45; the 3K walk is recreational.",
+      "notesEs": "Carrera temática de Barbie: caminata de 3K más 5K y 10K. Desde $999 MXN ($899 PLUS). Las inscripciones en línea cierran el 28 de agosto a las 17:00. Premiación ~08:45; la caminata de 3K es recreativa.",
+      "status": "ok",
+      "statusNote": "Confirmed for 30 Aug 2026, 06:30, Paseo Andares (Blvd. Puerta de Hierro 4965), Zapopan, per the Asdeporte convocatoria, Runera and Compite.mx. Current-edition registration link verified and added. Confidence raised medium→high.",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "serial-de-atletismo-tlajomulco-2026-san-miguel-c",
@@ -2884,7 +2925,7 @@
       ],
       "city": "Playas de Rosarito",
       "state": "Baja California",
-      "venue": null,
+      "venue": "Plan Libertador, Playas de Rosarito",
       "organizer": "Gobierno de Playas de Rosarito (municipal)",
       "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-rosarito/",
@@ -2899,8 +2940,8 @@
     {
       "id": "xxiii-medio-maraton-internacional-ensenada-flash",
       "name": "XXIII Medio Maratón Internacional Ensenada FlashLyte 2026",
-      "date": "2026-08-17",
-      "time": "06:30",
+      "date": "2026-05-17",
+      "time": null,
       "distances": [
         "21K"
       ],
@@ -2911,14 +2952,16 @@
       "state": "Baja California",
       "venue": "Ensenada (World Athletics certified course)",
       "organizer": "INMUDERE / Gobierno de Ensenada",
-      "signupUrl": "https://www.sporttimerbcc.com/medio-internacional-ensenada-2026/",
+      "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/medio-maraton-internacional-ensenada/",
       "confidence": "high",
       "status": "changed",
-      "statusNote": "DATE ERROR CONFIRMED, RACE ALREADY HELD: the prior 'May 17 paraphrase error' theory is wrong — the XXIII Medio Maratón Internacional Ensenada FlashLyte 2026 actually ran on Sunday, May 17, 2026, per official ensenada.gob.mx coverage of the race start (arranque, ?p=29668) AND the post-race awards ceremony with full results (?p=29687: winner Ayrton Daniel Ledesma Fuentes, 1:08:47; women's winner Argentina Valdepeñas Cerna, 1:17:37; ~5,000 runners), corroborated by enlineabc.com.mx (dated 2026-05-18) and Multimedios. This event is over — the Aug 17, 2026 date carried in this record (sourced from TJRUN/noro.mx) is stale/incorrect, not a real upcoming race. Next (24th) edition date not announced; do not treat Aug 17, 2026 as a live date going forward. Found via web search 2026-08-10.",
+      "statusNote": "This edition has already been run — it took place on 17 May 2026, not in August. The date for the 24th edition has not been announced.",
       "lastVerified": "2026-08-10",
-      "notes": "23rd edition, ~5,000 runners. TJRUN detail page and noro.mx both give Aug 17, 2026; an ensenada.gob.mx snippet paraphrased 'May 17' — treated as a fetch/paraphrase error, not resolved silently. Registration also referenced at inmudere.com.",
-      "notesEs": "23ª edición, ~5,000 corredores. La página de detalle de TJRUN y noro.mx coinciden en 17 de agosto de 2026; un fragmento de ensenada.gob.mx parafraseó '17 de mayo' — se trató como un error de obtención/paráfrasis, no se resolvió en silencio. El registro también se menciona en inmudere.com."
+      "notes": "23rd edition, ~5,000 runners. This edition was held on 17 May 2026 (winners: Ayrton Daniel Ledesma Fuentes 1:08:47; Argentina Valdepeñas Cerna 1:17:37). The date for the 24th edition has not been announced.",
+      "notesEs": "23ª edición, ~5,000 corredores. Esta edición se celebró el 17 de mayo de 2026 (ganadores: Ayrton Daniel Ledesma Fuentes 1:08:47; Argentina Valdepeñas Cerna 1:17:37). La fecha de la 24ª edición aún no se anuncia.",
+      "statusNoteEs": "Esta edición ya se corrió — se celebró el 17 de mayo de 2026, no en agosto. La fecha de la 24ª edición aún no se anuncia.",
+      "sourceNotes": "Date error confirmed 2026-08-10: the XXIII edition ran Sun 17 May 2026 per official ensenada.gob.mx coverage of the start (?p=29668) and the awards ceremony with full results (?p=29687), corroborated by enlineabc.com.mx (2026-05-18) and Multimedios. The Aug 17, 2026 date carried here came from TJRUN/noro.mx and was stale. Date corrected to 2026-05-17 and the stale signupUrl removed on 2026-08-10."
     },
     {
       "id": "serial-atletico-delegacional-de-tijuana-2026",
@@ -3542,11 +3585,10 @@
       "signupUrl": "https://carrerasmx.com.mx/eventos/506",
       "sourceUrl": "https://carrerasmx.com.mx/eventos/506",
       "confidence": "medium",
-      "statusNote": "No cancellation/postponement/aviso signals found via web search (2026-07-31); limited independent web coverage for this event beyond the single-calendar source (Carreras Laguna). Direct fetch of carrerasmx.com.mx blocked by network policy this run.",
       "lastVerified": "2026-07-31",
       "notes": "SpongeBob-themed run.",
       "notesEs": "Carrera temática de Bob Esponja.",
-      "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna)."
+      "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna). No cancellation/postponement/aviso signals found via web search (2026-07-31); limited independent web coverage for this event beyond the single-calendar source (Carreras Laguna). Direct fetch of carrerasmx.com.mx blocked by network policy this run."
     },
     {
       "id": "canacintra-torreon-5k-y-10k-2026",
@@ -3587,14 +3629,17 @@
       ],
       "city": "Torreón",
       "state": "Coahuila",
-      "venue": null,
+      "venue": "Calle Juan Pablos, junto al Bosque Venustiano Carranza",
       "organizer": "Grupo SIMSA",
       "signupUrl": "https://carrerasmx.com.mx/eventos/509",
       "sourceUrl": "https://carrerasmx.com.mx/eventos/509",
-      "confidence": "medium",
-      "notes": "'Clásica 10K' organized by Grupo SIMSA.",
-      "notesEs": "'Clásica 10K' organizada por Grupo SIMSA.",
-      "sourceNotes": "Venue and price not published. Single-calendar source."
+      "confidence": "high",
+      "notes": "22nd edition. AIMS-certified 10K, re-routed this year through Colonia Torreón Jardín and Campestre La Rosita. $290 MXN; cap 1,500; over $225,000 MXN in prize money.",
+      "notesEs": "22ª edición. 10K certificado por AIMS, con ruta modificada este año por la Colonia Torreón Jardín y Campestre La Rosita. $290 MXN; cupo 1,500; más de $225,000 MXN en premios.",
+      "sourceNotes": "Venue and price not published. Single-calendar source.",
+      "status": "ok",
+      "statusNote": "Confirmed for 30 Aug 2026, 07:00, starting on calle Juan Pablos next to Bosque Venustiano Carranza, per El Siglo de Torreón, El Sol de la Laguna and Milenio. XXII edition; AIMS-certified course, re-routed this year through Colonia Torreón Jardín. Venue added; confidence raised medium→high.",
+      "lastVerified": "2026-08-10"
     },
     {
       "id": "carrera-colegio-de-contadores-publicos-de-saltil",
@@ -4127,7 +4172,7 @@
       ],
       "city": "Chetumal",
       "state": "Quintana Roo",
-      "venue": null,
+      "venue": "Blvd. Bahía, Chetumal",
       "organizer": null,
       "signupUrl": "https://dashport.run/proximos-eventos/evento_1199",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun",

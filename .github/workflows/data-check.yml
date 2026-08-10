@@ -1,0 +1,48 @@
+name: Checks (data + types)
+
+# deploy.yml only triggers on push to main, so until this workflow existed a
+# pull request ran NOTHING and a green PR proved nothing. This runs on PRs too.
+#
+# The data gate (scripts/verify-sweep.mjs) enforces the rule the Mon+Fri
+# race-watch routine kept breaking: a sweep writes the CORRECTED FIELD, and
+# statusNote explains it. Narrating a change without applying it fails here.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The diff-aware check compares each race against the PR base, so the
+          # base commit has to be in the local history — a shallow clone of the
+          # head alone can't resolve it.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify race data
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            node scripts/verify-sweep.mjs --base "origin/${{ github.base_ref }}"
+          else
+            node scripts/verify-sweep.mjs
+          fi
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx eslint .
+        continue-on-error: true # pre-existing violations; surfaced, not blocking
