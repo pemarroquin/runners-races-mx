@@ -124,8 +124,8 @@
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "high",
       "status": "changed",
-      "statusNote": "CORRECCIÓN DE FECHA: la fecha correcta es 16 de agosto de 2026, no el 9. Según sdpnoticias.com, la gira 2026 'Corre Sin Tabúes' tiene: CDMX el 9 de agosto (evento distinto), Monterrey el 16 de agosto, Guadalajara el 23 de agosto — todas ya con cupo agotado. La fecha 9 de agosto que teníamos registrada se había confundido con la edición de CDMX.",
-      "lastVerified": "2026-07-27",
+      "statusNote": "CORRECCIÓN DE FECHA (2026-07-27): la fecha correcta es 16 de agosto de 2026, no el 9. Según sdpnoticias.com, la gira 2026 'Corre Sin Tabúes' tiene: CDMX el 9 de agosto (evento distinto), Monterrey el 16 de agosto, Guadalajara el 23 de agosto — todas ya con cupo agotado. VENUE CHANGE found via web search 2026-08-10: multiple sources (asdeporte convocatoria copy, elhorizonte.mx road-closure coverage) now describe the Monterrey start/finish as Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil, Ciudad Universitaria UANL, San Nicolás de los Garza — not Parque Fundidora as previously recorded here. Registration is AGOTADA (sold out) per Asdeporte; that is not a cancellation signal. Date (Aug 16, 2026) reconfirmed, no cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-10",
       "notes": "Includes a 3K walk option.",
       "start": {
         "lat": 25.6785,
@@ -1134,6 +1134,9 @@
       "signupUrl": "https://www.asdeporte.com/evento/gatorade-g15k-cdmx-2026-elk/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/gatorade-g15k-cdmx-2026-elk/datos-del-evento",
       "confidence": "high",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 16, 2026, 06:00-06:30, Paseo de la Reforma per web search of Asdeporte listing and liebresmx.run calendar. No cancellation/postponement/aviso signals found via web search (2026-08-10). Direct fetch of asdeporte.com blocked by network policy this run.",
+      "lastVerified": "2026-08-10",
       "notes": "SOLD OUT (AGOTADAS) per Asdeporte at 2026-07-05. Waves every 6 min from 06:30; cap 8,000; was from $1,300 MXN.",
       "distanceTags": [
         "15K"
@@ -2035,6 +2038,9 @@
       "signupUrl": "https://asdeporte.com/evento/snoopy-run-club-puebla-2026-v19",
       "sourceUrl": "https://asdeporte.com/evento/snoopy-run-club-puebla-2026-v19",
       "confidence": "high",
+      "status": "ok",
+      "statusNote": "Confirmed for Aug 16, 2026, 07:00, Ecoparque/Parque Metropolitano de Puebla per Ambas Manos (ambasmanos.mx), Runera and Asdeporte listings found via web search. Registration closes Aug 14, 2026 or at capacity. No cancellation/postponement/aviso signals found (2026-08-10). Direct fetch of asdeporte.com blocked by network policy this run.",
+      "lastVerified": "2026-08-10",
       "notes": "Snoopy-themed run.",
       "sourceNotes": "Verified via Runera detail page."
     },
@@ -2774,8 +2780,9 @@
       "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-rosarito/",
       "confidence": "low",
-      "statusNote": "Verification inconclusive: direct fetch of tjrun.com.mx blocked by network/proxy policy. Web search (2026-08-07) for cancellation/postponement/aviso signals returned no relevant results — no confirmation and no contradiction found for this municipal series. Recommend re-check next cycle.",
-      "lastVerified": "2026-08-07",
+      "status": "ok",
+      "statusNote": "Date confirmed: per El Mexicano (el-mexicano.com.mx) and Semanario ZETA coverage found via web search 2026-08-10, this is the 3rd of 4 stages in the 2026 series (Mar 14 stage 1, May 23 Real de Rosarito, Aug 15 Plan Libertador, Nov 14 Primo Tapia). No cancellation/postponement/aviso signals found. Direct fetch of tjrun.com.mx still blocked by network policy this run.",
+      "lastVerified": "2026-08-10",
       "notes": "Municipal community athletics series.",
       "sourceNotes": "Distances/time not published on the calendar listing."
     },
@@ -2797,6 +2804,9 @@
       "signupUrl": "https://www.sporttimerbcc.com/medio-internacional-ensenada-2026/",
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/medio-maraton-internacional-ensenada/",
       "confidence": "high",
+      "status": "changed",
+      "statusNote": "DATE ERROR CONFIRMED, RACE ALREADY HELD: the prior 'May 17 paraphrase error' theory is wrong — the XXIII Medio Maratón Internacional Ensenada FlashLyte 2026 actually ran on Sunday, May 17, 2026, per official ensenada.gob.mx coverage of the race start (arranque, ?p=29668) AND the post-race awards ceremony with full results (?p=29687: winner Ayrton Daniel Ledesma Fuentes, 1:08:47; women's winner Argentina Valdepeñas Cerna, 1:17:37; ~5,000 runners), corroborated by enlineabc.com.mx (dated 2026-05-18) and Multimedios. This event is over — the Aug 17, 2026 date carried in this record (sourced from TJRUN/noro.mx) is stale/incorrect, not a real upcoming race. Next (24th) edition date not announced; do not treat Aug 17, 2026 as a live date going forward. Found via web search 2026-08-10.",
+      "lastVerified": "2026-08-10",
       "notes": "23rd edition, ~5,000 runners. TJRUN detail page and noro.mx both give Aug 17, 2026; an ensenada.gob.mx snippet paraphrased 'May 17' — treated as a fetch/paraphrase error, not resolved silently. Registration also referenced at inmudere.com."
     },
     {
