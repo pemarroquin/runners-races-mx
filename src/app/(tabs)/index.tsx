@@ -28,10 +28,47 @@ import {
   getAvailableMonths,
   monthKey,
   type DistanceTag,
+  type Race,
 } from '@/lib/races';
 import { useRaces, useRacesStatus } from '@/lib/races-provider';
+import { pickRegionArt } from '@/lib/region-art';
 import { useRegion } from '@/lib/region-context';
 import { raceInRegion } from '@/lib/regions';
+
+// Feed layout row: a periodic full-width "hero" card with a larger image,
+// or a 2-up "grid" row of compact cards — instead of every race rendering
+// as an identical text-only row. Cadence: the first race is a hero, then
+// races chunk into grid pairs, and every 5th grid-pair row promotes the
+// next race back to hero (roughly one hero per 10 items) so a long scroll
+// doesn't read as "one special card forever." Sort order is untouched —
+// this only decides which *position* in the existing order gets the hero
+// treatment.
+type LayoutRow = { type: 'hero'; race: Race } | { type: 'grid'; races: Race[] };
+const GRID_ROWS_PER_HERO = 5;
+
+function buildLayoutRows(races: Race[]): LayoutRow[] {
+  const rows: LayoutRow[] = [];
+  let i = 0;
+  let expectHero = true;
+  let gridRowsSinceHero = 0;
+  while (i < races.length) {
+    if (expectHero) {
+      rows.push({ type: 'hero', race: races[i] });
+      i += 1;
+      expectHero = false;
+      gridRowsSinceHero = 0;
+      continue;
+    }
+    // Trailing odd race gets its own one-item grid row rather than crashing
+    // or borrowing a race from nowhere.
+    const pair = races.slice(i, i + 2);
+    rows.push({ type: 'grid', races: pair });
+    i += pair.length;
+    gridRowsSinceHero += 1;
+    if (gridRowsSinceHero >= GRID_ROWS_PER_HERO) expectHero = true;
+  }
+  return rows;
+}
 
 function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
   const next = new Set(set);
@@ -113,6 +150,8 @@ export default function FeedScreen() {
       return matchesQuery && matchesDistance && matchesMonth;
     }).length;
   }, [races.length, query, distances, months, allRaces, region, showPast]);
+
+  const layoutRows = useMemo(() => buildLayoutRows(races), [races]);
 
   const availableMonths = useMemo(
     () => getAvailableMonths(allRaces.filter((r) => raceInRegion(r, region)), locale),
@@ -322,25 +361,49 @@ export default function FeedScreen() {
       </View>
 
       <FlatList
-        data={races}
-        keyExtractor={(r) => r.id}
+        data={layoutRows}
+        keyExtractor={(row) => (row.type === 'hero' ? `hero-${row.race.id}` : `grid-${row.races[0].id}`)}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={pulling && status === 'loading'} onRefresh={onRefresh} />
         }
-        renderItem={({ item, index }) => (
-          // Staggered reveal, capped at the first 8 rows so rows mounted while
-          // scrolling (or while typing in search) get a quick plain fade
-          // instead of an ever-growing delay queue.
-          <Animated.View
-            entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
-            <RaceCard
-              race={item}
-              onPress={() => router.push({ pathname: '/race/[id]', params: { id: item.id } })}
-            />
-          </Animated.View>
-        )}
+        renderItem={({ item, index }) => {
+          const goToRace = (id: string) =>
+            router.push({ pathname: '/race/[id]', params: { id } });
+          return (
+            // Staggered reveal, capped at the first 8 rows so rows mounted
+            // while scrolling (or while typing in search) get a quick plain
+            // fade instead of an ever-growing delay queue.
+            <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
+              {item.type === 'hero' ? (
+                <RaceCard
+                  race={item.race}
+                  variant="hero"
+                  imageSource={pickRegionArt(region.id, item.race.id)}
+                  onPress={() => goToRace(item.race.id)}
+                />
+              ) : (
+                <View style={styles.gridRow}>
+                  {item.races.map((race) => (
+                    <View key={race.id} style={styles.gridItem}>
+                      <RaceCard
+                        race={race}
+                        variant="compact"
+                        imageSource={pickRegionArt(region.id, race.id)}
+                        onPress={() => goToRace(race.id)}
+                      />
+                    </View>
+                  ))}
+                  {/* Trailing odd race: keep the single card at half width
+                      rather than stretching it full-bleed, so the grid's
+                      left-column alignment stays consistent to the last row. */}
+                  {item.races.length === 1 && <View style={styles.gridItem} />}
+                </View>
+              )}
+            </Animated.View>
+          );
+        }}
         ListEmptyComponent={
           <View>
             <Text style={[styles.empty, { color: c.textSecondary }]}>
@@ -463,6 +526,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   clearAllText: { fontSize: 13, fontWeight: '600' },
   list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },
+  gridRow: { flexDirection: 'row', gap: Spacing.two },
+  gridItem: { flex: 1 },
   empty: { textAlign: 'center', marginTop: Spacing.six, fontSize: 15 },
   otherCitiesText: {
     textAlign: 'center',
