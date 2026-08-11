@@ -73,7 +73,12 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
           <Text style={[styles.date, { color: c.textSecondary }]}>{displayDate}</Text>
           {race.status === 'changed' || race.status === 'canceled' ? (
             <View style={[styles.statusPill, { backgroundColor: c.accent }]}>
-              <Text style={styles.statusPillText}>{statusText}</Text>
+              {/* Capped: fixed pill sitting opposite the date in a tight
+                  header row — uncapped Dynamic Type would crowd or wrap
+                  against the date text rather than reflow the row. */}
+              <Text style={styles.statusPillText} maxFontSizeMultiplier={1.3}>
+                {statusText}
+              </Text>
             </View>
           ) : (
             <Text

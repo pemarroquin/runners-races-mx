@@ -37,6 +37,7 @@ export function RouteMap({ race }: { race: Race }) {
       {mapUrl && start && (
         <Pressable
           style={styles.mapWrap}
+          accessibilityRole="imagebutton"
           accessibilityLabel={t('detail.openMaps')}
           onPress={() => openInMaps(start.lat, start.lng, race.name)}>
           <Image source={{ uri: mapUrl }} style={styles.map} contentFit="cover" />

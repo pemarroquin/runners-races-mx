@@ -51,6 +51,13 @@ import { raceInRegion } from '@/lib/regions';
 type LayoutRow = { type: 'hero'; race: Race } | { type: 'grid'; races: Race[] };
 const GRID_ROWS_PER_HERO = 5;
 
+// The EN/ES segment and the facet/filter chips all render well under Apple
+// HIG's 44x44pt default control size (segment ~24pt tall, chips ~24-33pt) —
+// hitSlop brings the tappable area close to 44pt without inflating the
+// compact visual chrome (same idiom used in glass-button.tsx).
+const SEGMENT_HIT_SLOP = { top: 10, bottom: 10, left: 4, right: 4 };
+const CHIP_HIT_SLOP = { top: 8, bottom: 8, left: 4, right: 4 };
+
 function buildLayoutRows(races: Race[]): LayoutRow[] {
   const rows: LayoutRow[] = [];
   let i = 0;
@@ -282,7 +289,7 @@ export default function FeedScreen() {
         {regionHasData ? t('feed.empty') : t('city.emptyRegion', { city: region.name })}
       </Text>
       {otherRegionsCount > 0 && (
-        <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" hitSlop={6}>
+        <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" hitSlop={14}>
           <Text style={[styles.otherCitiesText, { color: c.accent }]}>
             {t('feed.otherCities', { count: otherRegionsCount })}
           </Text>
@@ -303,7 +310,8 @@ export default function FeedScreen() {
           <Text style={[styles.title, { color: c.text }]}>{t('feed.title')}</Text>
           <Pressable
             onPress={() => setPickerOpen(true)}
-            hitSlop={6}
+            accessibilityRole="button"
+            hitSlop={12}
             style={styles.subtitleRow}
             accessibilityLabel={
               locationInUse ? `${region.name} — ${t('city.locationOn')}` : region.name
@@ -322,8 +330,14 @@ export default function FeedScreen() {
               onPress={() => setLocale(l)}
               accessibilityRole="radio"
               accessibilityState={{ selected: locale === l }}
+              hitSlop={SEGMENT_HIT_SLOP}
               style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
               <Text
+                // Capped: a 2-letter code in a fixed-width pill next to its
+                // sibling segment — uncapped Dynamic Type at the largest
+                // accessibility sizes would overflow the pill rather than
+                // reflow (there's nowhere for it to wrap to).
+                maxFontSizeMultiplier={1.3}
                 style={[styles.langText, { color: locale === l ? c.background : c.textSecondary }]}>
                 {l.toUpperCase()}
               </Text>
@@ -339,6 +353,10 @@ export default function FeedScreen() {
             onChangeText={setQuery}
             placeholder={t('feed.search')}
             placeholderTextColor={c.textSecondary}
+            // Placeholder alone disappears once text is entered — an
+            // explicit label keeps VoiceOver's description of the field's
+            // purpose stable regardless of its current value.
+            accessibilityLabel={t('feed.search')}
             style={[styles.search, { color: c.text }]}
           />
         </GlassSurface>
@@ -366,7 +384,8 @@ export default function FeedScreen() {
               onPress={() => setActiveFacet(open ? null : f.key)}
               accessibilityRole="button"
               accessibilityState={{ expanded: open }}
-              accessibilityLabel={label}>
+              accessibilityLabel={label}
+              hitSlop={CHIP_HIT_SLOP}>
               {({ pressed }) => (
                 <GlassSurface
                   scheme={scheme}
@@ -379,7 +398,12 @@ export default function FeedScreen() {
                   <Text style={[styles.filterBtnText, { color: c.text }]}>{f.label}</Text>
                   {f.count > 0 && (
                     <View style={[styles.badge, { backgroundColor: c.accent }]}>
-                      <Text style={styles.badgeText}>{f.count}</Text>
+                      {/* Capped: fixed circular badge (minWidth 18) — an
+                          uncapped count at max Dynamic Type would blow past
+                          the circle rather than reflow. */}
+                      <Text style={styles.badgeText} maxFontSizeMultiplier={1.3}>
+                        {f.count}
+                      </Text>
                     </View>
                   )}
                   <Icon
@@ -399,7 +423,7 @@ export default function FeedScreen() {
       {hasActiveFilters && (
         <View style={styles.filterRow}>
           {query.length > 0 && (
-            <Pressable onPress={() => setQuery('')} accessibilityRole="button">
+            <Pressable onPress={() => setQuery('')} accessibilityRole="button" hitSlop={CHIP_HIT_SLOP}>
               <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                 <Text style={[styles.chipText, { color: c.text }]}>{query}</Text>
                 <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
@@ -407,7 +431,7 @@ export default function FeedScreen() {
             </Pressable>
           )}
           {Array.from(distances).map((tag) => (
-            <Pressable key={tag} onPress={() => toggleDistance(tag)} accessibilityRole="button">
+            <Pressable key={tag} onPress={() => toggleDistance(tag)} accessibilityRole="button" hitSlop={CHIP_HIT_SLOP}>
               <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                 <Text style={[styles.chipText, { color: c.text }]}>
                   {t(distanceTagLabelKey(tag))}
@@ -421,7 +445,7 @@ export default function FeedScreen() {
             const label = key === 'tbd' ? t('common.tbd') : m?.label;
             if (!label) return null;
             return (
-              <Pressable key={key} onPress={() => toggleMonth(key)} accessibilityRole="button">
+              <Pressable key={key} onPress={() => toggleMonth(key)} accessibilityRole="button" hitSlop={CHIP_HIT_SLOP}>
                 <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chipContent}>
                   <Text style={[styles.chipText, { color: c.text }]}>{label}</Text>
                   <Icon ios="xmark" android="close" size={11} weight="bold" color={c.text} />
@@ -429,7 +453,7 @@ export default function FeedScreen() {
               </Pressable>
             );
           })}
-          <Pressable onPress={clearAll} hitSlop={6}>
+          <Pressable onPress={clearAll} accessibilityRole="button" hitSlop={14}>
             <Text style={[styles.clearAllText, { color: c.accent }]}>{t('filters.clearAll')}</Text>
           </Pressable>
         </View>

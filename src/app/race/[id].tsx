@@ -184,7 +184,10 @@ export default function RaceDetailScreen() {
               this is additive, not a replacement for it. */}
           {(race.status === 'changed' || race.status === 'canceled') && (
             <View style={[styles.heroStatusPill, { backgroundColor: c.accent }]}>
-              <Text style={styles.statusPillText}>
+              {/* Capped: fixed pill absolutely positioned over the hero
+                  image — uncapped Dynamic Type has nowhere to reflow to
+                  without overrunning the image edge. */}
+              <Text style={styles.statusPillText} maxFontSizeMultiplier={1.3}>
                 {race.status === 'canceled' ? t('common.canceled') : t('common.changed')}
               </Text>
             </View>
@@ -207,7 +210,10 @@ export default function RaceDetailScreen() {
                   {statusNoteText}
                 </Text>
                 {noteIsLong && (
-                  <Pressable accessibilityRole="button" onPress={() => setNoteExpanded((v) => !v)}>
+                  <Pressable
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    onPress={() => setNoteExpanded((v) => !v)}>
                     <Text style={styles.statusToggle}>
                       {noteExpanded ? t('common.less') : t('common.more')}
                     </Text>
@@ -254,6 +260,8 @@ export default function RaceDetailScreen() {
         <Pressable
           onPress={buyTicket}
           disabled={ctaDisabled}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: ctaDisabled }}
           style={[styles.primaryBtn, { backgroundColor: c.text }, ctaDisabled && styles.disabled]}>
           <Text style={[styles.primaryText, { color: c.background }]}>{ctaLabel}</Text>
         </Pressable>
@@ -282,7 +290,7 @@ export default function RaceDetailScreen() {
               </Animated.View>
             </GlassSurface>
           </Pressable>
-          <Pressable onPress={addToCalendar} style={styles.secondaryFlex}>
+          <Pressable onPress={addToCalendar} accessibilityRole="button" style={styles.secondaryFlex}>
             <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.secondaryBtn}>
               <Text style={[styles.secondaryText, { color: c.text }]}>{t('detail.addCalendar')}</Text>
             </GlassSurface>
@@ -302,6 +310,8 @@ export default function RaceDetailScreen() {
           onPress={() => {
             if (isSafeUrl(race.sourceUrl)) Linking.openURL(race.sourceUrl).catch(() => {});
           }}
+          accessibilityRole="link"
+          hitSlop={12}
           style={styles.sourceRow}>
           <Text style={[styles.source, { color: c.textSecondary }]}>{t('detail.viewSource')}</Text>
           <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />

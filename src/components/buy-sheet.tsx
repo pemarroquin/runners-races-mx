@@ -166,7 +166,12 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
     <Modal transparent statusBarTranslucent visible onRequestClose={close} animationType="none">
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, backdropStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={close}
+            accessibilityRole="button"
+            accessibilityLabel={t('detail.close')}
+          />
         </Animated.View>
 
         <Animated.View

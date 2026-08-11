@@ -36,7 +36,9 @@ export function GlassButton({
       onPress={onPress}
       disabled={disabled}
       hitSlop={hitSlop}
-      accessibilityLabel={accessibilityLabel}>
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: Boolean(disabled) }}>
       {({ pressed }) => (
         <GlassSurface
           scheme={scheme}
