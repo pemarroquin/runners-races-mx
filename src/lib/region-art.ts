@@ -34,6 +34,13 @@ import type { ImageSourcePropType } from 'react-native';
 
 import { REGIONS } from '@/lib/regions';
 
+// Shared between RaceCard (feed) and the race detail screen, both of which
+// render a heroSource/compactSource picked from the same table below — kept
+// here rather than duplicated per-file so the ratio can never drift from
+// what the assets actually are.
+export const HERO_IMAGE_RATIO = 4 / 3; // matches the generation's native 2048x1536
+export const COMPACT_IMAGE_RATIO = 3 / 2; // a shorter crop, see compactSource note below
+
 export interface RegionArtEntry {
   key: string; // e.g. 'mty-fundidora'
   heroSource: ImageSourcePropType;

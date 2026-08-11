@@ -1,5 +1,6 @@
 import * as Calendar from 'expo-calendar';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -19,11 +20,14 @@ import { BuySheet } from '@/components/buy-sheet';
 import { RouteMap } from '@/components/route-map';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
+import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
 import { daysUntil, distanceTagLabelKey, formatDate, isSafeUrl } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
+import { HERO_IMAGE_RATIO, pickRegionArt } from '@/lib/region-art';
+import { REGIONS, raceInRegion } from '@/lib/regions';
 import { useSaved } from '@/lib/saved';
 
 async function getWritableCalendarId(): Promise<string | null> {
@@ -64,6 +68,12 @@ export default function RaceDetailScreen() {
   const saved = isSaved(race.id);
   const days = daysUntil(race.date);
   const dateLabel = formatDate(race.date, locale);
+  // Same region + same deterministic per-race pick the feed card already
+  // used, so tapping a card lands on the same picture rather than a
+  // different random one — that continuity is the whole point of "cascading"
+  // the art through to detail.
+  const region = REGIONS.find((r) => raceInRegion(race, r));
+  const heroImage = region ? pickRegionArt(region.id, race.id, 'hero') : undefined;
   const esNote = locale === 'es' ? race.notesEs : null;
   const noteText = typeof esNote === 'string' && esNote !== '' ? esNote : race.notes;
   // Same locale fallback for the status banner. Sweeps write statusNote in
@@ -151,6 +161,38 @@ export default function RaceDetailScreen() {
       contentContainerStyle={styles.container}>
       <Stack.Screen options={{ title: '' }} />
 
+      {/* Full-bleed, edge-to-edge — the same picture the feed card showed
+          for this race, now the first thing on the page instead of stopping
+          at the card. Sits outside the padded `body` below on purpose. */}
+      {heroImage && (
+        <Animated.View entering={FadeIn.duration(400)} style={styles.heroWrap}>
+          <ShimmerImage
+            source={heroImage}
+            accent={c.accent}
+            tint={c.backgroundSelected}
+            style={{ aspectRatio: HERO_IMAGE_RATIO }}
+            priority="high"
+          />
+          {/* Soft handoff into the body background instead of a hard cut. */}
+          <LinearGradient
+            colors={['transparent', c.background]}
+            style={styles.heroScrim}
+            pointerEvents="none"
+          />
+          {/* At-a-glance status on the image itself; the full banner with
+              the actual statusNote text still renders below, unchanged —
+              this is additive, not a replacement for it. */}
+          {(race.status === 'changed' || race.status === 'canceled') && (
+            <View style={[styles.heroStatusPill, { backgroundColor: c.accent }]}>
+              <Text style={styles.statusPillText}>
+                {race.status === 'canceled' ? t('common.canceled') : t('common.changed')}
+              </Text>
+            </View>
+          )}
+        </Animated.View>
+      )}
+
+      <View style={styles.body}>
       {/* Cinematic three-beat entrance: hero → details → actions. Rare
           navigation, so motion is welcome here (Emil's gate passed). */}
       <Animated.View entering={FadeInDown.duration(400)}>
@@ -265,6 +307,7 @@ export default function RaceDetailScreen() {
           <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />
         </Pressable>
       </Animated.View>
+      </View>
 
       <BuySheet
         visible={buyOpen}
@@ -294,7 +337,21 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  container: { padding: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.six },
+  // No padding here — the hero image needs to run full-bleed to the
+  // ScrollView's own edges. `body` (below) carries the padding every other
+  // screen gets from `container` in other files.
+  container: { paddingBottom: Spacing.six },
+  body: { paddingHorizontal: Spacing.four, paddingTop: Spacing.three, gap: Spacing.two },
+  heroWrap: { position: 'relative' },
+  heroScrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 },
+  heroStatusPill: {
+    position: 'absolute',
+    top: Spacing.three,
+    right: Spacing.three,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: GlassRadii.pill,
+  },
   notFoundContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three },
   notFoundText: { fontSize: 16, fontWeight: '600' },
   unconfirmed: { fontSize: 12, marginTop: -2 },
@@ -305,6 +362,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusTitle: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
+  statusPillText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
   statusNote: { color: '#ffffff', fontSize: 14, lineHeight: 20 },
   statusMeta: { color: 'rgba(255,255,255,0.85)', fontSize: 12 },
   statusToggle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700' },

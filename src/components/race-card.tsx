@@ -1,15 +1,19 @@
 import { Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
-import { daysUntil, distanceTagLabelKey, formatDate, type Race } from '@/lib/races';
-
-// Matches what the region-art generation actually produces (2048x1536).
-const HERO_IMAGE_RATIO = 4 / 3;
-// A shorter crop of the same image, so a 2-column grid card doesn't get too tall.
-const COMPACT_IMAGE_RATIO = 3 / 2;
+import {
+  abbreviateState,
+  daysUntil,
+  distanceTagIcon,
+  distanceTagLabelKey,
+  formatDate,
+  type Race,
+} from '@/lib/races';
+import { COMPACT_IMAGE_RATIO, HERO_IMAGE_RATIO } from '@/lib/region-art';
 
 interface RaceCardProps {
   race: Race;
@@ -33,7 +37,7 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
       : race.status === 'changed'
         ? t('common.changed')
         : countdown(days);
-  const cityLabel = `${race.city}, ${race.state}`;
+  const cityLabel = `${race.city}, ${abbreviateState(race.state)}`;
   const accessibilityLabel = [race.name, displayDate, cityLabel, statusText]
     .filter(Boolean)
     .join(', ');
@@ -87,18 +91,30 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
           numberOfLines={2}>
           {race.name}
         </Text>
-        <Text style={[isHero ? styles.city : styles.cityCompact, { color: c.textSecondary }]}>
+        <Text
+          style={[isHero ? styles.city : styles.cityCompact, { color: c.textSecondary }]}
+          // Compact sits in a 2-up grid row where a sibling card's height
+          // depends on this text — an unbounded city/state string (which
+          // varies a lot, e.g. "Ocoyoacac (La Marquesa), Estado de México"
+          // vs "Ciudad de México, Ciudad de México") was the main source of
+          // ragged, mismatched card heights across a row. Hero is alone in
+          // its row with no sibling to match, so it stays unbounded.
+          numberOfLines={isHero ? undefined : 1}>
           {cityLabel}
         </Text>
 
         <View style={styles.tagRow}>
-          {race.distanceTags.map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
-              <Text style={[styles.tagText, { color: c.text }]}>
-                {t(distanceTagLabelKey(tag))}
-              </Text>
-            </View>
-          ))}
+          {race.distanceTags.map((tag) => {
+            const icon = distanceTagIcon(tag);
+            return (
+              <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
+                {icon && <Icon ios={icon.ios} android={icon.android} size={12} color={c.text} />}
+                <Text style={[styles.tagText, { color: c.text }]}>
+                  {t(distanceTagLabelKey(tag))}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       </View>
     </Pressable>
@@ -113,16 +129,30 @@ const styles = StyleSheet.create({
     // squaring off the top. No-op for the text-only path — it never paints
     // anything outside the rounded rect anyway.
     overflow: 'hidden',
+    // A row's two flex:1 gridItem wrappers already stretch to match each
+    // other's height (row containers cross-stretch by default) — but that
+    // stretch only reaches the gridItem View itself, not this Pressable
+    // inside it, unless this also claims the full height. Without this, a
+    // card whose sibling has more text just left dead transparent space in
+    // its own (taller) gridItem, while the two visible card backgrounds
+    // ended at different heights. flex:1 here is a no-op in every other
+    // usage (hero row, myraces.tsx's single-column list) since those have
+    // no height-mismatched sibling to stretch against.
+    flex: 1,
   },
   content: {
     padding: Spacing.three,
     gap: Spacing.one,
   },
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
+  // Stacked, not a row: at compact width, "20 SEP 2026" and "faltan 41 días"
+  // side by side either wrapped mid-word or squeezed the date down to
+  // nothing. One line each reads cleanly at any card width, so this isn't
+  // variant-specific — hero has the room for a row too, but there's no
+  // reason for it to look different from every other card.
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 2,
+    alignItems: 'flex-start',
   },
   date: { fontSize: 13, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   countdown: { fontSize: 13, fontWeight: '600' },
@@ -133,6 +163,13 @@ const styles = StyleSheet.create({
   city: { fontSize: 14 },
   cityCompact: { fontSize: 13 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginTop: Spacing.one },
-  tag: { paddingHorizontal: Spacing.two, paddingVertical: 3, borderRadius: GlassRadii.pill },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 3,
+    borderRadius: GlassRadii.pill,
+  },
   tagText: { fontSize: 12, fontWeight: '600' },
 });

@@ -10,6 +10,9 @@ import {
   TextInput,
   View,
   useColorScheme,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +26,9 @@ import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import {
+  DISTANCE_TAGS,
   daysUntil,
+  distanceTagIcon,
   distanceTagLabelKey,
   getAvailableMonths,
   monthKey,
@@ -77,6 +82,22 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
   return next;
 }
 
+// Idle-state (no search/filter) body: a "this week" hero carousel followed by
+// horizontal shelves grouped by distance — the shape a Strava-style races
+// directory uses, so browsing without a specific ask in mind reads as
+// "explore what's around" instead of one long undifferentiated list. Any
+// active search query or distance/month filter means the user already told
+// us what they want, so that case keeps the existing hero/grid FlatList
+// (`buildLayoutRows` above) as the "filtered results" view instead — a shelf
+// UI would fight, not serve, an explicit filter.
+const THIS_WEEK_MAX_DAYS = 6; // today (0) through 6 days out, not calendar-week-aligned
+// Shelf card width as a fraction of screen width: sized so ~2.3 cards are
+// visible per screen, leaving a partial next-card peeking at the trailing
+// edge as a scroll affordance (a full 2-up width, matching the grid's own
+// column, would leave zero peek and read as a static row rather than a
+// scrollable shelf).
+const SHELF_CARD_WIDTH_RATIO = 0.42;
+
 export default function FeedScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
@@ -87,7 +108,6 @@ export default function FeedScreen() {
   const [query, setQuery] = useState('');
   const [distances, setDistances] = useState<Set<DistanceTag>>(new Set());
   const [months, setMonths] = useState<Set<string>>(new Set());
-  const [showPast, setShowPast] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeFacet, setActiveFacet] = useState<FilterFacet>(null);
   // Bottom edge of the facet chip row, relative to the header (its direct
@@ -97,33 +117,40 @@ export default function FeedScreen() {
   // covers the first paint, before layout has run once.
   const [chipsRowBottom, setChipsRowBottom] = useState(132);
   const [pulling, setPulling] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
   const allRaces = useRaces();
   const { status, refresh } = useRacesStatus();
   const { region, method } = useRegion();
   const locationInUse = method === 'gps' || method === 'ip';
+  const { width } = useWindowDimensions();
 
   // A month picked in one region rarely exists in another — drop the
   // selection on region change so a stray key can never survive into a
   // filter that silently prunes results with no visible way to clear it.
+  // Also reset the hero carousel back to its first page — a stale page index
+  // from the previous region's race count otherwise leaves the dots looking
+  // wrong (or renders a page past the end of the new, shorter array).
   useEffect(() => {
     setMonths(new Set());
+    setHeroIndex(0);
   }, [region.id]);
 
+  // Home is for discovering what's coming up — past races only matter once
+  // you've saved one, which is what My Races' own "Anteriores" section is
+  // for. No toggle here, and no way to see a past race from this screen.
   const races = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRaces.filter((r) => {
       if (!raceInRegion(r, region)) return false;
-      if (!showPast) {
-        const days = daysUntil(r.date);
-        if (!(r.date === null || (days !== null && days >= 0))) return false;
-      }
+      const days = daysUntil(r.date);
+      if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery =
         !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     });
-  }, [query, distances, months, allRaces, region, showPast]);
+  }, [query, distances, months, allRaces, region]);
 
   // Distinguish "region has no data at all" from "filters matched nothing".
   const regionHasData = useMemo(
@@ -140,22 +167,68 @@ export default function FeedScreen() {
     if (races.length !== 0 || !q) return 0;
     return allRaces.filter((r) => {
       if (raceInRegion(r, region)) return false;
-      if (!showPast) {
-        const days = daysUntil(r.date);
-        if (!(r.date === null || (days !== null && days >= 0))) return false;
-      }
+      const days = daysUntil(r.date);
+      if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery = r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     }).length;
-  }, [races.length, query, distances, months, allRaces, region, showPast]);
+  }, [races.length, query, distances, months, allRaces, region]);
 
   const layoutRows = useMemo(() => buildLayoutRows(races), [races]);
+
+  // Idle-state (no active filters) data. `races` above is already: region-
+  // scoped, upcoming-only (past races excluded by the same rule as the
+  // filtered view, reused rather than reimplemented), AND already sorted
+  // ascending by date — `allRaces` (useRaces()) is sorted at the source and
+  // `.filter()` preserves relative order, so no re-sort is needed here.
+  const thisWeekRaces = useMemo(
+    () =>
+      races.filter((r) => {
+        const days = daysUntil(r.date);
+        return days !== null && days >= 0 && days <= THIS_WEEK_MAX_DAYS;
+      }),
+    [races],
+  );
+  // Carousel when 2+ races fall in the next 7 days; a single upcoming race
+  // (this week or not) renders alone with no carousel chrome; zero races in
+  // the region is handled by the shared empty state below, never reached here.
+  const heroIsThisWeek = thisWeekRaces.length > 0;
+  const heroRaces = heroIsThisWeek ? thisWeekRaces : races.slice(0, 1);
+
+  // One shelf per distance tag that has a match in-region — a race tagged
+  // both 3K and 5K intentionally appears in both shelves (no dedup: each
+  // shelf is "what qualifies", not a partition of the race list). Empty
+  // shelves are dropped by the `.filter` below. TBD is included like every
+  // other tag when it has matches, for the same reason 3K gets its own
+  // "Caminatas" framing below — consistency between a shelf and its chip,
+  // not a special case.
+  const shelves = useMemo(
+    () =>
+      DISTANCE_TAGS.map((tag) => ({
+        tag,
+        races: races.filter((r) => r.distanceTags.includes(tag)),
+      })).filter((shelf) => shelf.races.length > 0),
+    [races],
+  );
+
+  // Hero pages full-width (matches the body's own horizontal padding, see
+  // `styles.list`). Shelf cards use a fraction of screen width instead — see
+  // `SHELF_CARD_WIDTH_RATIO` above for why.
+  const contentWidth = width - Spacing.three * 2;
+  const shelfCardWidth = Math.round(width * SHELF_CARD_WIDTH_RATIO);
 
   const availableMonths = useMemo(
     () => getAvailableMonths(allRaces.filter((r) => raceInRegion(r, region)), locale),
     [allRaces, region, locale],
+  );
+
+  // Shared by the filtered hero/grid FlatList and the idle-state hero
+  // carousel + shelves — both navigate to the same detail route.
+  const goToRace = useCallback(
+    (id: string) => router.push({ pathname: '/race/[id]', params: { id } }),
+    [router],
   );
 
   const toggleDistance = useCallback(
@@ -199,6 +272,24 @@ export default function FeedScreen() {
     { key: 'distance', label: t('filters.distance'), count: distances.size },
     { key: 'month', label: t('filters.date'), count: months.size },
   ];
+
+  // Shared between the filtered FlatList's ListEmptyComponent and the
+  // "region has zero races at all" case of the idle shelf-browsing view —
+  // one empty-state implementation, not two.
+  const emptyStateContent = (
+    <View>
+      <Text style={[styles.empty, { color: c.textSecondary }]}>
+        {regionHasData ? t('feed.empty') : t('city.emptyRegion', { city: region.name })}
+      </Text>
+      {otherRegionsCount > 0 && (
+        <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" hitSlop={6}>
+          <Text style={[styles.otherCitiesText, { color: c.accent }]}>
+            {t('feed.otherCities', { count: otherRegionsCount })}
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -251,21 +342,6 @@ export default function FeedScreen() {
             style={[styles.search, { color: c.text }]}
           />
         </GlassSurface>
-        <Pressable
-          onPress={() => setShowPast((v) => !v)}
-          accessibilityRole="button">
-          {({ pressed }) => (
-            <GlassSurface
-              scheme={scheme}
-              radius={GlassRadii.pill}
-              style={pressed && styles.pressed}
-              contentStyle={styles.filterContent}>
-              <Text style={[styles.filterBtnText, { color: c.text }]}>
-                {showPast ? t('feed.hidePast') : t('feed.showPast')}
-              </Text>
-            </GlassSurface>
-          )}
-        </Pressable>
       </View>
 
       {/* One small chip per filter facet (Strava reference: Sport · Dates ·
@@ -360,6 +436,21 @@ export default function FeedScreen() {
       )}
       </View>
 
+      {races.length === 0 ? (
+        // Total emptiness (no races at all in the region, or filters pruned
+        // everything) — same content either way `regionHasData` decides the
+        // message, `otherRegionsCount` decides whether the city-picker link
+        // shows. Still scrollable/pullable so refresh works from an empty
+        // screen.
+        <ScrollView
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={pulling && status === 'loading'} onRefresh={onRefresh} />
+          }>
+          {emptyStateContent}
+        </ScrollView>
+      ) : hasActiveFilters ? (
       <FlatList
         data={layoutRows}
         keyExtractor={(row) => (row.type === 'hero' ? `hero-${row.race.id}` : `grid-${row.races[0].id}`)}
@@ -415,8 +506,6 @@ export default function FeedScreen() {
         // (visible on jumpy scrollbar drag / scrollToIndex) rather than
         // just losing the layout-skip optimization.
         renderItem={({ item, index }) => {
-          const goToRace = (id: string) =>
-            router.push({ pathname: '/race/[id]', params: { id } });
           return (
             // Staggered reveal, capped at the first 8 rows so rows mounted
             // while scrolling (or while typing in search) get a quick plain
@@ -450,24 +539,106 @@ export default function FeedScreen() {
             </Animated.View>
           );
         }}
-        ListEmptyComponent={
-          <View>
-            <Text style={[styles.empty, { color: c.textSecondary }]}>
-              {regionHasData ? t('feed.empty') : t('city.emptyRegion', { city: region.name })}
-            </Text>
-            {otherRegionsCount > 0 && (
-              <Pressable
-                onPress={() => setPickerOpen(true)}
-                accessibilityRole="button"
-                hitSlop={6}>
-                <Text style={[styles.otherCitiesText, { color: c.accent }]}>
-                  {t('feed.otherCities', { count: otherRegionsCount })}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        }
+        ListEmptyComponent={emptyStateContent}
       />
+      ) : (
+        // Idle state (no search/filter active): "this week"/"next race" hero
+        // + one horizontal shelf per distance tag with a match, instead of
+        // the flat hero/grid list above — see the module comment near
+        // `THIS_WEEK_MAX_DAYS` for the reasoning.
+        <ScrollView
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={pulling && status === 'loading'} onRefresh={onRefresh} />
+          }>
+          <Animated.View entering={FadeInDown.duration(320)}>
+            <Text style={[styles.sectionTitle, { color: c.text }]}>
+              {heroIsThisWeek ? t('feed.thisWeek') : t('feed.nextRace')}
+            </Text>
+            {heroRaces.length > 1 ? (
+              <>
+                <FlatList
+                  data={heroRaces}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(r) => r.id}
+                  onMomentumScrollEnd={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / contentWidth);
+                    setHeroIndex(Math.max(0, Math.min(idx, heroRaces.length - 1)));
+                  }}
+                  renderItem={({ item }) => (
+                    <View style={{ width: contentWidth }}>
+                      <RaceCard
+                        race={item}
+                        variant="hero"
+                        imageSource={pickRegionArt(region.id, item.id, 'hero')}
+                        onPress={() => goToRace(item.id)}
+                      />
+                    </View>
+                  )}
+                />
+                <View style={styles.dotsRow}>
+                  {heroRaces.map((r, i) => (
+                    <View
+                      key={r.id}
+                      style={[
+                        styles.dot,
+                        { backgroundColor: i === heroIndex ? c.accent : c.backgroundSelected },
+                      ]}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : (
+              <RaceCard
+                race={heroRaces[0]}
+                variant="hero"
+                imageSource={pickRegionArt(region.id, heroRaces[0].id, 'hero')}
+                onPress={() => goToRace(heroRaces[0].id)}
+              />
+            )}
+          </Animated.View>
+
+          {shelves.map((shelf, index) => {
+            const icon = distanceTagIcon(shelf.tag);
+            // 3K is explicitly framed as the walk category, not just "3K" —
+            // every other shelf reuses the tag's own chip label so a shelf
+            // and its cards' chips always agree.
+            const label =
+              shelf.tag === '3K' ? t('feed.walksShelf') : t(distanceTagLabelKey(shelf.tag));
+            return (
+              <Animated.View
+                key={shelf.tag}
+                entering={FadeInDown.duration(320).delay(Math.min(index + 1, 8) * 45)}>
+                <View style={styles.shelfHeaderRow}>
+                  {icon && <Icon ios={icon.ios} android={icon.android} size={14} color={c.text} />}
+                  <Text style={[styles.shelfHeaderText, { color: c.text }]}>{label}</Text>
+                </View>
+                <FlatList
+                  data={shelf.races}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(r) => r.id}
+                  contentContainerStyle={styles.shelfContent}
+                  renderItem={({ item }) => (
+                    <View style={{ width: shelfCardWidth }}>
+                      <RaceCard
+                        race={item}
+                        variant="compact"
+                        imageSource={pickRegionArt(region.id, item.id, 'compact')}
+                        onPress={() => goToRace(item.id)}
+                      />
+                    </View>
+                  )}
+                />
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+      )}
 
       <CityPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
       <FilterPopover
@@ -581,4 +752,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  // Idle-state (shelf-browsing) body.
+  sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: Spacing.two },
+  shelfHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    marginBottom: Spacing.two,
+  },
+  shelfHeaderText: { fontSize: 18, fontWeight: '700' },
+  // paddingRight gives the last (partially cut-off) card some breathing room
+  // past the screen edge instead of ending flush against it.
+  shelfContent: { gap: Spacing.two, paddingRight: Spacing.three },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    marginTop: Spacing.two,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 });
