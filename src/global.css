@@ -14,3 +14,32 @@
 input:focus {
   outline: none;
 }
+
+/* ShimmerImage's loading-state pulse, web variant (shimmer-image.web.tsx).
+   Mirrors the native Reanimated version's timing exactly: opacity
+   0.1 <-> 0.32 (0.1 + 1*0.22), 700ms in / 700ms out, sine ease, infinite —
+   as plain CSS so this one component doesn't need to pull the ~740 KiB
+   Reanimated runtime into the web bundle just for a decorative pulse.
+   `prefers-reduced-motion` is handled natively by the media query, no JS
+   needed (the native version's `useReducedMotion()` check is Reanimated's
+   own equivalent of the same OS-level signal). */
+@keyframes shimmer-pulse {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+.shimmer-pulse {
+  animation: shimmer-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-pulse {
+    animation: none;
+    opacity: 0.21;
+  }
+}
