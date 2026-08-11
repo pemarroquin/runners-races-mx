@@ -37,11 +37,19 @@ interface ShimmerImageProps {
   /** Base surface color underneath the shimmer/image — a themed neutral, not a hardcoded gray. */
   tint: string;
   style?: StyleProp<ViewStyle>;
+  /** Passed straight through to expo-image's own loader-priority hint. Unset
+   * (expo-image's default, effectively 'normal') for the compact grid images —
+   * there can be a dozen of them mounted per screen and none of them is more
+   * urgent than the rest. Hero cards pass 'high': there's at most one on
+   * screen at a time and it's the single largest, most visually prominent
+   * element in the feed, so it should win any contention for decode/network
+   * priority against the grid images around it. */
+  priority?: 'low' | 'normal' | 'high';
 }
 
 const REVEAL_MS = 250; // expo-image's own crossfade on load — mid the requested 200-300ms band
 
-export function ShimmerImage({ source, accent, tint, style }: ShimmerImageProps) {
+export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerImageProps) {
   const reduced = useReducedMotion();
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const pulse = useSharedValue(0);
@@ -82,6 +90,7 @@ export function ShimmerImage({ source, accent, tint, style }: ShimmerImageProps)
           contentFit="cover"
           transition={REVEAL_MS}
           cachePolicy="memory-disk"
+          priority={priority}
           onLoad={() => setStatus('loaded')}
           onError={() => setStatus('error')}
           // Decorative — the card's own Pressable already carries the full
