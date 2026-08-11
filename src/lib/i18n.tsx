@@ -42,7 +42,7 @@ const translations = {
       unconfirmed: 'Sin confirmar',
       retry: 'Reintentar',
     },
-    tabs: { feed: 'Carreras', myRaces: 'Mis carreras' },
+    tabs: { feed: 'Carreras', myRaces: 'Mis carreras', settings: 'Ajustes' },
     feed: {
       title: 'Carreras',
       search: 'Buscar carrera o ciudad…',
@@ -107,6 +107,30 @@ const translations = {
       emptyRegion: 'Aún no tenemos carreras en %{city}.\nEstamos trabajando en ello — por ahora explora Monterrey.',
       locationOn: 'usando tu ubicación',
     },
+    settings: {
+      title: 'Ajustes',
+      version: 'Versión',
+      support: 'Soporte',
+    },
+    privacy: {
+      title: 'Privacidad',
+      collectedTitle: 'Qué recopilamos',
+      collectedLocation:
+        'Ubicación aproximada: si das permiso de GPS, la usamos solo en este dispositivo para mostrarte carreras cercanas. Nunca sale de tu teléfono.',
+      collectedIp:
+        'Si el GPS no está disponible o no diste permiso, calculamos tu ciudad aproximada a partir de tu dirección IP con el servicio ipapi.co. Tu IP se envía a ipapi.co en ese momento — es lo único que sale de tu dispositivo, y solo pasa cuando no hay GPS.',
+      collectedSaved:
+        'Carreras guardadas: los IDs de las carreras que guardas quedan solo en este dispositivo (SQLite en iOS/Android, almacenamiento local en la versión web). No se sincronizan a ningún servidor.',
+      notTitle: 'Qué no hacemos',
+      notAccounts: 'No hay cuentas ni inicio de sesión.',
+      notTracking: 'No rastreamos tu actividad ni usamos analítica.',
+      notSharing: 'No vendemos ni compartimos tus datos con nadie.',
+      notServer: 'No guardamos nada en un servidor propio: no existe una base de datos de usuarios.',
+      deleteTitle: 'Borrar tus datos',
+      deleteBody:
+        'Como no guardamos nada en un servidor, no hay un trámite de "solicitar borrado" que ofrecer. Borrar la app de tu teléfono (o los datos del sitio en tu navegador, en la versión web) elimina todo lo guardado localmente.',
+      ipapiLink: 'Política de privacidad de ipapi.co',
+    },
   },
   en: {
     common: {
@@ -131,7 +155,7 @@ const translations = {
       unconfirmed: 'Unconfirmed',
       retry: 'Retry',
     },
-    tabs: { feed: 'Races', myRaces: 'My races' },
+    tabs: { feed: 'Races', myRaces: 'My races', settings: 'Settings' },
     feed: {
       title: 'Races',
       search: 'Search race or city…',
@@ -195,6 +219,30 @@ const translations = {
       mxOnly: 'Available in Mexico for now.',
       emptyRegion: "No races in %{city} yet.\nWe're working on it — explore Monterrey meanwhile.",
       locationOn: 'using your location',
+    },
+    settings: {
+      title: 'Settings',
+      version: 'Version',
+      support: 'Support',
+    },
+    privacy: {
+      title: 'Privacy',
+      collectedTitle: 'What we collect',
+      collectedLocation:
+        "Approximate location: if you grant GPS permission, we use it only on this device to show nearby races. It never leaves your phone.",
+      collectedIp:
+        "If GPS isn't available or you didn't grant permission, we estimate your city from your IP address using the ipapi.co service. Your IP is sent to ipapi.co at that point — it's the only thing that ever leaves your device, and only when GPS isn't available.",
+      collectedSaved:
+        'Saved races: the IDs of races you save stay on this device only (SQLite on iOS/Android, local storage on the web version). Nothing syncs to any server.',
+      notTitle: "What we don't do",
+      notAccounts: 'No accounts, no login.',
+      notTracking: 'No tracking your activity, no analytics.',
+      notSharing: "We don't sell or share your data with anyone.",
+      notServer: "Nothing is stored on a server we run — there's no database of users.",
+      deleteTitle: 'Deleting your data',
+      deleteBody:
+        'Since nothing is stored on a server, there\'s no "request deletion" process to offer. Deleting the app from your phone (or clearing the site\'s data in your browser, on the web version) removes everything stored locally.',
+      ipapiLink: 'ipapi.co privacy policy',
     },
   },
 };
