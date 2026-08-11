@@ -380,7 +380,7 @@ export default function FeedScreen() {
                 <RaceCard
                   race={item.race}
                   variant="hero"
-                  imageUrl={pickRegionArt(region.id, item.race.id)}
+                  imageSource={pickRegionArt(region.id, item.race.id)}
                   onPress={() => goToRace(item.race.id)}
                 />
               ) : (
@@ -390,7 +390,7 @@ export default function FeedScreen() {
                       <RaceCard
                         race={race}
                         variant="compact"
-                        imageUrl={pickRegionArt(region.id, race.id)}
+                        imageSource={pickRegionArt(region.id, race.id)}
                         onPress={() => goToRace(race.id)}
                       />
                     </View>

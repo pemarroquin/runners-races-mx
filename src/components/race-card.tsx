@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
 
 import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
@@ -14,12 +14,12 @@ const COMPACT_IMAGE_RATIO = 3 / 2;
 interface RaceCardProps {
   race: Race;
   onPress: () => void;
-  /** Remote art URL for this race's region, or undefined to stay text-only (today's real-world default). */
-  imageUrl?: string;
+  /** Bundled region-art asset for this race's region, or undefined to stay text-only (the real-world default for regions with no art yet, e.g. chih). */
+  imageSource?: ImageSourcePropType;
   variant?: 'hero' | 'compact';
 }
 
-export function RaceCard({ race, onPress, imageUrl, variant = 'compact' }: RaceCardProps) {
+export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: RaceCardProps) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t, locale } = useI18n();
@@ -52,9 +52,9 @@ export function RaceCard({ race, onPress, imageUrl, variant = 'compact' }: RaceC
         // (Emil — frequent interactions get feedback, not choreography).
         pressed && styles.pressed,
       ]}>
-      {imageUrl && (
+      {imageSource && (
         <ShimmerImage
-          uri={imageUrl}
+          source={imageSource}
           accent={c.accent}
           tint={c.backgroundSelected}
           style={{ aspectRatio: isHero ? HERO_IMAGE_RATIO : COMPACT_IMAGE_RATIO }}

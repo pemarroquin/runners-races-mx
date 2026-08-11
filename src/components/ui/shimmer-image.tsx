@@ -4,10 +4,20 @@
 // fade-in reveal — never a bare spinner, never an instant pop-in). Here
 // that's a soft accent-tinted pulse over the image's own footprint (so
 // there's zero layout shift when the real image lands), handed off to
-// expo-image's own crossfade transition once the bytes arrive.
+// expo-image's own crossfade transition once the bytes arrive. Region art is
+// a bundled local asset (see region-art.ts) rather than a remote fetch, so in
+// practice this decode is near-instant and the pulse rarely gets seen — kept
+// anyway since it's still correct on a slow device and this component makes
+// no assumption about where `source` comes from.
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  type ImageSourcePropType,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -19,7 +29,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 interface ShimmerImageProps {
-  uri: string;
+  /** A bundled require() asset today (region art is local, not remote) — typed
+   * broadly since expo-image's own `source` prop already accepts a remote
+   * `{ uri }` too, so this component works unchanged if that ever changes. */
+  source: ImageSourcePropType;
   accent: string;
   /** Base surface color underneath the shimmer/image — a themed neutral, not a hardcoded gray. */
   tint: string;
@@ -28,7 +41,7 @@ interface ShimmerImageProps {
 
 const REVEAL_MS = 250; // expo-image's own crossfade on load — mid the requested 200-300ms band
 
-export function ShimmerImage({ uri, accent, tint, style }: ShimmerImageProps) {
+export function ShimmerImage({ source, accent, tint, style }: ShimmerImageProps) {
   const reduced = useReducedMotion();
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const pulse = useSharedValue(0);
@@ -64,7 +77,7 @@ export function ShimmerImage({ uri, accent, tint, style }: ShimmerImageProps) {
       )}
       {status !== 'error' && (
         <Image
-          source={{ uri }}
+          source={source}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={REVEAL_MS}
