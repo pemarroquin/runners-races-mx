@@ -99,8 +99,14 @@ export default function SettingsScreen() {
                 onPress={() => setMode(m)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: mode === m }}
+                // Segment renders ~24pt tall — hitSlop brings the tappable
+                // area close to Apple HIG's 44pt default control size
+                // without inflating the compact segmented control.
+                hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
                 style={[styles.segment, mode === m && { backgroundColor: c.text }]}>
-                <Text style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
+                <Text
+                  maxFontSizeMultiplier={1.3}
+                  style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
                   {themeModeLabel(m, t)}
                 </Text>
               </Pressable>
@@ -134,6 +140,8 @@ export default function SettingsScreen() {
 
         <Pressable
           onPress={() => Linking.openURL(IPAPI_PRIVACY_URL).catch(() => {})}
+          accessibilityRole="link"
+          hitSlop={12}
           style={styles.sourceRow}>
           <Text style={[styles.source, { color: c.textSecondary }]}>{t('privacy.ipapiLink')}</Text>
           <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />

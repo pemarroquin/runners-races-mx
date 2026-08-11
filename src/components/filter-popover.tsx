@@ -45,6 +45,12 @@ import {
 
 const CARD_MAX_WIDTH = 380;
 
+// Both chips and segment pills render well under Apple HIG's 44x44pt default
+// control size (chips are ~24pt tall, segments ~26pt) — hitSlop brings the
+// tappable area close to 44pt without inflating the compact visual chrome.
+const CHIP_HIT_SLOP = { top: 10, bottom: 10, left: 4, right: 4 };
+const SEGMENT_HIT_SLOP = { top: 9, bottom: 9, left: 2, right: 2 };
+
 export type FilterFacet = 'distance' | 'month' | null;
 
 interface FilterPopoverProps {
@@ -133,7 +139,12 @@ export function FilterPopover({
     <Modal transparent statusBarTranslucent visible onRequestClose={close} animationType="none">
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, backdropStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t('filters.done')} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={close}
+            accessibilityRole="button"
+            accessibilityLabel={t('filters.done')}
+          />
         </Animated.View>
 
         <Animated.View style={[styles.cardWrap, { top, width: cardWidth }, cardStyle]}>
@@ -156,6 +167,7 @@ export function FilterPopover({
                         onPress={() => onToggleDistance(tag)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: true }}
+                        hitSlop={CHIP_HIT_SLOP}
                         style={[styles.chip, { backgroundColor: c.text }]}>
                         {label}
                       </Pressable>
@@ -164,7 +176,8 @@ export function FilterPopover({
                         key={tag}
                         onPress={() => onToggleDistance(tag)}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: false }}>
+                        accessibilityState={{ selected: false }}
+                        hitSlop={CHIP_HIT_SLOP}>
                         <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
                           {label}
                         </GlassSurface>
@@ -186,8 +199,14 @@ export function FilterPopover({
                           onPress={() => onSetMonths(new Set(preset.keys))}
                           accessibilityRole="radio"
                           accessibilityState={{ selected: active }}
+                          hitSlop={SEGMENT_HIT_SLOP}
                           style={[styles.segment, active && { backgroundColor: c.text }]}>
                           <Text
+                            // Capped: 3 equal-width segments sharing one
+                            // fixed-height track — uncapped Dynamic Type on a
+                            // multi-word label ("Próximos 3 meses") would
+                            // wrap and blow out the track's height.
+                            maxFontSizeMultiplier={1.3}
                             style={[styles.segmentText, { color: active ? c.background : c.text }]}>
                             {preset.label}
                           </Text>
@@ -210,6 +229,7 @@ export function FilterPopover({
                           onPress={() => onToggleMonth(m.key)}
                           accessibilityRole="button"
                           accessibilityState={{ selected: true }}
+                          hitSlop={CHIP_HIT_SLOP}
                           style={[styles.chip, { backgroundColor: c.text }]}>
                           {label}
                         </Pressable>
@@ -218,7 +238,8 @@ export function FilterPopover({
                           key={m.key}
                           onPress={() => onToggleMonth(m.key)}
                           accessibilityRole="button"
-                          accessibilityState={{ selected: false }}>
+                          accessibilityState={{ selected: false }}
+                          hitSlop={CHIP_HIT_SLOP}>
                           <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
                             {label}
                           </GlassSurface>
@@ -231,7 +252,7 @@ export function FilterPopover({
             </ScrollView>
 
             <View style={[styles.footer, { borderTopColor: c.backgroundSelected }]}>
-              <Pressable onPress={onReset} hitSlop={8} accessibilityRole="button">
+              <Pressable onPress={onReset} hitSlop={14} accessibilityRole="button">
                 <Text style={[styles.resetText, { color: c.accent }]}>{t('filters.reset')}</Text>
               </Pressable>
               <Pressable onPress={close} hitSlop={8} accessibilityRole="button">

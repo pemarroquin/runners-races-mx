@@ -49,7 +49,12 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose}>
       <Animated.View entering={FadeIn.duration(180)} style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('detail.close')}
+        />
         <Animated.View entering={FadeInDown.duration(300)} style={styles.card}>
           <GlassSurface scheme={scheme} radius={GlassRadii.card} style={StyleSheet.absoluteFill} noShadow />
           <Text style={[styles.title, { color: c.text }]}>{t('city.title')}</Text>
@@ -57,6 +62,9 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
           <Pressable
             onPress={useMyLocation}
             disabled={detecting}
+            accessibilityRole="button"
+            accessibilityLabel={t('city.useLocation')}
+            accessibilityState={{ disabled: detecting, busy: detecting }}
             style={[styles.locateBtn, { backgroundColor: c.text }]}>
             {detecting ? (
               <ActivityIndicator size="small" color={c.background} />
@@ -83,6 +91,14 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
                       setRegionId(r.id);
                       onClose();
                     }}
+                    accessibilityRole="radio"
+                    accessibilityLabel={r.name}
+                    accessibilityState={{ selected: active }}
+                    // Row has ~34pt of visual height (padding + one line of
+                    // text) — hitSlop brings the tappable area up toward
+                    // Apple HIG's 44pt minimum control size without inflating
+                    // the visible row.
+                    hitSlop={{ top: 5, bottom: 5 }}
                     style={[styles.row, active && { backgroundColor: c.backgroundElement }]}>
                     <Text
                       style={[
@@ -133,7 +149,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
+    // Apple HIG default control size for iOS/iPadOS is 44x44pt.
+    minHeight: 44,
   },
   locateRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   locateText: { fontSize: 14, fontWeight: '600' },
