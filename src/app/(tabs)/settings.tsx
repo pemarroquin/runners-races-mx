@@ -99,6 +99,11 @@ export default function SettingsScreen() {
                 onPress={() => setMode(m)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: mode === m }}
+                // react-native-web (0.21) doesn't translate accessibilityState
+                // into ARIA attributes for View-based components — only flat
+                // aria-* props are forwarded — so role="radio" was shipping
+                // with no aria-checked at all (PageSpeed Insights, 2026-08-11).
+                aria-checked={mode === m}
                 // Segment renders ~24pt tall — hitSlop brings the tappable
                 // area close to Apple HIG's 44pt default control size
                 // without inflating the compact segmented control.

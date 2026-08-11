@@ -330,6 +330,10 @@ export default function FeedScreen() {
               onPress={() => setLocale(l)}
               accessibilityRole="radio"
               accessibilityState={{ selected: locale === l }}
+              // react-native-web doesn't turn accessibilityState into ARIA
+              // attributes on View-based components — flat aria-checked is
+              // what actually reaches the DOM (PageSpeed Insights, 2026-08-11).
+              aria-checked={locale === l}
               hitSlop={SEGMENT_HIT_SLOP}
               style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
               <Text
