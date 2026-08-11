@@ -303,3 +303,22 @@ export function getAvailableMonths(
       return { key, label: `${months[m - 1]} ${y}` };
     });
 }
+
+/** This calendar month's key, in the same 'YYYY-MM' shape as `monthKey`. */
+export function currentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * The next `count` consecutive calendar-month keys starting from THIS month
+ * (inclusive) — so the "next 3 months" preset is a superset of "this month"
+ * rather than a disjoint window starting after it.
+ */
+export function nextMonthKeys(count: number): string[] {
+  const d = new Date();
+  return Array.from({ length: count }, (_, i) => {
+    const dt = new Date(d.getFullYear(), d.getMonth() + i, 1);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+  });
+}
