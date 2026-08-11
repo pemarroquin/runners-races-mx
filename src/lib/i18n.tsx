@@ -53,6 +53,9 @@ const translations = {
       } as PluralForm,
       updated: 'Datos actualizados',
       updateFailed: 'No pudimos actualizar los datos',
+      thisWeek: 'Esta semana',
+      nextRace: 'Próxima carrera',
+      walksShelf: 'Caminatas',
     },
     filters: {
       '3K': '3K',
@@ -171,6 +174,9 @@ const translations = {
       } as PluralForm,
       updated: 'Data updated',
       updateFailed: 'We could not update the data',
+      thisWeek: 'This week',
+      nextRace: 'Next race',
+      walksShelf: 'Walks',
     },
     filters: {
       '3K': '3K',

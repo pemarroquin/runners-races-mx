@@ -1,10 +1,18 @@
 import { Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
-import { abbreviateState, daysUntil, distanceTagLabelKey, formatDate, type Race } from '@/lib/races';
+import {
+  abbreviateState,
+  daysUntil,
+  distanceTagIcon,
+  distanceTagLabelKey,
+  formatDate,
+  type Race,
+} from '@/lib/races';
 import { COMPACT_IMAGE_RATIO, HERO_IMAGE_RATIO } from '@/lib/region-art';
 
 interface RaceCardProps {
@@ -96,13 +104,17 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
         </Text>
 
         <View style={styles.tagRow}>
-          {race.distanceTags.map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
-              <Text style={[styles.tagText, { color: c.text }]}>
-                {t(distanceTagLabelKey(tag))}
-              </Text>
-            </View>
-          ))}
+          {race.distanceTags.map((tag) => {
+            const icon = distanceTagIcon(tag);
+            return (
+              <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
+                {icon && <Icon ios={icon.ios} android={icon.android} size={12} color={c.text} />}
+                <Text style={[styles.tagText, { color: c.text }]}>
+                  {t(distanceTagLabelKey(tag))}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       </View>
     </Pressable>
@@ -151,6 +163,13 @@ const styles = StyleSheet.create({
   city: { fontSize: 14 },
   cityCompact: { fontSize: 13 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginTop: Spacing.one },
-  tag: { paddingHorizontal: Spacing.two, paddingVertical: 3, borderRadius: GlassRadii.pill },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 3,
+    borderRadius: GlassRadii.pill,
+  },
   tagText: { fontSize: 12, fontWeight: '600' },
 });

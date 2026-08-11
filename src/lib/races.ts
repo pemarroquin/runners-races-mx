@@ -2,6 +2,8 @@
 // refresh on launch. The weekly race-watch agent commits verified data to
 // GitHub; the app fetches it on open ("update fresh on app open", per PRD) and
 // falls back to the bundled copy offline.
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+
 import racesJson from '@/assets/data/races.json';
 import { getPref, initDb, setPref } from '@/lib/db';
 
@@ -50,6 +52,31 @@ const DISTANCE_TAG_LABEL_KEY: Record<DistanceTag, string> = {
 /** i18n key for a distance tag's chip label (e.g. 'Half' -> 'filters.half'). */
 export function distanceTagLabelKey(tag: DistanceTag): string {
   return DISTANCE_TAG_LABEL_KEY[tag];
+}
+
+interface DistanceTagIcon {
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}
+
+// Category icon per distance tag, shared by RaceCard's tag chips AND the
+// Feed's distance shelves (one source of truth so "browsing the 3K shelf"
+// and "seeing a 3K chip on a card" use the same glyph). Only verified-to-exist
+// symbol names are listed here — `30K` and `TBD` are deliberately absent
+// (return null, no icon) rather than guessing an unverified SF Symbol name.
+const DISTANCE_TAG_ICON: Partial<Record<DistanceTag, DistanceTagIcon>> = {
+  '3K': { ios: 'figure.walk', android: 'directions_walk' }, // walk category
+  '5K': { ios: 'figure.run', android: 'directions_run' },
+  '10K': { ios: 'figure.run', android: 'directions_run' },
+  '15K': { ios: 'figure.run', android: 'directions_run' },
+  Half: { ios: 'medal.fill', android: 'military_tech' },
+  Full: { ios: 'medal.fill', android: 'military_tech' },
+  Ultra: { ios: 'mountain.2.fill', android: 'terrain' },
+};
+
+/** Category icon for a distance tag, or null when no verified icon exists for it (`30K`, `TBD`). */
+export function distanceTagIcon(tag: DistanceTag): DistanceTagIcon | null {
+  return DISTANCE_TAG_ICON[tag] ?? null;
 }
 
 /** Start-line location. `approx: true` = venue centroid, not the official start. */
