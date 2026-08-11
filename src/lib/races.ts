@@ -273,6 +273,21 @@ export function formatDate(dateStr: string | null, locale: string): string | nul
   return `${d} ${months[m - 1]} ${y}`;
 }
 
+// Only states whose full name is genuinely long enough to cause wrapping in
+// a compact card's one-line city/state string get an entry — most of the 13
+// states in the dataset (Jalisco, Puebla, Yucatán...) are already short.
+// Colloquial Mexican Spanish abbreviation, not a formal postal code (those
+// are 2-3 uppercase letters and read as shouting in body text — "Edo de
+// México" is how it's actually said/written day to day).
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  'Estado de México': 'Edo de México',
+};
+
+/** Shortens a small set of known-long state names for tight layouts (card city/state line). Falls through unchanged for every other state. */
+export function abbreviateState(state: string): string {
+  return STATE_ABBREVIATIONS[state] ?? state;
+}
+
 /** Whole days from today until the race date (negative = past, null = undated). */
 export function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
