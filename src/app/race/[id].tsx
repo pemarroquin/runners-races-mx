@@ -1,7 +1,7 @@
 import * as Calendar from 'expo-calendar';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
-import { BuySheet } from '@/components/buy-sheet';
 import { RouteMap } from '@/components/route-map';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -29,6 +28,17 @@ import { useRaces } from '@/lib/races-provider';
 import { HERO_IMAGE_RATIO, pickRegionArt } from '@/lib/region-art';
 import { REGIONS, raceInRegion } from '@/lib/regions';
 import { useSaved } from '@/lib/saved';
+
+// BuySheet pulls in react-native-webview, react-native-gesture-handler drag
+// handling, and its own Reanimated motion — real weight that every other
+// screen (feed, my races, settings) paid for anyway under the single shared
+// web entry bundle, even though only the race-detail purchase flow needs it.
+// Same pattern PR #16 already proved for mapbox-gl: a dynamic import here is
+// a real Metro chunk boundary, splitting it out of the bundle every route
+// downloads on first load.
+const BuySheet = lazy(() =>
+  import('@/components/buy-sheet').then((m) => ({ default: m.BuySheet })),
+);
 
 async function getWritableCalendarId(): Promise<string | null> {
   if (Platform.OS === 'ios') {
@@ -319,12 +329,14 @@ export default function RaceDetailScreen() {
       </Animated.View>
       </View>
 
-      <BuySheet
-        visible={buyOpen}
-        url={race.signupUrl}
-        title={race.name}
-        onClose={() => setBuyOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <BuySheet
+          visible={buyOpen}
+          url={race.signupUrl}
+          title={race.name}
+          onClose={() => setBuyOpen(false)}
+        />
+      </Suspense>
     </ScrollView>
   );
 }

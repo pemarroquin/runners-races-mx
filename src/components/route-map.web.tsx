@@ -6,15 +6,27 @@
 // the official course-map image (if any) is shown. mapbox-gl is only pulled into
 // the web bundle — Metro never loads this file on native.
 //
-// mapbox-gl (JS + CSS) is loaded via a dynamic import inside the effect below,
-// not a static top-level import. Metro splits that into its own async chunk,
-// so the ~1MB+ library only downloads when a race with a start point actually
+// mapbox-gl JS is loaded via a dynamic import inside the effect below, not a
+// static top-level import. Metro splits that into its own async chunk, so
+// the ~1MB+ library only downloads when a race with a start point actually
 // renders this component — every other route (feed, settings, races with no
 // start coords) never pays for it. See PageSpeed diagnostic: mapbox-gl was
 // previously ~140 references baked into the single ~4.6MB web entry bundle,
 // flagged as unused JS on every non-map page load.
+//
+// mapbox-gl's CSS is handled separately, via ensureMapboxCss() below, NOT a
+// JS import (dynamic or otherwise). Verified live against a PSI run
+// (2026-08-11): `import('mapbox-gl/dist/mapbox-gl.css')` still showed up as
+// a render-blocking stylesheet on the home feed, because Metro's web CSS
+// handling extracts every CSS module it finds anywhere in the dependency
+// graph into one shared output stylesheet, linked in <head> for every page
+// — it doesn't respect the JS import being dynamic the way code-splitting
+// does. A runtime <link> tag, added to the document only when this
+// component actually mounts, is the one path that keeps the CSS out of that
+// global bundle entirely.
 import { Image } from 'expo-image';
 import type { Map as MapboxMap } from 'mapbox-gl';
+import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 
@@ -25,6 +37,20 @@ import type { Race } from '@/lib/races';
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const ROUTE_COLOR = '#E4572E'; // matches native ROUTE_COLOR
 const MARKER_ZOOM = 14; // used when there's only a start point (no route to fit)
+
+// Version-pinned to the installed npm package (not hand-maintained) so a
+// `mapbox-gl` bump can't silently drift the CDN CSS out of sync with the JS.
+const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
+
+function ensureMapboxCss() {
+  const id = 'mapbox-gl-css';
+  if (document.getElementById(id)) return;
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = MAPBOX_CSS_URL;
+  document.head.appendChild(link);
+}
 
 export function RouteMap({ race }: { race: Race }) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -44,10 +70,8 @@ export function RouteMap({ race }: { race: Race }) {
     let map: MapboxMap | undefined;
 
     (async () => {
-      const [{ default: mapboxgl }] = await Promise.all([
-        import('mapbox-gl'),
-        import('mapbox-gl/dist/mapbox-gl.css'),
-      ]);
+      ensureMapboxCss();
+      const { default: mapboxgl } = await import('mapbox-gl');
       if (cancelled || !containerRef.current) return;
 
       mapboxgl.accessToken = TOKEN;
