@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -17,8 +17,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CityPicker } from '@/components/city-picker';
-import { FilterPopover, type FilterFacet } from '@/components/filter-popover';
+import type { FilterFacet } from '@/components/filter-popover';
 import { RaceCard } from '@/components/race-card';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -39,6 +38,20 @@ import { useRaces, useRacesStatus } from '@/lib/races-provider';
 import { pickRegionArt } from '@/lib/region-art';
 import { useRegion } from '@/lib/region-context';
 import { raceInRegion } from '@/lib/regions';
+
+// CityPicker and FilterPopover are modals — never visible on first paint,
+// only mounted-and-shown after a tap on the region pill or a filter chip —
+// but both statically imported the feed pulled their own Reanimated
+// (useAnimatedStyle/withTiming) code into the shared web entry bundle
+// regardless. Same pattern as BuySheet's split: a dynamic import here is a
+// real Metro chunk boundary, so neither one's code (or its animation
+// runtime) has to be parsed before the feed itself can render.
+const CityPicker = lazy(() =>
+  import('@/components/city-picker').then((m) => ({ default: m.CityPicker })),
+);
+const FilterPopover = lazy(() =>
+  import('@/components/filter-popover').then((m) => ({ default: m.FilterPopover })),
+);
 
 // Feed layout row: a periodic full-width "hero" card with a larger image,
 // or a 2-up "grid" row of compact cards — instead of every race rendering
@@ -664,20 +677,22 @@ export default function FeedScreen() {
         </ScrollView>
       )}
 
-      <CityPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
-      <FilterPopover
-        facet={activeFacet}
-        onClose={() => setActiveFacet(null)}
-        top={insets.top + chipsRowBottom + Spacing.one}
-        distances={distances}
-        onToggleDistance={toggleDistance}
-        onResetDistances={resetDistances}
-        months={months}
-        onToggleMonth={toggleMonth}
-        onSetMonths={setMonthsExact}
-        onResetMonths={resetMonths}
-        availableMonths={availableMonths}
-      />
+      <Suspense fallback={null}>
+        <CityPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
+        <FilterPopover
+          facet={activeFacet}
+          onClose={() => setActiveFacet(null)}
+          top={insets.top + chipsRowBottom + Spacing.one}
+          distances={distances}
+          onToggleDistance={toggleDistance}
+          onResetDistances={resetDistances}
+          months={months}
+          onToggleMonth={toggleMonth}
+          onSetMonths={setMonthsExact}
+          onResetMonths={resetMonths}
+          availableMonths={availableMonths}
+        />
+      </Suspense>
     </SafeAreaView>
   );
 }
