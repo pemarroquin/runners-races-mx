@@ -368,6 +368,52 @@ export default function FeedScreen() {
         refreshControl={
           <RefreshControl refreshing={pulling && status === 'loading'} onRefresh={onRefresh} />
         }
+        // Perf tuning (image-perf pass) — rows now carry a decoded bitmap
+        // each, where before this was plain text, so the defaults (tuned for
+        // cheap text rows) render/keep more than the screen ever needs.
+        //
+        // initialNumToRender: default is 10 rows. A hero row (image at 4:3
+        // + ~100pt of text/tags) runs ~380-420pt tall; a grid row (image at
+        // 3:2 + ~90pt of text) runs ~200-220pt. Even a large-viewport phone
+        // rarely shows more than "1 hero + 2-3 grid rows" before the fold,
+        // so 6 comfortably covers the visible viewport across device sizes
+        // with a little scroll-ahead buffer, instead of decoding ~10 rows
+        // (up to ~19 images) before first paint.
+        initialNumToRender={6}
+        // maxToRenderPerBatch: default is 10 rows added per batch during
+        // scroll. Each row can now include up to 2 image decodes (a grid
+        // row), so a smaller batch keeps each JS-thread render commit
+        // shorter and more interruptible while scrolling fast.
+        maxToRenderPerBatch={5}
+        // windowSize: default is 21 "screens" (10 above + current + 10
+        // below) of rows kept mounted outside the viewport. That's sized for
+        // cheap rows; here every mounted-but-offscreen row is still holding
+        // a decoded bitmap or two in memory. 7 (3 screens each direction)
+        // keeps a reasonable fling buffer without holding dozens of
+        // off-screen images resident.
+        windowSize={7}
+        // removeClippedSubviews: detaches offscreen rows from the native
+        // view hierarchy (their JS state is preserved, so this is safe for
+        // FlatList's own re-render/measurement bookkeeping) — meaningful
+        // memory savings for a long, image-heavy list. Long-standing RN
+        // guidance to pair this with heavier list rows.
+        removeClippedSubviews
+        // updateCellsBatchingPeriod: default 50ms between render batches.
+        // Nudged up slightly so the JS thread gets a bit more breathing
+        // room between batches now that each batch's rows include image
+        // decodes, trading a marginally longer worst-case "blank cell" edge
+        // during a fast fling for less thread contention overall.
+        updateCellsBatchingPeriod={75}
+        // getItemLayout intentionally omitted: rows alternate between two
+        // different fixed aspect-ratio images (hero 4:3 vs grid 3:2), AND
+        // the text content within a row varies in height — race name is
+        // `numberOfLines={2}` (1 or 2 lines depending on how long the name
+        // is) and the distance-tag row wraps (`flexWrap: 'wrap'`) to a
+        // second line for races with 3+ tags. A static per-row height
+        // formula can't account for that variance, and a wrong
+        // getItemLayout is worse than none — it misreports scroll offsets
+        // (visible on jumpy scrollbar drag / scrollToIndex) rather than
+        // just losing the layout-skip optimization.
         renderItem={({ item, index }) => {
           const goToRace = (id: string) =>
             router.push({ pathname: '/race/[id]', params: { id } });
@@ -380,7 +426,7 @@ export default function FeedScreen() {
                 <RaceCard
                   race={item.race}
                   variant="hero"
-                  imageSource={pickRegionArt(region.id, item.race.id)}
+                  imageSource={pickRegionArt(region.id, item.race.id, 'hero')}
                   onPress={() => goToRace(item.race.id)}
                 />
               ) : (
@@ -390,7 +436,7 @@ export default function FeedScreen() {
                       <RaceCard
                         race={race}
                         variant="compact"
-                        imageSource={pickRegionArt(region.id, race.id)}
+                        imageSource={pickRegionArt(region.id, race.id, 'compact')}
                         onPress={() => goToRace(race.id)}
                       />
                     </View>

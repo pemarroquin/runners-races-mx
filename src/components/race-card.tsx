@@ -58,6 +58,10 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
           accent={c.accent}
           tint={c.backgroundSelected}
           style={{ aspectRatio: isHero ? HERO_IMAGE_RATIO : COMPACT_IMAGE_RATIO }}
+          // Hero is at most one on screen and the single most visually
+          // prominent element in the feed — worth prioritizing over the
+          // dozen-odd unprioritized compact grid images around it.
+          priority={isHero ? 'high' : undefined}
         />
       )}
       <View style={styles.content}>
