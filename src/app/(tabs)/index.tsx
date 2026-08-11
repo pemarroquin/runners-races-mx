@@ -87,7 +87,6 @@ export default function FeedScreen() {
   const [query, setQuery] = useState('');
   const [distances, setDistances] = useState<Set<DistanceTag>>(new Set());
   const [months, setMonths] = useState<Set<string>>(new Set());
-  const [showPast, setShowPast] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeFacet, setActiveFacet] = useState<FilterFacet>(null);
   // Bottom edge of the facet chip row, relative to the header (its direct
@@ -109,21 +108,22 @@ export default function FeedScreen() {
     setMonths(new Set());
   }, [region.id]);
 
+  // Home is for discovering what's coming up — past races only matter once
+  // you've saved one, which is what My Races' own "Anteriores" section is
+  // for. No toggle here, and no way to see a past race from this screen.
   const races = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allRaces.filter((r) => {
       if (!raceInRegion(r, region)) return false;
-      if (!showPast) {
-        const days = daysUntil(r.date);
-        if (!(r.date === null || (days !== null && days >= 0))) return false;
-      }
+      const days = daysUntil(r.date);
+      if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery =
         !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     });
-  }, [query, distances, months, allRaces, region, showPast]);
+  }, [query, distances, months, allRaces, region]);
 
   // Distinguish "region has no data at all" from "filters matched nothing".
   const regionHasData = useMemo(
@@ -140,16 +140,14 @@ export default function FeedScreen() {
     if (races.length !== 0 || !q) return 0;
     return allRaces.filter((r) => {
       if (raceInRegion(r, region)) return false;
-      if (!showPast) {
-        const days = daysUntil(r.date);
-        if (!(r.date === null || (days !== null && days >= 0))) return false;
-      }
+      const days = daysUntil(r.date);
+      if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery = r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     }).length;
-  }, [races.length, query, distances, months, allRaces, region, showPast]);
+  }, [races.length, query, distances, months, allRaces, region]);
 
   const layoutRows = useMemo(() => buildLayoutRows(races), [races]);
 
@@ -251,21 +249,6 @@ export default function FeedScreen() {
             style={[styles.search, { color: c.text }]}
           />
         </GlassSurface>
-        <Pressable
-          onPress={() => setShowPast((v) => !v)}
-          accessibilityRole="button">
-          {({ pressed }) => (
-            <GlassSurface
-              scheme={scheme}
-              radius={GlassRadii.pill}
-              style={pressed && styles.pressed}
-              contentStyle={styles.filterContent}>
-              <Text style={[styles.filterBtnText, { color: c.text }]}>
-                {showPast ? t('feed.hidePast') : t('feed.showPast')}
-              </Text>
-            </GlassSurface>
-          )}
-        </Pressable>
       </View>
 
       {/* One small chip per filter facet (Strava reference: Sport · Dates ·

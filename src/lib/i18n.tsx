@@ -47,8 +47,6 @@ const translations = {
       title: 'Carreras',
       search: 'Buscar carrera o ciudad…',
       empty: 'No se encontraron carreras.',
-      showPast: 'Ver anteriores',
-      hidePast: 'Ocultar anteriores',
       otherCities: {
         one: '1 carrera en otra ciudad',
         other: '%{count} carreras en otras ciudades',
@@ -167,8 +165,6 @@ const translations = {
       title: 'Races',
       search: 'Search race or city…',
       empty: 'No races found.',
-      showPast: 'Show past',
-      hidePast: 'Hide past',
       otherCities: {
         one: '1 race in another city',
         other: '%{count} races in other cities',
