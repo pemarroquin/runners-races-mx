@@ -8,11 +8,17 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
+import { useThemeMode, type ThemeMode } from '@/lib/theme-mode';
 
 const IPAPI_PRIVACY_URL = 'https://ipapi.co/privacy/';
+// Source of truth: docs/Settings.md. Change it there first, then mirror the
+// value here — there's no build step that reads the doc directly.
 const SUPPORT_EMAIL = 'support@racesmx.com';
+const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
 function Section({
   title,
@@ -64,10 +70,17 @@ function Row({
   );
 }
 
+function themeModeLabel(mode: ThemeMode, t: (key: string) => string): string {
+  if (mode === 'light') return t('settings.themeLight');
+  if (mode === 'dark') return t('settings.themeDark');
+  return t('settings.themeSystem');
+}
+
 export default function SettingsScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
+  const { mode, setMode } = useThemeMode();
 
   // expoConfig.version stays in sync with app.json/package.json, so this
   // reads the shipped build number instead of a value that can drift.
@@ -77,6 +90,24 @@ export default function SettingsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
       <Text style={[styles.title, { color: c.text }]}>{t('settings.title')}</Text>
       <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.themeRow}>
+          <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.theme')}</Text>
+          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
+            {THEME_MODES.map((m) => (
+              <Pressable
+                key={m}
+                onPress={() => setMode(m)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: mode === m }}
+                style={[styles.segment, mode === m && { backgroundColor: c.text }]}>
+                <Text style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
+                  {themeModeLabel(m, t)}
+                </Text>
+              </Pressable>
+            ))}
+          </GlassSurface>
+        </View>
+
         <View style={styles.rowGroup}>
           <Row label={t('settings.version')} value={version} c={c} />
           <Row
@@ -121,6 +152,20 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   container: { padding: Spacing.three, paddingBottom: BottomTabInset },
+  themeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.five,
+  },
+  segmentTrack: { flexDirection: 'row', padding: 3, gap: 2 },
+  segment: {
+    borderRadius: GlassRadii.pill,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 5,
+    alignItems: 'center',
+  },
+  segmentText: { fontSize: 12, fontWeight: '700' },
   rowGroup: { marginBottom: Spacing.five },
   row: {
     flexDirection: 'row',

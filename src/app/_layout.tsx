@@ -8,6 +8,7 @@ import { LocaleProvider } from '@/lib/i18n';
 import { RacesProvider } from '@/lib/races-provider';
 import { RegionProvider } from '@/lib/region-context';
 import { SavedProvider } from '@/lib/saved';
+import { ThemeModeProvider } from '@/lib/theme-mode';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,6 +16,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeModeProvider>
       <LocaleProvider>
         <RacesProvider>
         <RegionProvider>
@@ -31,6 +33,7 @@ export default function RootLayout() {
         </RegionProvider>
         </RacesProvider>
       </LocaleProvider>
+      </ThemeModeProvider>
     </GestureHandlerRootView>
   );
 }

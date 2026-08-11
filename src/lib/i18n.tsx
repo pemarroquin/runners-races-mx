@@ -111,6 +111,10 @@ const translations = {
       title: 'Ajustes',
       version: 'Versión',
       support: 'Soporte',
+      theme: 'Apariencia',
+      themeSystem: 'Sistema',
+      themeLight: 'Claro',
+      themeDark: 'Oscuro',
     },
     privacy: {
       title: 'Privacidad',
@@ -224,6 +228,10 @@ const translations = {
       title: 'Settings',
       version: 'Version',
       support: 'Support',
+      theme: 'Appearance',
+      themeSystem: 'System',
+      themeLight: 'Light',
+      themeDark: 'Dark',
     },
     privacy: {
       title: 'Privacy',

@@ -4,7 +4,8 @@ import { Tabs } from 'expo-router';
 // type from there without switching the runtime import used app-wide.
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { Image, Pressable, StyleSheet, View, useWindowDimensions, type ColorValue } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { Pressable, StyleSheet, View, useWindowDimensions, type ColorValue } from 'react-native';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -49,7 +50,7 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.feed'),
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon focused={focused} color={color} source={require('../../../assets/images/tabIcons/home.png')} />
+            <TabGlyph focused={focused} color={color} ios="house.fill" iosInactive="house" android="home_filled" androidInactive="home" />
           ),
         }}
       />
@@ -57,12 +58,11 @@ export default function TabsLayout() {
         name="myraces"
         options={{
           title: t('tabs.myRaces'),
+          // Heart, not a generic explore/compass glyph — this tab is
+          // literally "the races you hearted" (see the save toggle on
+          // race/[id].tsx, same icon pair), so the tab bar should say that.
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon
-              focused={focused}
-              color={color}
-              source={require('../../../assets/images/tabIcons/explore.png')}
-            />
+            <TabGlyph focused={focused} color={color} ios="heart.fill" iosInactive="heart" android="favorite" androidInactive="favorite_border" />
           ),
         }}
       />
@@ -71,7 +71,7 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.settings'),
           tabBarIcon: ({ focused, color }) => (
-            <TabSymbolIcon focused={focused} color={color} />
+            <TabGlyph focused={focused} color={color} ios="gearshape.fill" iosInactive="gearshape" android="settings" androidInactive="settings" />
           ),
         }}
       />
@@ -150,31 +150,35 @@ function TabBarBackground() {
   );
 }
 
-function TabIcon({
+// All three tabs render through the same vector-symbol path now (SF Symbols
+// on iOS, Material Symbols on Android/web via expo-symbols) — home/myraces
+// used to be tiny bundled PNGs (24-73px source) that read as pixelated next
+// to the settings tab's crisp gearshape, since they never scale past their
+// baked-in bitmap resolution. expo-symbols already ships ~4000 Material
+// Symbols bundled (`node_modules/expo-symbols/build/android/symbols.json`)
+// with solid sports/running coverage — figure.run, flag.checkered, trophy,
+// directions_run, sprint, etc. — so there was no need to pull in a separate
+// icon package for that; this app already had one.
+function TabGlyph({
   focused,
   color,
-  source,
+  ios,
+  iosInactive,
+  android,
+  androidInactive,
 }: {
   focused: boolean;
   color: ColorValue;
-  source: number;
+  ios: SFSymbol;
+  iosInactive: SFSymbol;
+  android: AndroidSymbol;
+  androidInactive: AndroidSymbol;
 }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Image source={source} style={{ width: ICON_SIZE, height: ICON_SIZE, tintColor: color }} />
-    </View>
-  );
-}
-
-// Settings has no bundled raster icon (unlike home/explore) — SF Symbol /
-// Material Symbol via the shared Icon component instead of generating new
-// @1x/@2x/@3x PNGs for one tab.
-function TabSymbolIcon({ focused, color }: { focused: boolean; color: ColorValue }) {
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
       <Icon
-        ios={focused ? 'gearshape.fill' : 'gearshape'}
-        android="settings"
+        ios={focused ? ios : iosInactive}
+        android={focused ? android : androidInactive}
         size={ICON_SIZE - 2}
         color={color}
       />
