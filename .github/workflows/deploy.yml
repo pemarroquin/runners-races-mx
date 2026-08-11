@@ -47,6 +47,9 @@ jobs:
           EXPO_PUBLIC_MAPBOX_TOKEN: ${{ secrets.EXPO_PUBLIC_MAPBOX_TOKEN }}
         run: npx expo export -p web
 
+      - name: Inline critical CSS
+        run: node scripts/inline-critical-css.mjs dist
+
       - name: Assemble site (landing page + runningapp/)
         run: |
           rm -rf site-build
