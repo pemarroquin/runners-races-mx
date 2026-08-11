@@ -71,7 +71,10 @@ const translations = {
       date: 'Fecha',
       reset: 'Limpiar',
       clearAll: 'Limpiar todo',
-      showResults: { one: 'Ver 1 carrera', other: 'Ver %{count} carreras' } as PluralForm,
+      done: 'Listo',
+      presetThisMonth: 'Este mes',
+      presetNext3: 'Próximos 3 meses',
+      presetAll: 'Todos',
     },
     detail: {
       buy: 'Comprar boleto',
@@ -184,7 +187,10 @@ const translations = {
       date: 'Date',
       reset: 'Reset',
       clearAll: 'Clear all',
-      showResults: { one: 'Show 1 race', other: 'Show %{count} races' } as PluralForm,
+      done: 'Done',
+      presetThisMonth: 'This month',
+      presetNext3: 'Next 3 months',
+      presetAll: 'All',
     },
     detail: {
       buy: 'Buy ticket',

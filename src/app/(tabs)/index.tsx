@@ -4,6 +4,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -11,10 +12,10 @@ import {
   useColorScheme,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CityPicker } from '@/components/city-picker';
-import { FilterSheet } from '@/components/filter-sheet';
+import { FilterPopover, type FilterFacet } from '@/components/filter-popover';
 import { RaceCard } from '@/components/race-card';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -44,13 +45,20 @@ export default function FeedScreen() {
   const c = Colors[scheme];
   const router = useRouter();
   const { t, locale, setLocale } = useI18n();
+  const insets = useSafeAreaInsets();
 
   const [query, setQuery] = useState('');
   const [distances, setDistances] = useState<Set<DistanceTag>>(new Set());
   const [months, setMonths] = useState<Set<string>>(new Set());
   const [showPast, setShowPast] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [activeFacet, setActiveFacet] = useState<FilterFacet>(null);
+  // Bottom edge of the facet chip row, relative to the header (its direct
+  // parent) — measured via onLayout rather than measureInWindow, since the
+  // header sits flush under the safe-area inset and this is the only offset
+  // the popover needs to land just below the row. A reasonable default
+  // covers the first paint, before layout has run once.
+  const [chipsRowBottom, setChipsRowBottom] = useState(132);
   const [pulling, setPulling] = useState(false);
   const allRaces = useRaces();
   const { status, refresh } = useRacesStatus();
@@ -119,6 +127,12 @@ export default function FeedScreen() {
     (key: string) => setMonths((prev) => toggleInSet(prev, key)),
     [],
   );
+  // Fast-path for the month popover's preset row — replaces the whole
+  // selection rather than toggling into it, so picking a preset after some
+  // manual chips were already active gives a predictable result.
+  const setMonthsExact = useCallback((keys: Set<string>) => setMonths(keys), []);
+  const resetDistances = useCallback(() => setDistances(new Set()), []);
+  const resetMonths = useCallback(() => setMonths(new Set()), []);
   const clearFilters = useCallback(() => {
     setDistances(new Set());
     setMonths(new Set());
@@ -142,8 +156,10 @@ export default function FeedScreen() {
     if (status !== 'loading') setPulling(false);
   }, [status]);
 
-  const filterButtonLabel =
-    activeFilterCount > 0 ? `${t('filters.title')} (${activeFilterCount})` : t('filters.title');
+  const facetChips: { key: NonNullable<FilterFacet>; label: string; count: number }[] = [
+    { key: 'distance', label: t('filters.distance'), count: distances.size },
+    { key: 'month', label: t('filters.date'), count: months.size },
+  ];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -197,25 +213,6 @@ export default function FeedScreen() {
           />
         </GlassSurface>
         <Pressable
-          onPress={() => setFilterSheetOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel={filterButtonLabel}>
-          {({ pressed }) => (
-            <GlassSurface
-              scheme={scheme}
-              radius={GlassRadii.pill}
-              style={pressed && styles.pressed}
-              contentStyle={styles.filterContent}>
-              <Text style={[styles.filterBtnText, { color: c.text }]}>{t('filters.title')}</Text>
-              {activeFilterCount > 0 && (
-                <View style={[styles.badge, { backgroundColor: c.accent }]}>
-                  <Text style={styles.badgeText}>{activeFilterCount}</Text>
-                </View>
-              )}
-            </GlassSurface>
-          )}
-        </Pressable>
-        <Pressable
           onPress={() => setShowPast((v) => !v)}
           accessibilityRole="button">
           {({ pressed }) => (
@@ -231,6 +228,58 @@ export default function FeedScreen() {
           )}
         </Pressable>
       </View>
+
+      {/* One small chip per filter facet (Strava reference: Sport · Dates ·
+          Distance · … as separate pills in a scrolling row). Tapping a chip
+          opens a compact popover for that facet only, instead of one sheet
+          holding every facet at once — cheaper to change a single filter. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.facetRow}
+        contentContainerStyle={styles.facetRowContent}
+        onLayout={(e) =>
+          setChipsRowBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)
+        }>
+        {facetChips.map((f) => {
+          const open = activeFacet === f.key;
+          const label =
+            f.count > 0 ? `${f.label} (${f.count})` : f.label;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => setActiveFacet(open ? null : f.key)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: open }}
+              accessibilityLabel={label}>
+              {({ pressed }) => (
+                <GlassSurface
+                  scheme={scheme}
+                  radius={GlassRadii.pill}
+                  style={[
+                    pressed && styles.pressed,
+                    open && { borderWidth: 1.5, borderColor: c.accent },
+                  ]}
+                  contentStyle={styles.filterContent}>
+                  <Text style={[styles.filterBtnText, { color: c.text }]}>{f.label}</Text>
+                  {f.count > 0 && (
+                    <View style={[styles.badge, { backgroundColor: c.accent }]}>
+                      <Text style={styles.badgeText}>{f.count}</Text>
+                    </View>
+                  )}
+                  <Icon
+                    ios="chevron.down"
+                    android="expand_more"
+                    size={10}
+                    weight="bold"
+                    color={c.textSecondary}
+                  />
+                </GlassSurface>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {hasActiveFilters && (
         <View style={styles.filterRow}>
@@ -312,16 +361,18 @@ export default function FeedScreen() {
       />
 
       <CityPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
-      <FilterSheet
-        visible={filterSheetOpen}
-        onClose={() => setFilterSheetOpen(false)}
+      <FilterPopover
+        facet={activeFacet}
+        onClose={() => setActiveFacet(null)}
+        top={insets.top + chipsRowBottom + Spacing.one}
         distances={distances}
         onToggleDistance={toggleDistance}
+        onResetDistances={resetDistances}
         months={months}
         onToggleMonth={toggleMonth}
+        onSetMonths={setMonthsExact}
+        onResetMonths={resetMonths}
         availableMonths={availableMonths}
-        onClear={clearFilters}
-        resultCount={races.length}
       />
     </SafeAreaView>
   );
@@ -387,6 +438,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
+  facetRow: { marginTop: Spacing.two },
+  facetRowContent: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+  },
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
