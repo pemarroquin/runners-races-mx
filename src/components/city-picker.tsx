@@ -94,6 +94,11 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
                     accessibilityRole="radio"
                     accessibilityLabel={r.name}
                     accessibilityState={{ selected: active }}
+                    // react-native-web doesn't turn accessibilityState into
+                    // ARIA attributes on View-based components — flat
+                    // aria-checked is what actually reaches the DOM
+                    // (PageSpeed Insights, 2026-08-11).
+                    aria-checked={active}
                     // Row has ~34pt of visual height (padding + one line of
                     // text) — hitSlop brings the tappable area up toward
                     // Apple HIG's 44pt minimum control size without inflating

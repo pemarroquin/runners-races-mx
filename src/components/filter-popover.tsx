@@ -199,6 +199,11 @@ export function FilterPopover({
                           onPress={() => onSetMonths(new Set(preset.keys))}
                           accessibilityRole="radio"
                           accessibilityState={{ selected: active }}
+                          // react-native-web doesn't turn accessibilityState
+                          // into ARIA attributes on View-based components —
+                          // flat aria-checked is what actually reaches the
+                          // DOM (PageSpeed Insights, 2026-08-11).
+                          aria-checked={active}
                           hitSlop={SEGMENT_HIT_SLOP}
                           style={[styles.segment, active && { backgroundColor: c.text }]}>
                           <Text

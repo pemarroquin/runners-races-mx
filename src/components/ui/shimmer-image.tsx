@@ -108,9 +108,15 @@ export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerI
           onLoad={() => setStatus('loaded')}
           onError={() => setStatus('error')}
           // Decorative — the card's own Pressable already carries the full
-          // accessibility label (name, date, city, status).
+          // accessibility label (name, date, city, status). alt="" (not
+          // omitted) is what actually marks it decorative on web: expo-image
+          // only sets the underlying <img>'s alt from accessibilityLabel/alt,
+          // so leaving both unset drops the attribute entirely rather than
+          // emitting alt="" — PageSpeed Insights flags that as a missing-alt
+          // violation even though the intent was "no label needed" (2026-08-11).
           accessibilityElementsHidden
           importantForAccessibility="no"
+          alt=""
         />
       )}
     </View>
