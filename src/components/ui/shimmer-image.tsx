@@ -47,6 +47,19 @@ interface ShimmerImageProps {
   priority?: 'low' | 'normal' | 'high';
 }
 
+// expo-image's web renderer defaults the underlying <img>'s `loading` to
+// 'lazy' whenever the `loading` prop isn't passed explicitly — regardless of
+// `priority`. Confirmed live via PageSpeed Insights (2026-08-11): the hero
+// card's image shipped BOTH `fetchpriority="high"` and `loading="lazy"`,
+// which directly contradict each other and flagged as a failing LCP audit
+// ("LCP resources should not use loading=lazy"). A 'high'-priority image is
+// by definition the one image on screen we want the browser to fetch eagerly
+// — 'low'/'normal'/unset keep the default lazy behavior, which is still
+// correct for the dozen unprioritized grid images per screen.
+function resolveLoading(priority: ShimmerImageProps['priority']) {
+  return priority === 'high' ? 'eager' : undefined;
+}
+
 const REVEAL_MS = 250; // expo-image's own crossfade on load — mid the requested 200-300ms band
 
 export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerImageProps) {
@@ -91,6 +104,7 @@ export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerI
           transition={REVEAL_MS}
           cachePolicy="memory-disk"
           priority={priority}
+          loading={resolveLoading(priority)}
           onLoad={() => setStatus('loaded')}
           onError={() => setStatus('error')}
           // Decorative — the card's own Pressable already carries the full
