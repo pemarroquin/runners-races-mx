@@ -45,6 +45,7 @@ import { Icon } from '@/components/ui/icon';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
+import { isSafeUrl } from '@/lib/races';
 
 const SHEET_RATIO = 0.9;
 const DISMISS_DISTANCE_RATIO = 0.3;
@@ -190,7 +191,9 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
                   {Platform.OS === 'web' && (
                     <GlassButton
                       scheme={scheme}
-                      onPress={() => Linking.openURL(url)}
+                      onPress={() => {
+                        if (isSafeUrl(url)) Linking.openURL(url).catch(() => {});
+                      }}
                       size={32}
                       radius={16}
                       accessibilityLabel={t('detail.openBrowser')}>
@@ -222,12 +225,34 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
                 src={url}
                 title={title}
                 onLoad={onLoaded}
+                // The framed page is a third-party sponsor checkout we don't
+                // control. Without `sandbox` it can run `window.top.location =
+                // ...` and replace the whole app with a page of its choosing —
+                // a one-line hijack of every user who taps Buy. The grants
+                // below are what a real checkout needs and nothing more;
+                // crucially `allow-top-navigation` is NOT among them.
+                //
+                // `allow-scripts` + `allow-same-origin` is only the classic
+                // sandbox-escape when the frame is same-origin with US (it
+                // could then reach in and drop its own sandbox). These
+                // checkouts are always cross-origin, and they need their own
+                // origin for cookies/session, so the pair is correct here.
+                sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                referrerPolicy="no-referrer-when-downgrade"
                 style={{ flex: 1, width: '100%', height: '100%', border: 0 }}
               />
             ) : (
               <WebView
                 source={{ uri: url }}
                 style={styles.web}
+                // Native counterpart to the iframe sandbox. The checkout page
+                // is third-party, so left alone it can navigate this WebView
+                // anywhere — including `intent:` or a custom scheme, which on
+                // Android hands control to another installed app. Confine it
+                // to http(s); anything else is refused rather than followed.
+                onShouldStartLoadWithRequest={(req) => isSafeUrl(req.url)}
+                // Don't let a checkout page open arbitrary extra windows.
+                setSupportMultipleWindows={false}
                 onLoadProgress={(e) => {
                   // Real progress from the WebView — never move backwards.
                   const p = e.nativeEvent.progress;

@@ -22,7 +22,7 @@ import { Icon } from '@/components/ui/icon';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
-import { daysUntil, distanceTagLabelKey, formatDate } from '@/lib/races';
+import { daysUntil, distanceTagLabelKey, formatDate, isSafeUrl } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
 
@@ -253,7 +253,14 @@ export default function RaceDetailScreen() {
           </GlassSurface>
         </Pressable>
 
-        <Pressable onPress={() => Linking.openURL(race.sourceUrl).catch(() => {})} style={styles.sourceRow}>
+        {/* isSafeUrl is already enforced at the data boundary (isValidRace
+            drops any race whose sourceUrl isn't http(s)); repeated here so the
+            sink is safe on its own terms rather than by assumption. */}
+        <Pressable
+          onPress={() => {
+            if (isSafeUrl(race.sourceUrl)) Linking.openURL(race.sourceUrl).catch(() => {});
+          }}
+          style={styles.sourceRow}>
           <Text style={[styles.source, { color: c.textSecondary }]}>{t('detail.viewSource')}</Text>
           <Icon ios="arrow.up.right" android="open_in_new" size={12} color={c.textSecondary} />
         </Pressable>

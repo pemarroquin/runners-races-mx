@@ -31,6 +31,15 @@ const CONFIDENCE = new Set(['high', 'medium', 'low']);
 const STATUS = new Set(['ok', 'changed', 'canceled']);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+// Mirrors isSafeUrl() in src/lib/races.ts. Every URL here reaches a WebView,
+// an iframe or Linking.openURL, and the sweep agent harvests signupUrl from
+// third-party race-calendar sites — so a hostile scheme has a real path in.
+// The app sanitizes at the trust boundary; this stops one being COMMITTED.
+const URL_FIELDS = ['sourceUrl', 'signupUrl', 'courseMapUrl'];
+const CONTROL_RE = /[\u0000-\u001f\u007f]/;
+const isSafeUrl = (u) =>
+  typeof u === 'string' && !CONTROL_RE.test(u.trim()) && /^https?:\/\/[^\s]+$/i.test(u.trim());
+
 // Fields a sweep is allowed to touch WITHOUT that counting as a real data
 // change. If `status: 'changed'` is declared and only these moved, the sweep
 // recorded a finding it never applied — the exact defect this gate exists for.
@@ -86,6 +95,17 @@ for (const r of races) {
   if (typeof r.city !== 'string') err(id, 'city must be a string');
   if (typeof r.state !== 'string') err(id, 'state must be a string');
   if (!str(r.sourceUrl)) err(id, 'sourceUrl is required — no race without a fetched source');
+  // A non-http(s) URL here is a live sink, not a typo: these values are handed
+  // to a WebView, an iframe and Linking.openURL. `isValidRace` drops a race
+  // with an unsafe sourceUrl and nulls an unsafe signupUrl/courseMapUrl at
+  // runtime, so committing one means silently losing a listing or a link.
+  for (const f of URL_FIELDS) {
+    const u = r[f];
+    if (u == null) continue;
+    if (!isSafeUrl(u)) {
+      err(id, `${f} must be an absolute http(s) URL with no control characters, got ${JSON.stringify(String(u).slice(0, 60))}`);
+    }
+  }
   if (!Array.isArray(r.distances)) err(id, 'distances must be an array');
   if (!Array.isArray(r.distanceTags)) err(id, 'distanceTags must be an array');
   else {
