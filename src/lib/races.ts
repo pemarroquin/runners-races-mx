@@ -88,6 +88,58 @@ export interface Race {
 }
 
 /**
+ * True only for a well-formed absolute http(s) URL.
+ *
+ * Every URL in this file is attacker-influenced in practice: the race-watch
+ * agent harvests `signupUrl` from third-party race-calendar sites twice a week
+ * and commits it, and the whole payload is refetched from GitHub at runtime.
+ * Those values reach privileged sinks — `WebView source={{uri}}`, `<iframe
+ * src>`, `Linking.openURL` — where a non-http scheme is a real weapon:
+ * `Linking.openURL` will happily fire `intent:`/custom-scheme deep links into
+ * other installed apps, and the in-app checkout has no URL bar for a user to
+ * notice with.
+ *
+ * Deliberately NOT built on `new URL()`: React Native ships an incomplete,
+ * non-spec URL implementation, so parsing behaviour differs between native and
+ * web — exactly the kind of gap this check exists to close. A literal prefix
+ * test behaves identically everywhere.
+ *
+ * This allowlists the SCHEME, not the host. Race registrations live on
+ * hundreds of legitimate domains, so a host allowlist isn't possible; what
+ * this stops is `javascript:`, `data:`, `file:`, `intent:` and friends.
+ */
+export function isSafeUrl(u: unknown): u is string {
+  if (typeof u !== 'string') return false;
+  const trimmed = u.trim();
+  // Browsers strip tabs, newlines and other control characters out of URLs
+  // before navigating, so `java\nscript:...` can smuggle a scheme past a naive
+  // check. Reject any control character outright rather than trying to model
+  // each engine's stripping rules.
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
+  return /^https?:\/\/[^\s]+$/i.test(trimmed);
+}
+
+/**
+ * Null out any URL field that isn't a safe http(s) URL, keeping the rest of
+ * the race. Degrading one field beats dropping a real listing: a race with a
+ * rejected `signupUrl` still appears, just with the CTA disabled and showing
+ * "Registro próximamente" — the same state as a race whose registration isn't
+ * published yet.
+ *
+ * `sourceUrl` is handled in `isValidRace` instead, not here: it's required by
+ * the schema (no race without a fetched source), so a record whose source
+ * isn't an http(s) URL is malformed rather than degraded, and is dropped.
+ */
+function sanitizeRace(race: Race): Race {
+  const signupUrl = isSafeUrl(race.signupUrl) ? race.signupUrl : null;
+  const courseMapUrl = isSafeUrl(race.courseMapUrl) ? race.courseMapUrl : null;
+  if (signupUrl === race.signupUrl && courseMapUrl === (race.courseMapUrl ?? null)) {
+    return race; // untouched — keep the original object identity
+  }
+  return { ...race, signupUrl, courseMapUrl };
+}
+
+/**
  * Per-record shape check. The UI dereferences far more than `id`/`name`
  * (distanceTags, distances, city, state, sourceUrl, date), so a record
  * missing any of those would throw deep in a render — not here. Used to
@@ -101,7 +153,12 @@ function isValidRace(r: unknown): r is Race {
   if (typeof race.name !== 'string' || race.name === '') return false;
   if (typeof race.city !== 'string') return false;
   if (typeof race.state !== 'string') return false;
-  if (typeof race.sourceUrl !== 'string') return false;
+  // sourceUrl is rendered as a tappable "Ver fuente" that calls
+  // Linking.openURL, so a non-http(s) value here is a live deep-link sink, not
+  // a cosmetic problem. It's also required by the research contract (no race
+  // without a fetched source), so a record failing this is malformed and gets
+  // dropped rather than degraded. All 312 URLs in the current dataset pass.
+  if (!isSafeUrl(race.sourceUrl)) return false;
   if (!Array.isArray(race.distances)) return false;
   if (!Array.isArray(race.distanceTags)) return false;
   if (!race.distanceTags.every((t) => (DISTANCE_TAGS as string[]).includes(t as string))) {
@@ -116,7 +173,9 @@ function isValidRace(r: unknown): r is Race {
 // The bundled seed, filtered through the same validator as remote data — no
 // free pass just for shipping in the app. Consumers hold their own React
 // state seeded from this (see RacesProvider); nothing here is mutated.
-export const SEED_RACES: Race[] = (racesJson.races as unknown[]).filter(isValidRace);
+export const SEED_RACES: Race[] = (racesJson.races as unknown[])
+  .filter(isValidRace)
+  .map(sanitizeRace);
 
 /** Sort by date ascending; undated races sink to the bottom, ties by name. */
 export function sortRaces(races: Race[]): Race[] {
@@ -157,7 +216,10 @@ export async function fetchRemoteRaces(): Promise<Race[] | null> {
     // the whole payload as untrustworthy and keep the data we already have.
     const valid = races.filter(isValidRace);
     if (valid.length < races.length / 2) return null;
-    return valid;
+    // Scheme-sanitize AFTER the sanity floor so a payload full of hostile URLs
+    // still trips the floor on its record count rather than sneaking through
+    // as a pile of successfully-nulled links.
+    return valid.map(sanitizeRace);
   } catch {
     return null;
   }
@@ -177,7 +239,9 @@ export function loadCachedRaces(): Race[] | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
-    const valid = parsed.filter(isValidRace);
+    // The device cache is written by us, but it's still on-disk state that a
+    // previous (pre-allowlist) build may have populated — re-sanitize on read.
+    const valid = parsed.filter(isValidRace).map(sanitizeRace);
     if (valid.length === 0) return null;
     return valid;
   } catch {
