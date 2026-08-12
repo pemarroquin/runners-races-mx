@@ -62,7 +62,13 @@ export function RacesProvider({ children }: { children: ReactNode }) {
         if (result) {
           const sorted = sortRaces(result);
           setRaces(sorted);
-          saveCachedRaces(result);
+          // Deferred, not inline: saveCachedRaces serializes ~200 KB of JSON
+          // and does a synchronous SQLite write, both on the JS thread. Run
+          // straight after a successful launch fetch, that lands right where
+          // the feed is trying to paint its first frame. The in-memory state
+          // above is already correct for this session; the cache only matters
+          // to the NEXT cold start, so it can wait for an idle moment.
+          setTimeout(() => saveCachedRaces(result), 0);
           setStatus('ok');
           const now = Date.now();
           lastFetchedAtRef.current = now;

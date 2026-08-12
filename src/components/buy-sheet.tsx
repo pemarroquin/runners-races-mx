@@ -50,6 +50,23 @@ import { isSafeUrl } from '@/lib/races';
 const SHEET_RATIO = 0.9;
 const DISMISS_DISTANCE_RATIO = 0.3;
 const DISMISS_VELOCITY = 800; // px/s — fast short flicks should dismiss too
+// How long a web checkout gets before we offer the browser as a way out. Long
+// enough that a slow-but-working checkout isn't second-guessed, short enough
+// that a refused frame doesn't read as a hung app.
+const FRAME_BLOCKED_TIMEOUT_MS = 6000;
+
+/**
+ * Host portion of an http(s) URL, for display.
+ *
+ * Not `new URL()` — React Native's URL implementation is incomplete and
+ * differs from web's, the same reason isSafeUrl in races.ts uses a literal
+ * test. Callers only ever pass a string that already satisfied isSafeUrl, so
+ * the shape is known: scheme, "://", host, then an optional /?# terminator.
+ */
+function hostOf(url: string): string {
+  const m = /^https?:\/\/([^/?#]+)/i.exec(url.trim());
+  return m ? m[1] : '';
+}
 
 interface BuySheetProps {
   visible: boolean;
@@ -68,6 +85,17 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
 
   // Keep the Modal mounted while the exit animation plays.
   const [mounted, setMounted] = useState(false);
+  // A checkout that never renders. Two distinct causes, one user-visible
+  // outcome: the page errored (dead link, DNS, HTTP error), or — on web — it
+  // refuses to be framed at all (X-Frame-Options / frame-ancestors, which
+  // plenty of payment providers set). The framed case is undetectable from
+  // JS: a blocked iframe still fires `onLoad`, so there is nothing to catch.
+  // Both used to leave the user staring at a blank sheet whose progress bar
+  // had just completed. Now: a real message and a way out.
+  const [failed, setFailed] = useState(false);
+  // Web-only backstop for the silent frame block above — if nothing has
+  // painted by the time this fires, offer the browser instead of a void.
+  const [frameTimedOut, setFrameTimedOut] = useState(false);
   const translateY = useSharedValue(sheetH);
   const backdrop = useSharedValue(0);
   // Loading feedback: progress 0..1 (scaleX), bar fades out on completion,
@@ -79,6 +107,8 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      setFailed(false);
+      setFrameTimedOut(false);
       translateY.value = sheetH;
       backdrop.value = 0;
       // Reset loading state for this open. A touch of initial progress reads
@@ -118,6 +148,19 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   }, [visible, sheetH, reduced]);
 
   const close = useCallback(() => onClose(), [onClose]);
+
+  const openInBrowser = useCallback(() => {
+    if (isSafeUrl(url)) Linking.openURL(url).catch(() => {});
+  }, [url]);
+
+  // Web only: a frame that is refused paints nothing but still reports
+  // loaded, so poll a deadline instead. Native WebView reports real errors
+  // via onError/onHttpError, so it needs no equivalent.
+  useEffect(() => {
+    if (!mounted || Platform.OS !== 'web') return;
+    const timer = setTimeout(() => setFrameTimedOut(true), FRAME_BLOCKED_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [mounted]);
 
   // Drag lives on the header only, and the sheet is always settled (y = 0)
   // when a drag can begin, so translationY maps 1:1 to sheet offset.
@@ -189,22 +232,30 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
               contentStyle={styles.headerContent}>
               <View style={[styles.grabber, { backgroundColor: c.backgroundSelected }]} />
               <View style={styles.headerRow}>
-                <Text style={[styles.title, { color: c.text }]} numberOfLines={1}>
-                  {title}
-                </Text>
+                <View style={styles.titleWrap}>
+                  <Text style={[styles.title, { color: c.text }]} numberOfLines={1}>
+                    {title}
+                  </Text>
+                  {/* Whose checkout this actually is. The sheet has no URL
+                      bar, so before this the user was asked to enter card
+                      details with no way to see which site they were on. */}
+                  <Text style={[styles.host, { color: c.textSecondary }]} numberOfLines={1}>
+                    {hostOf(url)}
+                  </Text>
+                </View>
                 <View style={styles.headerActions}>
-                  {Platform.OS === 'web' && (
-                    <GlassButton
-                      scheme={scheme}
-                      onPress={() => {
-                        if (isSafeUrl(url)) Linking.openURL(url).catch(() => {});
-                      }}
-                      size={32}
-                      radius={16}
-                      accessibilityLabel={t('detail.openBrowser')}>
-                      <Icon ios="arrow.up.right" android="open_in_new" size={14} color={c.text} />
-                    </GlassButton>
-                  )}
+                  {/* Was web-only. On a phone this is the escape hatch when a
+                      checkout misbehaves in the embedded WebView — and the
+                      only way to reach a password manager or the browser's
+                      own payment autofill. */}
+                  <GlassButton
+                    scheme={scheme}
+                    onPress={openInBrowser}
+                    size={32}
+                    radius={16}
+                    accessibilityLabel={t('detail.openBrowser')}>
+                    <Icon ios="arrow.up.right" android="open_in_new" size={14} color={c.text} />
+                  </GlassButton>
                   <GlassButton
                     scheme={scheme}
                     onPress={close}
@@ -224,6 +275,22 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
             style={[styles.progressBar, { backgroundColor: c.accent }, barStyle]}
           />
 
+          {/* Hard failure (native only — a refused frame on web can't be
+              detected, see `failed` above): replace the blank checkout with
+              something actionable. */}
+          {failed ? (
+            <View style={styles.errorWrap}>
+              <Icon ios="exclamationmark.triangle" android="warning" size={28} color={c.textSecondary} />
+              <Text style={[styles.errorText, { color: c.text }]}>{t('detail.checkoutFailed')}</Text>
+              <Pressable onPress={openInBrowser} accessibilityRole="button">
+                <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.errorBtn}>
+                  <Text style={[styles.errorBtnText, { color: c.text }]}>
+                    {t('detail.openBrowser')}
+                  </Text>
+                </GlassSurface>
+              </Pressable>
+            </View>
+          ) : (
           <Animated.View style={[styles.contentWrap, contentStyle]}>
             {Platform.OS === 'web' ? (
               <iframe
@@ -266,9 +333,35 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
                   }
                 }}
                 onLoadEnd={onLoaded}
+                // Previously unhandled: a dead signup link or an HTTP error
+                // page just left the sheet blank with a completed progress
+                // bar, indistinguishable from a checkout that loaded fine.
+                onError={() => setFailed(true)}
+                onHttpError={(e) => {
+                  // Only the top-level document matters — a checkout whose
+                  // tracking pixel 404s is still a working checkout.
+                  if (e.nativeEvent.url === url) setFailed(true);
+                }}
               />
             )}
           </Animated.View>
+          )}
+
+          {/* Web escape hatch. A frame refused by X-Frame-Options fires
+              `onLoad` and paints nothing, so there is no error to catch —
+              after a grace period, offer the browser rather than let the user
+              sit in front of an empty sheet deciding the app is broken. */}
+          {frameTimedOut && !failed && Platform.OS === 'web' && (
+            <Pressable
+              onPress={openInBrowser}
+              accessibilityRole="button"
+              style={[styles.frameHint, { backgroundColor: c.backgroundElement }]}>
+              <Text style={[styles.frameHintText, { color: c.text }]}>
+                {t('detail.checkoutBlocked')}
+              </Text>
+              <Icon ios="arrow.up.right" android="open_in_new" size={13} color={c.text} />
+            </Pressable>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -309,8 +402,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  title: { flex: 1, fontSize: 15, fontWeight: '600' },
+  titleWrap: { flex: 1 },
+  title: { fontSize: 15, fontWeight: '600' },
+  host: { fontSize: 11, marginTop: 1 },
   headerActions: { flexDirection: 'row', gap: Spacing.one },
+  errorWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    padding: Spacing.four,
+  },
+  errorText: { fontSize: 15, textAlign: 'center', lineHeight: 21 },
+  errorBtn: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.four },
+  errorBtnText: { fontSize: 15, fontWeight: '600' },
+  frameHint: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three,
+    bottom: Spacing.four,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: GlassRadii.pill,
+  },
+  frameHintText: { fontSize: 13, fontWeight: '600' },
   progressBar: {
     height: 3,
     width: '100%',

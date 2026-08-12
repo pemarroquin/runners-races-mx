@@ -97,6 +97,9 @@ const translations = {
       viewSource: 'Ver fuente',
       close: 'Cerrar',
       openBrowser: 'Abrir en el navegador',
+      checkoutFailed:
+        'No pudimos abrir el registro aquí. Puede que el enlace ya no funcione o que el organizador no permita abrirlo dentro de la app.',
+      checkoutBlocked: '¿No carga? Ábrelo en el navegador',
       openMaps: 'Abrir en Mapas',
       approxLocation: 'Ubicación aproximada del punto de salida',
       share: 'Compartir',
@@ -233,6 +236,9 @@ const translations = {
       viewSource: 'View source',
       close: 'Close',
       openBrowser: 'Open in browser',
+      checkoutFailed:
+        "We couldn't open the registration here. The link may no longer work, or the organizer may not allow it to open inside the app.",
+      checkoutBlocked: "Not loading? Open it in your browser",
       openMaps: 'Open in Maps',
       approxLocation: 'Approximate start location',
       share: 'Share',

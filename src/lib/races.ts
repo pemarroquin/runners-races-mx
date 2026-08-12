@@ -12,6 +12,11 @@ import { getPref, initDb, setPref } from '@/lib/db';
 export const REMOTE_RACES_URL: string | null =
   'https://raw.githubusercontent.com/pemarroquin/runners-races-mx/main/assets/data/races.json';
 
+// Matches the bound location.ts already puts on its own calls. Generous
+// enough for a slow cellular connection to deliver ~200 KB, short enough that
+// a dead network doesn't leave the refresh lock held for a minute.
+const FETCH_TIMEOUT_MS = 15_000;
+
 export type Confidence = 'high' | 'medium' | 'low';
 export type DistanceTag =
   | '3K'
@@ -222,14 +227,29 @@ export function sortRaces(races: Race[]): Race[] {
  */
 export async function fetchRemoteRaces(): Promise<Race[] | null> {
   if (!REMOTE_RACES_URL) return null;
+  // No network call in this app may hang indefinitely. React Native's fetch
+  // has no default timeout on Android, so a captive portal or degraded DNS
+  // left `refreshingRef` stuck true in RacesProvider — which made every later
+  // refresh, INCLUDING pull-to-refresh, a permanent no-op with the spinner
+  // still turning. location.ts already bounds its calls this way.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     // No custom headers here: on web, any non-safelisted request header (e.g.
     // 'cache-control') forces a CORS preflight OPTIONS request, and GitHub's
     // raw host 403s that preflight, silently breaking every refresh on web.
-    // Cache-bust with a query param instead (no header needed), and pass
-    // `cache: 'no-store'` — a standard RequestInit option, not a header, so
-    // it never triggers a preflight either.
-    const res = await fetch(`${REMOTE_RACES_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    //
+    // `cache: 'no-cache'` (a RequestInit option, not a header, so it never
+    // triggers a preflight) means "revalidate before using the cached copy" —
+    // the browser/platform sends the ETag it already has and GitHub answers
+    // 304 Not Modified with an empty body when the data hasn't changed.
+    //
+    // The previous `?t=${Date.now()}` cache-buster made that impossible: a
+    // unique URL every time can never match a cached entry, so all 200 KB
+    // came down the wire on every single app open and every foreground
+    // refresh, on mobile data. Races change twice a week; almost every one of
+    // those downloads was re-fetching bytes the device already had.
+    const res = await fetch(REMOTE_RACES_URL, { cache: 'no-cache', signal: controller.signal });
     if (!res.ok) return null;
     const json = await res.json();
     const races = json?.races;
@@ -248,7 +268,11 @@ export async function fetchRemoteRaces(): Promise<Race[] | null> {
     // as a pile of successfully-nulled links.
     return valid.map(sanitizeRace);
   } catch {
+    // Includes the AbortError from the timeout above — callers treat null as
+    // "keep what we already have", which is the right response either way.
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
