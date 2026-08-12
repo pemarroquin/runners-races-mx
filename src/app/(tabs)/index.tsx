@@ -30,6 +30,7 @@ import {
   daysUntil,
   distanceTagIcon,
   distanceTagLabelKey,
+  foldForSearch,
   getAvailableMonths,
   monthKey,
   type DistanceTag,
@@ -163,13 +164,15 @@ export default function FeedScreen() {
   // you've saved one, which is what My Races' own "Anteriores" section is
   // for. No toggle here, and no way to see a past race from this screen.
   const races = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    // Accent-folded on both sides — see foldForSearch. Comparing raw strings
+    // meant `maraton` found no "Maratón" and `queretaro` found no "Querétaro".
+    const q = foldForSearch(query.trim());
     return allRaces.filter((r) => {
       if (!raceInRegion(r, region)) return false;
       const days = daysUntil(r.date);
       if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery =
-        !q || r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
+        !q || foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
@@ -187,13 +190,13 @@ export default function FeedScreen() {
   // and the user actually typed a query, count matches outside the region so
   // the empty state can point them at the city picker instead of a dead end.
   const otherRegionsCount = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = foldForSearch(query.trim());
     if (races.length !== 0 || !q) return 0;
     return allRaces.filter((r) => {
       if (raceInRegion(r, region)) return false;
       const days = daysUntil(r.date);
       if (!(r.date === null || (days !== null && days >= 0))) return false;
-      const matchesQuery = r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q);
+      const matchesQuery = foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
@@ -415,6 +418,24 @@ export default function FeedScreen() {
           );
         })}
       </ScrollView>
+
+      {/* A failed refresh used to be completely silent: `status: 'error'` was
+          set, the translations for it already existed, and nothing rendered
+          them — so stale data looked exactly like fresh data. Only the error
+          case gets chrome; a success is already visible as the pull-to-refresh
+          spinner ending, and a permanent "updated 3 minutes ago" line would be
+          noise on every launch. */}
+      {status === 'error' && (
+        <View style={styles.staleRow}>
+          <Icon ios="exclamationmark.triangle.fill" android="warning" size={12} color={c.textSecondary} />
+          <Text style={[styles.staleText, { color: c.textSecondary }]}>
+            {t('feed.updateFailed')}
+          </Text>
+          <Pressable onPress={refresh} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.staleRetry, { color: c.accent }]}>{t('common.retry')}</Text>
+          </Pressable>
+        </View>
+      )}
 
       {hasActiveFilters && (
         <View style={styles.filterRow}>
@@ -757,6 +778,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
   },
   chipText: { fontSize: 13, fontWeight: '600' },
+  staleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+  },
+  staleText: { fontSize: 12, flexShrink: 1 },
+  staleRetry: { fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   clearAllText: { fontSize: 13, fontWeight: '600' },
   list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },

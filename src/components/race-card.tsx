@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
@@ -13,6 +13,7 @@ import {
   type Race,
 } from '@/lib/races';
 import { COMPACT_IMAGE_RATIO, HERO_IMAGE_RATIO } from '@/lib/region-art';
+import { useSaved } from '@/lib/saved';
 
 interface RaceCardProps {
   race: Race;
@@ -27,6 +28,7 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
   const c = Colors[scheme];
   const { t, locale } = useI18n();
   const countdown = useCountdown();
+  const { isSaved, toggle } = useSaved();
   const days = daysUntil(race.date);
   const dateLabel = formatDate(race.date, locale);
   const displayDate = dateLabel ?? countdown(null);
@@ -37,12 +39,24 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
         ? t('common.changed')
         : countdown(days);
   const cityLabel = `${race.city}, ${abbreviateState(race.state)}`;
-  const accessibilityLabel = [race.name, displayDate, cityLabel, statusText]
+  // Whether registration is actually reachable. 80 of 195 races have no
+  // signup link, and that was only discoverable by opening the race and
+  // reading a greyed-out button — a wasted tap on 40% of the catalog.
+  const registrationOpen = Boolean(race.signupUrl) && race.status !== 'canceled';
+  const registrationLabel = registrationOpen ? t('feed.regOpen') : t('detail.noLink');
+  const accessibilityLabel = [race.name, displayDate, cityLabel, statusText, registrationLabel]
     .filter(Boolean)
     .join(', ');
   const isHero = variant === 'hero';
+  const saved = isSaved(race.id);
 
   return (
+    // The save button is a SIBLING of the card, not a child: the card sets
+    // `accessible` so VoiceOver reads it as one race rather than five
+    // fragments, and on iOS that collapses any nested touchable into the
+    // group — a heart inside the card would be unreachable to a screen
+    // reader. Overlaying it as a sibling keeps both independently focusable.
+    <View style={styles.wrap}>
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
@@ -130,12 +144,63 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
             </View>
           ))}
         </View>
+
+        {/* Registration state, on the card instead of one tap deeper. Only
+            the "not open" case is called out: an open registration is the
+            expectation, so badging it too would put a label on every card
+            and say nothing. Canceled races already carry the status pill
+            above, so they're excluded here rather than double-labeled. */}
+        {!registrationOpen && race.status !== 'canceled' && (
+          <Text style={[styles.regClosed, { color: c.textSecondary }]} numberOfLines={1}>
+            {t('detail.noLink')}
+          </Text>
+        )}
       </View>
     </Pressable>
+
+    <Pressable
+      onPress={() => {
+        // Same failure surfacing as the detail screen's save button: a write
+        // that didn't persist must not read as a save that did.
+        if (!toggle(race.id)) Alert.alert(t('detail.saveFailed'));
+      }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: saved }}
+      accessibilityLabel={`${saved ? t('detail.saved') : t('detail.save')}: ${race.name}`}
+      hitSlop={10}
+      style={({ pressed }) => [styles.saveBtn, pressed && styles.pressed]}>
+      <Icon
+        ios={saved ? 'heart.fill' : 'heart'}
+        android={saved ? 'favorite' : 'favorite_border'}
+        size={17}
+        color="#ffffff"
+      />
+    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Positioning context for the save button, and the flex:1 that the card
+  // itself used to claim directly — a 2-up grid row stretches its two
+  // children to equal height, and that child is now this wrapper.
+  wrap: { flex: 1, position: 'relative' },
+  // Pinned to the card's top-right, over the image when there is one. The
+  // dark scrim keeps a white heart legible against arbitrary artwork, and
+  // gives the button a visible target on the text-only cards (chih) where
+  // there is no image behind it.
+  saveBtn: {
+    position: 'absolute',
+    top: Spacing.two,
+    right: Spacing.two,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  regClosed: { fontSize: 12, fontWeight: '600', marginTop: Spacing.half },
   card: {
     borderRadius: Spacing.three,
     // Needed so an edge-to-edge image (rendered as the first child, ahead of

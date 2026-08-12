@@ -56,6 +56,7 @@ const translations = {
       thisWeek: 'Esta semana',
       nextRace: 'Próxima carrera',
       walksShelf: 'Caminatas',
+      regOpen: 'Registro abierto',
     },
     filters: {
       '3K': '3K',
@@ -102,6 +103,15 @@ const translations = {
       empty: 'Aún no has guardado carreras.\nExplora y guarda las que te interesen.',
       pastSection: 'Anteriores',
       upcomingSection: 'Próximas',
+      storageBlocked:
+        'Este navegador no permite guardar datos (por ejemplo, en modo privado), así que tus carreras no se conservarán al cerrar la app.',
+      missing: {
+        one: '1 carrera guardada ya no está disponible — el organizador la retiró del calendario.',
+        other:
+          '%{count} carreras guardadas ya no están disponibles — el organizador las retiró del calendario.',
+      } as PluralForm,
+      clearMissing: 'Quitarlas de mi lista',
+      remove: 'Quitar de mis carreras',
     },
     city: {
       title: 'Elige tu ciudad',
@@ -147,7 +157,7 @@ const translations = {
       daysAway: '%{count} days away',
       oneDayAway: '1 day away',
       past: 'Finished',
-      tbd: 'Date To Be Defined Yet',
+      tbd: 'Date TBD',
       when: 'When',
       where: 'Where',
       distances: 'Distances',
@@ -178,6 +188,7 @@ const translations = {
       thisWeek: 'This week',
       nextRace: 'Next race',
       walksShelf: 'Walks',
+      regOpen: 'Registration open',
     },
     filters: {
       '3K': '3K',
@@ -224,6 +235,14 @@ const translations = {
       empty: "You haven't saved any races yet.\nBrowse and save the ones you like.",
       pastSection: 'Past',
       upcomingSection: 'Upcoming',
+      storageBlocked:
+        "This browser doesn't allow saving data (private mode, for example), so your races won't be kept after you close the app.",
+      missing: {
+        one: '1 saved race is no longer listed — the organizer pulled it from the calendar.',
+        other: '%{count} saved races are no longer listed — the organizer pulled them from the calendar.',
+      } as PluralForm,
+      clearMissing: 'Remove them from my list',
+      remove: 'Remove from my races',
     },
     city: {
       title: 'Choose your city',

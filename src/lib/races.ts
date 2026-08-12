@@ -292,6 +292,41 @@ const MONTHS: Record<string, string[]> = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
 
+// Accent folding for search, as an explicit character map.
+//
+// Deliberately NOT `String.prototype.normalize('NFD')` + `\p{Diacritic}`, for
+// the same reason `isSafeUrl` above avoids `new URL()`: both depend on engine
+// Unicode support that differs between Hermes (native) and a browser's JS
+// engine (web), and `normalize` in particular is not a safe assumption on
+// Hermes. A literal map behaves identically everywhere, and the alphabet it
+// has to cover is small and closed — the ONLY accented characters in the
+// whole dataset's searchable fields (name, city, state, venue) are
+// á é í ó ú ñ Á. ü/Ü and the remaining uppercase forms are included anyway so
+// future data can't quietly reintroduce the bug.
+const FOLD_MAP: Record<string, string> = {
+  á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ü: 'u', ñ: 'n',
+  Á: 'a', É: 'e', Í: 'i', Ó: 'o', Ú: 'u', Ü: 'u', Ñ: 'n',
+};
+
+/**
+ * Lowercased and stripped of Spanish accents, for accent-insensitive search.
+ *
+ * Search used to compare raw strings, so a user typing `maraton` matched none
+ * of the 104 races whose name carries an accent ("Medio Maratón
+ * Montemorelos"), and `queretaro` matched none of the 75 races in an accented
+ * city. Phone keyboards don't produce accents without a long-press, so the
+ * accented spelling is the one users DON'T type — which made the most natural
+ * query the one that returned nothing.
+ *
+ * ñ folds to n on purpose: this is substring matching, not dictionary
+ * collation, and someone typing "nino" expects to find "Niño".
+ */
+export function foldForSearch(s: string): string {
+  let out = '';
+  for (const ch of s) out += FOLD_MAP[ch] ?? ch;
+  return out.toLowerCase();
+}
+
 /** "13 dic 2026" (es) / "13 Dec 2026" (en). Null date → null. */
 export function formatDate(dateStr: string | null, locale: string): string | null {
   if (!dateStr) return null;
