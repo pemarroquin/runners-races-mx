@@ -79,7 +79,7 @@ function themeModeLabel(mode: ThemeMode, t: (key: string) => string): string {
 export default function SettingsScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const { mode, setMode } = useThemeMode();
 
   // expoConfig.version stays in sync with app.json/package.json, so this
@@ -113,6 +113,30 @@ export default function SettingsScreen() {
                   maxFontSizeMultiplier={1.3}
                   style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
                   {themeModeLabel(m, t)}
+                </Text>
+              </Pressable>
+            ))}
+          </GlassSurface>
+        </View>
+
+        <View style={styles.themeRow}>
+          <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.language')}</Text>
+          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
+            {(['es', 'en'] as const).map((l) => (
+              <Pressable
+                key={l}
+                onPress={() => setLocale(l)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: locale === l }}
+                // Same react-native-web ARIA gap as the theme segment above —
+                // role="radio" alone doesn't reach the DOM as aria-checked.
+                aria-checked={locale === l}
+                hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
+                style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
+                <Text
+                  maxFontSizeMultiplier={1.3}
+                  style={[styles.segmentText, { color: locale === l ? c.background : c.textSecondary }]}>
+                  {l.toUpperCase()}
                 </Text>
               </Pressable>
             ))}
