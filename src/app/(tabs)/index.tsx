@@ -51,11 +51,10 @@ import { raceInRegion } from '@/lib/regions';
 type LayoutRow = { type: 'hero'; race: Race } | { type: 'grid'; races: Race[] };
 const GRID_ROWS_PER_HERO = 5;
 
-// The EN/ES segment and the facet/filter chips all render well under Apple
-// HIG's 44x44pt default control size (segment ~24pt tall, chips ~24-33pt) —
-// hitSlop brings the tappable area close to 44pt without inflating the
-// compact visual chrome (same idiom used in glass-button.tsx).
-const SEGMENT_HIT_SLOP = { top: 10, bottom: 10, left: 4, right: 4 };
+// The facet/filter chips render well under Apple HIG's 44x44pt default
+// control size (~24-33pt tall) — hitSlop brings the tappable area close to
+// 44pt without inflating the compact visual chrome (same idiom used in
+// glass-button.tsx).
 const CHIP_HIT_SLOP = { top: 8, bottom: 8, left: 4, right: 4 };
 
 function buildLayoutRows(races: Race[]): LayoutRow[] {
@@ -98,18 +97,36 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
 // (`buildLayoutRows` above) as the "filtered results" view instead — a shelf
 // UI would fight, not serve, an explicit filter.
 const THIS_WEEK_MAX_DAYS = 6; // today (0) through 6 days out, not calendar-week-aligned
-// Shelf card width as a fraction of screen width: sized so ~2.3 cards are
-// visible per screen, leaving a partial next-card peeking at the trailing
-// edge as a scroll affordance (a full 2-up width, matching the grid's own
-// column, would leave zero peek and read as a static row rather than a
-// scrollable shelf).
-const SHELF_CARD_WIDTH_RATIO = 0.42;
+// Carousel card width as a fraction of the content width (screen width minus
+// the shared horizontal padding — see `contentWidth` below), shared by every
+// horizontal-scroll section on this screen: the "this week" hero carousel
+// and each distance shelf. Sized so one card fills nearly the whole
+// scroller and the next card peeks in at the trailing edge as a scroll
+// affordance — a full-width card would leave zero peek and read as a static
+// page rather than a scrollable carousel; a half-width card (the old 2-up
+// shelf) undersells each card and buries the peek's purpose.
+const CAROUSEL_CARD_WIDTH_RATIO = 0.84;
+const CAROUSEL_GAP = Spacing.two;
+// Every horizontal carousel steps one card at a time on release, rather than
+// free-scrolling to wherever momentum happens to land — snapToInterval
+// aligned to a full card-width-plus-gap, with disableIntervalMomentum so a
+// fast flick can't skip past several cards in one gesture.
+const CAROUSEL_SNAP_PROPS = {
+  decelerationRate: 'fast' as const,
+  disableIntervalMomentum: true,
+};
+// Section-title icon size, derived from the shelf header's own text size
+// (`styles.shelfHeaderText.fontSize`) rather than a disconnected literal —
+// keeps the glyph visually tied to the title it sits next to instead of
+// looking like an arbitrary fixed size.
+const SHELF_HEADER_FONT_SIZE = 18; // keep in sync with styles.shelfHeaderText
+const SHELF_ICON_SIZE = Math.round(SHELF_HEADER_FONT_SIZE * 0.85);
 
 export default function FeedScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const router = useRouter();
-  const { t, locale, setLocale } = useI18n();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
 
   const [query, setQuery] = useState('');
@@ -220,11 +237,13 @@ export default function FeedScreen() {
     [races],
   );
 
-  // Hero pages full-width (matches the body's own horizontal padding, see
-  // `styles.list`). Shelf cards use a fraction of screen width instead — see
-  // `SHELF_CARD_WIDTH_RATIO` above for why.
+  // contentWidth matches the body's own horizontal padding (see
+  // `styles.list`) — every horizontal carousel's card width is a fraction of
+  // this, not of the raw screen width, so the peek lines up with that same
+  // padding. See `CAROUSEL_CARD_WIDTH_RATIO` above for why.
   const contentWidth = width - Spacing.three * 2;
-  const shelfCardWidth = Math.round(width * SHELF_CARD_WIDTH_RATIO);
+  const carouselCardWidth = Math.round(contentWidth * CAROUSEL_CARD_WIDTH_RATIO);
+  const carouselStep = carouselCardWidth + CAROUSEL_GAP;
 
   const availableMonths = useMemo(
     () => getAvailableMonths(allRaces.filter((r) => raceInRegion(r, region)), locale),
@@ -321,33 +340,6 @@ export default function FeedScreen() {
             <Icon ios="chevron.down" android="expand_more" size={12} weight="bold" color={c.textSecondary} />
           </Pressable>
         </View>
-        {/* Real segmented control (iOS 27 "Tabs Mode Compact" language): one
-            glass track, active segment gets a solid filled pill inside it. */}
-        <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
-          {(['es', 'en'] as const).map((l) => (
-            <Pressable
-              key={l}
-              onPress={() => setLocale(l)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: locale === l }}
-              // react-native-web doesn't turn accessibilityState into ARIA
-              // attributes on View-based components — flat aria-checked is
-              // what actually reaches the DOM (PageSpeed Insights, 2026-08-11).
-              aria-checked={locale === l}
-              hitSlop={SEGMENT_HIT_SLOP}
-              style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
-              <Text
-                // Capped: a 2-letter code in a fixed-width pill next to its
-                // sibling segment — uncapped Dynamic Type at the largest
-                // accessibility sizes would overflow the pill rather than
-                // reflow (there's nowhere for it to wrap to).
-                maxFontSizeMultiplier={1.3}
-                style={[styles.langText, { color: locale === l ? c.background : c.textSecondary }]}>
-                {l.toUpperCase()}
-              </Text>
-            </Pressable>
-          ))}
-        </GlassSurface>
       </View>
 
       <View style={styles.searchRow}>
@@ -590,15 +582,17 @@ export default function FeedScreen() {
                 <FlatList
                   data={heroRaces}
                   horizontal
-                  pagingEnabled
                   showsHorizontalScrollIndicator={false}
+                  snapToInterval={carouselStep}
+                  {...CAROUSEL_SNAP_PROPS}
                   keyExtractor={(r) => r.id}
+                  contentContainerStyle={styles.shelfContent}
                   onMomentumScrollEnd={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-                    const idx = Math.round(e.nativeEvent.contentOffset.x / contentWidth);
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / carouselStep);
                     setHeroIndex(Math.max(0, Math.min(idx, heroRaces.length - 1)));
                   }}
                   renderItem={({ item }) => (
-                    <View style={{ width: contentWidth }}>
+                    <View style={{ width: carouselCardWidth }}>
                       <RaceCard
                         race={item}
                         variant="hero"
@@ -642,17 +636,21 @@ export default function FeedScreen() {
                 key={shelf.tag}
                 entering={FadeInDown.duration(320).delay(Math.min(index + 1, 8) * 45)}>
                 <View style={styles.shelfHeaderRow}>
-                  {icon && <Icon ios={icon.ios} android={icon.android} size={14} color={c.text} />}
+                  {icon && (
+                    <Icon ios={icon.ios} android={icon.android} size={SHELF_ICON_SIZE} color={c.text} />
+                  )}
                   <Text style={[styles.shelfHeaderText, { color: c.text }]}>{label}</Text>
                 </View>
                 <FlatList
                   data={shelf.races}
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  snapToInterval={carouselStep}
+                  {...CAROUSEL_SNAP_PROPS}
                   keyExtractor={(r) => r.id}
                   contentContainerStyle={styles.shelfContent}
                   renderItem={({ item }) => (
-                    <View style={{ width: shelfCardWidth }}>
+                    <View style={{ width: carouselCardWidth }}>
                       <RaceCard
                         race={item}
                         variant="compact"
@@ -704,15 +702,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700' },
   subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   subtitle: { fontSize: 14 },
-  segmentTrack: { flexDirection: 'row', padding: 3, gap: 2 },
-  segment: {
-    borderRadius: GlassRadii.pill,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  langText: { fontSize: 12, fontWeight: '700' },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',

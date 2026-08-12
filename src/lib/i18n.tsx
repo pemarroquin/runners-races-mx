@@ -119,6 +119,7 @@ const translations = {
       themeSystem: 'Sistema',
       themeLight: 'Claro',
       themeDark: 'Oscuro',
+      language: 'Idioma',
     },
     privacy: {
       title: 'Privacidad',
@@ -240,6 +241,7 @@ const translations = {
       themeSystem: 'System',
       themeLight: 'Light',
       themeDark: 'Dark',
+      language: 'Language',
     },
     privacy: {
       title: 'Privacy',
