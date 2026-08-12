@@ -88,6 +88,10 @@ const translations = {
       saveFailed: 'No pudimos guardar la carrera en este dispositivo. Vuelve a intentarlo.',
       addCalendar: 'Agregar al calendario',
       calendarAdded: 'Agregada a tu calendario',
+      calendarAddedNoTime:
+        'Agregada a tu calendario como evento de todo el día — el organizador aún no confirma la hora de salida.',
+      calendarAlready: 'Esta carrera ya está en tu calendario.',
+      calendarFailed: 'No pudimos agregarla a tu calendario. Vuelve a intentarlo.',
       calendarNoDate: 'Esta carrera aún no tiene fecha confirmada.',
       permission: 'Necesitamos permiso para acceder a tu calendario.',
       viewSource: 'Ver fuente',
@@ -220,6 +224,10 @@ const translations = {
       saveFailed: "We couldn't save this race on this device. Please try again.",
       addCalendar: 'Add to calendar',
       calendarAdded: 'Added to your calendar',
+      calendarAddedNoTime:
+        "Added to your calendar as an all-day event — the organizer hasn't confirmed a start time yet.",
+      calendarAlready: 'This race is already in your calendar.',
+      calendarFailed: "We couldn't add it to your calendar. Please try again.",
       calendarNoDate: 'This race has no confirmed date yet.',
       permission: 'We need permission to access your calendar.',
       viewSource: 'View source',
