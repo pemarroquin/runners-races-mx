@@ -21,6 +21,7 @@ import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
+import { raceWebUrl } from '@/constants/links';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
 import { daysUntil, distanceTagLabelKey, formatDate, isSafeUrl } from '@/lib/races';
@@ -166,7 +167,9 @@ export default function RaceDetailScreen() {
       name: race.name,
       date: dateLabel ? `${dateLabel}${race.time ? ` · ${race.time}` : ''}` : t('common.tbd'),
     });
-    const message = `${headline}\n${race.sourceUrl}`;
+    // The app's own link, not race.sourceUrl — sharing used to send people to
+    // a third-party race calendar with no route back here.
+    const message = `${headline}\n${raceWebUrl(race.id)}`;
     try {
       await Share.share({ message });
     } catch {
