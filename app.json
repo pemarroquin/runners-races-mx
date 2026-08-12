@@ -46,7 +46,8 @@
         {
           "locationWhenInUsePermission": "Runners' Races MX uses your location to show races in your city."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

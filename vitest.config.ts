@@ -22,6 +22,14 @@ export default defineConfig({
       // helpers. expo-sqlite is a native module with no Node build, so it is
       // swapped for an in-memory stand-in that satisfies the same contract.
       { find: /^expo-sqlite$/, replacement: path.resolve(__dirname, 'test/stubs/expo-sqlite.ts') },
+      // Same reasoning for the reminder scheduler's dependencies: the real
+      // packages boot the Expo runtime / react-native module registry, which
+      // cannot run in a plain Node process.
+      {
+        find: /^expo-notifications$/,
+        replacement: path.resolve(__dirname, 'test/stubs/expo-notifications.ts'),
+      },
+      { find: /^react-native$/, replacement: path.resolve(__dirname, 'test/stubs/react-native.ts') },
       { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'src/$1') },
     ],
   },

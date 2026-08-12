@@ -18,6 +18,7 @@ import { CinematicSplash } from '@/components/splash';
 import { LocaleProvider } from '@/lib/i18n';
 import { RacesProvider } from '@/lib/races-provider';
 import { RegionProvider } from '@/lib/region-context';
+import { RemindersProvider } from '@/lib/reminders-provider';
 import { SavedProvider } from '@/lib/saved';
 import { ThemeModeProvider } from '@/lib/theme-mode';
 import { TodayProvider } from '@/lib/today';
@@ -34,6 +35,9 @@ export default function RootLayout() {
         <RacesProvider>
         <RegionProvider>
         <SavedProvider>
+        {/* Inside SavedProvider and RacesProvider: it syncs the notification
+            schedule off saved ids + race data, so it has to consume both. */}
+        <RemindersProvider>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -42,6 +46,7 @@ export default function RootLayout() {
             {/* Rendered after the Stack so it overlays the app during launch */}
             <CinematicSplash />
           </ThemeProvider>
+        </RemindersProvider>
         </SavedProvider>
         </RegionProvider>
         </RacesProvider>

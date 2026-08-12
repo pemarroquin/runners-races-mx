@@ -136,6 +136,13 @@ const translations = {
       themeLight: 'Claro',
       themeDark: 'Oscuro',
       language: 'Idioma',
+      reminders: 'Recordatorios',
+      remindersHint:
+        'Te avisamos 3 días antes y la noche anterior de cada carrera que guardes.',
+      remindersOnHint:
+        'Te avisaremos 3 días antes y la noche anterior de cada carrera que guardes.',
+      remindersDenied:
+        'No diste permiso para enviarte notificaciones. Actívalo en los ajustes de tu teléfono para usar los recordatorios.',
     },
     privacy: {
       title: 'Privacidad',
@@ -146,6 +153,8 @@ const translations = {
         'Si el GPS no está disponible o no diste permiso, calculamos tu ciudad aproximada a partir de tu dirección IP con el servicio ipapi.co. Tu IP se envía a ipapi.co en ese momento — es lo único que sale de tu dispositivo, y solo pasa cuando no hay GPS.',
       collectedSaved:
         'Carreras guardadas: los IDs de las carreras que guardas quedan solo en este dispositivo (SQLite en iOS/Android, almacenamiento local en la versión web). No se sincronizan a ningún servidor.',
+      collectedReminders:
+        'Recordatorios: si los activas, tu teléfono programa las notificaciones localmente. No usamos notificaciones push ni servidores de mensajería — nada sale de tu dispositivo, y al desactivarlos se cancelan todas.',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No hay cuentas ni inicio de sesión.',
       notTracking: 'No rastreamos tu actividad ni usamos analítica.',
@@ -274,6 +283,13 @@ const translations = {
       themeLight: 'Light',
       themeDark: 'Dark',
       language: 'Language',
+      reminders: 'Reminders',
+      remindersHint:
+        'We’ll remind you 3 days before and the night before each race you save.',
+      remindersOnHint:
+        'We’ll remind you 3 days before and the night before each race you save.',
+      remindersDenied:
+        'You didn’t allow notifications. Turn them on in your phone settings to use reminders.',
     },
     privacy: {
       title: 'Privacy',
@@ -284,6 +300,8 @@ const translations = {
         "If GPS isn't available or you didn't grant permission, we estimate your city from your IP address using the ipapi.co service. Your IP is sent to ipapi.co at that point — it's the only thing that ever leaves your device, and only when GPS isn't available.",
       collectedSaved:
         'Saved races: the IDs of races you save stay on this device only (SQLite on iOS/Android, local storage on the web version). Nothing syncs to any server.',
+      collectedReminders:
+        'Reminders: if you turn them on, your phone schedules the notifications locally. We use no push notifications and no messaging servers — nothing leaves your device, and turning them off cancels all of them.',
       notTitle: "What we don't do",
       notAccounts: 'No accounts, no login.',
       notTracking: 'No tracking your activity, no analytics.',
