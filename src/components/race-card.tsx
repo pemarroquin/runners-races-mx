@@ -8,7 +8,6 @@ import { useCountdown, useI18n } from '@/lib/i18n';
 import {
   abbreviateState,
   daysUntil,
-  distanceTagIcon,
   distanceTagLabelKey,
   formatDate,
   type Race,
@@ -96,30 +95,40 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
           numberOfLines={2}>
           {race.name}
         </Text>
-        <Text
-          style={[isHero ? styles.city : styles.cityCompact, { color: c.textSecondary }]}
-          // Compact sits in a 2-up grid row where a sibling card's height
-          // depends on this text — an unbounded city/state string (which
-          // varies a lot, e.g. "Ocoyoacac (La Marquesa), Estado de México"
-          // vs "Ciudad de México, Ciudad de México") was the main source of
-          // ragged, mismatched card heights across a row. Hero is alone in
-          // its row with no sibling to match, so it stays unbounded.
-          numberOfLines={isHero ? undefined : 1}>
-          {cityLabel}
-        </Text>
+        <View style={isHero ? styles.cityRow : styles.cityRowCompact}>
+          <Icon
+            ios="mappin"
+            android="location_on"
+            size={isHero ? 13 : 12}
+            color={c.textSecondary}
+          />
+          <Text
+            style={[
+              isHero ? styles.city : styles.cityCompact,
+              { color: c.textSecondary },
+              styles.cityText,
+            ]}
+            // Compact sits in a 2-up grid row where a sibling card's height
+            // depends on this text — an unbounded city/state string (which
+            // varies a lot, e.g. "Ocoyoacac (La Marquesa), Estado de México"
+            // vs "Ciudad de México, Ciudad de México") was the main source of
+            // ragged, mismatched card heights across a row. Hero is alone in
+            // its row with no sibling to match, so it stays unbounded.
+            // flexShrink (styles.cityText) keeps the Text from forcing the
+            // row wider than its parent instead of truncating in place.
+            numberOfLines={isHero ? undefined : 1}>
+            {cityLabel}
+          </Text>
+        </View>
 
         <View style={styles.tagRow}>
-          {race.distanceTags.map((tag) => {
-            const icon = distanceTagIcon(tag);
-            return (
-              <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
-                {icon && <Icon ios={icon.ios} android={icon.android} size={12} color={c.text} />}
-                <Text style={[styles.tagText, { color: c.text }]}>
-                  {t(distanceTagLabelKey(tag))}
-                </Text>
-              </View>
-            );
-          })}
+          {race.distanceTags.map((tag) => (
+            <View key={tag} style={[styles.tag, { backgroundColor: c.backgroundSelected }]}>
+              <Text style={[styles.tagText, { color: c.text }]}>
+                {t(distanceTagLabelKey(tag))}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
     </Pressable>
@@ -167,6 +176,17 @@ const styles = StyleSheet.create({
   nameHero: { fontSize: 21, fontWeight: '700', marginTop: Spacing.half },
   city: { fontSize: 14 },
   cityCompact: { fontSize: 13 },
+  // Icon + label row. alignItems: 'center' keeps the row's own height
+  // pinned to its tallest child (the text line) — no extra height beyond
+  // what the bare Text used to take up, which matters for cityRowCompact
+  // sitting in the 2-up grid's height-matched row (see the numberOfLines
+  // comment below).
+  cityRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
+  cityRowCompact: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
+  // flexShrink lets the Text truncate to numberOfLines={1} width-wise
+  // instead of pushing the row wider than its container (RN Text defaults
+  // to flexShrink: 0, unlike web flex items).
+  cityText: { flexShrink: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginTop: Spacing.one },
   tag: {
     flexDirection: 'row',
