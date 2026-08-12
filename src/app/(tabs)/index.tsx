@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -157,10 +157,18 @@ export default function FeedScreen() {
   // Also reset the hero carousel back to its first page — a stale page index
   // from the previous region's race count otherwise leaves the dots looking
   // wrong (or renders a page past the end of the new, shorter array).
-  useEffect(() => {
+  //
+  // Adjusted during render off a tracked previous value, which is React's
+  // documented pattern for "reset state when a prop changes" — the effect
+  // version rendered once with the OLD region's filters applied to the NEW
+  // region's races before correcting itself, and tripped
+  // `react-hooks/set-state-in-effect` (live, since `reactCompiler` is on).
+  const [prevRegionId, setPrevRegionId] = useState(region.id);
+  if (prevRegionId !== region.id) {
+    setPrevRegionId(region.id);
     setMonths(new Set());
     setHeroIndex(0);
-  }, [region.id]);
+  }
 
   // Home is for discovering what's coming up — past races only matter once
   // you've saved one, which is what My Races' own "Anteriores" section is
@@ -171,7 +179,7 @@ export default function FeedScreen() {
     const q = foldForSearch(query.trim());
     return allRaces.filter((r) => {
       if (!raceInRegion(r, region)) return false;
-      const days = daysUntil(r.date);
+      const days = daysUntil(r.date, today);
       if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery =
         !q || foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
@@ -199,7 +207,7 @@ export default function FeedScreen() {
     if (races.length !== 0 || !q) return 0;
     return allRaces.filter((r) => {
       if (raceInRegion(r, region)) return false;
-      const days = daysUntil(r.date);
+      const days = daysUntil(r.date, today);
       if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery = foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
       const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
@@ -218,7 +226,7 @@ export default function FeedScreen() {
   const thisWeekRaces = useMemo(
     () =>
       races.filter((r) => {
-        const days = daysUntil(r.date);
+        const days = daysUntil(r.date, today);
         return days !== null && days >= 0 && days <= THIS_WEEK_MAX_DAYS;
       }),
     [races, today],
@@ -298,9 +306,14 @@ export default function FeedScreen() {
     setPulling(true);
     refresh();
   }, [refresh]);
-  useEffect(() => {
+  // Clear the pull flag once the refresh it started has settled — same
+  // adjust-during-render-off-a-previous-value pattern as the region reset
+  // above, rather than an effect that setStates synchronously.
+  const [prevStatus, setPrevStatus] = useState(status);
+  if (prevStatus !== status) {
+    setPrevStatus(status);
     if (status !== 'loading') setPulling(false);
-  }, [status]);
+  }
 
   const facetChips: { key: NonNullable<FilterFacet>; label: string; count: number }[] = [
     { key: 'distance', label: t('filters.distance'), count: distances.size },

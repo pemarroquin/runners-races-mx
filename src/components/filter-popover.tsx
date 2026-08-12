@@ -95,9 +95,15 @@ export function FilterPopover({
   const [mounted, setMounted] = useState(false);
   const progress = useSharedValue(0);
 
+  // Mounting on open is a state adjustment driven by a prop, not a
+  // synchronization with an external system — React's documented place for
+  // that is during render, and doing it in an effect cost an extra render
+  // pass (and tripped `react-hooks/set-state-in-effect`). React re-runs this
+  // render immediately, before touching the DOM, so nothing flashes.
+  if (visible && !mounted) setMounted(true);
+
   useEffect(() => {
     if (visible) {
-      setMounted(true);
       progress.value = withTiming(1, {
         duration: reduced ? 0 : 180,
         easing: Easing.out(Easing.quad),

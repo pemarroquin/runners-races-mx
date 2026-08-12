@@ -94,27 +94,42 @@ interface ThemeModeValue {
 
 const ThemeModeContext = createContext<ThemeModeValue | null>(null);
 
-export function ThemeModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>('system');
+/**
+ * The persisted choice, read synchronously. Runs from a `useState` lazy
+ * initializer rather than an effect: the effect version rendered once as
+ * 'system' and then set state again on mount, so a user who had chosen Dark
+ * got a flash of the light theme on every cold start — and it tripped
+ * `react-hooks/set-state-in-effect`, which matters here because
+ * `reactCompiler` is on. Same pattern SavedProvider already uses, for the
+ * same reason. initDb() is idempotent, so there's no provider-ordering
+ * dependency.
+ */
+function loadInitialMode(): ThemeMode {
+  try {
+    initDb();
+  } catch {
+    // Ignore — getPref below degrades to null when the db isn't open.
+  }
+  try {
+    const stored = getPref(PREF_THEME_MODE);
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+  } catch {
+    // Storage failure — keep following the OS (the 'system' default).
+  }
+  return 'system';
+}
 
-  // Rehydrate a previously persisted choice on mount, same pattern as
-  // LocaleProvider in i18n.tsx — initDb() is idempotent so this has no
-  // dependency on provider ordering elsewhere in the tree.
+export function ThemeModeProvider({ children }: { children: ReactNode }) {
+  const [mode, setModeState] = useState<ThemeMode>(loadInitialMode);
+
+  // applyMode is a side effect on the shared Appearance object, so it belongs
+  // in an effect, not in the initializer above — but it no longer carries a
+  // setState with it, which is what the lint rule was actually about.
   useEffect(() => {
-    try {
-      initDb();
-    } catch {
-      // Ignore — getPref below degrades to null when the db isn't open.
-    }
-    try {
-      const stored = getPref(PREF_THEME_MODE);
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        applyMode(stored);
-        setModeState(stored);
-      }
-    } catch {
-      // Storage failure — keep following the OS (the 'system' default).
-    }
+    applyMode(mode);
+    // Only on mount: every later change goes through setMode, which applies
+    // it directly. Re-running on `mode` would be harmless but misleading.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setMode = useCallback((m: ThemeMode) => {

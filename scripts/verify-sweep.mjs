@@ -215,6 +215,73 @@ if (baseIdx !== -1 && process.argv[baseIdx + 1]) {
   }
 }
 
+// ── forward coverage ────────────────────────────────────────────────────────
+// The catalog decays on its own. Every race has a date, that date passes, and
+// the feed hides it — so a dataset nobody extends silently empties out while
+// every per-record check here still passes. As of 2026-08-12 the calendar ran
+// Aug 39 / Sep 30 / Oct 25 / Nov 15 / Dec 12 and then fell off a cliff: 6 in
+// January, ZERO in February (peak half-marathon season in Mexico), 2 in March.
+//
+// Nothing in this gate could see that, because it is not a defect in any
+// record — it is the absence of records. These two checks are the alarm.
+//
+// They are warnings, not errors, on purpose: a sweep that fixes a venue must
+// not be blocked by a data-gathering shortfall it has nothing to do with.
+// The point is that the shortfall becomes visible in CI output every run,
+// instead of being noticed when a user opens an empty app.
+const MIN_UPCOMING_PER_REGION = 5;
+// Six months. Deliberately longer than it needs to be to describe "soon":
+// race registration opens months ahead, and a research pass takes real time,
+// so the alarm is only useful if it fires while there is still room to act.
+// At 120 days this check stayed silent through an entirely empty February.
+const FORWARD_HORIZON_DAYS = 180;
+
+const REGION_STATES = {
+  Monterrey: ['Nuevo León'],
+  'Ciudad de México': ['Ciudad de México', 'Estado de México'],
+  Guadalajara: ['Jalisco'],
+  Querétaro: ['Querétaro'],
+  Puebla: ['Puebla'],
+  Mérida: ['Yucatán'],
+  Tijuana: ['Baja California'],
+  León: ['Guanajuato'],
+  Cancún: ['Quintana Roo'],
+  'San Luis Potosí': ['San Luis Potosí'],
+  Saltillo: ['Coahuila'],
+  Chihuahua: ['Chihuahua'],
+};
+
+const horizon = new Date(Date.now() + FORWARD_HORIZON_DAYS * 86_400_000)
+  .toISOString()
+  .slice(0, 10);
+
+for (const [region, states] of Object.entries(REGION_STATES)) {
+  // Undated races count as upcoming — they are real listings awaiting a date.
+  const upcoming = races.filter(
+    (r) => states.includes(r.state) && (!r.date || r.date >= todayISO),
+  ).length;
+  if (upcoming < MIN_UPCOMING_PER_REGION) {
+    warn(
+      '_coverage',
+      `${region} has only ${upcoming} upcoming ${upcoming === 1 ? 'race' : 'races'} (min ${MIN_UPCOMING_PER_REGION}) — that region's feed is nearly empty; needs a research pass`,
+    );
+  }
+}
+
+// Month-by-month holes inside the horizon, which is how "February is empty"
+// shows up before anyone opens the app in February.
+for (let i = 0; i <= FORWARD_HORIZON_DAYS / 30; i += 1) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + i);
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  if (key > horizon.slice(0, 7)) break;
+  const count = races.filter((r) => r.date && r.date.slice(0, 7) === key).length;
+  if (count === 0) {
+    warn('_coverage', `no races anywhere in ${key} — a whole month is empty inside the ${FORWARD_HORIZON_DAYS}-day horizon`);
+  }
+}
+
 // ── report ──────────────────────────────────────────────────────────────────
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 for (const w of warnings) console.warn(`  warn  ${w}`);

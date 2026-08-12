@@ -43,7 +43,8 @@
     "eslint-config-expo": "^57.0.1",
     "sharp": "^0.35.3",
     "source-map": "^0.8.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.7"
   },
   "scripts": {
     "start": "expo start",
@@ -52,6 +53,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "verify-sweep": "node scripts/verify-sweep.mjs"
   },
   "private": true

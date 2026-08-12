@@ -374,14 +374,28 @@ export function abbreviateState(state: string): string {
   return STATE_ABBREVIATIONS[state] ?? state;
 }
 
-/** Whole days from today until the race date (negative = past, null = undated). */
-export function daysUntil(dateStr: string | null): number | null {
+/**
+ * Whole days from `today` until the race date (negative = past, null = undated).
+ *
+ * `today` is passed in rather than read from the clock inside here. Reading
+ * `new Date()` internally made this an impure function of a hidden input: no
+ * memo could know when the answer changed, so an app left open overnight kept
+ * yesterday's countdowns, and there was no way to test the boundaries without
+ * faking the system clock. Callers get it from `useToday()`, which is state
+ * that actually changes at midnight.
+ *
+ * @param today local calendar day as `YYYY-MM-DD` (see useToday)
+ */
+export function daysUntil(dateStr: string | null, today: string): number | null {
   if (!dateStr) return null;
+  const [ty, tm, td] = today.split('-').map(Number);
   const [y, m, d] = dateStr.split('-').map(Number);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(y, m - 1, d);
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+  // UTC on both sides purely to get a DST-free difference: these are calendar
+  // days, not instants, and a local-time subtraction across a DST boundary
+  // can land on 0.96 or 1.04 days.
+  const from = Date.UTC(ty, tm - 1, td);
+  const to = Date.UTC(y, m - 1, d);
+  return Math.round((to - from) / 86_400_000);
 }
 
 /** 'YYYY-MM' key for grouping by month; undated races sort into 'tbd'. */

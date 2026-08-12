@@ -51,7 +51,7 @@ export default function MyRacesScreen() {
     const upcoming: Race[] = [];
     const past: Race[] = [];
     for (const r of races) {
-      const days = daysUntil(r.date);
+      const days = daysUntil(r.date, today);
       if (days !== null && days < 0) past.push(r);
       else upcoming.push(r);
     }

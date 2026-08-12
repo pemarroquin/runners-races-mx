@@ -6,7 +6,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -319,29 +318,42 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(deviceLocale);
+/**
+ * The persisted locale choice, or the device default. Read synchronously from
+ * a `useState` lazy initializer, not an effect: the effect version rendered
+ * the whole tree in Spanish first and then switched, so an English user saw a
+ * flash of Spanish on every cold start — and it tripped
+ * `react-hooks/set-state-in-effect`, which matters with `reactCompiler` on.
+ *
+ * Still not module scope: on native that would run before the database is
+ * open. initDb() here is idempotent and removes any provider-ordering
+ * dependency.
+ */
+function loadInitialLocale(): Locale {
+  try {
+    initDb();
+  } catch {
+    // Ignore — getPref below degrades to null when the db isn't open.
+  }
+  let locale = deviceLocale;
+  try {
+    const stored = getPref(PREF_LOCALE);
+    if (stored === 'es' || stored === 'en') locale = stored;
+  } catch {
+    // Storage failure — fall back to the device-derived locale.
+  }
+  // Point the singleton at the same value BEFORE returning. `t()` reads
+  // `i18n.locale`, not React state, so deferring this to an effect would
+  // render the entire first paint in the wrong language — which is what the
+  // effect version did, and why an English user saw a flash of Spanish on
+  // every cold start. Assigning here is safe: the initializer runs once per
+  // mount and is idempotent.
+  i18n.locale = locale;
+  return locale;
+}
 
-  // Rehydrate a previously persisted locale choice on mount. initDb() is
-  // idempotent, so calling it here removes any dependency on provider
-  // ordering elsewhere in the tree. Never read prefs at module scope — on
-  // native that would run before the database is open.
-  useEffect(() => {
-    try {
-      initDb();
-    } catch {
-      // Ignore — getPref below degrades to null when the db isn't open.
-    }
-    try {
-      const stored = getPref(PREF_LOCALE);
-      if (stored === 'es' || stored === 'en') {
-        i18n.locale = stored;
-        setLocaleState(stored);
-      }
-    } catch {
-      // Storage failure — keep the device-derived locale already in state.
-    }
-  }, []);
+export function LocaleProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(loadInitialLocale);
 
   const setLocale = useCallback((l: Locale) => {
     i18n.locale = l;

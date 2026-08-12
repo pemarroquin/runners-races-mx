@@ -14,6 +14,19 @@
 //   events, so it trickles to 85% and completes on iframe load. Checkout
 //   content fades in when loaded. Bar animates scaleX only (transform-safe).
 // - Only transform/opacity are animated; reduced motion → instant.
+//
+/* eslint-disable react-hooks/immutability --
+ * Writing `sharedValue.value = ...` is how Reanimated is designed to be
+ * driven: a SharedValue is a deliberately mutable box that lives on the UI
+ * thread, and assigning to `.value` is its documented public API, not an
+ * accidental mutation of React state. The React Compiler lint rule can't
+ * distinguish the two and flags every assignment in this file (6 of them,
+ * across the open/close effect, the pan gesture, and the load handler).
+ *
+ * Scoped to this file rather than silenced globally, and NOT applied to the
+ * `react-hooks/set-state-in-effect` findings in the same file — those were
+ * real and are fixed above by adjusting state during render instead.
+ */
 import { useCallback, useEffect, useState } from 'react';
 import {
   Linking,
@@ -104,11 +117,20 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   const barOpacity = useSharedValue(1);
   const contentOpacity = useSharedValue(0);
 
+  // Same adjust-during-render pattern as FilterPopover: mounting on open is a
+  // state adjustment driven by a prop, which React documents as belonging in
+  // render rather than an effect (it also cost an extra render pass and
+  // tripped `react-hooks/set-state-in-effect`).
+  // The per-open state resets live here too, for the same reason — they are
+  // "reset when the prop flips", not synchronization with anything external.
+  if (visible && !mounted) {
+    setMounted(true);
+    setFailed(false);
+    setFrameTimedOut(false);
+  }
+
   useEffect(() => {
     if (visible) {
-      setMounted(true);
-      setFailed(false);
-      setFrameTimedOut(false);
       translateY.value = sheetH;
       backdrop.value = 0;
       // Reset loading state for this open. A touch of initial progress reads

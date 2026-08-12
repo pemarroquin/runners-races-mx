@@ -64,12 +64,12 @@ export default function RaceDetailScreen() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [noteExpanded, setNoteExpanded] = useState(false);
   const races = useRaces();
-  // Subscribed to purely so this screen re-renders when the day rolls over.
-  // A Provider whose value changes only re-renders its CONSUMERS (the
-  // children element identity is unchanged, so React bails out on the rest of
-  // the subtree) — without this call, an open detail screen would still read
-  // "falta 1 día" on race morning, which is exactly the bug being fixed.
-  useToday();
+  // Also what makes this screen re-render when the day rolls over: a Provider
+  // whose value changes only re-renders its CONSUMERS (children keep the same
+  // element identity, so React bails out on the rest of the subtree), and
+  // without the subscription an open detail screen would still read
+  // "falta 1 día" on race morning.
+  const today = useToday();
   const race = useMemo(() => races.find((r) => r.id === id), [races, id]);
   if (!race) {
     return (
@@ -85,7 +85,7 @@ export default function RaceDetailScreen() {
   }
 
   const saved = isSaved(race.id);
-  const days = daysUntil(race.date);
+  const days = daysUntil(race.date, today);
   const dateLabel = formatDate(race.date, locale);
   // Same region + same deterministic per-race pick the feed card already
   // used, so tapping a card lands on the same picture rather than a

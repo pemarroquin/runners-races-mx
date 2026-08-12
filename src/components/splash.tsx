@@ -74,11 +74,11 @@ export function CinematicSplash() {
     SplashScreen.hideAsync();
 
     if (alreadySeen) {
-      // Nothing to animate — the overlay is not rendered at all (see `done`
-      // below). Still mark it, harmlessly, in case the first run's write
-      // failed.
+      // Nothing to animate — `alreadySeen` alone already suppresses the
+      // overlay in render, so there is no setDone here (which would be a
+      // synchronous setState in an effect for no behavioural gain). Still
+      // re-mark it, harmlessly, in case the first run's write failed.
       markSplashSeen();
-      setDone(true);
       return;
     }
     markSplashSeen();
@@ -134,7 +134,7 @@ export function CinematicSplash() {
   return (
     <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
       <Animated.View style={titleStyle}>
-        <Text style={styles.title}>Runners' Races MX</Text>
+        <Text style={styles.title}>Runners&apos; Races MX</Text>
         <Animated.View
           style={[styles.bar, { backgroundColor: Colors.dark.accent }, barStyle]}
         />

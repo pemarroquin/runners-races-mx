@@ -14,6 +14,7 @@ import {
 } from '@/lib/races';
 import { COMPACT_IMAGE_RATIO, HERO_IMAGE_RATIO } from '@/lib/region-art';
 import { useSaved } from '@/lib/saved';
+import { useToday } from '@/lib/today';
 
 interface RaceCardProps {
   race: Race;
@@ -29,7 +30,10 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
   const { t, locale } = useI18n();
   const countdown = useCountdown();
   const { isSaved, toggle } = useSaved();
-  const days = daysUntil(race.date);
+  // Subscribing here (rather than taking today as a prop) is what makes every
+  // card's countdown re-render when the day rolls over at midnight.
+  const today = useToday();
+  const days = daysUntil(race.date, today);
   const dateLabel = formatDate(race.date, locale);
   const displayDate = dateLabel ?? countdown(null);
   const statusText =
