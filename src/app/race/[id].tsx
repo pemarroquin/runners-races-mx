@@ -30,6 +30,7 @@ import { HERO_IMAGE_RATIO, pickRegionArt } from '@/lib/region-art';
 import { REGIONS, raceInRegion } from '@/lib/regions';
 import { useSaved } from '@/lib/saved';
 import { instantInZone, timeZoneForState } from '@/lib/time';
+import { useToday } from '@/lib/today';
 
 // BuySheet pulls in react-native-webview, react-native-gesture-handler drag
 // handling, and its own Reanimated motion — real weight that every other
@@ -63,6 +64,12 @@ export default function RaceDetailScreen() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [noteExpanded, setNoteExpanded] = useState(false);
   const races = useRaces();
+  // Subscribed to purely so this screen re-renders when the day rolls over.
+  // A Provider whose value changes only re-renders its CONSUMERS (the
+  // children element identity is unchanged, so React bails out on the rest of
+  // the subtree) — without this call, an open detail screen would still read
+  // "falta 1 día" on race morning, which is exactly the bug being fixed.
+  useToday();
   const race = useMemo(() => races.find((r) => r.id === id), [races, id]);
   if (!race) {
     return (

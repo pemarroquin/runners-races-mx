@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -33,6 +34,8 @@ interface RegionValue {
   setRegionId: (id: string, method?: RegionMethod) => void;
   /** Re-run GPS→IP detection (used by the picker's "use my location" row). */
   detect: () => Promise<DetectMethod>;
+  /** Allow detection to override an earlier manual pick — call before `detect`. */
+  clearManualPick: () => void;
   detecting: boolean;
 }
 
@@ -43,7 +46,14 @@ export function RegionProvider({ children }: { children: ReactNode }) {
   const [method, setMethodState] = useState<RegionMethod | null>(null);
   const [detecting, setDetecting] = useState(false);
 
+  // Set once the user picks a city by hand. First-launch detection runs GPS
+  // (up to 10s) then IP (up to 8s), so there is an ~18-second window in which
+  // someone can open the picker, choose a city, and then have the detection
+  // result land on top of their choice. A manual pick always wins.
+  const manualPickRef = useRef(false);
+
   const setRegionId = useCallback((id: string, m: RegionMethod = 'manual') => {
+    if (m === 'manual') manualPickRef.current = true;
     setRegionIdState(id);
     setMethodState(m);
     try {
@@ -58,12 +68,22 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     setDetecting(true);
     try {
       const { region, method: m } = await detectRegion();
+      // The guard is checked AFTER the await, not before: the whole point is
+      // a choice made while this was in flight. (The picker's own "use my
+      // location" button clears the flag first — see useMyLocation there —
+      // since that IS the user asking for detection.)
+      if (manualPickRef.current) return m;
       if (region && (m === 'gps' || m === 'ip')) setRegionId(region.id, m);
       return m;
     } finally {
       setDetecting(false);
     }
   }, [setRegionId]);
+
+  /** Lets the picker's explicit "use my location" override a prior manual pick. */
+  const clearManualPick = useCallback(() => {
+    manualPickRef.current = false;
+  }, []);
 
   useEffect(() => {
     let stored: string | null = null;
@@ -99,8 +119,8 @@ export function RegionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<RegionValue>(
-    () => ({ region: getRegion(regionId), method, setRegionId, detect, detecting }),
-    [regionId, method, setRegionId, detect, detecting],
+    () => ({ region: getRegion(regionId), method, setRegionId, detect, clearManualPick, detecting }),
+    [regionId, method, setRegionId, detect, clearManualPick, detecting],
   );
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;

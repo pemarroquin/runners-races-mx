@@ -20,6 +20,7 @@ import { RacesProvider } from '@/lib/races-provider';
 import { RegionProvider } from '@/lib/region-context';
 import { SavedProvider } from '@/lib/saved';
 import { ThemeModeProvider } from '@/lib/theme-mode';
+import { TodayProvider } from '@/lib/today';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,6 +30,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeModeProvider>
       <LocaleProvider>
+        <TodayProvider>
         <RacesProvider>
         <RegionProvider>
         <SavedProvider>
@@ -43,6 +45,7 @@ export default function RootLayout() {
         </SavedProvider>
         </RegionProvider>
         </RacesProvider>
+        </TodayProvider>
       </LocaleProvider>
       </ThemeModeProvider>
     </GestureHandlerRootView>

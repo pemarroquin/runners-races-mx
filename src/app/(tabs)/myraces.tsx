@@ -10,6 +10,7 @@ import { useI18n } from '@/lib/i18n';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
+import { useToday } from '@/lib/today';
 
 interface RaceSection {
   key: 'upcoming' | 'past';
@@ -24,6 +25,7 @@ export default function MyRacesScreen() {
   const { t } = useI18n();
   const { savedIds, dropMissing, storageError } = useSaved();
   const allRaces = useRaces();
+  const today = useToday();
 
   const races = useMemo(
     () => allRaces.filter((r) => savedIds.has(r.id)),
@@ -65,7 +67,9 @@ export default function MyRacesScreen() {
       result.push({ key: 'past', title: t('myraces.pastSection'), data: past });
     }
     return result;
-  }, [races, t]);
+    // `today` — daysUntil() reads the current date, so without it a race that
+    // finished overnight stays under "Próximas" until something else changes.
+  }, [races, t, today]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>

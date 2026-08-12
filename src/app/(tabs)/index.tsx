@@ -40,6 +40,7 @@ import { useRaces, useRacesStatus } from '@/lib/races-provider';
 import { pickRegionArt } from '@/lib/region-art';
 import { useRegion } from '@/lib/region-context';
 import { raceInRegion } from '@/lib/regions';
+import { useToday } from '@/lib/today';
 
 // Feed layout row: a periodic full-width "hero" card with a larger image,
 // or a 2-up "grid" row of compact cards — instead of every race rendering
@@ -146,6 +147,7 @@ export default function FeedScreen() {
   const allRaces = useRaces();
   const { status, refresh } = useRacesStatus();
   const { region, method } = useRegion();
+  const today = useToday();
   const locationInUse = method === 'gps' || method === 'ip';
   const { width } = useWindowDimensions();
 
@@ -177,7 +179,10 @@ export default function FeedScreen() {
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     });
-  }, [query, distances, months, allRaces, region]);
+    // `today` is a dependency because daysUntil() reads the current date:
+    // without it, an app left open overnight keeps showing yesterday's feed,
+    // including a race that has already finished.
+  }, [query, distances, months, allRaces, region, today]);
 
   // Distinguish "region has no data at all" from "filters matched nothing".
   const regionHasData = useMemo(
@@ -201,7 +206,7 @@ export default function FeedScreen() {
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     }).length;
-  }, [races.length, query, distances, months, allRaces, region]);
+  }, [races.length, query, distances, months, allRaces, region, today]);
 
   const layoutRows = useMemo(() => buildLayoutRows(races), [races]);
 
@@ -216,7 +221,7 @@ export default function FeedScreen() {
         const days = daysUntil(r.date);
         return days !== null && days >= 0 && days <= THIS_WEEK_MAX_DAYS;
       }),
-    [races],
+    [races, today],
   );
   // Carousel when 2+ races fall in the next 7 days; a single upcoming race
   // (this week or not) renders alone with no carousel chrome; zero races in
