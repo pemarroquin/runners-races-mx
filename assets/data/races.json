@@ -127,12 +127,12 @@
       "state": "Nuevo León",
       "venue": "Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil, Ciudad Universitaria UANL",
       "organizer": "Asdeporte",
-      "signupUrl": "https://www.asdeporte.com/evento/carrera-saba--corre-sin-tabu-es-monterrey-2026-nks/datos-del-evento",
+      "signupUrl": null,
       "sourceUrl": "https://asociaciondeatletismonl.com/carreras-de-rutas/",
       "confidence": "high",
       "status": "changed",
-      "statusNote": "The start and finish have moved: this race now starts on Av. Pedro de Alba, in front of the Facultad de Ingeniería Civil at Ciudad Universitaria UANL, San Nicolás — not Parque Fundidora. The date, 16 August 2026, is confirmed. Registration is sold out.",
-      "lastVerified": "2026-08-14",
+      "statusNote": "This race has already taken place (16 August 2026) at Av. Pedro de Alba, in front of the Facultad de Ingeniería Civil at Ciudad Universitaria UANL, San Nicolás — not the originally listed Parque Fundidora. Registration had been sold out.",
+      "lastVerified": "2026-08-17",
       "notes": "Includes a 3K walk option.",
       "notesEs": "Incluye una opción de caminata de 3K.",
       "start": {
@@ -140,8 +140,8 @@
         "lng": -100.3122,
         "approx": true
       },
-      "sourceNotes": "Date conflict RESOLVED 2026-07-27: independent news source (sdpnoticias.com) corroborates Aug 16 as the Monterrey leg of the 2026 tour, distinct from Aug 9 CDMX and Aug 23 Guadalajara legs. TriTour's Aug 16 was correct; Aug 9 (AANL/Idemsport) was a mix-up with the CDMX date. Date corrected 2026-07-27: the correct date is 16 Aug 2026, not 9 Aug — per sdpnoticias.com the 2026 \"Corre Sin Tabúes\" tour runs CDMX 9 Aug (a distinct event), Monterrey 16 Aug, Guadalajara 23 Aug. Venue change found 2026-08-10 via the Asdeporte convocatoria copy and elhorizonte.mx road-closure coverage. Sold out per Asdeporte — not a cancellation signal. Venue, city and start coordinates back-filled 2026-08-10 (were still Parque Fundidora). Re-checked 2026-08-14: still sold out per the Asdeporte page title and the organizer's own X/Twitter post; no cancellation/postponement/aviso signals found. Direct fetch of asdeporte.com and asociaciondeatletismonl.com blocked by network policy this run — confirmed via search-engine snippets and the organizer's social post instead.",
-      "statusNoteEs": "Cambiaron la salida y la meta: la carrera ahora arranca en Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil de Ciudad Universitaria UANL, San Nicolás — ya no en el Parque Fundidora. La fecha, 16 de agosto de 2026, está confirmada. Las inscripciones están agotadas."
+      "sourceNotes": "Date conflict RESOLVED 2026-07-27: independent news source (sdpnoticias.com) corroborates Aug 16 as the Monterrey leg of the 2026 tour, distinct from Aug 9 CDMX and Aug 23 Guadalajara legs. TriTour's Aug 16 was correct; Aug 9 (AANL/Idemsport) was a mix-up with the CDMX date. Date corrected 2026-07-27: the correct date is 16 Aug 2026, not 9 Aug — per sdpnoticias.com the 2026 \"Corre Sin Tabúes\" tour runs CDMX 9 Aug (a distinct event), Monterrey 16 Aug, Guadalajara 23 Aug. Venue change found 2026-08-10 via the Asdeporte convocatoria copy and elhorizonte.mx road-closure coverage. Sold out per Asdeporte — not a cancellation signal. Venue, city and start coordinates back-filled 2026-08-10 (were still Parque Fundidora). Re-checked 2026-08-14: still sold out per the Asdeporte page title and the organizer's own X/Twitter post; no cancellation/postponement/aviso signals found. Direct fetch of asdeporte.com and asociaciondeatletismonl.com blocked by network policy this run — confirmed via search-engine snippets and the organizer's social post instead. 2026-08-17: this race's date (Aug 16) has now passed — signupUrl removed per the sweep contract (a runner should not be able to pay for a race that already happened); this race was outside this run's 8-day verification window (today is 2026-08-17), so no fresh source re-check was performed, only this date-passed cleanup.",
+      "statusNoteEs": "Esta carrera ya se llevó a cabo (16 de agosto de 2026) en Av. Pedro de Alba, frente a la Facultad de Ingeniería Civil de Ciudad Universitaria UANL, San Nicolás — ya no en el Parque Fundidora, como se listaba originalmente. Las inscripciones habían estado agotadas."
     },
     {
       "id": "heroes-ocultos-bionella-2026",
@@ -167,11 +167,11 @@
       "confidence": "high",
       "notes": "13th edition road race. Venue per AANL calendar.",
       "notesEs": "Carrera en ruta, 13ª edición. Sede según el calendario de AANL.",
-      "status": "changed",
-      "statusNote": "Start time confirmed: 06:45 at Circuito Valle Oriente, San Pedro Garza García. The date, 23 August 2026, is confirmed.",
-      "sourceNotes": "Date conflict recorded: the AANL rutas calendar lists \"Héroes Ocultos 13° edición\" on BOTH 16 and 23 Aug 2026. Kept 23 Aug — the organizer (Trotime), Runera and Compite.mx all agree on it; the 16 Aug row looks like a duplicate calendar artifact. Start time and venue confirmed 2026-08-10 via the Trotime convocatoria (organiser/timer), Runera and Compite.mx.",
-      "lastVerified": "2026-08-10",
-      "statusNoteEs": "Hora de salida confirmada: 06:45 en Circuito Valle Oriente, San Pedro Garza García. La fecha, 23 de agosto de 2026, está confirmada."
+      "status": "ok",
+      "statusNote": "Confirmed for 23 Aug 2026, 06:45, Circuito Valle Oriente, San Pedro Garza García. No cancellation/postponement/aviso signals found (2026-08-17).",
+      "sourceNotes": "Date conflict recorded: the AANL rutas calendar lists \"Héroes Ocultos 13° edición\" on BOTH 16 and 23 Aug 2026. Kept 23 Aug — the organizer (Trotime), Runera and Compite.mx all agree on it; the 16 Aug row looks like a duplicate calendar artifact. Start time and venue confirmed 2026-08-10 via the Trotime convocatoria (organiser/timer), Runera and Compite.mx. Re-checked 2026-08-17: Tri Tour México, RunMX and Compite.mx still list it as scheduled for Aug 23; direct fetch of trotime.com.mx blocked by network policy this run — based on search-engine snippets only. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-17",
+      "statusNoteEs": "Confirmada para el 23 de agosto de 2026, 06:45, Circuito Valle Oriente, San Pedro Garza García. No se encontraron señales de cancelación, posposición o aviso (2026-08-17)."
     },
     {
       "id": "chipinque-trail-2026",
@@ -1232,7 +1232,8 @@
       ],
       "status": "ok",
       "statusNote": "Confirmed for 23 Aug 2026, 06:30, Av. de los Compositores at Fuente Xochipilli, 2ª Sección Bosque de Chapultepec, per itam.mx and the Asdeporte convocatoria. Cap 2,000; marks the ITAM 80th anniversary; virtual 5/10K option runs 22-23 Aug. Cut-offs 45 min (5K) / 90 min (10K). No cancellation signals found (2026-08-10).",
-      "lastVerified": "2026-08-10"
+      "sourceNotes": "Re-checked 2026-08-17 via web search (direct fetch of asdeporte.com blocked by network policy): still listed as scheduled, no cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "simicarrera-cdmx-2026",
@@ -1262,7 +1263,8 @@
       ],
       "status": "ok",
       "statusNote": "Confirmed for 23 Aug 2026, 06:00, Paseo de la Reforma, per the Asdeporte convocatoria and simicarreras.com.mx. Cap 10,000; 3K SimiPet walk plus 5/10/15K. Online registration is code-redemption only; general registration is in person at Farmacias Similares. No cancellation/postponement signals found (2026-08-10).",
-      "lastVerified": "2026-08-10"
+      "sourceNotes": "Re-checked 2026-08-17 via web search (direct fetch of asdeporte.com blocked by network policy): still listed as scheduled, no cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "nike-after-dark-cdmx-2026",
@@ -1731,7 +1733,8 @@
       ],
       "status": "ok",
       "statusNote": "Confirmed for 23 Aug 2026, 08:00, Huerto Urbano del Bosque de Aragón, 6K, per the Asdeporte convocatoria and Runera. Pet-friendly. No cancellation/postponement signals found (2026-08-10).",
-      "lastVerified": "2026-08-10"
+      "sourceNotes": "Re-checked 2026-08-17 via web search (direct fetch of asdeporte.com blocked by network policy): still listed as scheduled, no cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "batman-run-cdmx-2026",
@@ -2444,12 +2447,11 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "high",
       "notes": "22nd edition, run in honour of Guadalajara's firefighters. $350 MXN; cap 10,000; registration closes Aug 22. Separate registration category for firefighters.",
-      "sourceNotes": "tritour listing (marcate slug); event page not rendered. Name, start time, venue and signupUrl filled in from Marcate (official registrar) 2026-08-10; confidence raised medium→high.",
-      "status": "changed",
-      "statusNote": "Details confirmed with the official registrar: 23 August 2026 at 06:00, starting on Av. Circunvalación Agustín Yáñez between the Glorieta Minerva and Aurelio Aceves. Registration closes 22 August, or earlier if the 10,000 places fill.",
+      "sourceNotes": "tritour listing (marcate slug); event page not rendered. Name, start time, venue and signupUrl filled in from Marcate (official registrar) 2026-08-10; confidence raised medium→high. Re-checked 2026-08-17 via web search (direct fetch of marcate.com.mx blocked by network policy): local Guadalajara coverage (El Informador, Quadratín, NTR Guadalajara) still confirms Aug 23; no cancellation/postponement/aviso signals found.",
+      "status": "ok",
+      "statusNote": "Confirmed with the official registrar: 23 August 2026 at 06:00, starting on Av. Circunvalación Agustín Yáñez between the Glorieta Minerva and Aurelio Aceves. Registration closes 22 August, or earlier if the 10,000 places fill. No cancellation/postponement/aviso signals found (2026-08-17).",
       "notesEs": "22ª edición, en honor a los bomberos de Guadalajara. $350 MXN; cupo 10,000; las inscripciones cierran el 22 de agosto. Hay una categoría de registro aparte para bomberos.",
-      "lastVerified": "2026-08-10",
-      "statusNoteEs": "Datos confirmados con el registro oficial: 23 de agosto de 2026 a las 06:00, con salida en Av. Circunvalación Agustín Yáñez, entre la Glorieta Minerva y Aurelio Aceves. Las inscripciones cierran el 22 de agosto, o antes si se llenan los 10,000 lugares."
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "barbie-run-guadalajara-2026",
@@ -2761,7 +2763,10 @@
       "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=the-loop-jurica",
       "confidence": "high",
       "notes": "Staggered: 15K 06:15 / 5K 06:45 / 10K 07:00. Kids/grandparents Sat Aug 22. $649-$749 MXN. Signup by BBVA transfer, no direct online URL.",
-      "notesEs": "Escalonada: 15K 06:15 / 5K 06:45 / 10K 07:00. Infantil/abuelos el sábado 22 de agosto. $649-$749 MXN. Registro por transferencia BBVA, sin URL de registro en línea directo."
+      "notesEs": "Escalonada: 15K 06:15 / 5K 06:45 / 10K 07:00. Infantil/abuelos el sábado 22 de agosto. $649-$749 MXN. Registro por transferencia BBVA, sin URL de registro en línea directo.",
+      "status": "ok",
+      "statusNote": "Still listed on the Tri Tour México Querétaro calendar for 23 Aug 2026 as of 2026-08-17. No cancellation/postponement/aviso signals found via web search; direct fetch of xtrailmexico.com blocked by network policy this run — based on search-engine snippets only.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "carrera-de-la-esperanza-2026-xvi",
@@ -3007,7 +3012,10 @@
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/trail-dog-run-tijuana/",
       "confidence": "medium",
       "notes": "Trail race. Starts: 21K 7:30, 10K 7:45, 5K 8:00. Fees: 5K $600, 10K $550, 21K $650 MXN. Single calendar detail page + RunPass registration.",
-      "notesEs": "Carrera de trail. Salidas: 21K 7:30, 10K 7:45, 5K 8:00. Cuotas: 5K $600, 10K $550, 21K $650 MXN. Una sola página de detalle de calendario + registro en RunPass."
+      "notesEs": "Carrera de trail. Salidas: 21K 7:30, 10K 7:45, 5K 8:00. Cuotas: 5K $600, 10K $550, 21K $650 MXN. Una sola página de detalle de calendario + registro en RunPass.",
+      "status": "ok",
+      "statusNote": "Confirmed for 23 Aug 2026 at Rancho Santo Domingo, Tijuana — third edition, per Diario Tijuana (diariotijuana.info, 2026-07). No cancellation/postponement/aviso signals found via web search (2026-08-17); direct fetch of tjrun.com.mx blocked by network policy this run.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "run-woman-run-ensenada-2026-3ra-edicion",
@@ -3254,7 +3262,10 @@
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1772503233/",
       "confidence": "high",
       "notes": "15K starts 06:30, 10K/5K 06:45. Cap 1,700. Adults early $340 (to Apr 30), $390 (May 1-Jun 30), $480 (Jul 1-Aug 22); with donation $580.",
-      "notesEs": "El 15K sale a las 06:30, 10K/5K a las 06:45. Cupo de 1,700. Adultos anticipada $340 (hasta el 30 de abril), $390 (1 mayo-30 junio), $480 (1 julio-22 agosto); con donativo $580."
+      "notesEs": "El 15K sale a las 06:30, 10K/5K a las 06:45. Cupo de 1,700. Adultos anticipada $340 (hasta el 30 de abril), $390 (1 mayo-30 junio), $480 (1 julio-22 agosto); con donativo $580.",
+      "status": "ok",
+      "statusNote": "Still listed on the Tri Tour México León calendar and Marcate.com.mx for 23 Aug 2026 as of 2026-08-17. No cancellation/postponement/aviso signals found via web search; direct fetch of marcate.com.mx blocked by network policy this run — based on search-engine snippets only.",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "carrera-atletica-pies-de-fuego-bomberos-de-silao",
@@ -3873,7 +3884,10 @@
       "confidence": "high",
       "notes": "Single evening start, 19:00.",
       "notesEs": "Salida única vespertina, 19:00.",
-      "sourceNotes": "Official INPODE event page. Distances shown are the serial's overall set (3/5/10/21K); per-leg breakdown not published for this urban leg. No online registration link found."
+      "sourceNotes": "Official INPODE event page. Distances shown are the serial's overall set (3/5/10/21K); per-leg breakdown not published for this urban leg. No online registration link found. Re-checked 2026-08-17 via web search (direct fetch of inpode.slp.gob.mx blocked by network policy): SLP outlets (Código San Luis, El Sol de San Luis, Canal 7 SLP) confirm the 2026 Serial Rutas y Trail Mágico is proceeding as presented; no cancellation/postponement/aviso signals found for this Aug 23 leg specifically.",
+      "status": "ok",
+      "statusNote": "Confirmed as part of the 2026 Serial Rutas y Trail Mágico (9-race series across SLP's 4 regions), officially presented per SLP media coverage. No cancellation/postponement/aviso signals found for the Aug 23 Ruta de los Barrios leg via web search (2026-08-17).",
+      "lastVerified": "2026-08-17"
     },
     {
       "id": "medio-maraton-uaslp-2026-sede-san-luis-potosi",
