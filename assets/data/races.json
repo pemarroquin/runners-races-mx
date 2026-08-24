@@ -197,8 +197,8 @@
       "notesEs": "Carrera de trail de montaña; parte de la cuota se dona a la conservación del parque.",
       "sourceNotes": "Date from AANL calendar; dedicated 2026 event page not yet published (2025 edition ran Aug 24 at 07:30, ~$670 MXN). Only the 2025 Idemsport event page exists so far.",
       "status": "ok",
-      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Ecológico Chipinque, 6K and 10K. Start time still unpublished for this edition (the 2025 edition started 07:30). No cancellation signals found.",
-      "lastVerified": "2026-08-10"
+      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Ecológico Chipinque, 6K and 10K. Start time still unpublished for this edition (the 2025 edition started 07:30). No cancellation signals found. Reconfirmed 2026-08-24: no cancellation/postponement/aviso signals found via web search; dedicated 2026 event page and start time still not published.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "carrera-cruz-roja-2026",
@@ -715,10 +715,10 @@
       "distanceTags": [
         "5K"
       ],
-      "sourceNotes": "On both calendars. No start time published yet. 2025 edition registered via Trotime + Gimnasio Cedereg. Re-checked 2026-08-21 via web search (direct fetch of idemsport.com/guadalupe.gob.mx blocked by network policy): all search results found were dated to the 2025 edition (Aug 30, 2025, a Saturday — note 30 Aug falls on a Sunday in 2026, so these can't be 2026 coverage); no 2026-specific announcement or venue found. No cancellation/postponement/aviso signal found either. Venue/time remain unconfirmed for 2026 — recommend re-check closer to the event.",
+      "sourceNotes": "On both calendars. No start time published yet. 2025 edition registered via Trotime + Gimnasio Cedereg. Re-checked 2026-08-21 via web search (direct fetch of idemsport.com/guadalupe.gob.mx blocked by network policy): all search results found were dated to the 2025 edition (Aug 30, 2025, a Saturday — note 30 Aug falls on a Sunday in 2026, so these can't be 2026 coverage); no 2026-specific announcement or venue found. No cancellation/postponement/aviso signal found either. Venue/time remain unconfirmed for 2026 — recommend re-check closer to the event. Re-checked 2026-08-24 via web search (direct fetch of idemsport.com, guadalupe.gob.mx, facebook.com and instagram.com all blocked by network policy): found a Trotime Facebook/Instagram post titled '¡Cambio de sede!' referencing '3-5K Nocturno Guadalupe' and a venue change, but could not confirm from search snippets alone whether it refers to the 2025 or 2026 edition, nor the new location — full post content unreachable. Not applied as a change per the sweep contract (ambiguous source, not guessed). Recommend a direct fetch of the Trotime post next cycle once network access allows it.",
       "status": "ok",
-      "statusNote": "No new venue/time information published for the 2026 edition as of this check; still listed as a Friday night 5K in Guadalupe on the AANL/Idemsport calendars. No cancellation/postponement/aviso signals found (2026-08-21).",
-      "lastVerified": "2026-08-21"
+      "statusNote": "Still listed as a Friday night 5K/3K in Guadalupe on the AANL/Idemsport calendars; venue and start time remain unpublished for 2026. A possible venue change was flagged by the organizer on social media but could not be confirmed for this edition — worth checking closer to race day (Aug 28). No cancellation signals found (2026-08-24).",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "san-vicente-paul-2026",
@@ -749,8 +749,8 @@
       },
       "sourceNotes": "On both calendars. Registration not yet published as of 2026-07-04.",
       "status": "ok",
-      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Fundidora, 5K and 1K. Start time still unpublished. No cancellation signals found.",
-      "lastVerified": "2026-08-10"
+      "statusNote": "Confirmed on the AANL rutas calendar (2026-08-10) for 30 Aug 2026 at Parque Fundidora, 5K and 1K. Start time still unpublished. No cancellation signals found. Reconfirmed 2026-08-24: no cancellation/postponement/aviso signals found via web search.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "ios-offices-2026",
@@ -1127,11 +1127,10 @@
       "distanceTags": [
         "Full"
       ],
-      "status": "changed",
-      "statusNote": "Start time corrected to 05:50 — this listing previously said 07:00, which is not a start block for this race. Blocks are staggered from 05:45 (wheelchair) to 06:30, starting on Av. Insurgentes by the Estadio Olímpico Universitario and finishing at the Zócalo. Online registration closes 26 August.",
-      "sourceNotes": "Start-time conflict recorded, not resolved silently: Marcate (registrar) says 05:50; emociondeportiva.com and tritour.org describe staggered blocks from 05:45 (wheelchair) to 06:30. Kept 05:50 as the registrar-published mass start. Start time corrected 2026-08-10 from Marcate, the official registrar. Date, route and venue reconfirmed; signupUrl repointed from the generic inscripciones.marcate.events to the current-edition page.",
-      "lastVerified": "2026-08-10",
-      "statusNoteEs": "Corregimos la hora de salida a 05:50 — antes aparecía 07:00, que no es un bloque de salida de esta carrera. Los bloques son escalonados, de 05:45 (silla de ruedas) a 06:30, con salida en Av. Insurgentes junto al Estadio Olímpico Universitario y meta en el Zócalo. Las inscripciones en línea cierran el 26 de agosto."
+      "status": "ok",
+      "statusNote": "Start time is 05:50 (corrected 2026-08-10 from an earlier, incorrect 07:00 listing) — blocks staggered 05:45–06:30, Av. Insurgentes to the Zócalo. Reconfirmed 2026-08-24: still on track, no cancellation/postponement signals found.",
+      "sourceNotes": "Start-time conflict recorded, not resolved silently: Marcate (registrar) says 05:50; emociondeportiva.com and tritour.org describe staggered blocks from 05:45 (wheelchair) to 06:30. Kept 05:50 as the registrar-published mass start. Start time corrected 2026-08-10 from Marcate, the official registrar. Date, route and venue reconfirmed; signupUrl repointed from the generic inscripciones.marcate.events to the current-edition page. Re-checked 2026-08-24 via web search: emociondeportiva.com, marcate.com.mx, compite.mx, raceroster.com and the AIMS race listing all still show the race scheduled for 30 Aug 2026; online registration closes Aug 26, on-site expo registration continues through Aug 29; no cancellation/postponement/aviso signals found. Status moved back to 'ok' 2026-08-24 (from 'changed') — the 2026-08-10 time correction is stable and this run found nothing new; statusNoteEs dropped since the banner only renders for changed/canceled.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "adidas-split-30k-cdmx-2026",
@@ -2478,8 +2477,8 @@
       "notes": "Barbie-themed run: 3K walk plus 5K and 10K. From $999 MXN ($899 PLUS). Online registration closes Aug 28 at 17:00. Awards ~08:45; the 3K walk is recreational.",
       "notesEs": "Carrera temática de Barbie: caminata de 3K más 5K y 10K. Desde $999 MXN ($899 PLUS). Las inscripciones en línea cierran el 28 de agosto a las 17:00. Premiación ~08:45; la caminata de 3K es recreativa.",
       "status": "ok",
-      "statusNote": "Confirmed for 30 Aug 2026, 06:30, Paseo Andares (Blvd. Puerta de Hierro 4965), Zapopan, per the Asdeporte convocatoria, Runera and Compite.mx. Current-edition registration link verified and added. Confidence raised medium→high.",
-      "lastVerified": "2026-08-10"
+      "statusNote": "Confirmed for 30 Aug 2026, 06:30, Paseo Andares (Blvd. Puerta de Hierro 4965), Zapopan, per the Asdeporte convocatoria, Runera and Compite.mx. Current-edition registration link verified and added. Confidence raised medium→high. Reconfirmed 2026-08-24: still on track, no cancellation signals found.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "serial-de-atletismo-tlajomulco-2026-san-miguel-c",
@@ -2502,7 +2501,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "notes": null,
-      "sourceNotes": "tritour listing (marcate slug); not rendered."
+      "sourceNotes": "tritour listing (marcate slug); not rendered.",
+      "status": "ok",
+      "statusNote": "Confirmed as the 3rd date of the Tlajomulco 2026 athletics serial for 30 Aug 2026 in San Miguel Cuyutlán, 5K/15K, per Márcate, Quadratín Jalisco and the Tlajomulco municipal government announcement. No cancellation/postponement/aviso signals found (2026-08-24).",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "37-medio-marat-n-atlas-2026-cardio-protegido",
@@ -3042,9 +3044,9 @@
       "notes": "Women-only, capacity 300. Adults $230-$310, kids $200 MXN (tiered). Registration Jun 12-Aug 28, 2026. running.life detail + RockTheSport.",
       "notesEs": "Solo para mujeres, cupo de 300. Adultos $230-$310, niños $200 MXN (escalonado). Registro del 12 de junio al 28 de agosto de 2026. Detalle en running.life + RockTheSport.",
       "status": "ok",
-      "statusNote": "No cancellation/postponement/aviso signals found for the 3rd edition (2026-08-21). Date (29 Aug), venue (Costa Padel) and registration window could not be independently re-confirmed beyond the record's own sourceUrl/signupUrl this run — see sourceNotes.",
+      "statusNote": "No cancellation/postponement/aviso signals found for the 3rd edition. Date (29 Aug) and venue (Costa Padel) could not be independently re-confirmed beyond the record's own sourceUrl/signupUrl — see sourceNotes. Reconfirmed 2026-08-24.",
       "sourceNotes": "First verification sweep for this record (2026-08-21). Direct fetch of running.life and web.rockthesport.com blocked by network policy; web search for cancellation/postponement/aviso terms returned nothing. One unrelated snippet (oem.com.mx/La Voz de la Frontera, \"Celebran con éxito la Run Woman Run\") could not be dated or tied to this specific 3rd/2026 edition vs. an earlier one — not used as evidence either way. Recommend a direct fetch of the primary sources next cycle once network access allows it.",
-      "lastVerified": "2026-08-21"
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "carrera-agua-caliente-2026",
@@ -3295,7 +3297,10 @@
       "sourceUrl": "https://periodicocorreo.com.mx/municipios/2026/jul/06/bomberos-de-silao-convocan-a-carrera-atletica-para-fortalecer-su-capacidad-operativa-161231.html",
       "confidence": "medium",
       "notes": "Fundraiser for the fire dept. Fee $350. Registration by WhatsApp / QR only — no web signup URL. Single news-source confirmation.",
-      "notesEs": "Recaudación de fondos para el cuerpo de bomberos. Cuota $350. Registro solo por WhatsApp / código QR — sin URL de registro web. Confirmación de una sola fuente de noticias."
+      "notesEs": "Recaudación de fondos para el cuerpo de bomberos. Cuota $350. Registro solo por WhatsApp / código QR — sin URL de registro web. Confirmación de una sola fuente de noticias.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found for the 1st edition, scheduled 30 Aug 2026 at the Estación Central de Bomberos de Silao (2026-08-24). Still single-source confirmed via periodicocorreo.com.mx — no independent second source found.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "maraton-leon-450-46-edicion",
@@ -3657,8 +3662,8 @@
       "notesEs": "22ª edición. 10K certificado por AIMS, con ruta modificada este año por la Colonia Torreón Jardín y Campestre La Rosita. $290 MXN; cupo 1,500; más de $225,000 MXN en premios.",
       "sourceNotes": "Venue and price not published. Single-calendar source.",
       "status": "ok",
-      "statusNote": "Confirmed for 30 Aug 2026, 07:00, starting on calle Juan Pablos next to Bosque Venustiano Carranza, per El Siglo de Torreón, El Sol de la Laguna and Milenio. XXII edition; AIMS-certified course, re-routed this year through Colonia Torreón Jardín. Venue added; confidence raised medium→high.",
-      "lastVerified": "2026-08-10"
+      "statusNote": "Confirmed for 30 Aug 2026, 07:00, starting on calle Juan Pablos next to Bosque Venustiano Carranza, per El Siglo de Torreón, El Sol de la Laguna and Milenio. XXII edition; AIMS-certified course, re-routed this year through Colonia Torreón Jardín. Venue added; confidence raised medium→high. Reconfirmed 2026-08-24: no cancellation/postponement/aviso signals found via web search.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "carrera-colegio-de-contadores-publicos-de-saltil",
@@ -3677,7 +3682,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo",
       "confidence": "medium",
       "notes": null,
-      "sourceNotes": "Distances/time/venue not published on the calendar. signupUrl (gotime.mx/imcpslw) is the registration link listed by tritour, not independently fetched. Single-calendar source."
+      "sourceNotes": "Distances/time/venue not published on the calendar. signupUrl (gotime.mx/imcpslw) is the registration link listed by tritour, not independently fetched. Single-calendar source.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found (2026-08-24). Still listed for 30 Aug 2026 on the Tri Tour México Saltillo calendar; distances, time and venue remain unpublished.",
+      "lastVerified": "2026-08-24"
     },
     {
       "id": "carrera-industrial-canacintra-monclova-2026",
