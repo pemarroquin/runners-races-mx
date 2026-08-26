@@ -166,6 +166,14 @@ const GLYPHS: Record<string, Glyph> = {
       <path d="M4.6 20.2c0-4 3.3-6.3 7.4-6.3s7.4 2.3 7.4 6.3z" fill={c} />
     </>
   ),
+  pause: (c) => (
+    <>
+      <rect x="6.5" y="4.5" width="3.8" height="15" rx="1.2" fill={c} />
+      <rect x="13.7" y="4.5" width="3.8" height="15" rx="1.2" fill={c} />
+    </>
+  ),
+  play_arrow: (c) => <path d="M7.5 4.8v14.4a1 1 0 0 0 1.53.85l11.2-7.2a1 1 0 0 0 0-1.7L9.03 3.95A1 1 0 0 0 7.5 4.8z" fill={c} />,
+  stop: (c) => <rect x="5.5" y="5.5" width="13" height="13" rx="2" fill={c} />,
   account_circle: (c) => (
     <>
       <circle cx="12" cy="12" r="9" stroke={c} strokeWidth={1.8} fill="none" />

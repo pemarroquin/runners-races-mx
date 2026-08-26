@@ -50,6 +50,10 @@ const translations = {
     },
     track: {
       newSession: 'Nueva sesión',
+      pause: 'Pausar',
+      resume: 'Reanudar',
+      paused: 'En pausa',
+      close: 'Cerrar',
       start: 'Iniciar',
       stop: 'Terminar',
       starting: 'Buscando señal…',
@@ -62,7 +66,7 @@ const translations = {
       permission:
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
       unavailable: 'No pudimos acceder al GPS en este dispositivo.',
-      keepOpen: 'Mantén esta pantalla abierta mientras corres.',
+      keepOpen: 'Mantén la pantalla encendida — si bloqueas el teléfono se detiene el registro.',
       summaryTitle: 'Territorio conquistado',
       noFence:
         'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
@@ -243,6 +247,10 @@ const translations = {
     },
     track: {
       newSession: 'New session',
+      pause: 'Pause',
+      resume: 'Resume',
+      paused: 'Paused',
+      close: 'Close',
       start: 'Start',
       stop: 'Finish',
       starting: 'Finding signal…',
@@ -255,7 +263,7 @@ const translations = {
       permission:
         'We need location permission to trace your route. Turn it on in your phone settings.',
       unavailable: "We couldn't access GPS on this device.",
-      keepOpen: 'Keep this screen open while you run.',
+      keepOpen: 'Keep the screen on — locking your phone stops recording.',
       summaryTitle: 'Territory claimed',
       noFence:
         'Your route was too short to enclose an area. Run a loop and try again.',

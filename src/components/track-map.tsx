@@ -14,7 +14,6 @@
 // RouteTrace takes over: no network, no key, instant. It replaces the map
 // rather than sitting on top of it, so the alignment problem never arises.
 import { Image } from 'expo-image';
-import * as Location from 'expo-location';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 
@@ -28,6 +27,12 @@ const REFRESH_MS = 8000;
 interface TrackMapProps {
   points: LatLng[];
   running: boolean;
+  /** A real fix, or null. Never a fallback — see use-current-location.ts. */
+  here: LatLng | null;
+  /** True once a session is live. The static-image path can't fly a camera
+   *  or extrude a wall (see track-map.web.tsx for the platform split), so
+   *  this is accepted and unused rather than making callers branch. */
+  active: boolean;
   dark: boolean;
   color: ColorValue;
   placeholder: string;
@@ -40,6 +45,7 @@ interface TrackMapProps {
 export function TrackMap({
   points,
   running,
+  here,
   dark,
   color,
   placeholder,
@@ -49,34 +55,8 @@ export function TrackMap({
   // Measured rather than passed in: the map fills whatever area the screen
   // gives it, but RouteTrace needs a concrete pixel height to project into.
   const [height, setHeight] = useState(0);
-  const [origin, setOrigin] = useState<LatLng | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
 
-  // One low-accuracy fix on mount purely to centre the map. Deliberately
-  // separate from the run tracker: this must work before (and without ever)
-  // starting a run, and it asks for the coarse fix the tracker doesn't want.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        // Don't prompt here — the permission dialog belongs to the Start
-        // button, where the user has asked for something. Only use a grant
-        // that already exists.
-        if (status !== 'granted') return;
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-        if (!cancelled) {
-          setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        }
-      } catch {
-        // No location is a normal state here, not an error — the map just
-        // stays on its placeholder.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // The route the *map image* is built from, which deliberately lags the
   // live point list. Refreshing per GPS fix would be a network request every
@@ -108,12 +88,17 @@ export function TrackMap({
   // Memoised on primitives: a fresh object literal here would change the
   // memo deps below every render, rebuilding the URL string each time and
   // making the <Image> refetch continuously.
-  const centreLat = origin?.lat ?? first?.lat ?? region.lat;
-  const centreLng = origin?.lng ?? first?.lng ?? region.lng;
+  const centreLat = here?.lat ?? first?.lat ?? region.lat;
+  const centreLng = here?.lng ?? first?.lng ?? region.lng;
+  // Only claim a position when we actually have one — the region centre is
+  // a framing fallback, never something to drop a "you are here" pin on.
+  const hasRealFix = here !== null || first !== null;
 
   const mapUrl = useMemo(
-    () => (hasRoute ? buildPathMapUrl(snapshot, dark) : buildPinMapUrl(centreLat, centreLng, dark)),
-    [hasRoute, snapshot, centreLat, centreLng, dark],
+    () => (hasRoute
+        ? buildPathMapUrl(snapshot, dark)
+        : buildPinMapUrl(centreLat, centreLng, dark, hasRealFix)),
+    [hasRoute, snapshot, centreLat, centreLng, dark, hasRealFix],
   );
 
   // A route that can't be drawn by Mapbox still has to be visible, so the

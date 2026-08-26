@@ -60,3 +60,38 @@ export const ROUTE_GLOW_OPACITY = 0.35;
 
 /** Closed-fence fill on the summary. */
 export const FENCE_FILL_OPACITY = 0.25;
+
+/**
+ * The live route's vibrant gradient, as `line-gradient` stops (offset 0-1
+ * along the drawn line). Reads as the iridescent Apple-AI ramp Pedro asked
+ * for: cool at the tail, warm at the head, so the newest stretch is the
+ * brightest part of the line and the eye lands on where you are now.
+ *
+ * `line-gradient` requires `lineMetrics: true` on the GeoJSON source — the
+ * property is silently ignored without it, which looks like a flat line
+ * rather than an error.
+ */
+export const ROUTE_GRADIENT: [number, string][] = [
+  [0.0, '#4F5BD5'],
+  [0.25, '#8A2BE2'],
+  [0.45, '#D62976'],
+  [0.65, '#F4508B'],
+  [0.85, '#FA7E1E'],
+  [1.0, '#FEDA75'],
+];
+
+/** Trailing distance that stays a flat line before the route sets into wall. */
+export const FENCE_LAG_M = 100;
+/** Wall thickness on the ground, metres. */
+export const FENCE_WALL_WIDTH_M = 3;
+/** Wall height, metres. */
+export const FENCE_WALL_HEIGHT_M = 18;
+export const FENCE_WALL_COLOR = '#8A2BE2';
+export const FENCE_WALL_OPACITY = 0.55;
+/** Seconds the wall takes to rise once a stretch settles. */
+export const FENCE_RISE_MS = 900;
+
+/** Camera framing when a session starts — tilted, so the wall reads as 3D. */
+export const SESSION_ZOOM = 17.5;
+export const SESSION_PITCH = 60;
+export const SESSION_FLY_MS = 2200;
