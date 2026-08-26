@@ -41,7 +41,48 @@ const translations = {
       unconfirmed: 'Sin confirmar',
       retry: 'Reintentar',
     },
-    tabs: { feed: 'Carreras', myRaces: 'Mis carreras', settings: 'Ajustes' },
+    tabs: {
+      track: 'Correr',
+      leaderboard: 'Tabla',
+      feed: 'Carreras',
+      myRaces: 'Mis carreras',
+      settings: 'Perfil',
+    },
+    track: {
+      title: 'Territorio',
+      intro:
+        'Corre un circuito y el área que encierres es tuya. Entre más grande, mejor tu posición.',
+      start: 'Iniciar',
+      stop: 'Terminar',
+      starting: 'Buscando señal…',
+      distance: 'Distancia',
+      time: 'Tiempo',
+      area: 'Área',
+      pace: 'Ritmo',
+      waiting: 'Esperando tu primera ubicación…',
+      permission:
+        'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
+      unavailable: 'No pudimos acceder al GPS en este dispositivo.',
+      keepOpen: 'Mantén esta pantalla abierta mientras corres.',
+      summaryTitle: 'Territorio conquistado',
+      noFence:
+        'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
+      save: 'Guardar territorio',
+      saving: 'Guardando…',
+      saved: 'Territorio guardado',
+      discard: 'Descartar',
+      syncFailedNetwork:
+        'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
+      syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
+      syncDisabled: 'El guardado en línea no está configurado en esta versión.',
+      retry: 'Reintentar',
+    },
+    leaderboard: {
+      title: 'Tabla de posiciones',
+      soonTitle: 'Muy pronto',
+      soonBody:
+        'Aquí verás quién tiene más territorio. Por ahora corre y acumula el tuyo — se contará cuando abramos la tabla.',
+    },
     feed: {
       title: 'Carreras',
       search: 'Buscar carrera o ciudad…',
@@ -155,14 +196,19 @@ const translations = {
         'Carreras guardadas: los IDs de las carreras que guardas quedan solo en este dispositivo (SQLite en iOS/Android, almacenamiento local en la versión web). No se sincronizan a ningún servidor.',
       collectedReminders:
         'Recordatorios: si los activas, tu teléfono programa las notificaciones localmente. No usamos notificaciones push ni servidores de mensajería — nada sale de tu dispositivo, y al desactivarlos se cancelan todas.',
+      collectedTerritory:
+        'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
+      collectedIdentity:
+        'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
       notTitle: 'Qué no hacemos',
-      notAccounts: 'No hay cuentas ni inicio de sesión.',
-      notTracking: 'No rastreamos tu actividad ni usamos analítica.',
+      notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
+      notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
       notSharing: 'No vendemos ni compartimos tus datos con nadie.',
-      notServer: 'No guardamos nada en un servidor propio: no existe una base de datos de usuarios.',
+      notServer:
+        'Fuera del territorio que grabas, nada más se guarda en un servidor: tus carreras guardadas, tu idioma y tus recordatorios viven solo en este dispositivo.',
       deleteTitle: 'Borrar tus datos',
       deleteBody:
-        'Como no guardamos nada en un servidor, no hay un trámite de "solicitar borrado" que ofrecer. Borrar la app de tu teléfono (o los datos del sitio en tu navegador, en la versión web) elimina todo lo guardado localmente.',
+        'Lo guardado localmente (carreras guardadas, idioma, recordatorios) se borra al eliminar la app de tu teléfono o los datos del sitio en tu navegador. Para borrar los territorios que subiste, escríbenos desde la sección de soporte y eliminamos tu cuenta anónima y sus recorridos.',
       ipapiLink: 'Política de privacidad de ipapi.co',
     },
   },
@@ -189,7 +235,48 @@ const translations = {
       unconfirmed: 'Unconfirmed',
       retry: 'Retry',
     },
-    tabs: { feed: 'Races', myRaces: 'My races', settings: 'Settings' },
+    tabs: {
+      track: 'Run',
+      leaderboard: 'Ranking',
+      feed: 'Races',
+      myRaces: 'My races',
+      settings: 'Profile',
+    },
+    track: {
+      title: 'Territory',
+      intro:
+        'Run a loop and the area you enclose is yours. The bigger it is, the higher you rank.',
+      start: 'Start',
+      stop: 'Finish',
+      starting: 'Finding signal…',
+      distance: 'Distance',
+      time: 'Time',
+      area: 'Area',
+      pace: 'Pace',
+      waiting: 'Waiting for your first location…',
+      permission:
+        'We need location permission to trace your route. Turn it on in your phone settings.',
+      unavailable: "We couldn't access GPS on this device.",
+      keepOpen: 'Keep this screen open while you run.',
+      summaryTitle: 'Territory claimed',
+      noFence:
+        'Your route was too short to enclose an area. Run a loop and try again.',
+      save: 'Save territory',
+      saving: 'Saving…',
+      saved: 'Territory saved',
+      discard: 'Discard',
+      syncFailedNetwork:
+        "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
+      syncFailedAuth: "We couldn't create your session. Please try again.",
+      syncDisabled: 'Online saving is not configured in this build.',
+      retry: 'Retry',
+    },
+    leaderboard: {
+      title: 'Leaderboard',
+      soonTitle: 'Coming soon',
+      soonBody:
+        "This is where you'll see who holds the most territory. For now, go run and build yours — it all counts once the board opens.",
+    },
     feed: {
       title: 'Races',
       search: 'Search race or city…',
@@ -302,14 +389,19 @@ const translations = {
         'Saved races: the IDs of races you save stay on this device only (SQLite on iOS/Android, local storage on the web version). Nothing syncs to any server.',
       collectedReminders:
         'Reminders: if you turn them on, your phone schedules the notifications locally. We use no push notifications and no messaging servers — nothing leaves your device, and turning them off cancels all of them.',
+      collectedTerritory:
+        'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
+      collectedIdentity:
+        'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
       notTitle: "What we don't do",
-      notAccounts: 'No accounts, no login.',
-      notTracking: 'No tracking your activity, no analytics.',
+      notAccounts: 'No email, password, or personal details are needed to use the app.',
+      notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",
       notSharing: "We don't sell or share your data with anyone.",
-      notServer: "Nothing is stored on a server we run — there's no database of users.",
+      notServer:
+        'Apart from the territory you record, nothing else goes to a server: your saved races, language, and reminders stay on this device only.',
       deleteTitle: 'Deleting your data',
       deleteBody:
-        'Since nothing is stored on a server, there\'s no "request deletion" process to offer. Deleting the app from your phone (or clearing the site\'s data in your browser, on the web version) removes everything stored locally.',
+        'Anything stored locally (saved races, language, reminders) is removed by deleting the app from your phone, or clearing the site data in your browser. To delete territories you uploaded, contact us through the support link and we will remove your anonymous account and its runs.',
       ipapiLink: 'ipapi.co privacy policy',
     },
   },

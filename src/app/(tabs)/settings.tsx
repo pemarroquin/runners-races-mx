@@ -210,6 +210,13 @@ export default function SettingsScreen() {
             t('privacy.collectedIp'),
             t('privacy.collectedSaved'),
             t('privacy.collectedReminders'),
+            // Territory Mode is the first thing in this app that puts user
+            // data on a server, so it gets its own paragraph rather than a
+            // clause bolted onto the location one — and it sits next to the
+            // identity note, since the anonymous account only exists because
+            // of it.
+            t('privacy.collectedTerritory'),
+            t('privacy.collectedIdentity'),
           ]}
           c={c}
         />

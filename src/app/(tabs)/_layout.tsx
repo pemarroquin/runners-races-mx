@@ -45,8 +45,33 @@ export default function TabsLayout() {
     <Tabs
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{ headerShown: false }}>
+      {/* Declaration order IS tab-bar order (expo-router doesn't sort by
+          filename). Territory Mode leads the app now, so Track is the `index`
+          route — an actual file rename, not just a reorder: `index` is what
+          `/` resolves to, so making Track the landing screen on web too meant
+          it had to BE the index file. The race feed moved to `races.tsx` and
+          its web URL is now /races; nothing linked to `/` (shares point at
+          /race/<id>), so no external link broke. */}
       <Tabs.Screen
         name="index"
+        options={{
+          title: t('tabs.track'),
+          tabBarIcon: ({ focused, color }) => (
+            <TabGlyph focused={focused} color={color} ios="figure.run" iosInactive="figure.run" android="sprint" androidInactive="directions_run" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: t('tabs.leaderboard'),
+          tabBarIcon: ({ focused, color }) => (
+            <TabGlyph focused={focused} color={color} ios="trophy.fill" iosInactive="trophy" android="trophy" androidInactive="trophy" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="races"
         options={{
           title: t('tabs.feed'),
           tabBarIcon: ({ focused, color }) => (
@@ -150,7 +175,7 @@ function TabBarBackground() {
   );
 }
 
-// All three tabs render through the same vector-symbol path now (SF Symbols
+// Every tab renders through the same vector-symbol path (SF Symbols
 // on iOS, Material Symbols on Android/web via expo-symbols) — home/myraces
 // used to be tiny bundled PNGs (24-73px source) that read as pixelated next
 // to the settings tab's crisp gearshape, since they never scale past their
