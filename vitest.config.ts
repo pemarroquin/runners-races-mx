@@ -30,11 +30,16 @@ export default defineConfig({
         replacement: path.resolve(__dirname, 'test/stubs/expo-notifications.ts'),
       },
       // Territory Mode's run tracker (src/lib/tracking.ts) owns the
-      // expo-location subscription; the pure distance maths and formatters
-      // it also exports are what the tests actually cover.
+      // expo-location subscription and holds the screen awake; the pure
+      // distance maths and formatters it also exports are what the tests
+      // actually cover.
       {
         find: /^expo-location$/,
         replacement: path.resolve(__dirname, 'test/stubs/expo-location.ts'),
+      },
+      {
+        find: /^expo-keep-awake$/,
+        replacement: path.resolve(__dirname, 'test/stubs/expo-keep-awake.ts'),
       },
       { find: /^react-native$/, replacement: path.resolve(__dirname, 'test/stubs/react-native.ts') },
       { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'src/$1') },

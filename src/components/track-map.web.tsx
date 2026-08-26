@@ -7,10 +7,9 @@
 // renders them fine, so the custom Studio style can only be used here. See
 // constants/map.ts.
 //
-// GL JS also buys the two things a baked PNG structurally cannot do: a route
-// line whose colour/width/glow are ours to set, and animation. Coordinates
-// are pushed into a GeoJSON source as they arrive, so the line grows in real
-// time instead of being re-fetched every few seconds.
+// GL JS also buys what a baked PNG structurally cannot: a gradient route
+// line, an extruded 3D fence, and a camera that moves. The route renders in
+// two pieces while running — see fence-3d.ts for the split.
 //
 // mapbox-gl is loaded by dynamic import and its CSS by a runtime <link>, both
 // copied from route-map.web.tsx — see that file's header for why the CSS
@@ -22,25 +21,41 @@ import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 
 import {
+  FENCE_LAG_M,
+  FENCE_RISE_MS,
+  FENCE_WALL_COLOR,
+  FENCE_WALL_HEIGHT_M,
+  FENCE_WALL_OPACITY,
+  FENCE_WALL_WIDTH_M,
   MAP_DEFAULT_ZOOM,
   MAP_STYLE_GL,
   ROUTE_GLOW_BLUR,
   ROUTE_GLOW_OPACITY,
   ROUTE_GLOW_WIDTH,
+  ROUTE_GRADIENT,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  SESSION_FLY_MS,
+  SESSION_PITCH,
+  SESSION_ZOOM,
 } from '@/constants/map';
+import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
-const SOURCE_ID = 'run-route';
+const ROUTE_SRC = 'run-route';
+const WALL_SRC = 'run-wall';
 const PULSE_STYLE_ID = 'track-pulse-style';
 
 interface TrackMapProps {
   points: LatLng[];
   running: boolean;
+  /** A real fix, or null. Never a fallback — see use-current-location.ts. */
+  here: LatLng | null;
+  /** True once a session is live: drives the fly-in and the 3D framing. */
+  active: boolean;
   dark: boolean;
   color: ColorValue;
   placeholder: string;
@@ -83,23 +98,33 @@ function ensurePulseStyle() {
   background: ${ROUTE_LINE_COLOR};
   animation: track-pulse 2s ease-out infinite;
 }
-/* Respect a reduced-motion preference — the dot stays, it just stops pulsing. */
 @media (prefers-reduced-motion: reduce) {
   .track-dot__halo { animation: none; opacity: 0; }
 }`;
   document.head.appendChild(style);
 }
 
-export function TrackMap({ points, running, placeholder, placeholderColor, unavailable }: TrackMapProps) {
+export function TrackMap({
+  points,
+  running,
+  here,
+  active,
+  placeholder,
+  placeholderColor,
+  unavailable,
+}: TrackMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const readyRef = useRef(false);
+  const flownRef = useRef(false);
   const { region } = useRegion();
 
-  const first = points.length > 0 ? points[0] : null;
-  const centreLat = first?.lat ?? region.lat;
-  const centreLng = first?.lng ?? region.lng;
+  // Only ever a fallback for the *initial* camera, and only while no real fix
+  // exists. The marker is a separate decision below — it is never placed on a
+  // city centre, because a pin is a claim about where you are.
+  const initialLat = here?.lat ?? region.lat;
+  const initialLng = here?.lng ?? region.lng;
 
   // Built once. Re-creating the map when points change would tear down and
   // re-instantiate a WebGL context on every GPS fix.
@@ -117,7 +142,7 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: MAP_STYLE_GL,
-        center: [centreLng, centreLat],
+        center: [initialLng, initialLat],
         zoom: MAP_DEFAULT_ZOOM,
         attributionControl: false,
       });
@@ -125,16 +150,24 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
 
       map.on('load', () => {
         if (cancelled) return;
-        map.addSource(SOURCE_ID, {
+
+        // lineMetrics is REQUIRED for line-gradient. Without it the paint
+        // property is ignored silently and the line renders flat — which
+        // looks like a styling mistake rather than a missing source option.
+        map.addSource(ROUTE_SRC, {
           type: 'geojson',
+          lineMetrics: true,
           data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
         });
-        // Two layers, wide-blurred under narrow-solid: on a dark basemap a
-        // single flat line reads as a sticker sitting on top of the map.
+        map.addSource(WALL_SRC, {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
+
         map.addLayer({
-          id: `${SOURCE_ID}-glow`,
+          id: `${ROUTE_SRC}-glow`,
           type: 'line',
-          source: SOURCE_ID,
+          source: ROUTE_SRC,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
             'line-color': ROUTE_LINE_COLOR,
@@ -144,20 +177,43 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
           },
         });
         map.addLayer({
-          id: SOURCE_ID,
+          id: ROUTE_SRC,
           type: 'line',
-          source: SOURCE_ID,
+          source: ROUTE_SRC,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': ROUTE_LINE_COLOR, 'line-width': ROUTE_LINE_WIDTH },
+          paint: {
+            'line-width': ROUTE_LINE_WIDTH,
+            // Flattened [offset, color, ...] — the expression form
+            // line-gradient requires.
+            'line-gradient': [
+              'interpolate',
+              ['linear'],
+              ['line-progress'],
+              ...ROUTE_GRADIENT.flat(),
+            ] as unknown as string,
+          },
+        });
+
+        // The fence. Height is animated per-feature via a paint transition
+        // rather than a rAF loop: GL interpolates fill-extrusion-height on
+        // the GPU, so the rise costs nothing on the main thread.
+        map.addLayer({
+          id: WALL_SRC,
+          type: 'fill-extrusion',
+          source: WALL_SRC,
+          paint: {
+            'fill-extrusion-color': FENCE_WALL_COLOR,
+            'fill-extrusion-opacity': FENCE_WALL_OPACITY,
+            'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
+            'fill-extrusion-base': 0,
+            'fill-extrusion-height-transition': { duration: FENCE_RISE_MS, delay: 0 },
+          },
         });
 
         const el = document.createElement('div');
         el.className = 'track-dot';
         el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
-        markerRef.current = new mapboxgl.Marker({ element: el })
-          .setLngLat([centreLng, centreLat])
-          .addTo(map);
-
+        markerRef.current = new mapboxgl.Marker({ element: el });
         readyRef.current = true;
       });
     })();
@@ -165,36 +221,87 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
     return () => {
       cancelled = true;
       readyRef.current = false;
+      flownRef.current = false;
       markerRef.current?.remove();
       markerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
-    // Mount-only: centre/zoom updates are handled by the effect below, which
-    // moves the existing map instead of rebuilding it.
+    // Mount-only: later camera/marker changes move the existing map rather
+    // than rebuilding it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Feed new coordinates in. setData on an existing source is the cheap path
-  // — no layer or style churn, so the line simply extends.
+  // Marker placement is deliberately gated on a REAL fix. Showing the pin at
+  // the region fallback is what made it look like the location was wrong —
+  // it was a city centre being presented as the runner's position.
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = markerRef.current;
+    if (!map || !readyRef.current || !marker) return;
+
+    const head = points.length > 0 ? points[points.length - 1] : here;
+    if (!head) {
+      marker.remove();
+      return;
+    }
+    marker.setLngLat([head.lng, head.lat]).addTo(map);
+  }, [points, here]);
+
+  // Fly in when a session starts: tilt into 3D and close on the runner. Runs
+  // once per session (flownRef), so a later GPS fix doesn't re-trigger it.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
 
-    const coords = points.map((p) => [p.lng, p.lat] as [number, number]);
-    const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
-    source?.setData({
+    if (!active) {
+      flownRef.current = false;
+      return;
+    }
+    if (flownRef.current) return;
+
+    const target = points.length > 0 ? points[points.length - 1] : here;
+    if (!target) return; // wait for a real position rather than flying to a city centre
+
+    flownRef.current = true;
+    map.flyTo({
+      center: [target.lng, target.lat],
+      zoom: SESSION_ZOOM,
+      pitch: SESSION_PITCH,
+      duration: SESSION_FLY_MS,
+      essential: true,
+    });
+  }, [active, points, here]);
+
+  // Feed coordinates in. setData on an existing source is the cheap path —
+  // no layer or style churn, so the line simply extends.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+
+    const { settled, active: liveEdge } = splitTrailing(points, FENCE_LAG_M);
+
+    const routeSource = map.getSource(ROUTE_SRC) as GeoJSONSource | undefined;
+    routeSource?.setData({
       type: 'Feature',
       properties: {},
-      geometry: { type: 'LineString', coordinates: coords },
+      geometry: {
+        type: 'LineString',
+        coordinates: liveEdge.map((p) => [p.lng, p.lat] as [number, number]),
+      },
     });
 
-    const head = coords[coords.length - 1];
-    if (head) {
-      markerRef.current?.setLngLat(head);
-      // Follow only while recording: panning the camera under someone who is
-      // reading their finished route would fight them.
-      if (running) map.easeTo({ center: head, duration: 900 });
+    const wall = buildWallPolygon(settled, FENCE_WALL_WIDTH_M);
+    const wallSource = map.getSource(WALL_SRC) as GeoJSONSource | undefined;
+    wallSource?.setData(
+      wall ? { type: 'FeatureCollection', features: [wall] } : { type: 'FeatureCollection', features: [] },
+    );
+
+    // Follow only while recording: panning the camera under someone reading
+    // their finished route would fight them.
+    const head = points[points.length - 1];
+    if (head && running && flownRef.current) {
+      map.easeTo({ center: [head.lng, head.lat], duration: 900 });
     }
   }, [points, running]);
 
@@ -210,7 +317,7 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {points.length === 0 && running && (
-        <View style={styles.waiting} pointerEvents="none">
+        <View style={styles.waiting}>
           <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
         </View>
       )}
@@ -221,6 +328,13 @@ export function TrackMap({ points, running, placeholder, placeholderColor, unava
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
   centre: { alignItems: 'center', justifyContent: 'center', padding: 16 },
-  waiting: { position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center' },
+  waiting: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 24,
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
   placeholderText: { fontSize: 14, textAlign: 'center' },
 });

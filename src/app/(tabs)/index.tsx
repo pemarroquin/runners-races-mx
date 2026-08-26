@@ -8,6 +8,7 @@
 // for why the route is baked into the Mapbox image rather than overlaid.
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,20 +23,30 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TrackMap } from '@/components/track-map';
+import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { buildFenceMapUrl, FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import { uploadRun, type SyncOutcome } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
+import { useCurrentLocation } from '@/lib/use-current-location';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
+
+// Not in constants/theme.ts: these are traffic-light semantics for one
+// control pair, not part of the app's palette.
+const PAUSE_COLOR = '#F5C518';
+const STOP_COLOR = '#E5484D';
 
 export default function TrackScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
   const tracker = useRunTracker();
+  // Asks for permission on mount so the map can centre on the runner before
+  // they press Start — the pin used to sit on the selected city's centre.
+  const location = useCurrentLocation();
 
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [failure, setFailure] = useState<SyncOutcome | null>(null);
@@ -86,6 +97,16 @@ export default function TrackScreen() {
   if (tracker.status === 'finished') {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
+        <View style={styles.summaryClose}>
+          <RoundButton
+            label={t('track.close')}
+            onPress={discard}
+            background={c.backgroundElement}
+            foreground={c.text}
+            ios="xmark"
+            android="close"
+          />
+        </View>
         <ScrollView contentContainerStyle={styles.summary}>
           <Text style={[styles.summaryTitle, { color: c.text }]}>{t('track.summaryTitle')}</Text>
 
@@ -145,7 +166,7 @@ export default function TrackScreen() {
             )}
             <Pressable onPress={discard} accessibilityRole="button" hitSlop={10}>
               <Text style={[styles.secondary, { color: c.textSecondary }]}>
-                {t('track.discard')}
+                {saveState === 'saved' ? t('track.close') : t('track.discard')}
               </Text>
             </Pressable>
           </View>
@@ -156,12 +177,19 @@ export default function TrackScreen() {
 
   const running = tracker.status === 'running';
   const starting = tracker.status === 'starting';
+  const paused = tracker.status === 'paused';
+  // A session "owns" the screen from the moment Start is pressed: the map
+  // goes full-bleed 3D, and the idle chrome (scrim + title + Start) gets out
+  // of the way rather than sitting on top of the run.
+  const inSession = running || starting || paused;
 
   return (
     <View style={[styles.stage, { backgroundColor: c.backgroundElement }]}>
       <TrackMap
         points={tracker.points}
         running={running}
+        here={location.coords}
+        active={inSession}
         dark={scheme === 'dark'}
         color={c.accent}
         placeholder={t('track.waiting')}
@@ -172,46 +200,104 @@ export default function TrackScreen() {
       {/* The map is always dark (MAP_ALWAYS_DARK), so a plain white scrim
           reliably lifts the title/button above it regardless of the app's
           own light/dark setting — this is contrast against the MAP, not
-          against the screen's theme. */}
-      <LinearGradient
-        colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0)']}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
+          against the screen's theme. Removed during a session: it exists to
+          make the idle title readable, and there is no idle title then. */}
+      {!inSession && (
+        <LinearGradient
+          colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0)']}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      )}
 
-      {/* Centred within the area the floating tab bar doesn't cover, then
-          nudged up a touch: a text-over-button block reads low when it sits
-          on the true geometric centre. */}
+      {/* Session controls, top-right. Pause is yellow and Stop is red, so
+          the destructive one is never the one you hit by muscle memory. */}
+      {inSession && (
+        <SafeAreaView style={styles.controls} edges={['top']}>
+          <Animated.View entering={FadeIn.duration(400)} style={styles.controlRow}>
+            <RoundButton
+              label={paused ? t('track.resume') : t('track.pause')}
+              onPress={paused ? tracker.resume : tracker.pause}
+              background={PAUSE_COLOR}
+              foreground="#1A1A1A"
+              ios={paused ? 'play.fill' : 'pause.fill'}
+              android={paused ? 'play_arrow' : 'pause'}
+            />
+            <RoundButton
+              label={t('track.stop')}
+              onPress={tracker.stop}
+              background={STOP_COLOR}
+              foreground="#FFFFFF"
+              ios="stop.fill"
+              android="stop"
+            />
+          </Animated.View>
+        </SafeAreaView>
+      )}
+
       <SafeAreaView style={styles.overlay} edges={['top']}>
-        <View style={styles.overlayInner}>
-          {running || starting ? (
-            <View style={styles.liveStats}>
-              <Text style={[styles.liveTime, { color: c.text }]}>
+        <View style={[styles.overlayInner, inSession && styles.overlayInnerSession]}>
+          {inSession ? (
+            <Animated.View entering={FadeInDown.duration(400)} style={styles.liveStats}>
+              <Text style={[styles.liveTime, { color: '#FFFFFF' }]}>
                 {formatDuration(tracker.elapsedS)}
               </Text>
-              <Text style={[styles.liveDistance, { color: c.textSecondary }]}>
+              <Text style={[styles.liveDistance, { color: 'rgba(255,255,255,0.75)' }]}>
                 {formatDistance(tracker.distanceM)}
+                {paused ? `  ·  ${t('track.paused')}` : ''}
               </Text>
-            </View>
+              {/* Recording is foreground-only, so locking the phone ends the
+                  run. Saying so is not optional: the failure is silent and
+                  costs the runner the whole session. */}
+              <Text style={[styles.keepOpen, { color: 'rgba(255,255,255,0.6)' }]}>
+                {t('track.keepOpen')}
+              </Text>
+            </Animated.View>
           ) : (
-            <Text style={[styles.stageTitle, { color: c.text }]}>{t('track.newSession')}</Text>
+            <>
+              <Text style={[styles.stageTitle, { color: c.text }]}>{t('track.newSession')}</Text>
+              {tracker.error === 'permission' && (
+                <Text style={[styles.overlayNotice, { color: c.text }]}>{t('track.permission')}</Text>
+              )}
+              {tracker.error === 'unavailable' && (
+                <Text style={[styles.overlayNotice, { color: c.text }]}>{t('track.unavailable')}</Text>
+              )}
+              <PrimaryButton label={t('track.start')} onPress={tracker.start} c={c} />
+            </>
           )}
-
-          {tracker.error === 'permission' && (
-            <Text style={[styles.overlayNotice, { color: c.text }]}>{t('track.permission')}</Text>
-          )}
-          {tracker.error === 'unavailable' && (
-            <Text style={[styles.overlayNotice, { color: c.text }]}>{t('track.unavailable')}</Text>
-          )}
-
-          {tracker.status === 'idle' && (
-            <PrimaryButton label={t('track.start')} onPress={tracker.start} c={c} />
-          )}
-          {starting && <PrimaryButton label={t('track.starting')} onPress={() => {}} disabled c={c} />}
-          {running && <PrimaryButton label={t('track.stop')} onPress={tracker.stop} c={c} />}
         </View>
       </SafeAreaView>
     </View>
+  );
+}
+
+function RoundButton({
+  label,
+  onPress,
+  background,
+  foreground,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  background: string;
+  foreground: string;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.round,
+        { backgroundColor: background, opacity: pressed ? 0.85 : 1 },
+      ]}>
+      <Icon ios={ios} android={android} size={20} color={foreground} />
+    </Pressable>
   );
 }
 
@@ -272,11 +358,31 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
   },
   stageTitle: { fontSize: 30, fontWeight: '700', textAlign: 'center' },
+  controls: { position: 'absolute', top: 0, right: 0, zIndex: 2 },
+  controlRow: { flexDirection: 'row', gap: Spacing.two, padding: Spacing.three },
+  round: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  summaryClose: { position: 'absolute', top: 0, right: 0, zIndex: 2, padding: Spacing.three },
+  // During a session the stats sit high rather than centred: the lower half
+  // of the screen is where the 3D route and fence are, and centring the
+  // numbers would park them right on top of it.
+  overlayInnerSession: { justifyContent: 'flex-start', paddingTop: Spacing.six },
   overlayNotice: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
 
   liveStats: { alignItems: 'center', gap: Spacing.one },
   liveTime: { fontSize: 52, fontWeight: '700', fontVariant: ['tabular-nums'] },
   liveDistance: { fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  keepOpen: { fontSize: 12, textAlign: 'center', marginTop: Spacing.two, maxWidth: 260 },
 
   summary: { padding: Spacing.three, gap: Spacing.three, paddingBottom: BottomTabInset },
   summaryTitle: { fontSize: 28, fontWeight: '700' },

@@ -7,6 +7,7 @@
 // project's "Expo Go on device" testing workflow. See the feature plan's
 // "Tracking mode" decision. Practical consequence: the run screen has to
 // stay open, and the OS may throttle fixes when the screen locks.
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -16,7 +17,7 @@ export interface TrackPoint extends LatLng {
   ts: number;
 }
 
-export type TrackStatus = 'idle' | 'starting' | 'running' | 'finished';
+export type TrackStatus = 'idle' | 'starting' | 'running' | 'paused' | 'finished';
 export type TrackError = 'permission' | 'unavailable' | null;
 
 // Fixes worse than this are dropped rather than recorded. Indoors and in
@@ -26,6 +27,7 @@ export type TrackError = 'permission' | 'unavailable' | null;
 const MIN_ACCURACY_M = 50;
 const TIME_INTERVAL_MS = 2000;
 const DISTANCE_INTERVAL_M = 5;
+const KEEP_AWAKE_TAG = 'territory-session';
 
 export interface RunTracker {
   status: TrackStatus;
@@ -36,6 +38,8 @@ export interface RunTracker {
   startedAt: number | null;
   endedAt: number | null;
   start: () => Promise<void>;
+  pause: () => void;
+  resume: () => Promise<void>;
   stop: () => void;
   reset: () => void;
 }
@@ -62,11 +66,38 @@ export function useRunTracker(): RunTracker {
   // fixes into a dead component's state.
   useEffect(() => clearSub, [clearSub]);
 
+  // Elapsed is accumulated from the current leg's start, not from the run's
+  // startedAt: deriving it from startedAt would keep counting through a
+  // pause and then jump forward on resume.
+  const legStartRef = useRef<number | null>(null);
+  const accumulatedRef = useRef(0);
+
+  // Recording is foreground-only (Expo Go can't hold the background-location
+  // entitlement), so the OS auto-locking the screen would silently end the
+  // run. This doesn't defeat a manual lock — nothing available in Expo Go
+  // can — but it does stop the most common way a run dies: the display
+  // simply timing out in the runner's pocket.
   useEffect(() => {
-    if (status !== 'running' || startedAt === null) return;
-    const id = setInterval(() => setElapsedS(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    if (status !== 'running' && status !== 'paused') return;
+    void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
+    return () => {
+      // Wrapped rather than returned directly: deactivateKeepAwake returns a
+      // promise, and an effect cleanup must return void.
+      deactivateKeepAwake(KEEP_AWAKE_TAG);
+    };
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'running') return;
+    const tick = () => {
+      const legStart = legStartRef.current;
+      const legMs = legStart === null ? 0 : Date.now() - legStart;
+      setElapsedS(Math.floor((accumulatedRef.current + legMs) / 1000));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [status, startedAt]);
+  }, [status]);
 
   const onFix = useCallback((loc: Location.LocationObject) => {
     const accuracy = loc.coords.accuracy;
@@ -104,6 +135,8 @@ export function useRunTracker(): RunTracker {
 
       clearSub();
       lastRef.current = null;
+      accumulatedRef.current = 0;
+      legStartRef.current = Date.now();
       setPoints([]);
       setDistanceM(0);
       setElapsedS(0);
@@ -127,8 +160,42 @@ export function useRunTracker(): RunTracker {
     }
   }, [clearSub, onFix]);
 
+  /** Banks the current leg's time and drops the GPS subscription — a paused
+   *  run shouldn't keep the receiver powered or record movement. */
+  const pause = useCallback(() => {
+    clearSub();
+    const legStart = legStartRef.current;
+    if (legStart !== null) accumulatedRef.current += Date.now() - legStart;
+    legStartRef.current = null;
+    setStatus('paused');
+  }, [clearSub]);
+
+  const resume = useCallback(async () => {
+    try {
+      clearSub();
+      // Cleared so the first fix after resuming doesn't draw a straight line
+      // (and add distance) across wherever the runner moved while paused.
+      lastRef.current = null;
+      legStartRef.current = Date.now();
+      subRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          timeInterval: TIME_INTERVAL_MS,
+          distanceInterval: DISTANCE_INTERVAL_M,
+        },
+        onFix,
+      );
+      setStatus('running');
+    } catch {
+      setError('unavailable');
+    }
+  }, [clearSub, onFix]);
+
   const stop = useCallback(() => {
     clearSub();
+    const legStart = legStartRef.current;
+    if (legStart !== null) accumulatedRef.current += Date.now() - legStart;
+    legStartRef.current = null;
     setEndedAt(Date.now());
     setStatus('finished');
   }, [clearSub]);
@@ -136,6 +203,8 @@ export function useRunTracker(): RunTracker {
   const reset = useCallback(() => {
     clearSub();
     lastRef.current = null;
+    accumulatedRef.current = 0;
+    legStartRef.current = null;
     setPoints([]);
     setDistanceM(0);
     setElapsedS(0);
@@ -154,6 +223,8 @@ export function useRunTracker(): RunTracker {
     startedAt,
     endedAt,
     start,
+    pause,
+    resume,
     stop,
     reset,
   };

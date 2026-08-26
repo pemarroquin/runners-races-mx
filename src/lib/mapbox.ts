@@ -72,13 +72,23 @@ export function buildStaticMapUrl(race: Race, dark: boolean): string | null {
  * before a run starts, so the screen isn't empty while you're standing at
  * the start line.
  */
-export function buildPinMapUrl(lat: number, lng: number, _dark: boolean): string | null {
+export function buildPinMapUrl(
+  lat: number,
+  lng: number,
+  _dark: boolean,
+  /** Only draw the pin when the coordinate is a real fix. Framing the map on
+   *  the selected city is fine; dropping a "you are here" pin on that city's
+   *  centre is a false claim, and was the actual cause of the pin appearing
+   *  kilometres from the runner. */
+  hasRealFix = true,
+): string | null {
   if (!TOKEN) return null;
   // Territory Mode's map is always dark — see MAP_ALWAYS_DARK.
   const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : _dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
   const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
-  const overlay = `pin-s+${ROUTE_COLOR}(${lng},${lat})`;
-  return `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/${lng},${lat},${MAP_DEFAULT_ZOOM}/${size}?access_token=${TOKEN}`;
+  const overlay = hasRealFix ? `pin-s+${ROUTE_COLOR}(${lng},${lat})` : '';
+  const path = overlay ? `${overlay}/` : '';
+  return `https://api.mapbox.com/styles/v1/${styleId}/static/${path}${lng},${lat},${MAP_DEFAULT_ZOOM}/${size}?access_token=${TOKEN}`;
 }
 
 /**
