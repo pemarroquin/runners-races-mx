@@ -10,6 +10,7 @@ import {
   pathDistanceM,
   type LatLng,
 } from '@/lib/territory';
+import { decimate } from '@/lib/mapbox';
 import { formatArea, formatDistance, formatDuration } from '@/lib/tracking';
 
 // A simple square loop, ~100m per side near Monterrey's latitude, given as
@@ -179,5 +180,28 @@ describe('formatters', () => {
 
   it('clamps negative durations rather than emitting a negative clock', () => {
     expect(formatDuration(-5)).toBe('0:00');
+  });
+});
+
+describe('decimate', () => {
+  it('leaves a short list untouched', () => {
+    const items = [1, 2, 3];
+    expect(decimate(items, 100)).toBe(items);
+  });
+
+  it('thins to the cap while keeping the first and last', () => {
+    const items = Array.from({ length: 500 }, (_, i) => i);
+    const out = decimate(items, 100);
+    expect(out).toHaveLength(100);
+    // The route has to still start and end where the run did — dropping
+    // either end would draw a line that stops short of the runner.
+    expect(out[0]).toBe(0);
+    expect(out[out.length - 1]).toBe(499);
+  });
+
+  it('keeps the order it was given', () => {
+    const out = decimate(Array.from({ length: 300 }, (_, i) => i), 50);
+    const ascending = out.every((v, i) => i === 0 || v > out[i - 1]);
+    expect(ascending).toBe(true);
   });
 });

@@ -45,13 +45,11 @@ const translations = {
       track: 'Correr',
       leaderboard: 'Tabla',
       feed: 'Carreras',
-      myRaces: 'Mis carreras',
+      myRaces: 'Guardadas',
       settings: 'Perfil',
     },
     track: {
-      title: 'Territorio',
-      intro:
-        'Corre un circuito y el área que encierres es tuya. Entre más grande, mejor tu posición.',
+      newSession: 'Nueva sesión',
       start: 'Iniciar',
       stop: 'Terminar',
       starting: 'Buscando señal…',
@@ -60,6 +58,7 @@ const translations = {
       area: 'Área',
       pace: 'Ritmo',
       waiting: 'Esperando tu primera ubicación…',
+      mapUnavailable: 'No pudimos cargar el mapa. Tu recorrido se sigue registrando.',
       permission:
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
       unavailable: 'No pudimos acceder al GPS en este dispositivo.',
@@ -237,15 +236,13 @@ const translations = {
     },
     tabs: {
       track: 'Run',
-      leaderboard: 'Ranking',
+      leaderboard: 'Leaderboard',
       feed: 'Races',
-      myRaces: 'My races',
+      myRaces: 'Saved',
       settings: 'Profile',
     },
     track: {
-      title: 'Territory',
-      intro:
-        'Run a loop and the area you enclose is yours. The bigger it is, the higher you rank.',
+      newSession: 'New session',
       start: 'Start',
       stop: 'Finish',
       starting: 'Finding signal…',
@@ -254,6 +251,7 @@ const translations = {
       area: 'Area',
       pace: 'Pace',
       waiting: 'Waiting for your first location…',
+      mapUnavailable: "We couldn't load the map. Your route is still being recorded.",
       permission:
         'We need location permission to trace your route. Turn it on in your phone settings.',
       unavailable: "We couldn't access GPS on this device.",

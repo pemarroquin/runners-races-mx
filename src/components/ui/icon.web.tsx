@@ -123,12 +123,81 @@ const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   terrain: (c) => <path d="M5 19L9.5 9l2.5 4.5 2-2.8L20 19H5z" fill={c} />,
+  sprint: (c) => (
+    <>
+      <circle cx="15" cy="4.6" r="2.1" fill={c} />
+      <path
+        d="M9.6 21.4l2.3-5.3-2.5-2.3c-.7-.7-.9-1.7-.5-2.5l1.8-3.6c.4-.9 1.4-1.3 2.3-1l3 .8c.5.1 1 .5 1.2 1l1 2.2 2 .7-.6 1.9-2.7-.9c-.5-.2-.9-.5-1.1-1l-.4-.9-1.2 2.8 2.3 2.2c.5.4.6 1.1.4 1.7l-1.4 4.3-2-.6 1.2-3.7-3.1-2.9-1.8 4.2-2-.9z"
+        fill={c}
+      />
+      <path d="M2.4 9.6h3.8M1.4 13.1h3.4M3 16.6h2.9" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+    </>
+  ),
+  trophy: (c) => (
+    <>
+      <path d="M8 3.5h8v4.8a4 4 0 0 1-8 0V3.5z" stroke={c} strokeWidth={1.8} fill="none" strokeLinejoin="round" />
+      <path
+        d="M8 5.2H5.4a2.6 2.6 0 0 0 2.6 2.6M16 5.2h2.6A2.6 2.6 0 0 1 16 7.8"
+        stroke={c}
+        strokeWidth={1.7}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path d="M12 12.3v3.4M9 20.2h6M10.2 20.2l.5-4.5M13.8 20.2l-.5-4.5" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>
+  ),
+  emoji_events: (c) => (
+    <>
+      <path d="M8 3h8v5.3a4 4 0 0 1-8 0V3z" fill={c} />
+      <path
+        d="M8 5.2H5.4a2.6 2.6 0 0 0 2.6 2.6M16 5.2h2.6A2.6 2.6 0 0 1 16 7.8"
+        stroke={c}
+        strokeWidth={1.7}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path d="M12 12.3v3.4" stroke={c} strokeWidth={1.9} strokeLinecap="round" />
+      <path d="M9.2 20.4l.7-4.4h4.2l.7 4.4z" fill={c} />
+    </>
+  ),
+  person: (c) => (
+    <>
+      <circle cx="12" cy="8" r="3.7" fill={c} />
+      <path d="M4.6 20.2c0-4 3.3-6.3 7.4-6.3s7.4 2.3 7.4 6.3z" fill={c} />
+    </>
+  ),
+  account_circle: (c) => (
+    <>
+      <circle cx="12" cy="12" r="9" stroke={c} strokeWidth={1.8} fill="none" />
+      <circle cx="12" cy="9.8" r="3" stroke={c} strokeWidth={1.7} fill="none" />
+      <path
+        d="M6.3 18.8c1.2-2.2 3.3-3.4 5.7-3.4s4.5 1.2 5.7 3.4"
+        stroke={c}
+        strokeWidth={1.7}
+        fill="none"
+        strokeLinecap="round"
+      />
+    </>
+  ),
 };
 
 export function Icon({ android, size = 17, color }: IconProps) {
   const c = String(color);
   const glyph = GLYPHS[android];
-  if (!glyph) return null;
+  if (!glyph) {
+    // This registry only covers the handful of names the app actually uses,
+    // while the `android` prop is typed against all ~4000 Material Symbols —
+    // so a valid symbol name typechecks fine and then renders NOTHING here.
+    // That shipped once: the Track and Leaderboard tabs were blank on web
+    // while iOS was fine, and tsc/lint/build were all green. Fail loudly in
+    // development instead of drawing an invisible icon.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `[Icon] no web glyph for "${android}". Add it to GLYPHS in components/ui/icon.web.tsx — the icon renders as nothing until you do.`,
+      );
+    }
+    return null;
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {glyph(c)}

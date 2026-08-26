@@ -5,7 +5,7 @@ import { Tabs } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { Pressable, StyleSheet, View, useWindowDimensions, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions, type ColorValue } from 'react-native';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -26,16 +26,25 @@ import { useI18n } from '@/lib/i18n';
 // row directly with `flex: 1` per item guarantees every tab gets an equal
 // share of the pill width, so the layout stays symmetric no matter how many
 // tabs there are.
-const BAR_HEIGHT = 56;
+// Labelled now, not icon-only: at five tabs the glyphs alone stopped being
+// self-explanatory (a runner and a trophy read as almost anything). The icon
+// circle shrank to make room for the label rather than the pill growing
+// taller than a thumb's reach.
+const BAR_HEIGHT = 64;
 const BAR_BOTTOM_MARGIN = 16;
-const ICON_SIZE = 24;
-const ICON_WRAP_SIZE = 44;
-// Per-tab slot width: icon circle + fixed breathing room each side. Matches
-// the spacing the pill originally shipped with for 2 icons (70px/icon) —
-// the pill's total width simply scales with tab count now instead of being
-// a hand-tuned constant that silently stopped fitting when a 3rd tab (or a
-// 4th, later) was added.
-const ITEM_WIDTH = ICON_WRAP_SIZE + 26;
+const ICON_SIZE = 21;
+const ICON_WRAP_SIZE = 32;
+const LABEL_SIZE = 10;
+// Per-tab slot width: sized to the longest label rather than to the icon
+// circle, since the label is now the wider element ("Leaderboard" is the
+// widest string at ~60px). The pill's total width scales with tab count, so
+// adding a tab never silently overflows.
+const ITEM_WIDTH = 74;
+// Breathing room inside the pill's rounded ends. Without it the first and
+// last items' highlight circles sit flush against the curve and read as
+// clipped — the row is a flex container, so the padding has to be counted
+// into the pill's own width or it just squeezes the items instead.
+const BAR_PADDING_H = 12;
 const MIN_SIDE_MARGIN = 16;
 
 export default function TabsLayout() {
@@ -66,7 +75,7 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.leaderboard'),
           tabBarIcon: ({ focused, color }) => (
-            <TabGlyph focused={focused} color={color} ios="trophy.fill" iosInactive="trophy" android="trophy" androidInactive="trophy" />
+            <TabGlyph focused={focused} color={color} ios="trophy.fill" iosInactive="trophy" android="emoji_events" androidInactive="trophy" />
           ),
         }}
       />
@@ -95,8 +104,11 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: t('tabs.settings'),
+          // A person, not a gear: this tab is the account/profile surface now
+          // (it carries the privacy statement and will carry the runner's own
+          // territory), and a gear reads as "app preferences" only.
           tabBarIcon: ({ focused, color }) => (
-            <TabGlyph focused={focused} color={color} ios="gearshape.fill" iosInactive="gearshape" android="settings" androidInactive="settings" />
+            <TabGlyph focused={focused} color={color} ios="person.crop.circle.fill" iosInactive="person.crop.circle" android="person" androidInactive="account_circle" />
           ),
         }}
       />
@@ -110,7 +122,7 @@ export default function TabsLayout() {
 // behavior of screens stay standard.
 function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const barWidth = state.routes.length * ITEM_WIDTH;
+  const barWidth = state.routes.length * ITEM_WIDTH + BAR_PADDING_H * 2;
   const sideMargin = Math.max((windowWidth - barWidth) / 2, MIN_SIDE_MARGIN);
 
   return (
@@ -147,6 +159,16 @@ function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBar
               accessibilityLabel={options.title}
               style={styles.item}>
               {options.tabBarIcon?.({ focused, color, size: ICON_SIZE })}
+              <Text
+                numberOfLines={1}
+                // The label is decoration for screen readers — the Pressable
+                // already carries the same string as its accessibilityLabel,
+                // so exposing it twice would make VoiceOver read it twice.
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+                style={[styles.label, { color }]}>
+                {options.title}
+              </Text>
             </Pressable>
           );
         })}
@@ -225,11 +247,20 @@ const styles = StyleSheet.create({
   row: {
     ...StyleSheet.absoluteFill,
     flexDirection: 'row',
+    paddingHorizontal: BAR_PADDING_H,
   },
   item: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 1,
+  },
+  label: {
+    fontSize: LABEL_SIZE,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    textAlign: 'center',
+    paddingHorizontal: 2,
   },
   iconWrap: {
     width: ICON_WRAP_SIZE,

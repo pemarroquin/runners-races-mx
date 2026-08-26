@@ -3,10 +3,17 @@
 // EXPO_PUBLIC_MAPBOX_TOKEN (inlined at build time for every platform).
 import type { Geometry } from 'geojson';
 
+import {
+  FENCE_FILL_OPACITY,
+  MAP_ALWAYS_DARK,
+  MAP_DEFAULT_ZOOM,
+  MAP_STYLE_STATIC,
+  ROUTE_LINE_COLOR_URL,
+} from '@/constants/map';
 import type { Race } from '@/lib/races';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
-const ROUTE_COLOR = 'e4572e'; // #E4572E without the '#'
+const ROUTE_COLOR = ROUTE_LINE_COLOR_URL; // shared with GL JS — see constants/map.ts
 const IMG = { w: 800, h: 300, retina: '@2x' };
 const MARKER_ZOOM = 14;
 
@@ -60,6 +67,57 @@ export function buildStaticMapUrl(race: Race, dark: boolean): string | null {
   )}/${viewport}/${size}?access_token=${TOKEN}${padding}`;
 }
 
+/**
+ * Basemap centred on a single point, with a pin — what the Track tab shows
+ * before a run starts, so the screen isn't empty while you're standing at
+ * the start line.
+ */
+export function buildPinMapUrl(lat: number, lng: number, _dark: boolean): string | null {
+  if (!TOKEN) return null;
+  // Territory Mode's map is always dark — see MAP_ALWAYS_DARK.
+  const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : _dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
+  const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
+  const overlay = `pin-s+${ROUTE_COLOR}(${lng},${lat})`;
+  return `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/${lng},${lat},${MAP_DEFAULT_ZOOM}/${size}?access_token=${TOKEN}`;
+}
+
+/**
+ * The route so far, drawn *by Mapbox* over real streets.
+ *
+ * The path is baked into the image rather than overlaid as SVG on top of a
+ * basemap. Overlaying would mean reproducing Mapbox's Web Mercator framing
+ * exactly to keep the line on the right streets, and any drift there reads
+ * as a broken map — letting Mapbox draw both makes misalignment impossible
+ * by construction. The cost is a network round-trip, which is why callers
+ * throttle this (see track-map.tsx) instead of calling it per GPS fix.
+ *
+ * Long routes are decimated first: a polyline of several hundred points
+ * encodes past Mapbox's ~8k URL limit, which fails as a broken image rather
+ * than an error.
+ */
+export function buildPathMapUrl(
+  points: { lat: number; lng: number }[],
+  dark: boolean,
+): string | null {
+  if (!TOKEN || points.length < 2) return null;
+  const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
+  const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
+  const coords = decimate(points, 100).map((p): [number, number] => [p.lat, p.lng]);
+  const overlay = `path-4+${ROUTE_COLOR}-0.9(${encodeURIComponent(encodePolyline(coords))})`;
+  const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${size}?access_token=${TOKEN}&padding=50`;
+  return url.length > 8000 ? null : url;
+}
+
+/** Evenly thin a list down to at most `max` items, always keeping the first
+ *  and last so the drawn route still starts and ends where the run did. */
+export function decimate<T>(items: T[], max: number): T[] {
+  if (items.length <= max) return items;
+  const step = (items.length - 1) / (max - 1);
+  const out: T[] = [];
+  for (let i = 0; i < max; i++) out.push(items[Math.round(i * step)]);
+  return out;
+}
+
 // Territory Mode's finished fence, drawn over real streets — one image
 // request when a run ends, which is affordable in a way that repainting a
 // live map would not be (see route-trace.tsx's header).
@@ -79,7 +137,7 @@ export const FENCE_MAP_ASPECT = FENCE_IMG.w / FENCE_IMG.h;
 export function buildFenceMapUrl(geometry: Geometry, dark: boolean): string | null {
   if (!TOKEN) return null;
 
-  const styleId = dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
+  const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
   const feature = {
     type: 'Feature' as const,
     properties: {
@@ -87,7 +145,7 @@ export function buildFenceMapUrl(geometry: Geometry, dark: boolean): string | nu
       'stroke-width': 3,
       'stroke-opacity': 0.95,
       fill: `#${ROUTE_COLOR}`,
-      'fill-opacity': 0.25,
+      'fill-opacity': FENCE_FILL_OPACITY,
     },
     geometry,
   };
