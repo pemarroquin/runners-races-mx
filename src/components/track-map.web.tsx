@@ -248,6 +248,15 @@ export function TrackMap({
     marker.setLngLat([head.lng, head.lat]).addTo(map);
   }, [points, here]);
 
+  // Idle: keep the camera over the runner as they move, so the map isn't
+  // still framing wherever they were when the tab opened. Skipped during a
+  // session — the fly-in and follow below own the camera then.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || active || !here) return;
+    map.easeTo({ center: [here.lng, here.lat], duration: 600 });
+  }, [here, active]);
+
   // Fly in when a session starts: tilt into 3D and close on the runner. Runs
   // once per session (flownRef), so a later GPS fix doesn't re-trigger it.
   useEffect(() => {

@@ -6,6 +6,7 @@
 // The map is the screen, not a card on it: streets are visible from the
 // moment the tab opens, and the controls sit over them. See track-map.tsx
 // for why the route is baked into the Mapbox image rather than overlaid.
+import { useIsFocused } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
@@ -44,9 +45,22 @@ export default function TrackScreen() {
   const c = Colors[scheme];
   const { t } = useI18n();
   const tracker = useRunTracker();
-  // Asks for permission on mount so the map can centre on the runner before
-  // they press Start — the pin used to sit on the selected city's centre.
-  const location = useCurrentLocation();
+  const isFocused = useIsFocused();
+
+  const running = tracker.status === 'running';
+  const starting = tracker.status === 'starting';
+  const paused = tracker.status === 'paused';
+  // A session "owns" the screen from the moment Start is pressed: the map
+  // goes full-bleed 3D, and the idle chrome (scrim + title + Start) gets out
+  // of the way rather than sitting on top of the run.
+  const inSession = running || starting || paused;
+
+  // The tracker's own subscription supplies positions once a session is
+  // live, so the standalone watcher only runs when it's the sole source:
+  // this tab is on screen AND no session is recording. Without the focus
+  // gate it would hold the GPS on from another tab; without the session
+  // gate two subscriptions would run at once.
+  const location = useCurrentLocation({ watch: isFocused && !inSession });
 
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [failure, setFailure] = useState<SyncOutcome | null>(null);
@@ -174,14 +188,6 @@ export default function TrackScreen() {
       </SafeAreaView>
     );
   }
-
-  const running = tracker.status === 'running';
-  const starting = tracker.status === 'starting';
-  const paused = tracker.status === 'paused';
-  // A session "owns" the screen from the moment Start is pressed: the map
-  // goes full-bleed 3D, and the idle chrome (scrim + title + Start) gets out
-  // of the way rather than sitting on top of the run.
-  const inSession = running || starting || paused;
 
   return (
     <View style={[styles.stage, { backgroundColor: c.backgroundElement }]}>

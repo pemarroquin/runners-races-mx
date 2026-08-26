@@ -108,13 +108,20 @@ export function buildPinMapUrl(
 export function buildPathMapUrl(
   points: { lat: number; lng: number }[],
   dark: boolean,
+  /** Current position. Drawn as a pin on top of the route so the runner can
+   *  see where they are on it — the route alone doesn't show which end is
+   *  "now". */
+  here?: { lat: number; lng: number } | null,
 ): string | null {
   if (!TOKEN || points.length < 2) return null;
   const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
   const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
   const coords = decimate(points, 100).map((p): [number, number] => [p.lat, p.lng]);
-  const overlay = `path-4+${ROUTE_COLOR}-0.9(${encodeURIComponent(encodePolyline(coords))})`;
-  const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${size}?access_token=${TOKEN}&padding=50`;
+  const overlays = [`path-4+${ROUTE_COLOR}-0.9(${encodeURIComponent(encodePolyline(coords))})`];
+  if (here) overlays.push(`pin-s+${ROUTE_COLOR}(${here.lng},${here.lat})`);
+  const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlays.join(
+    ',',
+  )}/auto/${size}?access_token=${TOKEN}&padding=50`;
   return url.length > 8000 ? null : url;
 }
 
