@@ -15,7 +15,11 @@ declare module 'react-native-gesture-handler/lib/module/components/GestureHandle
   import type { ComponentType, PropsWithChildren } from 'react';
   import type { ViewProps } from 'react-native';
 
-  export interface GestureHandlerRootViewProps extends PropsWithChildren<ViewProps> {}
+  // A type alias, not an empty extending interface: the deep-import module
+  // this declares takes exactly ViewProps plus children and adds nothing of
+  // its own, and an interface with no members is just a slower way to say
+  // that (which @typescript-eslint/no-empty-object-type flags).
+  export type GestureHandlerRootViewProps = PropsWithChildren<ViewProps>;
 
   const GestureHandlerRootView: ComponentType<GestureHandlerRootViewProps>;
   export default GestureHandlerRootView;

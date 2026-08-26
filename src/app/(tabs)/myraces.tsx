@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { SectionList, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { Pressable, SectionList, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ import { useI18n } from '@/lib/i18n';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
+import { useToday } from '@/lib/today';
 
 interface RaceSection {
   key: 'upcoming' | 'past';
@@ -22,12 +23,26 @@ export default function MyRacesScreen() {
   const c = Colors[scheme];
   const router = useRouter();
   const { t } = useI18n();
-  const { savedIds } = useSaved();
+  const { savedIds, dropMissing, storageError } = useSaved();
   const allRaces = useRaces();
+  const today = useToday();
 
   const races = useMemo(
     () => allRaces.filter((r) => savedIds.has(r.id)),
     [savedIds, allRaces],
+  );
+
+  // Saved ids the catalog no longer contains. Counted rather than inferred
+  // from `races.length` alone so the message stays right if a race is ever
+  // saved twice under different ids.
+  const missingCount = useMemo(() => {
+    const present = new Set(races.map((r) => r.id));
+    return Array.from(savedIds).filter((id) => !present.has(id)).length;
+  }, [savedIds, races]);
+
+  const clearMissing = useCallback(
+    () => dropMissing(new Set(allRaces.map((r) => r.id))),
+    [dropMissing, allRaces],
   );
 
   // Undated races (daysUntil === null) are treated as upcoming — there's no
@@ -36,10 +51,14 @@ export default function MyRacesScreen() {
     const upcoming: Race[] = [];
     const past: Race[] = [];
     for (const r of races) {
-      const days = daysUntil(r.date);
+      const days = daysUntil(r.date, today);
       if (days !== null && days < 0) past.push(r);
       else upcoming.push(r);
     }
+    // Upcoming reads soonest-first (inherited from the source sort, which is
+    // ascending by date). Past has to be reversed: the same ascending order
+    // buries the race you just ran at the bottom under everything older.
+    past.reverse();
     const result: RaceSection[] = [];
     if (upcoming.length > 0) {
       result.push({ key: 'upcoming', title: t('myraces.upcomingSection'), data: upcoming });
@@ -48,7 +67,9 @@ export default function MyRacesScreen() {
       result.push({ key: 'past', title: t('myraces.pastSection'), data: past });
     }
     return result;
-  }, [races, t]);
+    // `today` — daysUntil() reads the current date, so without it a race that
+    // finished overnight stays under "Próximas" until something else changes.
+  }, [races, t, today]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -58,6 +79,34 @@ export default function MyRacesScreen() {
         keyExtractor={(r) => r.id}
         contentContainerStyle={styles.list}
         stickySectionHeadersEnabled={false}
+        ListHeaderComponent={
+          // Both of these were tracked in state and rendered nowhere: a
+          // browser that blocks storage made every save silently fail, and a
+          // race dropped from the catalog just disappeared from this list.
+          storageError !== null || missingCount > 0 ? (
+            <View style={styles.notices}>
+              {storageError !== null && (
+                <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
+                  <Text style={[styles.noticeText, { color: c.textSecondary }]}>
+                    {t('myraces.storageBlocked')}
+                  </Text>
+                </View>
+              )}
+              {missingCount > 0 && (
+                <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
+                  <Text style={[styles.noticeText, { color: c.textSecondary }]}>
+                    {t('myraces.missing', { count: missingCount })}
+                  </Text>
+                  <Pressable onPress={clearMissing} accessibilityRole="button" hitSlop={10}>
+                    <Text style={[styles.noticeAction, { color: c.accent }]}>
+                      {t('myraces.clearMissing')}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          ) : null
+        }
         renderSectionHeader={({ section }) => (
           <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>{section.title}</Text>
         )}
@@ -98,4 +147,8 @@ const styles = StyleSheet.create({
   },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: Spacing.six },
   empty: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
+  notices: { gap: Spacing.two, marginBottom: Spacing.two },
+  notice: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.one },
+  noticeText: { fontSize: 13, lineHeight: 19 },
+  noticeAction: { fontSize: 13, fontWeight: '700' },
 });

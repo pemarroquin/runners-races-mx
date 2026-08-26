@@ -45,7 +45,14 @@ const RacesStatusContext = createContext<RacesStatus>({
 });
 
 export function RacesProvider({ children }: { children: ReactNode }) {
-  const [races, setRaces] = useState<Race[]>(() => sortRaces(SEED_RACES));
+  // Seed from the last cached remote payload when there is one, falling back
+  // to the bundled data. Read synchronously in the initializer rather than
+  // set from an effect: the effect version painted the bundled seed first and
+  // replaced it on mount, so a user with fresher cached data saw a frame of
+  // stale races (and it tripped `react-hooks/set-state-in-effect`, which
+  // matters with `reactCompiler` on). loadCachedRaces already returns null on
+  // a cold device or any storage failure.
+  const [races, setRaces] = useState<Race[]>(() => sortRaces(loadCachedRaces() ?? SEED_RACES));
   const [status, setStatus] = useState<RefreshStatus>('idle');
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
   const refreshingRef = useRef(false);
@@ -62,7 +69,13 @@ export function RacesProvider({ children }: { children: ReactNode }) {
         if (result) {
           const sorted = sortRaces(result);
           setRaces(sorted);
-          saveCachedRaces(result);
+          // Deferred, not inline: saveCachedRaces serializes ~200 KB of JSON
+          // and does a synchronous SQLite write, both on the JS thread. Run
+          // straight after a successful launch fetch, that lands right where
+          // the feed is trying to paint its first frame. The in-memory state
+          // above is already correct for this session; the cache only matters
+          // to the NEXT cold start, so it can wait for an idle moment.
+          setTimeout(() => saveCachedRaces(result), 0);
           setStatus('ok');
           const now = Date.now();
           lastFetchedAtRef.current = now;
@@ -81,9 +94,6 @@ export function RacesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     aliveRef.current = true;
-
-    const cached = loadCachedRaces();
-    if (cached) setRaces(sortRaces(cached));
 
     refresh();
 

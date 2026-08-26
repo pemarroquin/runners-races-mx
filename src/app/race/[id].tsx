@@ -21,6 +21,7 @@ import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
 import { GlassRadii } from '@/constants/glass';
+import { raceWebUrl } from '@/constants/links';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useCountdown, useI18n } from '@/lib/i18n';
 import { daysUntil, distanceTagLabelKey, formatDate, isSafeUrl } from '@/lib/races';
@@ -28,6 +29,8 @@ import { useRaces } from '@/lib/races-provider';
 import { HERO_IMAGE_RATIO, pickRegionArt } from '@/lib/region-art';
 import { REGIONS, raceInRegion } from '@/lib/regions';
 import { useSaved } from '@/lib/saved';
+import { instantInZone, timeZoneForState } from '@/lib/time';
+import { useToday } from '@/lib/today';
 
 // BuySheet pulls in react-native-webview, react-native-gesture-handler drag
 // handling, and its own Reanimated motion — real weight that every other
@@ -61,6 +64,12 @@ export default function RaceDetailScreen() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [noteExpanded, setNoteExpanded] = useState(false);
   const races = useRaces();
+  // Also what makes this screen re-render when the day rolls over: a Provider
+  // whose value changes only re-renders its CONSUMERS (children keep the same
+  // element identity, so React bails out on the rest of the subtree), and
+  // without the subscription an open detail screen would still read
+  // "falta 1 día" on race morning.
+  const today = useToday();
   const race = useMemo(() => races.find((r) => r.id === id), [races, id]);
   if (!race) {
     return (
@@ -76,7 +85,7 @@ export default function RaceDetailScreen() {
   }
 
   const saved = isSaved(race.id);
-  const days = daysUntil(race.date);
+  const days = daysUntil(race.date, today);
   const dateLabel = formatDate(race.date, locale);
   // Same region + same deterministic per-race pick the feed card already
   // used, so tapping a card lands on the same picture rather than a
@@ -113,22 +122,44 @@ export default function RaceDetailScreen() {
         Alert.alert(t('detail.permission'));
         return;
       }
-      const [y, m, d] = race.date.split('-').map(Number);
-      const [hh, mm] = (race.time ?? '07:00').split(':').map(Number);
-      const start = new Date(y, m - 1, d, hh, mm);
-      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+      const zone = timeZoneForState(race.state);
+      // 107 of 195 races have no confirmed start time. The old code quietly
+      // substituted 07:00 and said nothing, putting a made-up time in the
+      // user's real calendar. An all-day event is the honest representation
+      // of "this race is on this date, time not announced yet".
+      const allDay = !race.time;
+      // Both branches build the instant in the RACE's zone, not the phone's.
+      const start = instantInZone(race.date, race.time ?? '00:00', zone);
+      const end = allDay
+        ? instantInZone(race.date, '23:59', zone)
+        : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+      // Tapping twice used to create a second identical event, with no way to
+      // undo it from the app. Look for one we already wrote before adding.
+      const existing = await Calendar.getEventsAsync(
+        [calId],
+        instantInZone(race.date, '00:00', zone),
+        instantInZone(race.date, '23:59', zone),
+      );
+      if (existing.some((e) => e.title === race.name)) {
+        Alert.alert(t('detail.calendarAlready'));
+        return;
+      }
+
       await Calendar.createEventAsync(calId, {
         title: race.name,
         startDate: start,
         endDate: end,
+        allDay,
         location: [race.venue, race.city, race.state].filter(Boolean).join(', '),
         notes: race.signupUrl ?? race.sourceUrl,
-        timeZone: undefined,
+        timeZone: zone,
       });
-      Alert.alert(t('detail.calendarAdded'));
+      Alert.alert(allDay ? t('detail.calendarAddedNoTime') : t('detail.calendarAdded'));
     } catch (e) {
       console.warn('calendar error', e);
-      Alert.alert(t('detail.permission'));
+      Alert.alert(t('detail.calendarFailed'));
     }
   }
 
@@ -143,7 +174,9 @@ export default function RaceDetailScreen() {
       name: race.name,
       date: dateLabel ? `${dateLabel}${race.time ? ` · ${race.time}` : ''}` : t('common.tbd'),
     });
-    const message = `${headline}\n${race.sourceUrl}`;
+    // The app's own link, not race.sourceUrl — sharing used to send people to
+    // a third-party race calendar with no route back here.
+    const message = `${headline}\n${raceWebUrl(race.id)}`;
     try {
       await Share.share({ message });
     } catch {

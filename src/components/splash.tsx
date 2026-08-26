@@ -24,10 +24,42 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
+import { getPref, initDb, setPref } from '@/lib/db';
 
 const EXIT_AT = 1100; // ms after mount when the overlay starts leaving
+const PREF_SPLASH_SEEN = 'splashSeen';
+
+/** True once the full sequence has played on this device. Never throws. */
+function hasSeenSplash(): boolean {
+  try {
+    initDb(); // idempotent — no dependency on provider ordering
+    return getPref(PREF_SPLASH_SEEN) === '1';
+  } catch {
+    // Storage unavailable: fall back to showing it. A repeated splash is a
+    // far better failure than never showing the app's one branded moment.
+    return false;
+  }
+}
+
+function markSplashSeen(): void {
+  try {
+    initDb();
+    setPref(PREF_SPLASH_SEEN, '1');
+  } catch {
+    // Non-fatal — worst case the splash plays again next launch.
+  }
+}
 
 export function CinematicSplash() {
+  // Whether the full ~1.5s sequence has already played on this device. Read
+  // synchronously in a lazy initializer (not an effect) so the first render
+  // already knows — an effect would flash the overlay before hiding it.
+  //
+  // The sequence is worth its 1.5s the first time and friction every time
+  // after: this is a utility app people open to check a date, and the web
+  // build already skips the hold entirely for the same reason (PR #20). A
+  // returning user gets a plain hand-off from the native splash instead.
+  const [alreadySeen] = useState(hasSeenSplash);
   const [done, setDone] = useState(false);
   const reduced = useReducedMotion();
 
@@ -40,6 +72,16 @@ export function CinematicSplash() {
 
   useEffect(() => {
     SplashScreen.hideAsync();
+
+    if (alreadySeen) {
+      // Nothing to animate — `alreadySeen` alone already suppresses the
+      // overlay in render, so there is no setDone here (which would be a
+      // synchronous setState in an effect for no behavioural gain). Still
+      // re-mark it, harmlessly, in case the first run's write failed.
+      markSplashSeen();
+      return;
+    }
+    markSplashSeen();
 
     if (reduced) {
       titleOpacity.value = 1;
@@ -87,12 +129,12 @@ export function CinematicSplash() {
     transform: [{ scaleX: bar.value }],
   }));
 
-  if (done) return null;
+  if (done || alreadySeen) return null;
 
   return (
     <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
       <Animated.View style={titleStyle}>
-        <Text style={styles.title}>Runners' Races MX</Text>
+        <Text style={styles.title}>Runners&apos; Races MX</Text>
         <Animated.View
           style={[styles.bar, { backgroundColor: Colors.dark.accent }, barStyle]}
         />

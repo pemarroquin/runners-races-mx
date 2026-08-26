@@ -31,11 +31,14 @@ export function CityPicker({ visible, onClose }: CityPickerProps) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
-  const { region, setRegionId, detect, detecting } = useRegion();
+  const { region, setRegionId, detect, clearManualPick, detecting } = useRegion();
   const [detectFailed, setDetectFailed] = useState(false);
 
   async function useMyLocation() {
     setDetectFailed(false);
+    // The user is explicitly asking to be located, so this must override the
+    // "a manual pick wins over in-flight detection" guard in RegionProvider.
+    clearManualPick();
     const method = await detect();
     if (method === 'none') {
       setDetectFailed(true); // stay open so the user can pick manually

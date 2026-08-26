@@ -6,7 +6,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -42,7 +41,47 @@ const translations = {
       unconfirmed: 'Sin confirmar',
       retry: 'Reintentar',
     },
-    tabs: { feed: 'Carreras', myRaces: 'Mis carreras', settings: 'Ajustes' },
+    tabs: {
+      track: 'Correr',
+      leaderboard: 'Tabla',
+      feed: 'Carreras',
+      myRaces: 'Guardadas',
+      settings: 'Perfil',
+    },
+    track: {
+      newSession: 'Nueva sesión',
+      start: 'Iniciar',
+      stop: 'Terminar',
+      starting: 'Buscando señal…',
+      distance: 'Distancia',
+      time: 'Tiempo',
+      area: 'Área',
+      pace: 'Ritmo',
+      waiting: 'Esperando tu primera ubicación…',
+      mapUnavailable: 'No pudimos cargar el mapa. Tu recorrido se sigue registrando.',
+      permission:
+        'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
+      unavailable: 'No pudimos acceder al GPS en este dispositivo.',
+      keepOpen: 'Mantén esta pantalla abierta mientras corres.',
+      summaryTitle: 'Territorio conquistado',
+      noFence:
+        'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
+      save: 'Guardar territorio',
+      saving: 'Guardando…',
+      saved: 'Territorio guardado',
+      discard: 'Descartar',
+      syncFailedNetwork:
+        'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
+      syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
+      syncDisabled: 'El guardado en línea no está configurado en esta versión.',
+      retry: 'Reintentar',
+    },
+    leaderboard: {
+      title: 'Tabla de posiciones',
+      soonTitle: 'Muy pronto',
+      soonBody:
+        'Aquí verás quién tiene más territorio. Por ahora corre y acumula el tuyo — se contará cuando abramos la tabla.',
+    },
     feed: {
       title: 'Carreras',
       search: 'Buscar carrera o ciudad…',
@@ -56,6 +95,7 @@ const translations = {
       thisWeek: 'Esta semana',
       nextRace: 'Próxima carrera',
       walksShelf: 'Caminatas',
+      regOpen: 'Registro abierto',
     },
     filters: {
       '3K': '3K',
@@ -87,11 +127,18 @@ const translations = {
       saveFailed: 'No pudimos guardar la carrera en este dispositivo. Vuelve a intentarlo.',
       addCalendar: 'Agregar al calendario',
       calendarAdded: 'Agregada a tu calendario',
+      calendarAddedNoTime:
+        'Agregada a tu calendario como evento de todo el día — el organizador aún no confirma la hora de salida.',
+      calendarAlready: 'Esta carrera ya está en tu calendario.',
+      calendarFailed: 'No pudimos agregarla a tu calendario. Vuelve a intentarlo.',
       calendarNoDate: 'Esta carrera aún no tiene fecha confirmada.',
       permission: 'Necesitamos permiso para acceder a tu calendario.',
       viewSource: 'Ver fuente',
       close: 'Cerrar',
       openBrowser: 'Abrir en el navegador',
+      checkoutFailed:
+        'No pudimos abrir el registro aquí. Puede que el enlace ya no funcione o que el organizador no permita abrirlo dentro de la app.',
+      checkoutBlocked: '¿No carga? Ábrelo en el navegador',
       openMaps: 'Abrir en Mapas',
       approxLocation: 'Ubicación aproximada del punto de salida',
       share: 'Compartir',
@@ -102,6 +149,15 @@ const translations = {
       empty: 'Aún no has guardado carreras.\nExplora y guarda las que te interesen.',
       pastSection: 'Anteriores',
       upcomingSection: 'Próximas',
+      storageBlocked:
+        'Este navegador no permite guardar datos (por ejemplo, en modo privado), así que tus carreras no se conservarán al cerrar la app.',
+      missing: {
+        one: '1 carrera guardada ya no está disponible — el organizador la retiró del calendario.',
+        other:
+          '%{count} carreras guardadas ya no están disponibles — el organizador las retiró del calendario.',
+      } as PluralForm,
+      clearMissing: 'Quitarlas de mi lista',
+      remove: 'Quitar de mis carreras',
     },
     city: {
       title: 'Elige tu ciudad',
@@ -120,6 +176,13 @@ const translations = {
       themeLight: 'Claro',
       themeDark: 'Oscuro',
       language: 'Idioma',
+      reminders: 'Recordatorios',
+      remindersHint:
+        'Te avisamos 3 días antes y la noche anterior de cada carrera que guardes.',
+      remindersOnHint:
+        'Te avisaremos 3 días antes y la noche anterior de cada carrera que guardes.',
+      remindersDenied:
+        'No diste permiso para enviarte notificaciones. Actívalo en los ajustes de tu teléfono para usar los recordatorios.',
     },
     privacy: {
       title: 'Privacidad',
@@ -130,14 +193,21 @@ const translations = {
         'Si el GPS no está disponible o no diste permiso, calculamos tu ciudad aproximada a partir de tu dirección IP con el servicio ipapi.co. Tu IP se envía a ipapi.co en ese momento — es lo único que sale de tu dispositivo, y solo pasa cuando no hay GPS.',
       collectedSaved:
         'Carreras guardadas: los IDs de las carreras que guardas quedan solo en este dispositivo (SQLite en iOS/Android, almacenamiento local en la versión web). No se sincronizan a ningún servidor.',
+      collectedReminders:
+        'Recordatorios: si los activas, tu teléfono programa las notificaciones localmente. No usamos notificaciones push ni servidores de mensajería — nada sale de tu dispositivo, y al desactivarlos se cancelan todas.',
+      collectedTerritory:
+        'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
+      collectedIdentity:
+        'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
       notTitle: 'Qué no hacemos',
-      notAccounts: 'No hay cuentas ni inicio de sesión.',
-      notTracking: 'No rastreamos tu actividad ni usamos analítica.',
+      notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
+      notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
       notSharing: 'No vendemos ni compartimos tus datos con nadie.',
-      notServer: 'No guardamos nada en un servidor propio: no existe una base de datos de usuarios.',
+      notServer:
+        'Fuera del territorio que grabas, nada más se guarda en un servidor: tus carreras guardadas, tu idioma y tus recordatorios viven solo en este dispositivo.',
       deleteTitle: 'Borrar tus datos',
       deleteBody:
-        'Como no guardamos nada en un servidor, no hay un trámite de "solicitar borrado" que ofrecer. Borrar la app de tu teléfono (o los datos del sitio en tu navegador, en la versión web) elimina todo lo guardado localmente.',
+        'Lo guardado localmente (carreras guardadas, idioma, recordatorios) se borra al eliminar la app de tu teléfono o los datos del sitio en tu navegador. Para borrar los territorios que subiste, escríbenos desde la sección de soporte y eliminamos tu cuenta anónima y sus recorridos.',
       ipapiLink: 'Política de privacidad de ipapi.co',
     },
   },
@@ -147,7 +217,7 @@ const translations = {
       daysAway: '%{count} days away',
       oneDayAway: '1 day away',
       past: 'Finished',
-      tbd: 'Date To Be Defined Yet',
+      tbd: 'Date TBD',
       when: 'When',
       where: 'Where',
       distances: 'Distances',
@@ -164,7 +234,47 @@ const translations = {
       unconfirmed: 'Unconfirmed',
       retry: 'Retry',
     },
-    tabs: { feed: 'Races', myRaces: 'My races', settings: 'Settings' },
+    tabs: {
+      track: 'Run',
+      leaderboard: 'Leaderboard',
+      feed: 'Races',
+      myRaces: 'Saved',
+      settings: 'Profile',
+    },
+    track: {
+      newSession: 'New session',
+      start: 'Start',
+      stop: 'Finish',
+      starting: 'Finding signal…',
+      distance: 'Distance',
+      time: 'Time',
+      area: 'Area',
+      pace: 'Pace',
+      waiting: 'Waiting for your first location…',
+      mapUnavailable: "We couldn't load the map. Your route is still being recorded.",
+      permission:
+        'We need location permission to trace your route. Turn it on in your phone settings.',
+      unavailable: "We couldn't access GPS on this device.",
+      keepOpen: 'Keep this screen open while you run.',
+      summaryTitle: 'Territory claimed',
+      noFence:
+        'Your route was too short to enclose an area. Run a loop and try again.',
+      save: 'Save territory',
+      saving: 'Saving…',
+      saved: 'Territory saved',
+      discard: 'Discard',
+      syncFailedNetwork:
+        "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
+      syncFailedAuth: "We couldn't create your session. Please try again.",
+      syncDisabled: 'Online saving is not configured in this build.',
+      retry: 'Retry',
+    },
+    leaderboard: {
+      title: 'Leaderboard',
+      soonTitle: 'Coming soon',
+      soonBody:
+        "This is where you'll see who holds the most territory. For now, go run and build yours — it all counts once the board opens.",
+    },
     feed: {
       title: 'Races',
       search: 'Search race or city…',
@@ -178,6 +288,7 @@ const translations = {
       thisWeek: 'This week',
       nextRace: 'Next race',
       walksShelf: 'Walks',
+      regOpen: 'Registration open',
     },
     filters: {
       '3K': '3K',
@@ -209,11 +320,18 @@ const translations = {
       saveFailed: "We couldn't save this race on this device. Please try again.",
       addCalendar: 'Add to calendar',
       calendarAdded: 'Added to your calendar',
+      calendarAddedNoTime:
+        "Added to your calendar as an all-day event — the organizer hasn't confirmed a start time yet.",
+      calendarAlready: 'This race is already in your calendar.',
+      calendarFailed: "We couldn't add it to your calendar. Please try again.",
       calendarNoDate: 'This race has no confirmed date yet.',
       permission: 'We need permission to access your calendar.',
       viewSource: 'View source',
       close: 'Close',
       openBrowser: 'Open in browser',
+      checkoutFailed:
+        "We couldn't open the registration here. The link may no longer work, or the organizer may not allow it to open inside the app.",
+      checkoutBlocked: "Not loading? Open it in your browser",
       openMaps: 'Open in Maps',
       approxLocation: 'Approximate start location',
       share: 'Share',
@@ -224,6 +342,14 @@ const translations = {
       empty: "You haven't saved any races yet.\nBrowse and save the ones you like.",
       pastSection: 'Past',
       upcomingSection: 'Upcoming',
+      storageBlocked:
+        "This browser doesn't allow saving data (private mode, for example), so your races won't be kept after you close the app.",
+      missing: {
+        one: '1 saved race is no longer listed — the organizer pulled it from the calendar.',
+        other: '%{count} saved races are no longer listed — the organizer pulled them from the calendar.',
+      } as PluralForm,
+      clearMissing: 'Remove them from my list',
+      remove: 'Remove from my races',
     },
     city: {
       title: 'Choose your city',
@@ -242,6 +368,13 @@ const translations = {
       themeLight: 'Light',
       themeDark: 'Dark',
       language: 'Language',
+      reminders: 'Reminders',
+      remindersHint:
+        'We’ll remind you 3 days before and the night before each race you save.',
+      remindersOnHint:
+        'We’ll remind you 3 days before and the night before each race you save.',
+      remindersDenied:
+        'You didn’t allow notifications. Turn them on in your phone settings to use reminders.',
     },
     privacy: {
       title: 'Privacy',
@@ -252,14 +385,21 @@ const translations = {
         "If GPS isn't available or you didn't grant permission, we estimate your city from your IP address using the ipapi.co service. Your IP is sent to ipapi.co at that point — it's the only thing that ever leaves your device, and only when GPS isn't available.",
       collectedSaved:
         'Saved races: the IDs of races you save stay on this device only (SQLite on iOS/Android, local storage on the web version). Nothing syncs to any server.',
+      collectedReminders:
+        'Reminders: if you turn them on, your phone schedules the notifications locally. We use no push notifications and no messaging servers — nothing leaves your device, and turning them off cancels all of them.',
+      collectedTerritory:
+        'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
+      collectedIdentity:
+        'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
       notTitle: "What we don't do",
-      notAccounts: 'No accounts, no login.',
-      notTracking: 'No tracking your activity, no analytics.',
+      notAccounts: 'No email, password, or personal details are needed to use the app.',
+      notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",
       notSharing: "We don't sell or share your data with anyone.",
-      notServer: "Nothing is stored on a server we run — there's no database of users.",
+      notServer:
+        'Apart from the territory you record, nothing else goes to a server: your saved races, language, and reminders stay on this device only.',
       deleteTitle: 'Deleting your data',
       deleteBody:
-        'Since nothing is stored on a server, there\'s no "request deletion" process to offer. Deleting the app from your phone (or clearing the site\'s data in your browser, on the web version) removes everything stored locally.',
+        'Anything stored locally (saved races, language, reminders) is removed by deleting the app from your phone, or clearing the site data in your browser. To delete territories you uploaded, contact us through the support link and we will remove your anonymous account and its runs.',
       ipapiLink: 'ipapi.co privacy policy',
     },
   },
@@ -286,29 +426,42 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(deviceLocale);
+/**
+ * The persisted locale choice, or the device default. Read synchronously from
+ * a `useState` lazy initializer, not an effect: the effect version rendered
+ * the whole tree in Spanish first and then switched, so an English user saw a
+ * flash of Spanish on every cold start — and it tripped
+ * `react-hooks/set-state-in-effect`, which matters with `reactCompiler` on.
+ *
+ * Still not module scope: on native that would run before the database is
+ * open. initDb() here is idempotent and removes any provider-ordering
+ * dependency.
+ */
+function loadInitialLocale(): Locale {
+  try {
+    initDb();
+  } catch {
+    // Ignore — getPref below degrades to null when the db isn't open.
+  }
+  let locale = deviceLocale;
+  try {
+    const stored = getPref(PREF_LOCALE);
+    if (stored === 'es' || stored === 'en') locale = stored;
+  } catch {
+    // Storage failure — fall back to the device-derived locale.
+  }
+  // Point the singleton at the same value BEFORE returning. `t()` reads
+  // `i18n.locale`, not React state, so deferring this to an effect would
+  // render the entire first paint in the wrong language — which is what the
+  // effect version did, and why an English user saw a flash of Spanish on
+  // every cold start. Assigning here is safe: the initializer runs once per
+  // mount and is idempotent.
+  i18n.locale = locale;
+  return locale;
+}
 
-  // Rehydrate a previously persisted locale choice on mount. initDb() is
-  // idempotent, so calling it here removes any dependency on provider
-  // ordering elsewhere in the tree. Never read prefs at module scope — on
-  // native that would run before the database is open.
-  useEffect(() => {
-    try {
-      initDb();
-    } catch {
-      // Ignore — getPref below degrades to null when the db isn't open.
-    }
-    try {
-      const stored = getPref(PREF_LOCALE);
-      if (stored === 'es' || stored === 'en') {
-        i18n.locale = stored;
-        setLocaleState(stored);
-      }
-    } catch {
-      // Storage failure — keep the device-derived locale already in state.
-    }
-  }, []);
+export function LocaleProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(loadInitialLocale);
 
   const setLocale = useCallback((l: Locale) => {
     i18n.locale = l;

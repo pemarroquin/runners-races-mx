@@ -50,6 +50,14 @@ jobs:
       - name: Inline critical CSS
         run: node scripts/inline-critical-css.mjs dist
 
+      # Deep links and share previews. `web.output: "single"` emits one
+      # index.html, and Porkbun has no SPA rewrite, so /race/<id> used to 404
+      # on every shared link and every hard reload. This writes a real file
+      # per race route (plus 404.html) and gives each one its own title and
+      # OpenGraph description. See the script header and deploy/DEPLOY.md.
+      - name: Generate route files + share metadata
+        run: node scripts/finalize-web.mjs dist
+
       - name: Assemble site (landing page + runningapp/)
         run: |
           rm -rf site-build

@@ -18,6 +18,8 @@ interface SavedValue {
   isSaved: (id: string) => boolean;
   /** Returns false when the write failed and the race was NOT saved. */
   toggle: (id: string) => boolean;
+  /** Drop every saved id that isn't in `keepIds` (races the catalog no longer lists). */
+  dropMissing: (keepIds: Set<string>) => void;
   /** Non-null when local storage is unavailable, so saves cannot persist. */
   storageError: string | null;
 }
@@ -97,9 +99,34 @@ export function SavedProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  // A saved race whose id has left the catalog (organizer pulled it, the
+  // race-watch routine renamed the record) used to just vanish from My Races
+  // with no explanation, while its row sat in SQLite forever. My Races now
+  // says so and offers this; same write-first-then-update-memory discipline
+  // as `toggle`, so a failed delete can't leave the UI claiming otherwise.
+  const dropMissing = useCallback((keepIds: Set<string>) => {
+    const current = savedIdsRef.current;
+    const doomed = Array.from(current).filter((id) => !keepIds.has(id));
+    if (doomed.length === 0) return;
+    const removed: string[] = [];
+    try {
+      for (const id of doomed) {
+        if (removeRace(id)) removed.push(id);
+      }
+    } catch (e) {
+      console.warn('dropMissing failed', e);
+      setStorageError(e instanceof Error ? e.message : String(e));
+    }
+    if (removed.length === 0) return;
+    const next = new Set(current);
+    for (const id of removed) next.delete(id);
+    savedIdsRef.current = next;
+    setSavedIds(next);
+  }, []);
+
   const value = useMemo<SavedValue>(
-    () => ({ savedIds, isSaved: (id) => savedIds.has(id), toggle, storageError }),
-    [savedIds, toggle, storageError],
+    () => ({ savedIds, isSaved: (id) => savedIds.has(id), toggle, dropMissing, storageError }),
+    [savedIds, toggle, dropMissing, storageError],
   );
 
   return <SavedContext.Provider value={value}>{children}</SavedContext.Provider>;

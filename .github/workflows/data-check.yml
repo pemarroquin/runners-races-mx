@@ -43,6 +43,12 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      - name: Unit tests
+        run: npm test
+
+      # Was continue-on-error while 16 pre-existing React Compiler violations
+      # sat in the tree. Those are fixed, so the gate is real now — with
+      # `reactCompiler: true` in app.json these rules describe bugs that only
+      # show up in a production build, which is the worst place to find them.
       - name: Lint
         run: npx eslint .
-        continue-on-error: true # pre-existing violations; surfaced, not blocking

@@ -4,7 +4,17 @@
 // src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
 // home for build/support metadata, since there's no other about screen.
 import Constants from 'expo-constants';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+  useColorScheme,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
@@ -12,6 +22,7 @@ import { GlassSurface } from '@/components/ui/glass-surface';
 import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
+import { useReminders } from '@/lib/reminders-provider';
 import { useThemeMode, type ThemeMode } from '@/lib/theme-mode';
 
 const IPAPI_PRIVACY_URL = 'https://ipapi.co/privacy/';
@@ -81,6 +92,19 @@ export default function SettingsScreen() {
   const c = Colors[scheme];
   const { t, locale, setLocale } = useI18n();
   const { mode, setMode } = useThemeMode();
+  const { enabled: remindersOn, setEnabled: setRemindersEnabled } = useReminders();
+  // Set when the OS permission prompt comes back denied, so the switch
+  // flipping back explains itself instead of just looking broken.
+  const [reminderDenied, setReminderDenied] = useState(false);
+
+  const onToggleReminders = useCallback(
+    async (next: boolean) => {
+      setReminderDenied(false);
+      const ok = await setRemindersEnabled(next);
+      if (!ok) setReminderDenied(true);
+    },
+    [setRemindersEnabled],
+  );
 
   // expoConfig.version stays in sync with app.json/package.json, so this
   // reads the shipped build number instead of a value that can drift.
@@ -143,6 +167,30 @@ export default function SettingsScreen() {
           </GlassSurface>
         </View>
 
+        {/* Off by default and opt-in from here, rather than prompting on
+            first save: the OS permission dialog only makes sense once the
+            user has actually asked for reminders. */}
+        <View style={styles.reminderBlock}>
+          <View style={styles.themeRow}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+              {t('settings.reminders')}
+            </Text>
+            <Switch
+              value={remindersOn}
+              onValueChange={onToggleReminders}
+              accessibilityLabel={t('settings.reminders')}
+            />
+          </View>
+          <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
+            {remindersOn ? t('settings.remindersOnHint') : t('settings.remindersHint')}
+          </Text>
+          {reminderDenied && (
+            <Text style={[styles.reminderDenied, { color: c.accent }]}>
+              {t('settings.remindersDenied')}
+            </Text>
+          )}
+        </View>
+
         <View style={styles.rowGroup}>
           <Row label={t('settings.version')} value={version} c={c} />
           <Row
@@ -157,7 +205,19 @@ export default function SettingsScreen() {
 
         <Section
           title={t('privacy.collectedTitle')}
-          body={[t('privacy.collectedLocation'), t('privacy.collectedIp'), t('privacy.collectedSaved')]}
+          body={[
+            t('privacy.collectedLocation'),
+            t('privacy.collectedIp'),
+            t('privacy.collectedSaved'),
+            t('privacy.collectedReminders'),
+            // Territory Mode is the first thing in this app that puts user
+            // data on a server, so it gets its own paragraph rather than a
+            // clause bolted onto the location one — and it sits next to the
+            // identity note, since the anonymous account only exists because
+            // of it.
+            t('privacy.collectedTerritory'),
+            t('privacy.collectedIdentity'),
+          ]}
           c={c}
         />
         <Section
@@ -203,6 +263,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentText: { fontSize: 12, fontWeight: '700' },
+  reminderBlock: { marginBottom: Spacing.five, gap: Spacing.one },
+  reminderHint: { fontSize: 13, lineHeight: 19, marginTop: -Spacing.four },
+  reminderDenied: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
   rowGroup: { marginBottom: Spacing.five },
   row: {
     flexDirection: 'row',

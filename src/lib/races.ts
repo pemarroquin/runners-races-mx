@@ -12,6 +12,11 @@ import { getPref, initDb, setPref } from '@/lib/db';
 export const REMOTE_RACES_URL: string | null =
   'https://raw.githubusercontent.com/pemarroquin/runners-races-mx/main/assets/data/races.json';
 
+// Matches the bound location.ts already puts on its own calls. Generous
+// enough for a slow cellular connection to deliver ~200 KB, short enough that
+// a dead network doesn't leave the refresh lock held for a minute.
+const FETCH_TIMEOUT_MS = 15_000;
+
 export type Confidence = 'high' | 'medium' | 'low';
 export type DistanceTag =
   | '3K'
@@ -222,14 +227,29 @@ export function sortRaces(races: Race[]): Race[] {
  */
 export async function fetchRemoteRaces(): Promise<Race[] | null> {
   if (!REMOTE_RACES_URL) return null;
+  // No network call in this app may hang indefinitely. React Native's fetch
+  // has no default timeout on Android, so a captive portal or degraded DNS
+  // left `refreshingRef` stuck true in RacesProvider — which made every later
+  // refresh, INCLUDING pull-to-refresh, a permanent no-op with the spinner
+  // still turning. location.ts already bounds its calls this way.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     // No custom headers here: on web, any non-safelisted request header (e.g.
     // 'cache-control') forces a CORS preflight OPTIONS request, and GitHub's
     // raw host 403s that preflight, silently breaking every refresh on web.
-    // Cache-bust with a query param instead (no header needed), and pass
-    // `cache: 'no-store'` — a standard RequestInit option, not a header, so
-    // it never triggers a preflight either.
-    const res = await fetch(`${REMOTE_RACES_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    //
+    // `cache: 'no-cache'` (a RequestInit option, not a header, so it never
+    // triggers a preflight) means "revalidate before using the cached copy" —
+    // the browser/platform sends the ETag it already has and GitHub answers
+    // 304 Not Modified with an empty body when the data hasn't changed.
+    //
+    // The previous `?t=${Date.now()}` cache-buster made that impossible: a
+    // unique URL every time can never match a cached entry, so all 200 KB
+    // came down the wire on every single app open and every foreground
+    // refresh, on mobile data. Races change twice a week; almost every one of
+    // those downloads was re-fetching bytes the device already had.
+    const res = await fetch(REMOTE_RACES_URL, { cache: 'no-cache', signal: controller.signal });
     if (!res.ok) return null;
     const json = await res.json();
     const races = json?.races;
@@ -248,7 +268,11 @@ export async function fetchRemoteRaces(): Promise<Race[] | null> {
     // as a pile of successfully-nulled links.
     return valid.map(sanitizeRace);
   } catch {
+    // Includes the AbortError from the timeout above — callers treat null as
+    // "keep what we already have", which is the right response either way.
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -292,6 +316,41 @@ const MONTHS: Record<string, string[]> = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
 
+// Accent folding for search, as an explicit character map.
+//
+// Deliberately NOT `String.prototype.normalize('NFD')` + `\p{Diacritic}`, for
+// the same reason `isSafeUrl` above avoids `new URL()`: both depend on engine
+// Unicode support that differs between Hermes (native) and a browser's JS
+// engine (web), and `normalize` in particular is not a safe assumption on
+// Hermes. A literal map behaves identically everywhere, and the alphabet it
+// has to cover is small and closed — the ONLY accented characters in the
+// whole dataset's searchable fields (name, city, state, venue) are
+// á é í ó ú ñ Á. ü/Ü and the remaining uppercase forms are included anyway so
+// future data can't quietly reintroduce the bug.
+const FOLD_MAP: Record<string, string> = {
+  á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ü: 'u', ñ: 'n',
+  Á: 'a', É: 'e', Í: 'i', Ó: 'o', Ú: 'u', Ü: 'u', Ñ: 'n',
+};
+
+/**
+ * Lowercased and stripped of Spanish accents, for accent-insensitive search.
+ *
+ * Search used to compare raw strings, so a user typing `maraton` matched none
+ * of the 104 races whose name carries an accent ("Medio Maratón
+ * Montemorelos"), and `queretaro` matched none of the 75 races in an accented
+ * city. Phone keyboards don't produce accents without a long-press, so the
+ * accented spelling is the one users DON'T type — which made the most natural
+ * query the one that returned nothing.
+ *
+ * ñ folds to n on purpose: this is substring matching, not dictionary
+ * collation, and someone typing "nino" expects to find "Niño".
+ */
+export function foldForSearch(s: string): string {
+  let out = '';
+  for (const ch of s) out += FOLD_MAP[ch] ?? ch;
+  return out.toLowerCase();
+}
+
 /** "13 dic 2026" (es) / "13 Dec 2026" (en). Null date → null. */
 export function formatDate(dateStr: string | null, locale: string): string | null {
   if (!dateStr) return null;
@@ -315,14 +374,28 @@ export function abbreviateState(state: string): string {
   return STATE_ABBREVIATIONS[state] ?? state;
 }
 
-/** Whole days from today until the race date (negative = past, null = undated). */
-export function daysUntil(dateStr: string | null): number | null {
+/**
+ * Whole days from `today` until the race date (negative = past, null = undated).
+ *
+ * `today` is passed in rather than read from the clock inside here. Reading
+ * `new Date()` internally made this an impure function of a hidden input: no
+ * memo could know when the answer changed, so an app left open overnight kept
+ * yesterday's countdowns, and there was no way to test the boundaries without
+ * faking the system clock. Callers get it from `useToday()`, which is state
+ * that actually changes at midnight.
+ *
+ * @param today local calendar day as `YYYY-MM-DD` (see useToday)
+ */
+export function daysUntil(dateStr: string | null, today: string): number | null {
   if (!dateStr) return null;
+  const [ty, tm, td] = today.split('-').map(Number);
   const [y, m, d] = dateStr.split('-').map(Number);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(y, m - 1, d);
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+  // UTC on both sides purely to get a DST-free difference: these are calendar
+  // days, not instants, and a local-time subtraction across a DST boundary
+  // can land on 0.96 or 1.04 days.
+  const from = Date.UTC(ty, tm - 1, td);
+  const to = Date.UTC(y, m - 1, d);
+  return Math.round((to - from) / 86_400_000);
 }
 
 /** 'YYYY-MM' key for grouping by month; undated races sort into 'tbd'. */
