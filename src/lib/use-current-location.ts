@@ -26,7 +26,24 @@ export interface CurrentLocation {
   request: () => Promise<LatLng | null>;
 }
 
-export function useCurrentLocation(autoRequest = true): CurrentLocation {
+export interface CurrentLocationOptions {
+  /** Ask for a fix on mount. */
+  autoRequest?: boolean;
+  /**
+   * Keep `coords` updated as the device moves, instead of taking a single
+   * fix and freezing. Off by default because a watcher holds the GPS on.
+   *
+   * The single-fix behaviour was a real bug: the map pin was placed once and
+   * then never moved while the runner did, which reads as a broken pin
+   * rather than a stale one.
+   */
+  watch?: boolean;
+}
+
+export function useCurrentLocation({
+  autoRequest = true,
+  watch = false,
+}: CurrentLocationOptions = {}): CurrentLocation {
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [status, setStatus] = useState<LocationStatus>('idle');
   const mounted = useRef(true);
@@ -69,6 +86,39 @@ export function useCurrentLocation(autoRequest = true): CurrentLocation {
       return null;
     }
   }, []);
+
+  // Continuous updates while `watch` is on. Balanced accuracy and a 10m
+  // distance filter: this only has to keep a map pin honest, so it doesn't
+  // need the BestForNavigation power draw the run tracker asks for.
+  useEffect(() => {
+    if (!watch) return;
+    let sub: Location.LocationSubscription | null = null;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { status: permission } = await Location.getForegroundPermissionsAsync();
+        if (permission !== 'granted' || cancelled) return;
+        sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 4000 },
+          (pos) => {
+            if (cancelled) return;
+            setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setStatus('ready');
+          },
+        );
+        if (cancelled) sub.remove();
+      } catch {
+        // A failed watcher just means the pin stops updating; the one-shot
+        // fix above still gave us something to show.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      sub?.remove();
+    };
+  }, [watch]);
 
   useEffect(() => {
     if (!autoRequest) return;

@@ -24,6 +24,11 @@ import type { LatLng } from '@/lib/territory';
 
 const REFRESH_MS = 8000;
 
+/** ~11m of precision — see the centre calculation below for why. */
+function round4(n: number): number {
+  return Math.round(n * 1e4) / 1e4;
+}
+
 interface TrackMapProps {
   points: LatLng[];
   running: boolean;
@@ -84,21 +89,32 @@ export function TrackMap({
   // that, a map of your metro beats an empty grey rectangle, and it needs no
   // location permission at all.
   const { region } = useRegion();
-  const first = points.length > 0 ? points[0] : null;
-  // Memoised on primitives: a fresh object literal here would change the
-  // memo deps below every render, rebuilding the URL string each time and
-  // making the <Image> refetch continuously.
-  const centreLat = here?.lat ?? first?.lat ?? region.lat;
-  const centreLng = here?.lng ?? first?.lng ?? region.lng;
+  // The LATEST point, not points[0]. Centring on the first fix meant the map
+  // framed where the run started and never moved again — combined with the
+  // one-shot location hook, that's why the pin sat still while the runner
+  // didn't.
+  const latest = points.length > 0 ? points[points.length - 1] : null;
+  const head = latest ?? here;
+
+  // Quantised to ~11m (4dp). The centre feeds a static-image URL, so using
+  // the raw coordinate would mint a new URL — and a new network request —
+  // on every single GPS fix. Rounding means the image is only refetched
+  // once the runner has actually moved a meaningful distance.
+  const centreLat = head ? round4(head.lat) : region.lat;
+  const centreLng = head ? round4(head.lng) : region.lng;
   // Only claim a position when we actually have one — the region centre is
   // a framing fallback, never something to drop a "you are here" pin on.
-  const hasRealFix = here !== null || first !== null;
+  const hasRealFix = head !== null;
 
   const mapUrl = useMemo(
-    () => (hasRoute
-        ? buildPathMapUrl(snapshot, dark)
-        : buildPinMapUrl(centreLat, centreLng, dark, hasRealFix)),
-    [hasRoute, snapshot, centreLat, centreLng, dark, hasRealFix],
+    () =>
+      hasRoute
+        ? // Pass the live position so the route image carries a "you are
+          // here" pin too — without it the pin vanished the moment a route
+          // existed, which reads as the pin having stopped working.
+          buildPathMapUrl(snapshot, dark, head)
+        : buildPinMapUrl(centreLat, centreLng, dark, hasRealFix),
+    [hasRoute, snapshot, centreLat, centreLng, dark, hasRealFix, head],
   );
 
   // A route that can't be drawn by Mapbox still has to be visible, so the
