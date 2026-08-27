@@ -252,6 +252,24 @@ export default function TrackScreen() {
                 {formatDistance(tracker.distanceM)}
                 {paused ? `  ·  ${t('track.paused')}` : ''}
               </Text>
+              {/* GPS state, shown plainly. Without this, "no permission",
+                  "still acquiring" and "every fix rejected as inaccurate"
+                  all look identical — a blank 0 — which is exactly how a
+                  too-strict accuracy filter went unnoticed on device. */}
+              {tracker.points.length === 0 && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t('track.searching')}
+                  {tracker.lastAccuracyM !== null
+                    ? `  ·  ${t('track.accuracy', { m: Math.round(tracker.lastAccuracyM) })}`
+                    : ''}
+                </Text>
+              )}
+              {tracker.points.length === 0 && tracker.rejectedFixes > 2 && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t('track.weakSignal')}
+                </Text>
+              )}
+
               {/* Recording is foreground-only, so locking the phone ends the
                   run. Saying so is not optional: the failure is silent and
                   costs the runner the whole session. */}
@@ -389,6 +407,7 @@ const styles = StyleSheet.create({
   liveTime: { fontSize: 52, fontWeight: '700', fontVariant: ['tabular-nums'] },
   liveDistance: { fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
   keepOpen: { fontSize: 12, textAlign: 'center', marginTop: Spacing.two, maxWidth: 260 },
+  gpsState: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: Spacing.two, maxWidth: 280 },
 
   summary: { padding: Spacing.three, gap: Spacing.three, paddingBottom: BottomTabInset },
   summaryTitle: { fontSize: 28, fontWeight: '700' },

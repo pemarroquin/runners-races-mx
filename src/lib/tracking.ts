@@ -20,13 +20,23 @@ export interface TrackPoint extends LatLng {
 export type TrackStatus = 'idle' | 'starting' | 'running' | 'paused' | 'finished';
 export type TrackError = 'permission' | 'unavailable' | null;
 
-// Fixes worse than this are dropped rather than recorded. Indoors and in
-// street canyons expo-location happily reports 100m+ accuracy fixes that
-// jump across blocks — those don't just add noise, they inflate both the
-// distance total and the fence area with movement that never happened.
-const MIN_ACCURACY_M = 50;
+// Fixes worse than this are dropped rather than recorded: a wild fix doesn't
+// just add noise, it inflates the distance total and the fence area with
+// movement that never happened.
+//
+// This was 50m and it was far too strict — phones routinely report 60-90m
+// accuracy at cold start, indoors, or between buildings, so on a real device
+// EVERY fix was rejected: no points, distance stuck at 0, and nothing on
+// screen to distinguish it from a denied permission. The threshold is now
+// generous enough to only exclude genuinely useless fixes, the first fix is
+// never rejected (see onFix), and the numbers behind the decision are
+// exposed so this can be diagnosed on a device instead of guessed at.
+const MIN_ACCURACY_M = 100;
 const TIME_INTERVAL_MS = 2000;
-const DISTANCE_INTERVAL_M = 5;
+// 3m, not 5: this gates when iOS delivers a callback at all (it maps to
+// CLLocationManager's distanceFilter), so a larger value means a walker sees
+// nothing happen for an uncomfortably long time at the start of a session.
+const DISTANCE_INTERVAL_M = 3;
 const KEEP_AWAKE_TAG = 'territory-session';
 
 export interface RunTracker {
@@ -37,6 +47,13 @@ export interface RunTracker {
   error: TrackError;
   startedAt: number | null;
   endedAt: number | null;
+  /** Reported accuracy of the most recent fix, in metres. Null before any
+   *  fix arrives. Surfaced in the UI so "weak GPS" is visibly different from
+   *  "no permission". */
+  lastAccuracyM: number | null;
+  /** Fixes discarded for poor accuracy. If this climbs while points stay at
+   *  zero, the filter is the problem — not permissions. */
+  rejectedFixes: number;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
@@ -52,6 +69,8 @@ export function useRunTracker(): RunTracker {
   const [error, setError] = useState<TrackError>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [endedAt, setEndedAt] = useState<number | null>(null);
+  const [lastAccuracyM, setLastAccuracyM] = useState<number | null>(null);
+  const [rejectedFixes, setRejectedFixes] = useState(0);
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
@@ -100,8 +119,17 @@ export function useRunTracker(): RunTracker {
   }, [status]);
 
   const onFix = useCallback((loc: Location.LocationObject) => {
-    const accuracy = loc.coords.accuracy;
-    if (accuracy !== null && accuracy !== undefined && accuracy > MIN_ACCURACY_M) return;
+    const accuracy = loc.coords.accuracy ?? null;
+    setLastAccuracyM(accuracy);
+
+    // The FIRST fix is always kept. A cold start often produces one poor
+    // reading before the receiver settles, and rejecting it left the run
+    // with no origin at all — which looked like tracking had never started.
+    const isFirst = lastRef.current === null;
+    if (!isFirst && accuracy !== null && accuracy > MIN_ACCURACY_M) {
+      setRejectedFixes((n) => n + 1);
+      return;
+    }
 
     const point: TrackPoint = {
       lat: loc.coords.latitude,
@@ -141,7 +169,23 @@ export function useRunTracker(): RunTracker {
       setDistanceM(0);
       setElapsedS(0);
       setEndedAt(null);
+      setRejectedFixes(0);
       setStartedAt(Date.now());
+
+      // Seed the run with an immediate fix BEFORE starting the watcher.
+      // watchPositionAsync only calls back once the device has moved
+      // `distanceInterval`, so without this the run has no origin point and
+      // the route/fence can't begin until the runner has already covered
+      // ground — which reads as tracking being broken. A failure here is
+      // survivable: the watcher still delivers the first real fix.
+      try {
+        const seed = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.BestForNavigation,
+        });
+        onFix(seed);
+      } catch {
+        // No seed available — fall through and let the watcher provide it.
+      }
 
       subRef.current = await Location.watchPositionAsync(
         {
@@ -177,6 +221,21 @@ export function useRunTracker(): RunTracker {
       // (and add distance) across wherever the runner moved while paused.
       lastRef.current = null;
       legStartRef.current = Date.now();
+      // Seed the run with an immediate fix BEFORE starting the watcher.
+      // watchPositionAsync only calls back once the device has moved
+      // `distanceInterval`, so without this the run has no origin point and
+      // the route/fence can't begin until the runner has already covered
+      // ground — which reads as tracking being broken. A failure here is
+      // survivable: the watcher still delivers the first real fix.
+      try {
+        const seed = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.BestForNavigation,
+        });
+        onFix(seed);
+      } catch {
+        // No seed available — fall through and let the watcher provide it.
+      }
+
       subRef.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
@@ -211,6 +270,8 @@ export function useRunTracker(): RunTracker {
     setStartedAt(null);
     setEndedAt(null);
     setError(null);
+    setLastAccuracyM(null);
+    setRejectedFixes(0);
     setStatus('idle');
   }, [clearSub]);
 
@@ -222,6 +283,8 @@ export function useRunTracker(): RunTracker {
     error,
     startedAt,
     endedAt,
+    lastAccuracyM,
+    rejectedFixes,
     start,
     pause,
     resume,
