@@ -7,6 +7,7 @@
 import type { MultiPolygon, Polygon } from 'geojson';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
+import type { LeaderboardRun } from '@/lib/leaderboard';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult } from '@/lib/territory';
 import type { TrackPoint } from '@/lib/tracking';
@@ -151,6 +152,117 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
       });
     }
     return { ok: true, fences, skipped };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
+export type LeaderboardOutcome =
+  | { ok: true; runs: LeaderboardRun[]; meUserId: string; skipped: number }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * Every run's fence + owner, for the leaderboard to aggregate on device (see
+ * leaderboard.ts for why the union happens here rather than in SQL).
+ *
+ * `runs: read all` and `profiles: read all` are both open policies, so this
+ * legitimately returns other people's fences — that is the feature. The
+ * caller's own id comes back too, so a row can be marked as yours without a
+ * second round-trip.
+ */
+export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  try {
+    // The embedded profile comes from runs.user_id's FK to profiles.id.
+    // PostgREST returns it as an object (or null if the row is missing).
+    const { data, error } = await supabase
+      .from('runs')
+      .select('user_id, region, fence, profiles(display_name)');
+
+    if (error || !data) return { ok: false, reason: 'network' };
+
+    const runs: LeaderboardRun[] = [];
+    let skipped = 0;
+    for (const row of data) {
+      const geometry = parseFenceGeometry(row.fence);
+      if (!geometry) {
+        skipped++;
+        continue;
+      }
+      // Depending on how PostgREST infers the relationship this arrives as
+      // an object or a one-element array; normalise rather than trusting one.
+      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+      runs.push({
+        userId: row.user_id,
+        displayName: profile?.display_name ?? null,
+        region: row.region ?? null,
+        geometry,
+      });
+    }
+    return { ok: true, runs, meUserId: session.user.id, skipped };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
+export type ProfileOutcome =
+  | { ok: true; displayName: string | null }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/** This device's own profile row (anonymous identity — see supabase.ts). */
+export async function fetchMyProfile(): Promise<ProfileOutcome> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    // maybeSingle, not single: the profile row is only created on the first
+    // run upload, so "no row yet" is the normal state for a new install and
+    // must not read as an error.
+    if (error) return { ok: false, reason: 'network' };
+    return { ok: true, displayName: data?.display_name ?? null };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
+/** Longer names get truncated in every row that renders them; cap at the
+ *  source so what's stored is what's shown. */
+export const DISPLAY_NAME_MAX = 24;
+
+/**
+ * Sets the name shown on the leaderboard. Upserts because a runner may pick
+ * a name before ever finishing a run, i.e. before uploadRun has created the
+ * profile row.
+ */
+export async function updateDisplayName(name: string): Promise<ProfileOutcome> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  const trimmed = name.trim().slice(0, DISPLAY_NAME_MAX);
+  // An empty string would render as a nameless row; store a real null so
+  // the UI's "anonymous" fallback is the single code path for "no name".
+  const value = trimmed.length > 0 ? trimmed : null;
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: session.user.id, display_name: value }, { onConflict: 'id' });
+    if (error) return { ok: false, reason: 'network' };
+    return { ok: true, displayName: value };
   } catch {
     return { ok: false, reason: 'network' };
   }
