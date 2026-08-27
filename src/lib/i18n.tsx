@@ -83,6 +83,11 @@ const translations = {
       syncDisabled: 'El guardado en línea no está configurado en esta versión.',
       retry: 'Reintentar',
       pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
+      tookArea: 'Le quitaste %{area}',
+      tookFrom: {
+        one: 'a 1 corredor',
+        other: 'a %{count} corredores',
+      } as PluralForm,
     },
     leaderboard: {
       title: 'Tabla de posiciones',
@@ -183,6 +188,8 @@ const translations = {
         'Aún no has conquistado territorio.\nInicia una sesión en Correr para trazar tu primer cercado.',
       fencesError: 'No pudimos cargar tus territorios. Revisa tu conexión.',
       fencesDisabled: 'El guardado en línea no está configurado en esta versión.',
+      fenceLost: 'Perdiste %{area} de este territorio',
+      fenceFullyTaken: 'Te quitaron todo este territorio',
     },
     city: {
       title: 'Elige tu ciudad',
@@ -310,6 +317,11 @@ const translations = {
       syncDisabled: 'Online saving is not configured in this build.',
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
+      tookArea: 'You took %{area}',
+      tookFrom: {
+        one: 'from 1 runner',
+        other: 'from %{count} runners',
+      } as PluralForm,
     },
     leaderboard: {
       title: 'Leaderboard',
@@ -409,6 +421,8 @@ const translations = {
         "No territory captured yet.\nStart a session in Run to draw your first fence.",
       fencesError: "We couldn't load your territories. Check your connection.",
       fencesDisabled: 'Online saving is not configured in this build.',
+      fenceLost: 'You lost %{area} of this territory',
+      fenceFullyTaken: 'This territory was taken from you entirely',
     },
     city: {
       title: 'Choose your city',

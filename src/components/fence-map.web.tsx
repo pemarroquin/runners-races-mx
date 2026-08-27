@@ -109,12 +109,12 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
           data: {
             type: 'FeatureCollection',
             features: past
-              .filter((f) => f.id !== skip)
+              .filter((f) => f.id !== skip && f.geometry !== null)
               .map(
                 (f): Feature => ({
                   type: 'Feature',
                   properties: { color: fenceColorForRun(f.startedAtMs).color },
-                  geometry: f.geometry,
+                  geometry: f.geometry!,
                 }),
               ),
           },
@@ -211,12 +211,12 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
     src?.setData({
       type: 'FeatureCollection',
       features: others
-        .filter((f) => f.id !== excludeId)
+        .filter((f) => f.id !== excludeId && f.geometry !== null)
         .map(
           (f): Feature => ({
             type: 'Feature',
             properties: { color: fenceColorForRun(f.startedAtMs).color },
-            geometry: f.geometry,
+            geometry: f.geometry!,
           }),
         ),
     });

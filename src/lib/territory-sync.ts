@@ -79,9 +79,18 @@ export interface MyFence {
   /** Epoch ms of the run's start — feeds fenceColorForRun, so the fence
    *  renders in the same colour set everywhere. */
   startedAtMs: number;
-  geometry: Polygon | MultiPolygon;
+  /**
+   * Null when the run has been FULLY taken by other runners — Phase 3's
+   * trigger nulls the fence and zeroes the area rather than deleting the
+   * row, because it is still history ("this run happened, then it was
+   * overtaken"). Distinct from a parse failure: the row is intact and
+   * correct, there is simply no ground left to draw.
+   */
+  geometry: Polygon | MultiPolygon | null;
   areaM2: number;
   distanceM: number;
+  /** m² other runners have carved out of this run since it was saved. */
+  lostM2: number;
 }
 
 export type FencesOutcome =
@@ -137,9 +146,13 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
     const fences: MyFence[] = [];
     let skipped = 0;
     for (const row of data) {
-      const geometry = parseFenceGeometry(row.fence);
       const startedAtMs = Date.parse(row.started_at);
-      if (!geometry || Number.isNaN(startedAtMs)) {
+      // A NULL fence is a fully-overtaken run, which is real history and
+      // must be kept. Only a fence that is present but unreadable, or an
+      // unparseable timestamp, counts as skipped — conflating the two made
+      // Phase 3's own outcome look like corrupt data.
+      const geometry = row.fence === null ? null : parseFenceGeometry(row.fence);
+      if (Number.isNaN(startedAtMs) || (row.fence !== null && geometry === null)) {
         skipped++;
         continue;
       }
@@ -149,9 +162,100 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
         geometry,
         areaM2: Number(row.area_m2) || 0,
         distanceM: Number(row.distance_m) || 0,
+        lostM2: 0, // filled in below
       });
     }
+
+    // How much ground each of these runs has lost to other runners. One
+    // extra query rather than a join: the embed would need the FK
+    // constraint's generated name, which is brittle to rename.
+    if (fences.length > 0) {
+      const { data: events } = await supabase
+        .from('territory_events')
+        .select('loser_run_id, area_taken_m2')
+        .in(
+          'loser_run_id',
+          fences.map((f) => f.id),
+        );
+      if (events) {
+        const lostByRun = new Map<string, number>();
+        for (const e of events) {
+          lostByRun.set(
+            e.loser_run_id,
+            (lostByRun.get(e.loser_run_id) ?? 0) + (Number(e.area_taken_m2) || 0),
+          );
+        }
+        for (const fence of fences) fence.lostM2 = lostByRun.get(fence.id) ?? 0;
+      }
+      // A failure here leaves lostM2 at 0 rather than failing the whole
+      // fetch: the fences themselves are the point, the loss annotation is
+      // a garnish.
+    }
+
     return { ok: true, fences, skipped };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
+/** What one run took from other runners — Phase 3's payoff, read back after
+ *  the upload so the summary can report it. */
+export interface RunSpoils {
+  areaTakenM2: number;
+  /** Distinct runners who lost ground, not runs — losing 3 fences to one
+   *  person reads as one rivalry, not three. */
+  runnersAffected: number;
+  runsAffected: number;
+}
+
+export type SpoilsOutcome =
+  | { ok: true; spoils: RunSpoils }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * Territory this run carved out of other runners' fences.
+ *
+ * Reads `territory_events`, which ONLY the Phase 3 trigger writes — so an
+ * empty result is the honest "you overlapped nobody", not a missing feature.
+ * Safe to call before the trigger migration is applied: the table exists
+ * from Phase 1 and simply stays empty.
+ */
+export async function fetchRunSpoils(runId: string): Promise<SpoilsOutcome> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  try {
+    const { data: events, error } = await supabase
+      .from('territory_events')
+      .select('loser_run_id, area_taken_m2')
+      .eq('winner_run_id', runId);
+
+    if (error || !events) return { ok: false, reason: 'network' };
+    if (events.length === 0) {
+      return { ok: true, spoils: { areaTakenM2: 0, runnersAffected: 0, runsAffected: 0 } };
+    }
+
+    const areaTakenM2 = events.reduce((sum, e) => sum + (Number(e.area_taken_m2) || 0), 0);
+    const loserRunIds = events.map((e) => e.loser_run_id);
+
+    // Second hop to turn runs into people. If it fails, fall back to the
+    // run count rather than reporting 0 runners against a real area — a
+    // number that contradicts itself is worse than a coarse one.
+    const { data: losers } = await supabase
+      .from('runs')
+      .select('user_id')
+      .in('id', loserRunIds);
+
+    const runnersAffected = losers
+      ? new Set(losers.map((r) => r.user_id)).size
+      : loserRunIds.length;
+
+    return {
+      ok: true,
+      spoils: { areaTakenM2, runnersAffected, runsAffected: events.length },
+    };
   } catch {
     return { ok: false, reason: 'network' };
   }
@@ -188,6 +292,11 @@ export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
     const runs: LeaderboardRun[] = [];
     let skipped = 0;
     for (const row of data) {
+      // A NULL fence means Phase 3 fully took this run's ground. It holds
+      // nothing, so it correctly contributes nothing to the ranking — but
+      // it is not corrupt, so it must not inflate `skipped`, which exists
+      // to surface real parse failures.
+      if (row.fence === null) continue;
       const geometry = parseFenceGeometry(row.fence);
       if (!geometry) {
         skipped++;
