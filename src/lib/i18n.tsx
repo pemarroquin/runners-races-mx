@@ -89,6 +89,17 @@ const translations = {
       soonTitle: 'Muy pronto',
       soonBody:
         'Aquí verás quién tiene más territorio. Por ahora corre y acumula el tuyo — se contará cuando abramos la tabla.',
+      global: 'Global',
+      anonymous: 'Anónimo',
+      runs: {
+        one: '1 sesión',
+        other: '%{count} sesiones',
+      } as PluralForm,
+      empty: 'Nadie ha conquistado territorio todavía.\nSé el primero.',
+      emptyRegion:
+        'Nadie ha conquistado territorio en %{city} todavía.\nSé el primero — o mira la tabla global.',
+      error: 'No pudimos cargar la tabla. Revisa tu conexión.',
+      disabled: 'El guardado en línea no está configurado en esta versión.',
     },
     feed: {
       title: 'Carreras',
@@ -197,6 +208,12 @@ const translations = {
         'Te avisaremos 3 días antes y la noche anterior de cada carrera que guardes.',
       remindersDenied:
         'No diste permiso para enviarte notificaciones. Actívalo en los ajustes de tu teléfono para usar los recordatorios.',
+      displayName: 'Nombre en la tabla',
+      displayNamePlaceholder: 'Anónimo',
+      displayNameHint:
+        'Es el nombre que ven los demás en la tabla de posiciones. Déjalo vacío para aparecer como Anónimo.',
+      displayNameSaved: 'Nombre guardado',
+      displayNameFailed: 'No pudimos guardar tu nombre. Revisa tu conexión.',
     },
     privacy: {
       title: 'Privacidad',
@@ -213,10 +230,13 @@ const translations = {
         'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
       collectedIdentity:
         'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
+      collectedVisible:
+        'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Si prefieres no aparecer, no guardes tus sesiones.',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
       notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
-      notSharing: 'No vendemos ni compartimos tus datos con nadie.',
+      notSharing:
+        'No vendemos tus datos ni los compartimos con terceros. Dentro de la app, lo único que ven otros corredores es lo de la tabla de posiciones, arriba.',
       notServer:
         'Fuera del territorio que grabas, nada más se guarda en un servidor: tus carreras guardadas, tu idioma y tus recordatorios viven solo en este dispositivo.',
       deleteTitle: 'Borrar tus datos',
@@ -296,6 +316,17 @@ const translations = {
       soonTitle: 'Coming soon',
       soonBody:
         "This is where you'll see who holds the most territory. For now, go run and build yours — it all counts once the board opens.",
+      global: 'Global',
+      anonymous: 'Anonymous',
+      runs: {
+        one: '1 session',
+        other: '%{count} sessions',
+      } as PluralForm,
+      empty: 'Nobody has captured territory yet.\nBe the first.',
+      emptyRegion:
+        'Nobody has captured territory in %{city} yet.\nBe the first — or check the global board.',
+      error: "We couldn't load the board. Check your connection.",
+      disabled: 'Online saving is not configured in this build.',
     },
     feed: {
       title: 'Races',
@@ -403,6 +434,12 @@ const translations = {
         'We’ll remind you 3 days before and the night before each race you save.',
       remindersDenied:
         'You didn’t allow notifications. Turn them on in your phone settings to use reminders.',
+      displayName: 'Leaderboard name',
+      displayNamePlaceholder: 'Anonymous',
+      displayNameHint:
+        'The name others see on the leaderboard. Leave it empty to show up as Anonymous.',
+      displayNameSaved: 'Name saved',
+      displayNameFailed: "We couldn't save your name. Check your connection.",
     },
     privacy: {
       title: 'Privacy',
@@ -419,10 +456,13 @@ const translations = {
         'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
       collectedIdentity:
         'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
+      collectedVisible:
+        'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. If you would rather not appear at all, do not save your sessions.',
       notTitle: "What we don't do",
       notAccounts: 'No email, password, or personal details are needed to use the app.',
       notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",
-      notSharing: "We don't sell or share your data with anyone.",
+      notSharing:
+        "We don't sell your data or share it with third parties. Inside the app, the only thing other runners see is what's on the leaderboard, described above.",
       notServer:
         'Apart from the territory you record, nothing else goes to a server: your saved races, language, and reminders stay on this device only.',
       deleteTitle: 'Deleting your data',

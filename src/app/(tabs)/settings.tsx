@@ -4,7 +4,7 @@
 // src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
 // home for build/support metadata, since there's no other about screen.
 import Constants from 'expo-constants';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Linking,
   Pressable,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
   useColorScheme,
 } from 'react-native';
@@ -23,6 +24,11 @@ import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { useReminders } from '@/lib/reminders-provider';
+import {
+  DISPLAY_NAME_MAX,
+  fetchMyProfile,
+  updateDisplayName,
+} from '@/lib/territory-sync';
 import { useThemeMode, type ThemeMode } from '@/lib/theme-mode';
 
 const IPAPI_PRIVACY_URL = 'https://ipapi.co/privacy/';
@@ -106,6 +112,46 @@ export default function SettingsScreen() {
     [setRemindersEnabled],
   );
 
+  // The name shown on the territory leaderboard. Lives here rather than in
+  // a new Profile surface: there's one settings screen and this is a
+  // setting. Null until the runner picks one — the board falls back to
+  // "Anónimo" rather than exposing anything from the anonymous identity.
+  const [displayName, setDisplayName] = useState('');
+  const [nameState, setNameState] = useState<'loading' | 'ready' | 'saving' | 'saved' | 'failed' | 'off'>(
+    'loading',
+  );
+
+  useEffect(() => {
+    let stale = false;
+    // Deferred so no setState runs synchronously in the effect body.
+    const id = setTimeout(() => {
+      fetchMyProfile().then((outcome) => {
+        if (stale) return;
+        if (outcome.ok) {
+          setDisplayName(outcome.displayName ?? '');
+          setNameState('ready');
+        } else {
+          // 'disabled' is a build configuration, not a failure — hide the
+          // field entirely rather than showing one that can't save.
+          setNameState(outcome.reason === 'disabled' ? 'off' : 'failed');
+        }
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, []);
+
+  // Saved on blur rather than per keystroke: one write when the runner is
+  // done, instead of a request per character.
+  const saveName = useCallback(async () => {
+    if (nameState === 'off' || nameState === 'loading') return;
+    setNameState('saving');
+    const outcome = await updateDisplayName(displayName);
+    setNameState(outcome.ok ? 'saved' : 'failed');
+  }, [displayName, nameState]);
+
   // expoConfig.version stays in sync with app.json/package.json, so this
   // reads the shipped build number instead of a value that can drift.
   const version = Constants.expoConfig?.version ?? '—';
@@ -167,6 +213,41 @@ export default function SettingsScreen() {
           </GlassSurface>
         </View>
 
+        {nameState !== 'off' && (
+          <View style={styles.nameBlock}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+              {t('settings.displayName')}
+            </Text>
+            <TextInput
+              value={displayName}
+              onChangeText={(next) => {
+                setDisplayName(next);
+                if (nameState === 'saved' || nameState === 'failed') setNameState('ready');
+              }}
+              onBlur={saveName}
+              onSubmitEditing={saveName}
+              editable={nameState !== 'loading' && nameState !== 'saving'}
+              maxLength={DISPLAY_NAME_MAX}
+              placeholder={t('settings.displayNamePlaceholder')}
+              placeholderTextColor={c.textSecondary}
+              returnKeyType="done"
+              autoCapitalize="words"
+              accessibilityLabel={t('settings.displayName')}
+              style={[
+                styles.nameInput,
+                { backgroundColor: c.backgroundElement, color: c.text },
+              ]}
+            />
+            <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
+              {nameState === 'failed'
+                ? t('settings.displayNameFailed')
+                : nameState === 'saved'
+                  ? t('settings.displayNameSaved')
+                  : t('settings.displayNameHint')}
+            </Text>
+          </View>
+        )}
+
         {/* Off by default and opt-in from here, rather than prompting on
             first save: the OS permission dialog only makes sense once the
             user has actually asked for reminders. */}
@@ -217,6 +298,10 @@ export default function SettingsScreen() {
             // of it.
             t('privacy.collectedTerritory'),
             t('privacy.collectedIdentity'),
+            // Phase 2 made territory visible to other runners; this is the
+            // paragraph that says so. Added in the same change as the
+            // leaderboard, not after it.
+            t('privacy.collectedVisible'),
           ]}
           c={c}
         />
@@ -265,6 +350,14 @@ const styles = StyleSheet.create({
   segmentText: { fontSize: 12, fontWeight: '700' },
   reminderBlock: { marginBottom: Spacing.five, gap: Spacing.one },
   reminderHint: { fontSize: 13, lineHeight: 19, marginTop: -Spacing.four },
+  nameBlock: { marginBottom: Spacing.five, gap: Spacing.two },
+  nameInput: {
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: 16,
+  },
+  nameHint: { marginTop: 0 },
   reminderDenied: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
   rowGroup: { marginBottom: Spacing.five },
   row: {
