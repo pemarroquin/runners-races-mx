@@ -83,6 +83,10 @@ const translations = {
       syncDisabled: 'El guardado en línea no está configurado en esta versión.',
       retry: 'Reintentar',
       pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
+      allInsideZone:
+        'Toda tu sesión ocurrió dentro de tu zona privada, así que no podemos guardarla sin revelar dónde vives. Aléjate un poco antes de empezar.',
+      zoneMasked:
+        'Recortamos el inicio y el final de tu recorrido por tu zona privada. Lo que ves aquí es lo que se sube.',
       tookArea: 'Le quitaste %{area}',
       tookFrom: {
         one: 'a 1 corredor',
@@ -215,6 +219,15 @@ const translations = {
         'Te avisaremos 3 días antes y la noche anterior de cada carrera que guardes.',
       remindersDenied:
         'No diste permiso para enviarte notificaciones. Actívalo en los ajustes de tu teléfono para usar los recordatorios.',
+      privacyZone: 'Zona privada',
+      zoneSetHere: 'Usar mi ubicación',
+      zoneRemove: 'Quitar',
+      zoneSetting: 'Guardando…',
+      zoneOnHint:
+        'Activada. Recortamos los primeros y últimos %{m} m de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro. El punto se queda en este teléfono: nunca se sube.',
+      zoneOffHint:
+        'Sin zona privada, el inicio y el final exactos de tus sesiones se suben y cualquier persona que use la app puede verlos. Ponla donde vives.',
+      zoneFailed: 'No pudimos guardar tu zona. Revisa el permiso de ubicación e inténtalo otra vez.',
       displayName: 'Nombre en la tabla',
       displayNamePlaceholder: 'Anónimo',
       displayNameHint:
@@ -237,6 +250,8 @@ const translations = {
         'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
       collectedIdentity:
         'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
+      collectedZone:
+        'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
         'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Si prefieres no aparecer, no guardes tus sesiones.',
       notTitle: 'Qué no hacemos',
@@ -317,6 +332,10 @@ const translations = {
       syncDisabled: 'Online saving is not configured in this build.',
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
+      allInsideZone:
+        'Your whole session happened inside your privacy zone, so we can\u2019t save it without revealing where you live. Start a little further out.',
+      zoneMasked:
+        'We trimmed the start and end of your route for your privacy zone. What you see here is what gets uploaded.',
       tookArea: 'You took %{area}',
       tookFrom: {
         one: 'from 1 runner',
@@ -448,6 +467,15 @@ const translations = {
         'We’ll remind you 3 days before and the night before each race you save.',
       remindersDenied:
         'You didn’t allow notifications. Turn them on in your phone settings to use reminders.',
+      privacyZone: 'Privacy zone',
+      zoneSetHere: 'Use my location',
+      zoneRemove: 'Remove',
+      zoneSetting: 'Saving…',
+      zoneOnHint:
+        'On. We trim the first and last %{m} m of every session before uploading it, with a random margin so the centre can\u2019t be worked out. The point stays on this phone \u2014 it is never uploaded.',
+      zoneOffHint:
+        'Without a privacy zone, the exact start and end of your sessions are uploaded and visible to anyone using the app. Set it where you live.',
+      zoneFailed: "We couldn\u2019t save your zone. Check location permission and try again.",
       displayName: 'Leaderboard name',
       displayNamePlaceholder: 'Anonymous',
       displayNameHint:
@@ -470,6 +498,8 @@ const translations = {
         'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
       collectedIdentity:
         'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
+      collectedZone:
+        'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:
         'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. If you would rather not appear at all, do not save your sessions.',
       notTitle: "What we don't do",

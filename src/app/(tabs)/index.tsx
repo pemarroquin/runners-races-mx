@@ -29,6 +29,8 @@ import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
+import { getHomeZone } from '@/lib/home-point';
+import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import {
   fetchMyFences,
@@ -94,13 +96,26 @@ export default function TrackScreen() {
     [tracker.startedAt],
   );
 
-  // Only computed once the run is over — running this on every fix would
-  // redo the whole simplify/unkink/union pipeline several times a minute
-  // for a shape nobody is looking at yet.
-  const fence: FenceResult | null = useMemo(
-    () => (tracker.status === 'finished' ? buildFence(tracker.points) : null),
-    [tracker.status, tracker.points],
-  );
+  // The finished run, after privacy masking. Computed ONCE when the run
+  // ends and held in state — NOT a useMemo. maskPath draws a random cut
+  // distance (see privacy-zone.ts), so recomputing would re-roll the jitter
+  // and quietly change the fence's shape between render, display and
+  // upload. The runner must see exactly what gets uploaded.
+  const [masked, setMasked] = useState<MaskResult | null>(null);
+  const [fence, setFence] = useState<FenceResult | null>(null);
+
+  useEffect(() => {
+    if (tracker.status !== 'finished') return;
+    const id = setTimeout(() => {
+      const result = maskPath(tracker.points, getHomeZone());
+      setMasked(result);
+      // The fence is rebuilt from the MASKED path, never clipped from the
+      // full one — see privacy-zone.ts for why cutting the finished polygon
+      // would draw a circle around the runner's home.
+      setFence(result.points.length > 0 ? buildFence(result.points) : null);
+    }, 0);
+    return () => clearTimeout(id);
+  }, [tracker.status, tracker.points]);
 
   // Everything already captured, for the summary map. Fetched when the run
   // finishes (before any save), so the list never contains the run on
@@ -126,12 +141,19 @@ export default function TrackScreen() {
   }, [finished]);
 
   const save = useCallback(async () => {
-    if (!fence || tracker.startedAt === null || tracker.endedAt === null) return;
+    if (!fence || masked === null || tracker.startedAt === null || tracker.endedAt === null) {
+      return;
+    }
     setSaveState('saving');
     setFailure(null);
     const outcome = await uploadRun({
-      points: tracker.points,
+      // The masked path, never tracker.points — this is the one call that
+      // sends location data off the device.
+      points: masked.points,
       fence,
+      // TRUE distance and duration, not the masked path's — neither reveals
+      // where you live, both are the runner's actual achievement, and a
+      // future anti-cheat pace check needs the real numbers to be honest.
       distanceM: tracker.distanceM,
       startedAt: tracker.startedAt,
       endedAt: tracker.endedAt,
@@ -149,13 +171,15 @@ export default function TrackScreen() {
       setSaveState('failed');
       setFailure(outcome);
     }
-  }, [fence, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, masked, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   const discard = useCallback(() => {
     setSaveState('idle');
     setFailure(null);
     setSavedRunId(null);
     setSpoils(null);
+    setMasked(null);
+    setFence(null);
     setPastFencesFailed(false);
     tracker.reset();
   }, [tracker]);
@@ -204,8 +228,23 @@ export default function TrackScreen() {
             <Stat label={t('track.area')} value={fence ? formatArea(fence.areaM2) : '—'} c={c} />
           </View>
 
-          {!fence && (
+          {/* The whole run happened inside the privacy zone, so there is
+              nothing that can be uploaded without revealing it. Said plainly
+              — silently refusing to save would look like a bug. */}
+          {masked?.fullyInsideZone && (
+            <Text style={[styles.notice, { color: c.accent }]}>{t('track.allInsideZone')}</Text>
+          )}
+
+          {!fence && !masked?.fullyInsideZone && (
             <Text style={[styles.notice, { color: c.textSecondary }]}>{t('track.noFence')}</Text>
+          )}
+
+          {/* Masking changed the shape on screen, so say so rather than
+              letting the runner wonder why their loop looks clipped. */}
+          {masked?.masked && !masked.fullyInsideZone && (
+            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
+              {t('track.zoneMasked')}
+            </Text>
           )}
 
           {saveState === 'failed' && failure && !failure.ok && (

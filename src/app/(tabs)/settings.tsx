@@ -4,6 +4,7 @@
 // src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
 // home for build/support metadata, since there's no other about screen.
 import Constants from 'expo-constants';
+import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Linking,
@@ -22,7 +23,9 @@ import { Icon } from '@/components/ui/icon';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
+import { clearHomeZone, getHomeZone, setHomeZone } from '@/lib/home-point';
 import { useI18n } from '@/lib/i18n';
+import type { PrivacyZone } from '@/lib/privacy-zone';
 import { useReminders } from '@/lib/reminders-provider';
 import {
   DISPLAY_NAME_MAX,
@@ -111,6 +114,46 @@ export default function SettingsScreen() {
     },
     [setRemindersEnabled],
   );
+
+  // Privacy zone state. Read synchronously from local prefs (same store as
+  // theme/locale), so there is no loading flash.
+  const [zone, setZone] = useState<PrivacyZone | null>(() => getHomeZone());
+  const [zoneBusy, setZoneBusy] = useState(false);
+  const [zoneError, setZoneError] = useState(false);
+
+  const setZoneHere = useCallback(async () => {
+    setZoneBusy(true);
+    setZoneError(false);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setZoneError(true);
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const ok = setHomeZone({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      // setPref returning false means blocked storage — reporting success
+      // there would leave the runner believing they are masked when they
+      // are not, which is the worst possible failure for this feature.
+      if (!ok) {
+        setZoneError(true);
+        return;
+      }
+      setZone(getHomeZone());
+    } catch {
+      setZoneError(true);
+    } finally {
+      setZoneBusy(false);
+    }
+  }, []);
+
+  const clearZone = useCallback(() => {
+    clearHomeZone();
+    setZone(getHomeZone());
+    setZoneError(false);
+  }, []);
 
   // The name shown on the territory leaderboard. Lives here rather than in
   // a new Profile surface: there's one settings screen and this is a
@@ -213,6 +256,38 @@ export default function SettingsScreen() {
           </GlassSurface>
         </View>
 
+        {/* Privacy zone. Set from wherever the runner is standing rather
+            than a map picker: "here" is the common case (you set it at
+            home), and it needs no new screen. The point NEVER leaves the
+            device — see privacy-zone.ts. */}
+        <View style={styles.nameBlock}>
+          <View style={styles.themeRow}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+              {t('settings.privacyZone')}
+            </Text>
+            <Pressable
+              onPress={zone ? clearZone : setZoneHere}
+              disabled={zoneBusy}
+              accessibilityRole="button"
+              hitSlop={10}>
+              <Text style={[styles.zoneAction, { color: c.accent, opacity: zoneBusy ? 0.5 : 1 }]}>
+                {zoneBusy
+                  ? t('settings.zoneSetting')
+                  : zone
+                    ? t('settings.zoneRemove')
+                    : t('settings.zoneSetHere')}
+              </Text>
+            </Pressable>
+          </View>
+          <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
+            {zoneError
+              ? t('settings.zoneFailed')
+              : zone
+                ? t('settings.zoneOnHint', { m: zone.radiusM })
+                : t('settings.zoneOffHint')}
+          </Text>
+        </View>
+
         {nameState !== 'off' && (
           <View style={styles.nameBlock}>
             <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
@@ -302,6 +377,9 @@ export default function SettingsScreen() {
             // paragraph that says so. Added in the same change as the
             // leaderboard, not after it.
             t('privacy.collectedVisible'),
+            // The mitigation belongs next to the disclosure of the risk, not
+            // in a separate section a reader might never reach.
+            t('privacy.collectedZone'),
           ]}
           c={c}
         />
@@ -358,6 +436,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   nameHint: { marginTop: 0 },
+  zoneAction: { fontSize: 15, fontWeight: '700' },
   reminderDenied: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
   rowGroup: { marginBottom: Spacing.five },
   row: {

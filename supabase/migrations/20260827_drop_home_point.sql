@@ -1,0 +1,35 @@
+-- Territory Mode — remove profiles.home_point
+--
+-- Apply with `supabase db push --linked`.
+--
+-- WHY THIS COLUMN IS BEING DROPPED RATHER THAN USED.
+--
+-- The Phase 1 schema added `home_point geography(Point, 4326)` with the
+-- comment "optional, for Phase 3 privacy zone", and the feature plan
+-- proposed storing each runner's home there. That would have been an own
+-- goal: `profiles` carries
+--
+--     create policy "profiles: read all" on profiles for select using (true);
+--
+-- and this app's Supabase anon key is an EXPO_PUBLIC_* variable, so it ships
+-- inside the client bundle and is readable by anyone who has the app. A home
+-- point written to this column would therefore be published — to every user
+-- — the home address of every runner who set one. That is strictly worse
+-- than the leaked-start-point problem the privacy zone exists to solve.
+--
+-- The privacy zone is implemented client-side instead (src/lib/privacy-zone.ts
+-- and src/lib/home-point.ts): the home point is kept in the device's local
+-- prefs, the GPS path is trimmed BEFORE upload, and the server therefore only
+-- ever receives an already-masked run. Nothing server-side needs to know
+-- where anyone lives.
+--
+-- The column is dropped rather than left empty so that no future change can
+-- start populating it without first having this conversation again. If a
+-- server-side feature ever genuinely needs it, it must come back with an
+-- owner-only RLS policy (`using (auth.uid() = id)`) and its own review.
+--
+-- Nothing is lost: no code has ever written to this column, so it is empty.
+-- Verify before applying if you want to be certain:
+--     select count(*) from profiles where home_point is not null;  -- expect 0
+
+alter table profiles drop column if exists home_point;
