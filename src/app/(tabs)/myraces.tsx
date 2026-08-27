@@ -19,6 +19,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RaceCard } from '@/components/race-card';
+import { Icon } from '@/components/ui/icon';
 import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
@@ -265,7 +266,12 @@ function FenceCard({
   const c = Colors[scheme];
   const { t } = useI18n();
   const color = fenceColorForRun(fence.startedAtMs).color;
-  const mapUrl = buildFenceMapUrl(fence.geometry, scheme === 'dark', color);
+  // Null once the run has been fully taken — there is no shape left to draw,
+  // but the card stays as history.
+  const mapUrl = fence.geometry
+    ? buildFenceMapUrl(fence.geometry, scheme === 'dark', color)
+    : null;
+  const fullyTaken = fence.geometry === null;
   const date = new Date(fence.startedAtMs).toLocaleDateString(
     locale === 'es' ? 'es-MX' : 'en-US',
     { day: 'numeric', month: 'short', year: 'numeric' },
@@ -290,6 +296,20 @@ function FenceCard({
           {formatArea(fence.areaM2)}  ·  {formatDistance(fence.distanceM)}
         </Text>
       </View>
+
+      {/* Phase 3: this run lost ground to someone else. Shown on the card
+          rather than only in a notification, so the history stays true even
+          if the runner never saw the alert. */}
+      {fence.lostM2 > 0 && (
+        <View style={[styles.fenceLost, { borderTopColor: c.backgroundSelected }]}>
+          <Icon ios="flag.slash" android="flag" size={12} color={c.accent} />
+          <Text style={[styles.fenceLostText, { color: c.accent }]}>
+            {fullyTaken
+              ? t('myraces.fenceFullyTaken')
+              : t('myraces.fenceLost', { area: formatArea(fence.lostM2) })}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -341,4 +361,14 @@ const styles = StyleSheet.create({
   fenceDot: { width: 10, height: 10, borderRadius: 5 },
   fenceDate: { fontSize: 15, fontWeight: '700' },
   fenceStats: { fontSize: 13, fontWeight: '600', marginLeft: 'auto' },
+  fenceLost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.three,
+    paddingTop: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  fenceLostText: { fontSize: 13, fontWeight: '600', flex: 1 },
 });

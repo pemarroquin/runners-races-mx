@@ -58,10 +58,12 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
   const pastPolys = useMemo(
     () =>
       others
-        .filter((f) => f.id !== excludeId)
+        // A null geometry is a fully-overtaken run — real history, but
+        // there is no ground left to draw.
+        .filter((f) => f.id !== excludeId && f.geometry !== null)
         .flatMap((f) => {
           const tint = fenceColorForRun(f.startedAtMs).color;
-          return polygonRings(f.geometry).map((rings, i) => ({
+          return polygonRings(f.geometry!).map((rings, i) => ({
             key: `${f.id}:${i}`,
             outer: ringToCoords(rings[0]),
             holes: rings.slice(1).map(ringToCoords),

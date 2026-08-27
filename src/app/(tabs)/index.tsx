@@ -32,8 +32,10 @@ import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import {
   fetchMyFences,
+  fetchRunSpoils,
   uploadRun,
   type MyFence,
+  type RunSpoils,
   type SyncOutcome,
 } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
@@ -77,6 +79,10 @@ export default function TrackScreen() {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [failure, setFailure] = useState<SyncOutcome | null>(null);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  // What this run took from other runners. Null until the upload lands —
+  // the Phase 3 trigger runs during the insert, so the answer exists by the
+  // time uploadRun returns, but only a read can tell us what it was.
+  const [spoils, setSpoils] = useState<RunSpoils | null>(null);
   const [pastFences, setPastFences] = useState<MyFence[]>([]);
   const [pastFencesFailed, setPastFencesFailed] = useState(false);
 
@@ -133,6 +139,10 @@ export default function TrackScreen() {
     if (outcome.ok) {
       setSaveState('saved');
       setSavedRunId(outcome.runId);
+      // Best-effort: a failed read here just means no "you took territory"
+      // line, never a failed save. The run is already banked.
+      const taken = await fetchRunSpoils(outcome.runId);
+      if (taken.ok && taken.spoils.runsAffected > 0) setSpoils(taken.spoils);
     } else {
       // Keep the run on screen. It only exists in memory, so clearing it on
       // a failed upload would destroy the thing the runner just earned.
@@ -145,6 +155,7 @@ export default function TrackScreen() {
     setSaveState('idle');
     setFailure(null);
     setSavedRunId(null);
+    setSpoils(null);
     setPastFencesFailed(false);
     tracker.reset();
   }, [tracker]);
@@ -212,6 +223,23 @@ export default function TrackScreen() {
               style={[styles.notice, { color: c.accent }]}>
               {t('track.saved')}
             </Animated.Text>
+          )}
+
+          {/* Phase 3's payoff. Deliberately its own banner rather than a
+              line in the stats row: taking ground off another runner is the
+              most interesting thing that can happen in a session, and it
+              only appears when it actually happened. */}
+          {spoils && (
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(200)}
+              style={[styles.spoils, { borderColor: fenceColor }]}>
+              <Text style={[styles.spoilsArea, { color: c.text }]}>
+                {t('track.tookArea', { area: formatArea(spoils.areaTakenM2) })}
+              </Text>
+              <Text style={[styles.spoilsFrom, { color: c.textSecondary }]}>
+                {t('track.tookFrom', { count: spoils.runnersAffected })}
+              </Text>
+            </Animated.View>
           )}
 
           <View style={styles.summaryActions}>
@@ -478,6 +506,14 @@ const styles = StyleSheet.create({
 
   notice: { fontSize: 14, lineHeight: 20 },
   noticeSmall: { fontSize: 12, lineHeight: 17 },
+  spoils: {
+    borderWidth: 2,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.half,
+  },
+  spoilsArea: { fontSize: 20, fontWeight: '700' },
+  spoilsFrom: { fontSize: 14, fontWeight: '600' },
   primary: {
     flexDirection: 'row',
     alignItems: 'center',
