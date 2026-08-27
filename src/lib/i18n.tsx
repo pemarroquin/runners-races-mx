@@ -67,6 +67,9 @@ const translations = {
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
       unavailable: 'No pudimos acceder al GPS en este dispositivo.',
       keepOpen: 'Mantén la pantalla encendida — si bloqueas el teléfono se detiene el registro.',
+      searching: 'Buscando señal GPS…',
+      accuracy: 'Precisión: %{m} m',
+      weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
       summaryTitle: 'Territorio conquistado',
       noFence:
         'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
@@ -264,6 +267,9 @@ const translations = {
         'We need location permission to trace your route. Turn it on in your phone settings.',
       unavailable: "We couldn't access GPS on this device.",
       keepOpen: 'Keep the screen on — locking your phone stops recording.',
+      searching: 'Searching for GPS signal…',
+      accuracy: 'Accuracy: %{m} m',
+      weakSignal: 'Weak signal — move into open sky to start tracing.',
       summaryTitle: 'Territory claimed',
       noFence:
         'Your route was too short to enclose an area. Run a loop and try again.',

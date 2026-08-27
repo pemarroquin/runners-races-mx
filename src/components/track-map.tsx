@@ -22,7 +22,7 @@ import { buildPathMapUrl, buildPinMapUrl } from '@/lib/mapbox';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
 
-const REFRESH_MS = 8000;
+const REFRESH_MS = 6000;
 
 /** ~11m of precision — see the centre calculation below for why. */
 function round4(n: number): number {
@@ -82,6 +82,18 @@ export function TrackMap({
     const id = setInterval(() => setSnapshot(pointsRef.current), REFRESH_MS);
     return () => clearInterval(id);
   }, [running]);
+
+  // The moment a route becomes drawable, show it — without this the first
+  // line doesn't appear until the throttle window elapses, so a runner who
+  // has started moving sees an unchanged map for several seconds and
+  // reasonably concludes tracking isn't working. Deferred via a timer so the
+  // setState isn't synchronous inside the effect body (React Compiler rule).
+  const drawable = points.length >= 2;
+  useEffect(() => {
+    if (!running || !drawable) return;
+    const id = setTimeout(() => setSnapshot(pointsRef.current), 0);
+    return () => clearTimeout(id);
+  }, [running, drawable]);
 
   const hasRoute = snapshot.length >= 2;
   // Falls back to the city the runner has selected, so there is always a map

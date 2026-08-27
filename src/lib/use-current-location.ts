@@ -46,6 +46,10 @@ export function useCurrentLocation({
 }: CurrentLocationOptions = {}): CurrentLocation {
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [status, setStatus] = useState<LocationStatus>('idle');
+  // Tracked separately from `status` so the watcher effect below can depend
+  // on it: it flips false→true exactly once, whereas `status` changes on
+  // every fix and would restart the subscription each time.
+  const [granted, setGranted] = useState(false);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -71,7 +75,10 @@ export function useCurrentLocation({
         if (mounted.current) setStatus('denied');
         return null;
       }
-      if (mounted.current) setStatus('locating');
+      if (mounted.current) {
+        setGranted(true);
+        setStatus('locating');
+      }
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
@@ -90,15 +97,21 @@ export function useCurrentLocation({
   // Continuous updates while `watch` is on. Balanced accuracy and a 10m
   // distance filter: this only has to keep a map pin honest, so it doesn't
   // need the BestForNavigation power draw the run tracker asks for.
+  //
+  // Gated on `granted` rather than reading the permission itself: the
+  // previous version called the read-only getForegroundPermissionsAsync,
+  // which on a first launch runs BEFORE the grant resolves, reads
+  // "undetermined", and returns — and since the effect only depended on
+  // `watch`, it never ran again once permission was given. The watcher
+  // therefore never started and the pin never moved.
   useEffect(() => {
-    if (!watch) return;
+    if (!watch || !granted) return;
     let sub: Location.LocationSubscription | null = null;
     let cancelled = false;
 
     (async () => {
       try {
-        const { status: permission } = await Location.getForegroundPermissionsAsync();
-        if (permission !== 'granted' || cancelled) return;
+        if (cancelled) return;
         sub = await Location.watchPositionAsync(
           { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 4000 },
           (pos) => {
@@ -118,7 +131,7 @@ export function useCurrentLocation({
       cancelled = true;
       sub?.remove();
     };
-  }, [watch]);
+  }, [watch, granted]);
 
   useEffect(() => {
     if (!autoRequest) return;
