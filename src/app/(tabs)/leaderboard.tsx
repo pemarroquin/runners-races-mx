@@ -141,6 +141,7 @@ export default function LeaderboardScreen() {
                 c={c}
                 anonymous={t('leaderboard.anonymous')}
                 runsLabel={t('leaderboard.runs', { count: item.runCount })}
+                flaggedLabel={t('leaderboard.flagged', { count: item.flaggedCount })}
               />
             </Animated.View>
           )}
@@ -169,6 +170,7 @@ function Row({
   c,
   anonymous,
   runsLabel,
+  flaggedLabel,
 }: {
   entry: LeaderboardEntry;
   rank: number;
@@ -176,6 +178,7 @@ function Row({
   c: Record<string, string>;
   anonymous: string;
   runsLabel: string;
+  flaggedLabel: string;
 }) {
   // Colour-coded by the same palette the fences use, keyed on the user id so
   // a runner reads as one colour down the whole board. Not their fence
@@ -194,7 +197,17 @@ function Row({
         <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
           {entry.displayName ?? anonymous}
         </Text>
-        <Text style={[styles.runs, { color: c.textSecondary }]}>{runsLabel}</Text>
+        <View style={styles.runsRow}>
+          <Text style={[styles.runs, { color: c.textSecondary }]}>{runsLabel}</Text>
+          {/* Flagged runs still count toward this score — the board says so
+              rather than quietly excluding them. */}
+          {entry.flaggedCount > 0 && (
+            <>
+              <Icon ios="exclamationmark.triangle.fill" android="warning" size={10} color={c.accent} />
+              <Text style={[styles.runs, { color: c.accent }]}>{flaggedLabel}</Text>
+            </>
+          )}
+        </View>
       </View>
       <Text style={[styles.area, { color: c.text }]}>{formatArea(entry.areaM2)}</Text>
     </View>
@@ -280,5 +293,6 @@ const styles = StyleSheet.create({
   nameWrap: { flex: 1, gap: 2 },
   name: { fontSize: 16, fontWeight: '700' },
   runs: { fontSize: 12, fontWeight: '600' },
+  runsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   area: { fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] },
 });

@@ -104,6 +104,10 @@ const translations = {
         one: '1 sesión',
         other: '%{count} sesiones',
       } as PluralForm,
+      flagged: {
+        one: '1 sesión marcada',
+        other: '%{count} sesiones marcadas',
+      } as PluralForm,
       empty: 'Nadie ha conquistado territorio todavía.\nSé el primero.',
       emptyRegion:
         'Nadie ha conquistado territorio en %{city} todavía.\nSé el primero — o mira la tabla global.',
@@ -192,6 +196,8 @@ const translations = {
         'Aún no has conquistado territorio.\nInicia una sesión en Correr para trazar tu primer cercado.',
       fencesError: 'No pudimos cargar tus territorios. Revisa tu conexión.',
       fencesDisabled: 'El guardado en línea no está configurado en esta versión.',
+      fenceFlagged:
+        'Marcamos esta sesión: la velocidad no parece de carrera a pie. Sigue contando para tu territorio.',
       fenceLost: 'Perdiste %{area} de este territorio',
       fenceFullyTaken: 'Te quitaron todo este territorio',
     },
@@ -353,6 +359,10 @@ const translations = {
         one: '1 session',
         other: '%{count} sessions',
       } as PluralForm,
+      flagged: {
+        one: '1 flagged session',
+        other: '%{count} flagged sessions',
+      } as PluralForm,
       empty: 'Nobody has captured territory yet.\nBe the first.',
       emptyRegion:
         'Nobody has captured territory in %{city} yet.\nBe the first — or check the global board.',
@@ -440,6 +450,8 @@ const translations = {
         "No territory captured yet.\nStart a session in Run to draw your first fence.",
       fencesError: "We couldn't load your territories. Check your connection.",
       fencesDisabled: 'Online saving is not configured in this build.',
+      fenceFlagged:
+        "We flagged this session \u2014 the speed doesn't look like running. It still counts toward your territory.",
       fenceLost: 'You lost %{area} of this territory',
       fenceFullyTaken: 'This territory was taken from you entirely',
     },

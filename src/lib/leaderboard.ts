@@ -31,6 +31,10 @@ export interface LeaderboardRun {
   displayName: string | null;
   region: string | null;
   geometry: Polygon | MultiPolygon;
+  /** Server-side speed flag. Flagged runs still count toward the ranking —
+   *  the board marks them rather than excluding them, so a GPS glitch never
+   *  silently costs someone their score. */
+  flagged?: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -39,6 +43,10 @@ export interface LeaderboardEntry {
   /** Area actually held — overlapping runs by this user counted once. */
   areaM2: number;
   runCount: number;
+  /** How many of those runs the speed trigger flagged. Surfaced so a board
+   *  built partly on implausible runs says so, rather than presenting every
+   *  row as equally solid. */
+  flaggedCount: number;
 }
 
 function asFeature(geometry: Polygon | MultiPolygon): Feature<Polygon | MultiPolygon> {
@@ -95,6 +103,7 @@ export function rankByArea(
       displayName: userRuns.find((r) => r.displayName !== null)?.displayName ?? null,
       areaM2: unionAreaM2(userRuns.map((r) => r.geometry)),
       runCount: userRuns.length,
+      flaggedCount: userRuns.filter((r) => r.flagged === true).length,
     });
   }
 

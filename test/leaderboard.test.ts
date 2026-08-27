@@ -29,8 +29,13 @@ const A_AGAIN = square(-100.32, 25.68, 0.01);
 // Disjoint from A.
 const B = square(-100.2, 25.68, 0.01);
 
-function run(userId: string, geometry: Polygon, region: string | null = 'mty'): LeaderboardRun {
-  return { userId, displayName: null, region, geometry };
+function run(
+  userId: string,
+  geometry: Polygon,
+  region: string | null = 'mty',
+  flagged = false,
+): LeaderboardRun {
+  return { userId, displayName: null, region, geometry, flagged };
 }
 
 describe('unionAreaM2', () => {
@@ -98,6 +103,27 @@ describe('rankByArea', () => {
     expect(rankByArea(runs, null).map((e) => e.userId)).toEqual(
       rankByArea([...runs].reverse(), null).map((e) => e.userId),
     );
+  });
+});
+
+describe('flag counting', () => {
+  it('counts flagged runs per user without excluding them from the score', () => {
+    // "Counts, but marked" — a flagged run still contributes its area, so a
+    // GPS glitch never silently costs someone their territory.
+    const clean = rankByArea([run('u1', A)], null)[0];
+    const flagged = rankByArea([run('u1', A, 'mty', true)], null)[0];
+    expect(flagged.areaM2).toBeCloseTo(clean.areaM2, 0);
+    expect(flagged.flaggedCount).toBe(1);
+    expect(clean.flaggedCount).toBe(0);
+  });
+
+  it('counts only the flagged subset of a user\u2019s runs', () => {
+    const entry = rankByArea(
+      [run('u1', A), run('u1', B, 'mty', true), run('u1', A_AGAIN, 'mty', true)],
+      null,
+    )[0];
+    expect(entry.runCount).toBe(3);
+    expect(entry.flaggedCount).toBe(2);
   });
 });
 
