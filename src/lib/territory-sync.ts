@@ -91,6 +91,14 @@ export interface MyFence {
   distanceM: number;
   /** m² other runners have carved out of this run since it was saved. */
   lostM2: number;
+  /** Set by the server-side speed trigger. A flagged run still counts and
+   *  still holds territory — it is marked, not punished. Never treat it as
+   *  proof of cheating; see 20260827_anti_cheat_flag.sql. */
+  flagged: boolean;
+  /** Which check tripped ('speed:claimed' | 'speed:path' | 'speed:segment'),
+   *  so the UI can say what was implausible rather than showing a bare
+   *  warning. */
+  flagReason: string | null;
 }
 
 export type FencesOutcome =
@@ -137,7 +145,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
   try {
     const { data, error } = await supabase
       .from('runs')
-      .select('id, started_at, distance_m, area_m2, fence')
+      .select('id, started_at, distance_m, area_m2, fence, flagged, flag_reason')
       .eq('user_id', session.user.id)
       .order('started_at', { ascending: false });
 
@@ -163,6 +171,8 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
         areaM2: Number(row.area_m2) || 0,
         distanceM: Number(row.distance_m) || 0,
         lostM2: 0, // filled in below
+        flagged: row.flagged === true,
+        flagReason: row.flag_reason ?? null,
       });
     }
 
@@ -285,7 +295,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
     // PostgREST returns it as an object (or null if the row is missing).
     const { data, error } = await supabase
       .from('runs')
-      .select('user_id, region, fence, profiles(display_name)');
+      .select('user_id, region, fence, flagged, profiles(display_name)');
 
     if (error || !data) return { ok: false, reason: 'network' };
 
@@ -310,6 +320,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
         displayName: profile?.display_name ?? null,
         region: row.region ?? null,
         geometry,
+        flagged: row.flagged === true,
       });
     }
     return { ok: true, runs, meUserId: session.user.id, skipped };

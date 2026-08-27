@@ -297,6 +297,18 @@ function FenceCard({
         </Text>
       </View>
 
+      {/* Speed-flagged by the server. Shown on the runner's own card too,
+          not just to others — if a run looks implausible, the person who
+          ran it should be the first to know. */}
+      {fence.flagged && (
+        <View style={[styles.fenceLost, { borderTopColor: c.backgroundSelected }]}>
+          <Icon ios="exclamationmark.triangle.fill" android="warning" size={12} color={c.accent} />
+          <Text style={[styles.fenceLostText, { color: c.accent }]}>
+            {t('myraces.fenceFlagged')}
+          </Text>
+        </View>
+      )}
+
       {/* Phase 3: this run lost ground to someone else. Shown on the card
           rather than only in a notification, so the history stays true even
           if the runner never saw the alert. */}
