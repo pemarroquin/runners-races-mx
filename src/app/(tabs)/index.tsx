@@ -345,7 +345,20 @@ export default function TrackScreen() {
                     : ''}
                 </Text>
               )}
-              {tracker.points.length === 0 && tracker.rejectedFixes > 2 && (
+              {/* Gated on the SIGNAL, not on points.length. It used to
+                  require points.length === 0, which the cached-position
+                  seed made almost impossible — so the one warning that
+                  explains a stalled route was unreachable in exactly the
+                  case it exists for (device report, 2026-08-27). */}
+              {tracker.degradedSignal && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t('track.degradedSignal')}
+                  {tracker.lastAccuracyM !== null
+                    ? `  ·  ${t('track.accuracy', { m: Math.round(tracker.lastAccuracyM) })}`
+                    : ''}
+                </Text>
+              )}
+              {!tracker.degradedSignal && tracker.points.length < 2 && tracker.rejectedFixes > 2 && (
                 <Text style={[styles.gpsState, { color: '#FFD166' }]}>
                   {t('track.weakSignal')}
                 </Text>

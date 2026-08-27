@@ -70,6 +70,7 @@ const translations = {
       searching: 'Buscando señal GPS…',
       accuracy: 'Precisión: %{m} m',
       weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
+      degradedSignal: 'Señal débil — seguimos trazando, con menos precisión.',
       summaryTitle: 'Territorio conquistado',
       noFence:
         'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
@@ -304,6 +305,7 @@ const translations = {
       searching: 'Searching for GPS signal…',
       accuracy: 'Accuracy: %{m} m',
       weakSignal: 'Weak signal — move into open sky to start tracing.',
+      degradedSignal: 'Weak signal — still tracking, with less precision.',
       summaryTitle: 'Territory claimed',
       noFence:
         'Your route was too short to enclose an area. Run a loop and try again.',
