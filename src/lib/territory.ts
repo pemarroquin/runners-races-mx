@@ -116,15 +116,40 @@ export function buildFence(path: LatLng[], toleranceDeg = DEFAULT_TOLERANCE_DEG)
   const ring = dedupeConsecutive(closeRing(toLngLat(path)));
   if (ring.length < MIN_FENCE_POINTS + 1) return null; // +1 for the closing repeat of point 0
 
-  const raw = polygon([ring]);
-  const simplified = simplify(raw, { tolerance: toleranceDeg, highQuality: true });
+  // The whole pipeline is wrapped because turf THROWS on degenerate input
+  // rather than returning something this function can inspect.
+  //
+  // The case that matters is not exotic: walk in a straight line — office to
+  // the parking lot, say — and the auto-closed ring is collinear. simplify()
+  // then collapses it below four points and raises "invalid polygon, fewer
+  // than 4 points" from inside @turf/clean-coords, BEFORE the ring check
+  // below ever runs. On the Track screen buildFence is called during render,
+  // so that throw took the whole tab down at the moment the runner pressed
+  // Stop (found 2026-08-27, from a real 50m walk).
+  //
+  // This function's contract has always been "returns null if there aren't
+  // enough distinct points to form a polygon" — a straight line is exactly
+  // that case, so null is the honest answer and the implementation now
+  // actually delivers it.
+  try {
+    const raw = polygon([ring]);
+    const simplified = simplify(raw, { tolerance: toleranceDeg, highQuality: true });
 
-  // Simplification can collapse a small/noisy loop below the minimum ring
-  // size — re-check rather than handing turf a broken ring.
-  const simplifiedRing = simplified.geometry.coordinates[0];
-  if (!simplifiedRing || dedupeConsecutive(simplifiedRing).length < MIN_FENCE_POINTS + 1) return null;
+    // Simplification can collapse a small/noisy loop below the minimum ring
+    // size — re-check rather than handing turf a broken ring.
+    const simplifiedRing = simplified.geometry.coordinates[0];
+    if (!simplifiedRing || dedupeConsecutive(simplifiedRing).length < MIN_FENCE_POINTS + 1) {
+      return null;
+    }
 
-  const cleaned = cleanPolygon(simplified);
-  const areaM2 = area(cleaned);
-  return { geometry: cleaned, areaM2 };
+    const cleaned = cleanPolygon(simplified);
+    const areaM2 = area(cleaned);
+    // A collinear or hairline shape can survive the point checks and still
+    // enclose nothing. Treat that as "no fence" rather than offering the
+    // runner a 0 m² territory to save.
+    if (!Number.isFinite(areaM2) || areaM2 <= 0) return null;
+    return { geometry: cleaned, areaM2 };
+  } catch {
+    return null;
+  }
 }
