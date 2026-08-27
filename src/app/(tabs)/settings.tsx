@@ -4,6 +4,8 @@
 // src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
 // home for build/support metadata, since there's no other about screen.
 import Constants from 'expo-constants';
+import * as Location from 'expo-location';
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Linking,
@@ -102,6 +104,55 @@ export default function SettingsScreen() {
   // Set when the OS permission prompt comes back denied, so the switch
   // flipping back explains itself instead of just looking broken.
   const [reminderDenied, setReminderDenied] = useState(false);
+
+  // Location permission, stated plainly. Without this the app gives no
+  // answer anywhere to "is tracking even allowed?" — and a denied
+  // permission looks identical to weak GPS once a session is running,
+  // which is exactly how a whole recording session can be lost.
+  const isFocused = useIsFocused();
+  const [locPerm, setLocPerm] = useState<Location.PermissionResponse | null>(null);
+  const [locBusy, setLocBusy] = useState(false);
+
+  // Re-read on every focus, not once on mount: the fix for a denied
+  // permission is to change it in the OS settings app and come back, and a
+  // mount-only check would still show the stale "denied" after that.
+  useEffect(() => {
+    if (!isFocused) return;
+    let stale = false;
+    const id = setTimeout(() => {
+      Location.getForegroundPermissionsAsync()
+        .then((res) => {
+          if (!stale) setLocPerm(res);
+        })
+        .catch(() => {
+          // Provider missing entirely (some web browsers) — leave it null
+          // and render the unknown state rather than claiming "denied".
+        });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [isFocused]);
+
+  const onFixLocation = useCallback(async () => {
+    // Once the OS has permanently denied, asking again silently no-ops —
+    // the only real fix is the system settings app, so send them there
+    // instead of showing a button that appears to do nothing.
+    if (locPerm && !locPerm.canAskAgain) {
+      Linking.openSettings().catch(() => {});
+      return;
+    }
+    setLocBusy(true);
+    try {
+      const res = await Location.requestForegroundPermissionsAsync();
+      setLocPerm(res);
+    } catch {
+      // Leave the previous state; the row still reads honestly.
+    } finally {
+      setLocBusy(false);
+    }
+  }, [locPerm]);
 
   const onToggleReminders = useCallback(
     async (next: boolean) => {
@@ -248,6 +299,43 @@ export default function SettingsScreen() {
           </View>
         )}
 
+        <View style={styles.reminderBlock}>
+          <View style={styles.themeRow}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+              {t('settings.location')}
+            </Text>
+            <View style={styles.locStatusWrap}>
+              <View
+                style={[
+                  styles.locDot,
+                  { backgroundColor: locPerm?.granted ? '#2FBF71' : c.accent },
+                ]}
+              />
+              <Text style={[styles.rowValue, { color: c.text }]}>
+                {locPerm === null
+                  ? t('settings.locationUnknown')
+                  : locPerm.granted
+                    ? t('settings.locationOn')
+                    : locPerm.canAskAgain
+                      ? t('settings.locationNotSet')
+                      : t('settings.locationOff')}
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
+            {locPerm?.granted ? t('settings.locationOnHint') : t('settings.locationOffHint')}
+          </Text>
+          {locPerm !== null && !locPerm.granted && (
+            <Pressable onPress={onFixLocation} disabled={locBusy} accessibilityRole="button" hitSlop={10}>
+              <Text style={[styles.locAction, { color: c.accent, opacity: locBusy ? 0.5 : 1 }]}>
+                {locPerm.canAskAgain
+                  ? t('settings.locationEnable')
+                  : t('settings.locationOpenSettings')}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
         {/* Off by default and opt-in from here, rather than prompting on
             first save: the OS permission dialog only makes sense once the
             user has actually asked for reminders. */}
@@ -359,6 +447,9 @@ const styles = StyleSheet.create({
   },
   nameHint: { marginTop: 0 },
   reminderDenied: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
+  locStatusWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  locDot: { width: 8, height: 8, borderRadius: 4 },
+  locAction: { fontSize: 14, fontWeight: '700' },
   rowGroup: { marginBottom: Spacing.five },
   row: {
     flexDirection: 'row',

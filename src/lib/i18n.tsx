@@ -209,6 +209,17 @@ const translations = {
       themeLight: 'Claro',
       themeDark: 'Oscuro',
       language: 'Idioma',
+      location: 'Ubicación',
+      locationOn: 'Activada',
+      locationOff: 'Bloqueada',
+      locationNotSet: 'Sin activar',
+      locationUnknown: 'Sin verificar',
+      locationOnHint:
+        'Podemos trazar tus recorridos. Solo se usa mientras la app está abierta y una sesión está en curso.',
+      locationOffHint:
+        'Sin este permiso no podemos trazar tus recorridos ni conquistar territorio.',
+      locationEnable: 'Activar ubicación',
+      locationOpenSettings: 'Abrir ajustes del teléfono',
       reminders: 'Recordatorios',
       remindersHint:
         'Te avisamos 3 días antes y la noche anterior de cada carrera que guardes.',
@@ -443,6 +454,17 @@ const translations = {
       themeLight: 'Light',
       themeDark: 'Dark',
       language: 'Language',
+      location: 'Location',
+      locationOn: 'On',
+      locationOff: 'Blocked',
+      locationNotSet: 'Not enabled',
+      locationUnknown: 'Not checked',
+      locationOnHint:
+        'We can trace your runs. Only used while the app is open and a session is running.',
+      locationOffHint:
+        "Without this permission we can't trace your runs or capture territory.",
+      locationEnable: 'Enable location',
+      locationOpenSettings: 'Open phone settings',
       reminders: 'Reminders',
       remindersHint:
         'We’ll remind you 3 days before and the night before each race you save.',
