@@ -82,6 +82,7 @@ const translations = {
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
       syncDisabled: 'El guardado en línea no está configurado en esta versión.',
       retry: 'Reintentar',
+      pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
     },
     leaderboard: {
       title: 'Tabla de posiciones',
@@ -165,6 +166,12 @@ const translations = {
       } as PluralForm,
       clearMissing: 'Quitarlas de mi lista',
       remove: 'Quitar de mis carreras',
+      tabRaces: 'Carreras',
+      tabFences: 'Territorios',
+      fencesEmpty:
+        'Aún no has conquistado territorio.\nInicia una sesión en Correr para trazar tu primer cercado.',
+      fencesError: 'No pudimos cargar tus territorios. Revisa tu conexión.',
+      fencesDisabled: 'El guardado en línea no está configurado en esta versión.',
     },
     city: {
       title: 'Elige tu ciudad',
@@ -282,6 +289,7 @@ const translations = {
       syncFailedAuth: "We couldn't create your session. Please try again.",
       syncDisabled: 'Online saving is not configured in this build.',
       retry: 'Retry',
+      pastFencesFailed: "We couldn't load your previous territories.",
     },
     leaderboard: {
       title: 'Leaderboard',
@@ -364,6 +372,12 @@ const translations = {
       } as PluralForm,
       clearMissing: 'Remove them from my list',
       remove: 'Remove from my races',
+      tabRaces: 'Races',
+      tabFences: 'Territories',
+      fencesEmpty:
+        "No territory captured yet.\nStart a session in Run to draw your first fence.",
+      fencesError: "We couldn't load your territories. Check your connection.",
+      fencesDisabled: 'Online saving is not configured in this build.',
     },
     city: {
       title: 'Choose your city',

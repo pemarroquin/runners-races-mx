@@ -151,17 +151,24 @@ export const FENCE_MAP_ASPECT = FENCE_IMG.w / FENCE_IMG.h;
  * caller passes geometry that territory.ts has already simplified, and this
  * returns null rather than emitting a URL the API will reject outright.
  */
-export function buildFenceMapUrl(geometry: Geometry, dark: boolean): string | null {
+export function buildFenceMapUrl(
+  geometry: Geometry,
+  dark: boolean,
+  /** '#rrggbb' — the run's own fence colour (FENCE_COLOR_SETS). Defaults to
+   *  the route colour for callers that predate per-run colours. */
+  colorHex?: string,
+): string | null {
   if (!TOKEN) return null;
 
+  const color = colorHex ?? `#${ROUTE_COLOR}`;
   const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
   const feature = {
     type: 'Feature' as const,
     properties: {
-      stroke: `#${ROUTE_COLOR}`,
+      stroke: color,
       'stroke-width': 3,
       'stroke-opacity': 0.95,
-      fill: `#${ROUTE_COLOR}`,
+      fill: color,
       'fill-opacity': FENCE_FILL_OPACITY,
     },
     geometry,

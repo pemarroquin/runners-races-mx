@@ -7,10 +7,9 @@
 // moment the tab opens, and the controls sit over them. See track-map.tsx
 // for why the route is baked into the Mapbox image rather than overlaid.
 import { useIsFocused } from 'expo-router';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -23,13 +22,20 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FenceMap } from '@/components/fence-map';
 import { TrackMap } from '@/components/track-map';
 import { Icon } from '@/components/ui/icon';
+import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
-import { buildFenceMapUrl, FENCE_MAP_ASPECT } from '@/lib/mapbox';
+import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { buildFence, type FenceResult } from '@/lib/territory';
-import { uploadRun, type SyncOutcome } from '@/lib/territory-sync';
+import {
+  fetchMyFences,
+  uploadRun,
+  type MyFence,
+  type SyncOutcome,
+} from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { useCurrentLocation } from '@/lib/use-current-location';
 
@@ -62,8 +68,25 @@ export default function TrackScreen() {
   // gate two subscriptions would run at once.
   const location = useCurrentLocation({ watch: isFocused && !inSession });
 
+  // Where the map should say the runner is. During a session the standalone
+  // watcher above is off, so the tracker's RAW fix stream takes over — using
+  // its filtered point list instead froze the pin on the first fix whenever
+  // the accuracy filter was rejecting everything after it.
+  const here = inSession ? (tracker.lastFix ?? location.coords) : location.coords;
+
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [failure, setFailure] = useState<SyncOutcome | null>(null);
+  const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  const [pastFences, setPastFences] = useState<MyFence[]>([]);
+  const [pastFencesFailed, setPastFencesFailed] = useState(false);
+
+  // This run's fence colour — deterministic from startedAt, so the live
+  // ribbon, the summary highlight, and the Saved tab all derive the same
+  // one. See FENCE_COLOR_SETS.
+  const fenceColor = useMemo(
+    () => fenceColorForRun(tracker.startedAt ?? 0).color,
+    [tracker.startedAt],
+  );
 
   // Only computed once the run is over — running this on every fix would
   // redo the whole simplify/unkink/union pipeline several times a minute
@@ -73,10 +96,28 @@ export default function TrackScreen() {
     [tracker.status, tracker.points],
   );
 
-  const fenceMapUrl = useMemo(
-    () => (fence ? buildFenceMapUrl(fence.geometry.geometry, scheme === 'dark') : null),
-    [fence, scheme],
-  );
+  // Everything already captured, for the summary map. Fetched when the run
+  // finishes (before any save), so the list never contains the run on
+  // screen; `savedRunId` guards the refetch-after-save case anyway.
+  const finished = tracker.status === 'finished';
+  useEffect(() => {
+    if (!finished) return;
+    let stale = false;
+    fetchMyFences().then((outcome) => {
+      if (stale) return;
+      if (outcome.ok) {
+        setPastFences(outcome.fences);
+        setPastFencesFailed(false);
+      } else {
+        // 'disabled' is a configuration state, not a failure — nothing to
+        // load, nothing to apologise for.
+        setPastFencesFailed(outcome.reason !== 'disabled');
+      }
+    });
+    return () => {
+      stale = true;
+    };
+  }, [finished]);
 
   const save = useCallback(async () => {
     if (!fence || tracker.startedAt === null || tracker.endedAt === null) return;
@@ -91,6 +132,7 @@ export default function TrackScreen() {
     });
     if (outcome.ok) {
       setSaveState('saved');
+      setSavedRunId(outcome.runId);
     } else {
       // Keep the run on screen. It only exists in memory, so clearing it on
       // a failed upload would destroy the thing the runner just earned.
@@ -102,6 +144,8 @@ export default function TrackScreen() {
   const discard = useCallback(() => {
     setSaveState('idle');
     setFailure(null);
+    setSavedRunId(null);
+    setPastFencesFailed(false);
     tracker.reset();
   }, [tracker]);
 
@@ -124,15 +168,23 @@ export default function TrackScreen() {
         <ScrollView contentContainerStyle={styles.summary}>
           <Text style={[styles.summaryTitle, { color: c.text }]}>{t('track.summaryTitle')}</Text>
 
-          {fenceMapUrl && (
+          {fence && (
+            // A real interactive map, not a baked image: pan/zoom over the
+            // territory just captured (gradient outline, this run's colour)
+            // with every previous fence drawn muted around it.
             <Animated.View entering={FadeIn.duration(400)} style={styles.fenceMapWrap}>
-              <Image
-                source={{ uri: fenceMapUrl }}
-                style={styles.fenceMap}
-                contentFit="cover"
-                accessibilityLabel={t('track.summaryTitle')}
+              <FenceMap
+                geometry={fence.geometry.geometry}
+                color={fenceColor}
+                others={pastFences}
+                excludeId={savedRunId}
               />
             </Animated.View>
+          )}
+          {pastFencesFailed && (
+            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
+              {t('track.pastFencesFailed')}
+            </Text>
           )}
 
           <View style={styles.stats}>
@@ -194,8 +246,9 @@ export default function TrackScreen() {
       <TrackMap
         points={tracker.points}
         running={running}
-        here={location.coords}
+        here={here}
         active={inSession}
+        fenceColor={fenceColor}
         dark={scheme === 'dark'}
         color={c.accent}
         placeholder={t('track.waiting')}
@@ -416,7 +469,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     aspectRatio: FENCE_MAP_ASPECT,
   },
-  fenceMap: { width: '100%', height: '100%' },
   summaryActions: { gap: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
 
   stats: { flexDirection: 'row', gap: Spacing.three },
@@ -425,6 +477,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] },
 
   notice: { fontSize: 14, lineHeight: 20 },
+  noticeSmall: { fontSize: 12, lineHeight: 17 },
   primary: {
     flexDirection: 'row',
     alignItems: 'center',

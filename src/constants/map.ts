@@ -82,12 +82,60 @@ export const ROUTE_GRADIENT: [number, string][] = [
 
 /** Trailing distance that stays a flat line before the route sets into wall. */
 export const FENCE_LAG_M = 100;
-/** Wall thickness on the ground, metres. */
+/** Wall thickness on the ground, metres (web — the 3D extrusion gets its
+ *  visual bulk from height, so the footprint stays thin). */
 export const FENCE_WALL_WIDTH_M = 3;
+/** Ribbon width on native, metres. The native fence is a FLAT filled ribbon
+ *  (react-native-maps has no fill-extrusion), so without the 18m of wall
+ *  height it needs a wider footprint to read as a fence at all — 3m is
+ *  ~4px at the session zoom. */
+export const FENCE_RIBBON_WIDTH_M = 8;
 /** Wall height, metres. */
 export const FENCE_WALL_HEIGHT_M = 18;
-export const FENCE_WALL_COLOR = '#8A2BE2';
 export const FENCE_WALL_OPACITY = 0.55;
+/** Default wall colour — only the pre-session layer setup uses this; each
+ *  session repaints with its own set (see FENCE_COLOR_SETS below). */
+export const FENCE_WALL_COLOR = '#8A2BE2';
+
+/**
+ * Fence colour sets — each run's fence gets ONE of these, so territories are
+ * tellable apart on a map of many. Pedro's ask (2026-08-27): "a different
+ * color each run", from a configurable list — add/remove/reorder sets here
+ * freely (a Settings picker can layer on later).
+ *
+ * Selection is `fenceColorForRun(startedAtMs)`: deterministic from the run's
+ * start time, which is already stored in Supabase (`runs.started_at`) — so
+ * every screen on every device derives the SAME colour for the same run with
+ * no colour column and no migration (those are applied by hand in this
+ * project and an unapplied one fails silently).
+ */
+export interface FenceColorSet {
+  id: string;
+  /** '#rrggbb'. Fills/strokes derive their alpha from the FENCE_* opacities. */
+  color: string;
+}
+
+export const FENCE_COLOR_SETS: FenceColorSet[] = [
+  { id: 'violet', color: '#8A2BE2' },
+  { id: 'cyan', color: '#22D3EE' },
+  { id: 'magenta', color: '#EC4899' },
+  { id: 'lime', color: '#A3E635' },
+  { id: 'amber', color: '#FBBF24' },
+  { id: 'blue', color: '#3B82F6' },
+];
+
+export function fenceColorForRun(startedAtMs: number): FenceColorSet {
+  // Seconds, not ms: ISO timestamps round-trip through Postgres with ms
+  // precision but the maths shouldn't depend on it.
+  const seconds = Math.abs(Math.floor(startedAtMs / 1000));
+  return FENCE_COLOR_SETS[seconds % FENCE_COLOR_SETS.length];
+}
+
+/** '#rrggbb' + alpha → 'rgba(...)', for react-native-maps fill/stroke props. */
+export function withAlpha(hex: string, alpha: number): string {
+  const v = parseInt(hex.slice(1), 16);
+  return `rgba(${(v >> 16) & 0xff}, ${(v >> 8) & 0xff}, ${v & 0xff}, ${alpha})`;
+}
 /** Seconds the wall takes to rise once a stretch settles. */
 export const FENCE_RISE_MS = 900;
 
@@ -95,3 +143,25 @@ export const FENCE_RISE_MS = 900;
 export const SESSION_ZOOM = 17.5;
 export const SESSION_PITCH = 60;
 export const SESSION_FLY_MS = 2200;
+
+/**
+ * Night styling for react-native-maps on Android (Google provider). The
+ * native Track map (track-map.tsx) honours MAP_ALWAYS_DARK with this on
+ * Android and `userInterfaceStyle="dark"` on iOS — Google ignores that prop
+ * and Apple ignores this one, so both are always passed. Google's standard
+ * night-mode recipe, trimmed to the layers this map shows.
+ */
+export const GOOGLE_DARK_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#212121' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#757575' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#181818' }] },
+  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#2c2c2c' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#373737' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3c3c3c' }] },
+  { featureType: 'transit', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] },
+];

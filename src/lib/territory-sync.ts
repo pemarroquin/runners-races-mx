@@ -4,6 +4,8 @@
 // just finished must never be lost to a dead network — so a failed upload
 // is reported to the caller as a value, never thrown, and the run stays on
 // screen for a manual retry.
+import type { MultiPolygon, Polygon } from 'geojson';
+
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult } from '@/lib/territory';
@@ -65,6 +67,90 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     if (error || !data) return { ok: false, reason: 'network' };
     return { ok: true, runId: data.id };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
+/** One previously-captured fence, ready to draw. */
+export interface MyFence {
+  id: string;
+  /** Epoch ms of the run's start — feeds fenceColorForRun, so the fence
+   *  renders in the same colour set everywhere. */
+  startedAtMs: number;
+  geometry: Polygon | MultiPolygon;
+  areaM2: number;
+  distanceM: number;
+}
+
+export type FencesOutcome =
+  | { ok: true; fences: MyFence[]; skipped: number }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * PostGIS ≥3 registers geometry→json casts, so PostgREST serialises the
+ * `fence` column as a GeoJSON object. Verified defensively rather than
+ * trusted: anything that isn't a usable (Multi)Polygon object is skipped AND
+ * counted, so a serialisation surprise shows up as `skipped > 0` instead of
+ * as a silently empty map.
+ */
+function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | null {
+  // Older PostgREST/PostGIS combinations return geometry as a string (WKB
+  // hex, or GeoJSON text); the JSON-text case is recoverable.
+  if (typeof value === 'string' && value.startsWith('{')) {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value !== 'object' || value === null) return null;
+  const g = value as { type?: unknown; coordinates?: unknown };
+  if ((g.type === 'Polygon' || g.type === 'MultiPolygon') && Array.isArray(g.coordinates)) {
+    return g as unknown as Polygon | MultiPolygon;
+  }
+  return null;
+}
+
+/**
+ * Every fence this device's (anonymous) identity has captured, newest first.
+ * Same outcome-as-value contract as uploadRun, and for the same reason: the
+ * callers render "why" (disabled/auth/network), never a bare empty list that
+ * could mean anything.
+ */
+export async function fetchMyFences(): Promise<FencesOutcome> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  try {
+    const { data, error } = await supabase
+      .from('runs')
+      .select('id, started_at, distance_m, area_m2, fence')
+      .eq('user_id', session.user.id)
+      .order('started_at', { ascending: false });
+
+    if (error || !data) return { ok: false, reason: 'network' };
+
+    const fences: MyFence[] = [];
+    let skipped = 0;
+    for (const row of data) {
+      const geometry = parseFenceGeometry(row.fence);
+      const startedAtMs = Date.parse(row.started_at);
+      if (!geometry || Number.isNaN(startedAtMs)) {
+        skipped++;
+        continue;
+      }
+      fences.push({
+        id: row.id,
+        startedAtMs,
+        geometry,
+        areaM2: Number(row.area_m2) || 0,
+        distanceM: Number(row.distance_m) || 0,
+      });
+    }
+    return { ok: true, fences, skipped };
   } catch {
     return { ok: false, reason: 'network' };
   }

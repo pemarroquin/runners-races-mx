@@ -56,6 +56,8 @@ interface TrackMapProps {
   here: LatLng | null;
   /** True once a session is live: drives the fly-in and the 3D framing. */
   active: boolean;
+  /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
+  fenceColor: string;
   dark: boolean;
   color: ColorValue;
   placeholder: string;
@@ -109,6 +111,7 @@ export function TrackMap({
   running,
   here,
   active,
+  fenceColor,
   placeholder,
   placeholderColor,
   unavailable,
@@ -240,7 +243,10 @@ export function TrackMap({
     const marker = markerRef.current;
     if (!map || !readyRef.current || !marker) return;
 
-    const head = points.length > 0 ? points[points.length - 1] : here;
+    // `here` first: during a session it's the tracker's RAW fix stream, which
+    // stays fresh even while fixes are rejected for accuracy — the accepted
+    // point list is only the fallback for the moment before any raw fix.
+    const head = here ?? (points.length > 0 ? points[points.length - 1] : null);
     if (!head) {
       marker.remove();
       return;
@@ -282,6 +288,15 @@ export function TrackMap({
     });
   }, [active, points, here]);
 
+  // Per-run fence colour. The wall layer is created once at mount (before
+  // any session exists) with the default FENCE_WALL_COLOR, so the run's own
+  // colour is applied as a paint update — cheap, no layer churn.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
+  }, [fenceColor, active]);
+
   // Feed coordinates in. setData on an existing source is the cheap path —
   // no layer or style churn, so the line simply extends.
   useEffect(() => {
@@ -307,12 +322,13 @@ export function TrackMap({
     );
 
     // Follow only while recording: panning the camera under someone reading
-    // their finished route would fight them.
-    const head = points[points.length - 1];
+    // their finished route would fight them. Follows the raw fix (`here`)
+    // when there is one, for the same reason as the marker above.
+    const head = here ?? points[points.length - 1];
     if (head && running && flownRef.current) {
       map.easeTo({ center: [head.lng, head.lat], duration: 900 });
     }
-  }, [points, running]);
+  }, [points, running, here]);
 
   if (!TOKEN) {
     return (

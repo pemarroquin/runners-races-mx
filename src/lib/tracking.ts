@@ -33,6 +33,11 @@ export type TrackError = 'permission' | 'unavailable' | null;
 // exposed so this can be diagnosed on a device instead of guessed at.
 const MIN_ACCURACY_M = 100;
 const TIME_INTERVAL_MS = 2000;
+// How stale a cached position may be and still serve as the run's instant
+// origin. Kept short so the worst-case phantom first segment (device moved
+// since the cache) stays a few metres; in practice the Track tab's idle
+// watcher was feeding fixes seconds before Start, so the cache is fresh.
+const LAST_KNOWN_MAX_AGE_MS = 10_000;
 // 3m, not 5: this gates when iOS delivers a callback at all (it maps to
 // CLLocationManager's distanceFilter), so a larger value means a walker sees
 // nothing happen for an uncomfortably long time at the start of a session.
@@ -54,6 +59,12 @@ export interface RunTracker {
   /** Fixes discarded for poor accuracy. If this climbs while points stay at
    *  zero, the filter is the problem — not permissions. */
   rejectedFixes: number;
+  /** The most recent RAW fix, before any accuracy filtering. This is what
+   *  the map pin/camera should follow during a session: recording quality
+   *  and "where is the runner" are different questions, and answering the
+   *  second with the filtered list froze the pin on the first fix whenever
+   *  the filter was rejecting everything after it. */
+  lastFix: LatLng | null;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
@@ -71,6 +82,7 @@ export function useRunTracker(): RunTracker {
   const [endedAt, setEndedAt] = useState<number | null>(null);
   const [lastAccuracyM, setLastAccuracyM] = useState<number | null>(null);
   const [rejectedFixes, setRejectedFixes] = useState(0);
+  const [lastFix, setLastFix] = useState<LatLng | null>(null);
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
@@ -121,6 +133,15 @@ export function useRunTracker(): RunTracker {
   const onFix = useCallback((loc: Location.LocationObject) => {
     const accuracy = loc.coords.accuracy ?? null;
     setLastAccuracyM(accuracy);
+    // Raw position, before ANY filtering — the map follows this. See the
+    // interface comment on lastFix.
+    setLastFix({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+
+    // Out-of-order guard: the fresh-fix seed in start()/resume() runs in
+    // parallel with the watcher rather than blocking it, so a slow
+    // getCurrentPositionAsync can resolve AFTER the watcher has already
+    // delivered newer fixes. Appending it would draw the route backwards.
+    if (lastRef.current !== null && loc.timestamp < lastRef.current.ts) return;
 
     // The FIRST fix is always kept. A cold start often produces one poor
     // reading before the receiver settles, and rejecting it left the run
@@ -150,6 +171,48 @@ export function useRunTracker(): RunTracker {
     }
   }, []);
 
+  // Shared by start() and resume(): get the watcher live, seeded with an
+  // origin, WITHOUT ever blocking on a slow GPS one-shot.
+  //
+  // The previous version awaited getCurrentPositionAsync(BestForNavigation)
+  // BEFORE starting the watcher. That call has no timeout and can sit for a
+  // long time (or forever) waiting for the receiver to reach the requested
+  // accuracy — during which the session was stuck at 'starting' with no
+  // subscription, no clock, and no fixes: an entire walk could pass with
+  // nothing tracked. Order is now:
+  //
+  //   1. Instant origin from the OS's cached position (getLastKnownPosition
+  //      resolves immediately) — the route has a starting point at once.
+  //   2. Watcher starts — recording is live from here, unconditionally.
+  //   3. A fresh precise fix is requested in PARALLEL, never awaited; if it
+  //      resolves it refines things, if it hangs nothing is waiting on it.
+  //      onFix's timestamp guard drops it if the watcher has moved on.
+  const beginRecording = useCallback(async () => {
+    try {
+      const cached = await Location.getLastKnownPositionAsync({
+        maxAge: LAST_KNOWN_MAX_AGE_MS,
+      });
+      if (cached) onFix(cached);
+    } catch {
+      // No cached position — the watcher or the parallel fix supplies one.
+    }
+
+    subRef.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: TIME_INTERVAL_MS,
+        distanceInterval: DISTANCE_INTERVAL_M,
+      },
+      onFix,
+    );
+
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation })
+      .then(onFix)
+      .catch(() => {
+        // Fine — the watcher is already delivering.
+      });
+  }, [onFix]);
+
   const start = useCallback(async () => {
     setError(null);
     setStatus('starting');
@@ -172,29 +235,7 @@ export function useRunTracker(): RunTracker {
       setRejectedFixes(0);
       setStartedAt(Date.now());
 
-      // Seed the run with an immediate fix BEFORE starting the watcher.
-      // watchPositionAsync only calls back once the device has moved
-      // `distanceInterval`, so without this the run has no origin point and
-      // the route/fence can't begin until the runner has already covered
-      // ground — which reads as tracking being broken. A failure here is
-      // survivable: the watcher still delivers the first real fix.
-      try {
-        const seed = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.BestForNavigation,
-        });
-        onFix(seed);
-      } catch {
-        // No seed available — fall through and let the watcher provide it.
-      }
-
-      subRef.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: TIME_INTERVAL_MS,
-          distanceInterval: DISTANCE_INTERVAL_M,
-        },
-        onFix,
-      );
+      await beginRecording();
       setStatus('running');
     } catch {
       // Covers the web permission rejection path and any platform where the
@@ -202,7 +243,7 @@ export function useRunTracker(): RunTracker {
       setError('unavailable');
       setStatus('idle');
     }
-  }, [clearSub, onFix]);
+  }, [clearSub, beginRecording]);
 
   /** Banks the current leg's time and drops the GPS subscription — a paused
    *  run shouldn't keep the receiver powered or record movement. */
@@ -221,34 +262,12 @@ export function useRunTracker(): RunTracker {
       // (and add distance) across wherever the runner moved while paused.
       lastRef.current = null;
       legStartRef.current = Date.now();
-      // Seed the run with an immediate fix BEFORE starting the watcher.
-      // watchPositionAsync only calls back once the device has moved
-      // `distanceInterval`, so without this the run has no origin point and
-      // the route/fence can't begin until the runner has already covered
-      // ground — which reads as tracking being broken. A failure here is
-      // survivable: the watcher still delivers the first real fix.
-      try {
-        const seed = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.BestForNavigation,
-        });
-        onFix(seed);
-      } catch {
-        // No seed available — fall through and let the watcher provide it.
-      }
-
-      subRef.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: TIME_INTERVAL_MS,
-          distanceInterval: DISTANCE_INTERVAL_M,
-        },
-        onFix,
-      );
+      await beginRecording();
       setStatus('running');
     } catch {
       setError('unavailable');
     }
-  }, [clearSub, onFix]);
+  }, [clearSub, beginRecording]);
 
   const stop = useCallback(() => {
     clearSub();
@@ -272,6 +291,9 @@ export function useRunTracker(): RunTracker {
     setError(null);
     setLastAccuracyM(null);
     setRejectedFixes(0);
+    // Cleared so a later idle screen doesn't prefer a minutes-old session
+    // fix over the live idle watcher's fresh one.
+    setLastFix(null);
     setStatus('idle');
   }, [clearSub]);
 
@@ -285,6 +307,7 @@ export function useRunTracker(): RunTracker {
     endedAt,
     lastAccuracyM,
     rejectedFixes,
+    lastFix,
     start,
     pause,
     resume,
