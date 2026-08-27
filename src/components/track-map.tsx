@@ -1,164 +1,204 @@
-// The Track tab's map. Shows real streets from the moment the tab opens —
-// centred on where you are before a run, then your route drawn over them
-// while it's in progress.
+// The Track tab's map — NATIVE. A live react-native-maps MapView (Apple Maps
+// on iOS, Google on Android; both ship inside Expo Go), replacing the static
+// Mapbox image this file used to render.
 //
-// The route is baked into the Mapbox image rather than drawn as SVG on top
-// of a basemap. Overlaying would mean reproducing Mapbox's Web Mercator
-// framing exactly to keep the line on the right streets, and any drift
-// there reads as a broken map; letting Mapbox draw both makes misalignment
-// impossible. The trade is a network round-trip, so the image is throttled
-// (REFRESH_MS) instead of rebuilt per GPS fix — the numbers above it still
-// update every second, which is the feedback that actually matters mid-run.
+// The static image was why the tab felt broken on device: it had no camera —
+// no fly-in when a session started, no follow while running — and the pin
+// only moved when a whole new image URL was fetched, throttled and quantised,
+// so on a phone it read as frozen on the first fix. A real MapView fixes all
+// of that, and `showsUserLocation` adds the OS's own blue dot, which tracks
+// the device continuously and independently of our JS fix stream.
 //
-// When that image can't load (no signal on a trail, no token configured),
-// RouteTrace takes over: no network, no key, instant. It replaces the map
-// rather than sitting on top of it, so the alignment problem never arises.
-import { Image } from 'expo-image';
+// What this deliberately does NOT have, versus track-map.web.tsx: the custom
+// Mapbox Studio style (a Mapbox GL SDK needs a dev client, which would break
+// the Expo Go testing workflow), and the extruded 3D fence wall — no
+// fill-extrusion primitive here, so the settled fence renders as a flat
+// filled ribbon in the run's colour instead. The camera choreography — idle
+// follow,
+// fly-in to a tilted close-up on start, follow while running — uses the same
+// constants as web so both platforms feel like the same feature.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
+import MapView, { Polygon, Polyline } from 'react-native-maps';
 
-import { RouteTrace } from '@/components/route-trace';
-import { buildPathMapUrl, buildPinMapUrl } from '@/lib/mapbox';
+import {
+  FENCE_LAG_M,
+  FENCE_RIBBON_WIDTH_M,
+  FENCE_WALL_OPACITY,
+  GOOGLE_DARK_MAP_STYLE,
+  MAP_DEFAULT_ZOOM,
+  ROUTE_LINE_COLOR,
+  ROUTE_LINE_WIDTH,
+  SESSION_FLY_MS,
+  SESSION_PITCH,
+  SESSION_ZOOM,
+  withAlpha,
+} from '@/constants/map';
+import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
+import { gradientStrokeColors, ringToCoords } from '@/lib/fence-draw';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
-
-const REFRESH_MS = 6000;
-
-/** ~11m of precision — see the centre calculation below for why. */
-function round4(n: number): number {
-  return Math.round(n * 1e4) / 1e4;
-}
 
 interface TrackMapProps {
   points: LatLng[];
   running: boolean;
   /** A real fix, or null. Never a fallback — see use-current-location.ts. */
   here: LatLng | null;
-  /** True once a session is live. The static-image path can't fly a camera
-   *  or extrude a wall (see track-map.web.tsx for the platform split), so
-   *  this is accepted and unused rather than making callers branch. */
+  /** True once a session is live: drives the fly-in and the tilted framing. */
   active: boolean;
+  /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
+  fenceColor: string;
+  /** Accepted for interface parity with track-map.web.tsx; the map is always
+   *  dark here (MAP_ALWAYS_DARK) regardless. */
   dark: boolean;
   color: ColorValue;
   placeholder: string;
   placeholderColor: ColorValue;
-  /** Shown when the basemap can't be fetched at all (bad/missing Mapbox
-   *  token, or offline before any route exists). */
+  /** Web-only concern (missing Mapbox token); a MapView needs no token. */
   unavailable: string;
+}
+
+// react-native-maps reads `zoom` on Google and `altitude` on Apple, and each
+// platform ignores the other's field — so every camera carries both. The
+// mapping is empirical, tuned to visually match the web map's zoom levels on
+// a phone viewport: z15 ≈ 960m (neighbourhood), z17.5 ≈ 170m (street).
+function altitudeForZoom(zoom: number): number {
+  return 60 * Math.pow(2, 19 - zoom);
+}
+
+function cameraFor(center: LatLng, zoom: number, pitch: number) {
+  return {
+    center: { latitude: center.lat, longitude: center.lng },
+    zoom,
+    altitude: altitudeForZoom(zoom),
+    pitch,
+    heading: 0,
+  };
 }
 
 export function TrackMap({
   points,
   running,
   here,
-  dark,
-  color,
+  active,
+  fenceColor,
   placeholder,
   placeholderColor,
-  unavailable,
 }: TrackMapProps) {
-  // Measured rather than passed in: the map fills whatever area the screen
-  // gives it, but RouteTrace needs a concrete pixel height to project into.
-  const [height, setHeight] = useState(0);
-  const [imageFailed, setImageFailed] = useState(false);
-
-
-  // The route the *map image* is built from, which deliberately lags the
-  // live point list. Refreshing per GPS fix would be a network request every
-  // couple of seconds; the numbers on screen carry the live feedback instead.
-  const [snapshot, setSnapshot] = useState<LatLng[]>([]);
-  const pointsRef = useRef(points);
-  useEffect(() => {
-    pointsRef.current = points;
-  }, [points]);
-
-  // Sampling happens in the interval callback, never in the effect body:
-  // setState called directly during an effect is forbidden by the React
-  // Compiler rules this project lints with, and it's the same deferred
-  // pattern the run tracker's elapsed clock uses.
-  useEffect(() => {
-    if (!running) return;
-    setSnapshot(pointsRef.current);
-    const id = setInterval(() => setSnapshot(pointsRef.current), REFRESH_MS);
-    return () => clearInterval(id);
-  }, [running]);
-
-  // The moment a route becomes drawable, show it — without this the first
-  // line doesn't appear until the throttle window elapses, so a runner who
-  // has started moving sees an unchanged map for several seconds and
-  // reasonably concludes tracking isn't working. Deferred via a timer so the
-  // setState isn't synchronous inside the effect body (React Compiler rule).
-  const drawable = points.length >= 2;
-  useEffect(() => {
-    if (!running || !drawable) return;
-    const id = setTimeout(() => setSnapshot(pointsRef.current), 0);
-    return () => clearTimeout(id);
-  }, [running, drawable]);
-
-  const hasRoute = snapshot.length >= 2;
-  // Falls back to the city the runner has selected, so there is always a map
-  // to look at. A precise fix replaces it the moment one is available; before
-  // that, a map of your metro beats an empty grey rectangle, and it needs no
-  // location permission at all.
+  const mapRef = useRef<MapView | null>(null);
+  const readyRef = useRef(false);
+  const flownRef = useRef(false);
   const { region } = useRegion();
-  // The LATEST point, not points[0]. Centring on the first fix meant the map
-  // framed where the run started and never moved again — combined with the
-  // one-shot location hook, that's why the pin sat still while the runner
-  // didn't.
-  const latest = points.length > 0 ? points[points.length - 1] : null;
-  const head = latest ?? here;
 
-  // Quantised to ~11m (4dp). The centre feeds a static-image URL, so using
-  // the raw coordinate would mint a new URL — and a new network request —
-  // on every single GPS fix. Rounding means the image is only refetched
-  // once the runner has actually moved a meaningful distance.
-  const centreLat = head ? round4(head.lat) : region.lat;
-  const centreLng = head ? round4(head.lng) : region.lng;
-  // Only claim a position when we actually have one — the region centre is
-  // a framing fallback, never something to drop a "you are here" pin on.
-  const hasRealFix = head !== null;
+  // Only ever a fallback for the *initial* camera, and only while no real
+  // fix exists — a map of your metro beats an empty rectangle, and it needs
+  // no location permission. Nothing is ever pinned on it: the position dot
+  // is the OS's own (showsUserLocation), which only renders on a real fix.
+  const initial = here ?? { lat: region.lat, lng: region.lng };
+  // Lazy state, not a ref: `initialCamera` is only read by MapView at mount,
+  // but a ref can't be read during render (react-hooks/refs). The lazy
+  // initializer freezes the mount-time framing; later camera moves go
+  // through animateCamera, never through this value.
+  const [initialCamera] = useState(() => cameraFor(initial, MAP_DEFAULT_ZOOM, 0));
 
-  const mapUrl = useMemo(
-    () =>
-      hasRoute
-        ? // Pass the live position so the route image carries a "you are
-          // here" pin too — without it the pin vanished the moment a route
-          // existed, which reads as the pin having stopped working.
-          buildPathMapUrl(snapshot, dark, head)
-        : buildPinMapUrl(centreLat, centreLng, dark, hasRealFix),
-    [hasRoute, snapshot, centreLat, centreLng, dark, hasRealFix, head],
+  // Idle: keep the camera over the runner as they move, so the map isn't
+  // still framing wherever they were when the tab opened. Skipped during a
+  // session — the fly-in and follow below own the camera then.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || active || !here) return;
+    map.animateCamera(cameraFor(here, MAP_DEFAULT_ZOOM, 0), { duration: 600 });
+  }, [here, active]);
+
+  // Fly in when a session starts: tilt and close on the runner. Runs once
+  // per session (flownRef), so a later GPS fix doesn't re-trigger it.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+
+    if (!active) {
+      flownRef.current = false;
+      return;
+    }
+    if (flownRef.current) return;
+
+    const target = points.length > 0 ? points[points.length - 1] : here;
+    if (!target) return; // wait for a real position rather than flying to a city centre
+
+    flownRef.current = true;
+    map.animateCamera(cameraFor(target, SESSION_ZOOM, SESSION_PITCH), {
+      duration: SESSION_FLY_MS,
+    });
+  }, [active, points, here]);
+
+  // Follow while recording. Driven by `here` (the tracker's RAW fix stream),
+  // not by the accepted point list: the camera should stay on the runner
+  // even while fixes are being rejected for accuracy.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !running || !flownRef.current || !here) return;
+    map.animateCamera(cameraFor(here, SESSION_ZOOM, SESSION_PITCH), { duration: 900 });
+  }, [here, running]);
+
+  // Same split as web (fence-3d.ts): everything older than the trailing
+  // FENCE_LAG_M "sets" into the fence — here a flat filled ribbon in this
+  // run's colour, since react-native-maps has no fill-extrusion — while the
+  // newest stretch stays the vibrant gradient line. The two share their join
+  // point, so the line feeds visually into the fence.
+  const { settled, active: liveEdge } = useMemo(
+    () => splitTrailing(points, FENCE_LAG_M),
+    [points],
   );
-
-  // A route that can't be drawn by Mapbox still has to be visible, so the
-  // SVG trace replaces the image rather than layering over it.
-  const showFallback = (mapUrl === null || imageFailed) && points.length >= 2;
+  const ribbonCoords = useMemo(() => {
+    const wall = buildWallPolygon(settled, FENCE_RIBBON_WIDTH_M);
+    return wall ? ringToCoords(wall.geometry.coordinates[0]) : null;
+  }, [settled]);
+  const edgeCoords = useMemo(
+    () => liveEdge.map((p) => ({ latitude: p.lat, longitude: p.lng })),
+    [liveEdge],
+  );
+  const edgeColors = useMemo(() => gradientStrokeColors(liveEdge.length), [liveEdge.length]);
 
   return (
-    <View
-      style={[styles.wrap, StyleSheet.absoluteFill]}
-      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
-      {mapUrl && !imageFailed && (
-        <Image
-          source={{ uri: mapUrl }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={200}
-          onError={() => setImageFailed(true)}
-        />
-      )}
+    <View style={[styles.wrap, StyleSheet.absoluteFill]}>
+      <MapView
+        ref={mapRef}
+        style={StyleSheet.absoluteFill}
+        initialCamera={initialCamera}
+        onMapReady={() => {
+          readyRef.current = true;
+        }}
+        showsUserLocation
+        showsMyLocationButton={false}
+        showsCompass={false}
+        toolbarEnabled={false}
+        pitchEnabled
+        userInterfaceStyle="dark"
+        customMapStyle={GOOGLE_DARK_MAP_STYLE}
+      >
+        {ribbonCoords && (
+          <Polygon
+            coordinates={ribbonCoords}
+            fillColor={withAlpha(fenceColor, FENCE_WALL_OPACITY)}
+            strokeColor={withAlpha(fenceColor, 0.9)}
+            strokeWidth={1}
+          />
+        )}
+        {edgeCoords.length >= 2 && (
+          <Polyline
+            coordinates={edgeCoords}
+            strokeWidth={ROUTE_LINE_WIDTH}
+            strokeColor={ROUTE_LINE_COLOR}
+            strokeColors={edgeColors}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
+      </MapView>
 
-      {showFallback && height > 0 && (
-        <RouteTrace points={points} color={color} height={height} />
-      )}
-
-      {/* Say WHY there's no map rather than showing a blank rectangle: a
-          missing token and "still waiting for GPS" look identical otherwise,
-          and the first one is a configuration problem nobody would guess. */}
-      {!showFallback && (mapUrl === null || imageFailed) && (
-        <View style={styles.placeholderWrap}>
-          <Text style={[styles.placeholderText, { color: placeholderColor }]}>
-            {mapUrl === null && !imageFailed ? placeholder : unavailable}
-          </Text>
+      {running && points.length === 0 && (
+        <View style={styles.waiting}>
+          <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
         </View>
       )}
     </View>
@@ -167,6 +207,13 @@ export function TrackMap({
 
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
-  placeholderWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  waiting: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 24,
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
   placeholderText: { fontSize: 14, textAlign: 'center' },
 });

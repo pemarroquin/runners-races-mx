@@ -1,16 +1,34 @@
+// The Saved tab — two collections behind one segmented switch: the races
+// you've bookmarked, and the territories (fences) you've captured in
+// Territory Mode. Pedro's call (2026-08-27): past fences live HERE, not on
+// the live Track map — a run-history surface, not run-time chrome.
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { Pressable, SectionList, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Image } from 'expo-image';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+  useColorScheme,
+} from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RaceCard } from '@/components/race-card';
+import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
+import { buildFenceMapUrl, FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
+import { fetchMyFences, type FencesOutcome, type MyFence } from '@/lib/territory-sync';
 import { useToday } from '@/lib/today';
+import { formatArea, formatDistance } from '@/lib/tracking';
 
 interface RaceSection {
   key: 'upcoming' | 'past';
@@ -18,14 +36,18 @@ interface RaceSection {
   data: Race[];
 }
 
+type SavedView = 'races' | 'fences';
+
 export default function MyRacesScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { savedIds, dropMissing, storageError } = useSaved();
   const allRaces = useRaces();
   const today = useToday();
+
+  const [view, setView] = useState<SavedView>('races');
 
   const races = useMemo(
     () => allRaces.filter((r) => savedIds.has(r.id)),
@@ -71,61 +93,204 @@ export default function MyRacesScreen() {
     // finished overnight stays under "Próximas" until something else changes.
   }, [races, t, today]);
 
+  // Fences load lazily — fetched (or refetched) each time the Territories
+  // view is opened, so a run saved since the last visit shows up. Kept as
+  // the raw outcome so the three non-data states (loading / disabled /
+  // failed) each render as themselves, never as a fake "no territory yet".
+  const [fences, setFences] = useState<FencesOutcome | null>(null);
+  useEffect(() => {
+    if (view !== 'fences') return;
+    let stale = false;
+    // Deferred by a tick so no setState runs synchronously in the effect
+    // body (React Compiler rule — same pattern as the run tracker's clock).
+    const id = setTimeout(() => {
+      setFences(null);
+      fetchMyFences().then((outcome) => {
+        if (!stale) setFences(outcome);
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [view]);
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
       <Text style={[styles.title, { color: c.text }]}>{t('myraces.title')}</Text>
-      <SectionList
-        sections={sections}
-        keyExtractor={(r) => r.id}
-        contentContainerStyle={styles.list}
-        stickySectionHeadersEnabled={false}
-        ListHeaderComponent={
-          // Both of these were tracked in state and rendered nowhere: a
-          // browser that blocks storage made every save silently fail, and a
-          // race dropped from the catalog just disappeared from this list.
-          storageError !== null || missingCount > 0 ? (
-            <View style={styles.notices}>
-              {storageError !== null && (
-                <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
-                  <Text style={[styles.noticeText, { color: c.textSecondary }]}>
-                    {t('myraces.storageBlocked')}
-                  </Text>
-                </View>
-              )}
-              {missingCount > 0 && (
-                <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
-                  <Text style={[styles.noticeText, { color: c.textSecondary }]}>
-                    {t('myraces.missing', { count: missingCount })}
-                  </Text>
-                  <Pressable onPress={clearMissing} accessibilityRole="button" hitSlop={10}>
-                    <Text style={[styles.noticeAction, { color: c.accent }]}>
-                      {t('myraces.clearMissing')}
+
+      <View style={styles.segmentRow}>
+        {(['races', 'fences'] as const).map((key) => {
+          const selected = view === key;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setView(key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={[
+                styles.segment,
+                { backgroundColor: selected ? c.accent : c.backgroundElement },
+              ]}>
+              <Text
+                style={[styles.segmentLabel, { color: selected ? '#ffffff' : c.textSecondary }]}>
+                {t(key === 'races' ? 'myraces.tabRaces' : 'myraces.tabFences')}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {view === 'races' ? (
+        <SectionList
+          sections={sections}
+          keyExtractor={(r) => r.id}
+          contentContainerStyle={styles.list}
+          stickySectionHeadersEnabled={false}
+          ListHeaderComponent={
+            // Both of these were tracked in state and rendered nowhere: a
+            // browser that blocks storage made every save silently fail, and a
+            // race dropped from the catalog just disappeared from this list.
+            storageError !== null || missingCount > 0 ? (
+              <View style={styles.notices}>
+                {storageError !== null && (
+                  <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
+                    <Text style={[styles.noticeText, { color: c.textSecondary }]}>
+                      {t('myraces.storageBlocked')}
                     </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          ) : null
-        }
-        renderSectionHeader={({ section }) => (
-          <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>{section.title}</Text>
-        )}
-        renderItem={({ item, index }) => (
-          <Animated.View
-            entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
-            <RaceCard
-              race={item}
-              onPress={() => router.push({ pathname: '/race/[id]', params: { id: item.id } })}
-            />
-          </Animated.View>
-        )}
-        ListEmptyComponent={
-          <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
-            <Text style={[styles.empty, { color: c.textSecondary }]}>{t('myraces.empty')}</Text>
-          </Animated.View>
-        }
-      />
+                  </View>
+                )}
+                {missingCount > 0 && (
+                  <View style={[styles.notice, { backgroundColor: c.backgroundElement }]}>
+                    <Text style={[styles.noticeText, { color: c.textSecondary }]}>
+                      {t('myraces.missing', { count: missingCount })}
+                    </Text>
+                    <Pressable onPress={clearMissing} accessibilityRole="button" hitSlop={10}>
+                      <Text style={[styles.noticeAction, { color: c.accent }]}>
+                        {t('myraces.clearMissing')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            ) : null
+          }
+          renderSectionHeader={({ section }) => (
+            <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>{section.title}</Text>
+          )}
+          renderItem={({ item, index }) => (
+            <Animated.View
+              entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
+              <RaceCard
+                race={item}
+                onPress={() => router.push({ pathname: '/race/[id]', params: { id: item.id } })}
+              />
+            </Animated.View>
+          )}
+          ListEmptyComponent={
+            <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+              <Text style={[styles.empty, { color: c.textSecondary }]}>{t('myraces.empty')}</Text>
+            </Animated.View>
+          }
+        />
+      ) : (
+        <FencesView fences={fences} locale={locale} scheme={scheme} />
+      )}
     </SafeAreaView>
+  );
+}
+
+function FencesView({
+  fences,
+  locale,
+  scheme,
+}: {
+  fences: FencesOutcome | null;
+  locale: string;
+  scheme: 'dark' | 'light';
+}) {
+  const c = Colors[scheme];
+  const { t } = useI18n();
+
+  if (fences === null) {
+    return (
+      <View style={styles.emptyWrap}>
+        <ActivityIndicator color={c.textSecondary} />
+      </View>
+    );
+  }
+
+  if (!fences.ok) {
+    return (
+      <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+        <Text style={[styles.empty, { color: c.textSecondary }]}>
+          {fences.reason === 'disabled'
+            ? t('myraces.fencesDisabled')
+            : t('myraces.fencesError')}
+        </Text>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={fences.fences}
+      keyExtractor={(f) => f.id}
+      contentContainerStyle={styles.list}
+      renderItem={({ item, index }) => (
+        <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
+          <FenceCard fence={item} locale={locale} scheme={scheme} />
+        </Animated.View>
+      )}
+      ListEmptyComponent={
+        <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+          <Text style={[styles.empty, { color: c.textSecondary }]}>
+            {t('myraces.fencesEmpty')}
+          </Text>
+        </Animated.View>
+      }
+    />
+  );
+}
+
+function FenceCard({
+  fence,
+  locale,
+  scheme,
+}: {
+  fence: MyFence;
+  locale: string;
+  scheme: 'dark' | 'light';
+}) {
+  const c = Colors[scheme];
+  const { t } = useI18n();
+  const color = fenceColorForRun(fence.startedAtMs).color;
+  const mapUrl = buildFenceMapUrl(fence.geometry, scheme === 'dark', color);
+  const date = new Date(fence.startedAtMs).toLocaleDateString(
+    locale === 'es' ? 'es-MX' : 'en-US',
+    { day: 'numeric', month: 'short', year: 'numeric' },
+  );
+
+  return (
+    <View style={[styles.fenceCard, { backgroundColor: c.backgroundElement }]}>
+      {mapUrl && (
+        <View style={styles.fenceImgWrap}>
+          <Image
+            source={{ uri: mapUrl }}
+            style={styles.fenceImg}
+            contentFit="cover"
+            accessibilityLabel={t('myraces.tabFences')}
+          />
+        </View>
+      )}
+      <View style={styles.fenceMeta}>
+        <View style={[styles.fenceDot, { backgroundColor: color }]} />
+        <Text style={[styles.fenceDate, { color: c.text }]}>{date}</Text>
+        <Text style={[styles.fenceStats, { color: c.textSecondary }]}>
+          {formatArea(fence.areaM2)}  ·  {formatDistance(fence.distanceM)}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -137,6 +302,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
+  segmentRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+  },
+  segment: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 999,
+  },
+  segmentLabel: { fontSize: 14, fontWeight: '700' },
   list: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1, paddingBottom: BottomTabInset },
   sectionTitle: {
     fontSize: 13,
@@ -151,4 +328,17 @@ const styles = StyleSheet.create({
   notice: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.one },
   noticeText: { fontSize: 13, lineHeight: 19 },
   noticeAction: { fontSize: 13, fontWeight: '700' },
+
+  fenceCard: { borderRadius: Spacing.two, overflow: 'hidden' },
+  fenceImgWrap: { aspectRatio: FENCE_MAP_ASPECT },
+  fenceImg: { width: '100%', height: '100%' },
+  fenceMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+  },
+  fenceDot: { width: 10, height: 10, borderRadius: 5 },
+  fenceDate: { fontSize: 15, fontWeight: '700' },
+  fenceStats: { fontSize: 13, fontWeight: '600', marginLeft: 'auto' },
 });
