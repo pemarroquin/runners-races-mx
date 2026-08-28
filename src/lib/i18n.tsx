@@ -70,6 +70,7 @@ const translations = {
       searching: 'Buscando señal GPS…',
       accuracy: 'Precisión: %{m} m',
       weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
+      degradedSignal: 'Señal débil — seguimos trazando, con menos precisión.',
       summaryTitle: 'Territorio conquistado',
       noFence:
         'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
@@ -83,6 +84,12 @@ const translations = {
       syncDisabled: 'El guardado en línea no está configurado en esta versión.',
       retry: 'Reintentar',
       pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
+      queued:
+        'Guardamos tu sesión en el teléfono. La subiremos sola la próxima vez que abras la app con señal — ya no se pierde si cierras.',
+      pendingUploads: {
+        one: '1 sesión guardada en el teléfono, pendiente de subir.',
+        other: '%{count} sesiones guardadas en el teléfono, pendientes de subir.',
+      } as PluralForm,
       tookArea: 'Le quitaste %{area}',
       tookFrom: {
         one: 'a 1 corredor',
@@ -208,6 +215,18 @@ const translations = {
       themeLight: 'Claro',
       themeDark: 'Oscuro',
       language: 'Idioma',
+      location: 'Ubicación',
+      locationOn: 'Activada',
+      locationOff: 'Bloqueada',
+      locationNotSet: 'Sin activar',
+      locationUnknown: 'Sin verificar',
+      locationOnHint:
+        'Podemos trazar tus recorridos. Solo se usa mientras la app está abierta y una sesión está en curso.',
+      locationOffHint:
+        'Sin este permiso no podemos trazar tus recorridos ni conquistar territorio.',
+      locationEnable: 'Activar ubicación',
+      locationOpenSettings: 'Abrir ajustes del teléfono',
+      locationBrowserBlocked: 'Desbloquea la ubicación en tu navegador',
       reminders: 'Recordatorios',
       remindersHint:
         'Te avisamos 3 días antes y la noche anterior de cada carrera que guardes.',
@@ -235,6 +254,8 @@ const translations = {
         'Recordatorios: si los activas, tu teléfono programa las notificaciones localmente. No usamos notificaciones push ni servidores de mensajería — nada sale de tu dispositivo, y al desactivarlos se cancelan todas.',
       collectedTerritory:
         'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
+      collectedQueue:
+        'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si lo descartas.',
       collectedIdentity:
         'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
       collectedVisible:
@@ -304,6 +325,7 @@ const translations = {
       searching: 'Searching for GPS signal…',
       accuracy: 'Accuracy: %{m} m',
       weakSignal: 'Weak signal — move into open sky to start tracing.',
+      degradedSignal: 'Weak signal — still tracking, with less precision.',
       summaryTitle: 'Territory claimed',
       noFence:
         'Your route was too short to enclose an area. Run a loop and try again.',
@@ -317,6 +339,12 @@ const translations = {
       syncDisabled: 'Online saving is not configured in this build.',
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
+      queued:
+        "Saved to your phone. We'll upload it automatically next time you open the app with a signal — closing the app won't lose it now.",
+      pendingUploads: {
+        one: '1 session saved on your phone, waiting to upload.',
+        other: '%{count} sessions saved on your phone, waiting to upload.',
+      } as PluralForm,
       tookArea: 'You took %{area}',
       tookFrom: {
         one: 'from 1 runner',
@@ -441,6 +469,18 @@ const translations = {
       themeLight: 'Light',
       themeDark: 'Dark',
       language: 'Language',
+      location: 'Location',
+      locationOn: 'On',
+      locationOff: 'Blocked',
+      locationNotSet: 'Not enabled',
+      locationUnknown: 'Not checked',
+      locationOnHint:
+        'We can trace your runs. Only used while the app is open and a session is running.',
+      locationOffHint:
+        "Without this permission we can't trace your runs or capture territory.",
+      locationEnable: 'Enable location',
+      locationOpenSettings: 'Open phone settings',
+      locationBrowserBlocked: 'Unblock location in your browser',
       reminders: 'Reminders',
       remindersHint:
         'We’ll remind you 3 days before and the night before each race you save.',
@@ -468,6 +508,8 @@ const translations = {
         'Reminders: if you turn them on, your phone schedules the notifications locally. We use no push notifications and no messaging servers — nothing leaves your device, and turning them off cancels all of them.',
       collectedTerritory:
         'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
+      collectedQueue:
+        'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you discard it.',
       collectedIdentity:
         'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
       collectedVisible:
