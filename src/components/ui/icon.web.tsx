@@ -133,6 +133,47 @@ const GLYPHS: Record<string, Glyph> = {
       <path d="M2.4 9.6h3.8M1.4 13.1h3.4M3 16.6h2.9" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
     </>
   ),
+  // Added 2026-08-27 for Territory Mode's flag/loss markers. Both were used
+  // on native for a full session before anyone noticed they drew nothing on
+  // web — the third time this exact trap has been hit. Add the glyph in the
+  // SAME change as the call site.
+  location_on: (c) => (
+    <>
+      <path
+        d="M12 21.2s6.6-6.1 6.6-11a6.6 6.6 0 1 0-13.2 0c0 4.9 6.6 11 6.6 11z"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10.1" r="2.4" stroke={c} strokeWidth={1.8} fill="none" />
+    </>
+  ),
+  warning: (c) => (
+    <>
+      <path
+        d="M12 3.8 2.9 19.4h18.2L12 3.8z"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <path d="M12 9.6v4.2" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+      <circle cx="12" cy="16.6" r="1.05" fill={c} />
+    </>
+  ),
+  flag: (c) => (
+    <>
+      <path d="M5.6 21V3.6" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+      <path
+        d="M5.6 4.4h11.2l-2 3.6 2 3.6H5.6z"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+      />
+    </>
+  ),
   trophy: (c) => (
     <>
       <path d="M8 3.5h8v4.8a4 4 0 0 1-8 0V3.5z" stroke={c} strokeWidth={1.8} fill="none" strokeLinejoin="round" />

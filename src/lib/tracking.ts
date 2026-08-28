@@ -38,11 +38,54 @@ const TIME_INTERVAL_MS = 2000;
 // since the cache) stays a few metres; in practice the Track tab's idle
 // watcher was feeding fixes seconds before Start, so the cache is fresh.
 const LAST_KNOWN_MAX_AGE_MS = 10_000;
+// Consecutive poor fixes tolerated before the accuracy filter gives up and
+// records one anyway.
+//
+// An accuracy filter's job is to reject OUTLIERS — the occasional wild fix
+// that would inflate distance and area with movement that never happened.
+// It is NOT supposed to reject the environment. Between office buildings a
+// phone can honestly report >100m accuracy on every fix for minutes at a
+// time, and the old unconditional filter then dropped EVERY fix after the
+// first, so the route never grew past its origin point and no line was ever
+// drawn (reported on device, 2026-08-27).
+//
+// What made that so confusing to diagnose: resume() clears `lastRef`, which
+// makes the next fix count as "first" — and the first fix is always kept.
+// So pausing and resuming was the only way to get a point in, and tracking
+// appeared to work only when the runner poked it.
+//
+// Failing open after a few rejections keeps outlier rejection working while
+// guaranteeing the track can never starve: a degraded route beats no route.
+const MAX_CONSECUTIVE_REJECTS = 3;
 // 3m, not 5: this gates when iOS delivers a callback at all (it maps to
 // CLLocationManager's distanceFilter), so a larger value means a walker sees
 // nothing happen for an uncomfortably long time at the start of a session.
 const DISTANCE_INTERVAL_M = 3;
 const KEEP_AWAKE_TAG = 'territory-session';
+
+/**
+ * Whether a fix should be recorded. Pure, so the rule can be tested without
+ * a device or a React renderer — see test/tracking.test.ts.
+ *
+ * - The first fix of a leg is always kept (a cold receiver's first reading
+ *   is often poor, and rejecting it leaves the run with no origin).
+ * - An isolated poor fix is dropped.
+ * - A SUSTAINED run of poor fixes is accepted, because that is a weak-signal
+ *   environment rather than an outlier, and refusing to record anything is
+ *   worse than recording something imprecise.
+ */
+export function shouldAcceptFix(params: {
+  isFirst: boolean;
+  accuracyM: number | null;
+  consecutiveRejects: number;
+  maxAccuracyM?: number;
+}): boolean {
+  const { isFirst, accuracyM, consecutiveRejects, maxAccuracyM = MIN_ACCURACY_M } = params;
+  if (isFirst) return true;
+  if (accuracyM === null) return true; // no accuracy reported — nothing to judge on
+  if (accuracyM <= maxAccuracyM) return true;
+  return consecutiveRejects >= MAX_CONSECUTIVE_REJECTS;
+}
 
 export interface RunTracker {
   status: TrackStatus;
@@ -59,6 +102,10 @@ export interface RunTracker {
   /** Fixes discarded for poor accuracy. If this climbs while points stay at
    *  zero, the filter is the problem — not permissions. */
   rejectedFixes: number;
+  /** True while the filter is failing open — the signal is poor enough that
+   *  fixes are being recorded despite failing the accuracy bar. Surfaced so
+   *  a degraded track says so instead of quietly looking like a good one. */
+  degradedSignal: boolean;
   /** The most recent RAW fix, before any accuracy filtering. This is what
    *  the map pin/camera should follow during a session: recording quality
    *  and "where is the runner" are different questions, and answering the
@@ -83,6 +130,10 @@ export function useRunTracker(): RunTracker {
   const [lastAccuracyM, setLastAccuracyM] = useState<number | null>(null);
   const [rejectedFixes, setRejectedFixes] = useState(0);
   const [lastFix, setLastFix] = useState<LatLng | null>(null);
+  const [degradedSignal, setDegradedSignal] = useState(false);
+  // A ref, not state: onFix must read the CURRENT count synchronously, and a
+  // state value captured in the callback would be stale.
+  const consecutiveRejectsRef = useRef(0);
 
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
@@ -143,14 +194,24 @@ export function useRunTracker(): RunTracker {
     // delivered newer fixes. Appending it would draw the route backwards.
     if (lastRef.current !== null && loc.timestamp < lastRef.current.ts) return;
 
-    // The FIRST fix is always kept. A cold start often produces one poor
-    // reading before the receiver settles, and rejecting it left the run
-    // with no origin at all — which looked like tracking had never started.
     const isFirst = lastRef.current === null;
-    if (!isFirst && accuracy !== null && accuracy > MIN_ACCURACY_M) {
+    if (
+      !shouldAcceptFix({
+        isFirst,
+        accuracyM: accuracy,
+        consecutiveRejects: consecutiveRejectsRef.current,
+      })
+    ) {
+      consecutiveRejectsRef.current += 1;
       setRejectedFixes((n) => n + 1);
       return;
     }
+    // Accepted despite failing the accuracy bar — the filter has failed open
+    // rather than let the track starve. Worth saying out loud in the UI.
+    const failedOpen =
+      !isFirst && accuracy !== null && accuracy > MIN_ACCURACY_M;
+    setDegradedSignal(failedOpen);
+    consecutiveRejectsRef.current = 0;
 
     const point: TrackPoint = {
       lat: loc.coords.latitude,
@@ -226,6 +287,7 @@ export function useRunTracker(): RunTracker {
 
       clearSub();
       lastRef.current = null;
+      consecutiveRejectsRef.current = 0;
       accumulatedRef.current = 0;
       legStartRef.current = Date.now();
       setPoints([]);
@@ -261,6 +323,7 @@ export function useRunTracker(): RunTracker {
       // Cleared so the first fix after resuming doesn't draw a straight line
       // (and add distance) across wherever the runner moved while paused.
       lastRef.current = null;
+      consecutiveRejectsRef.current = 0;
       legStartRef.current = Date.now();
       await beginRecording();
       setStatus('running');
@@ -294,6 +357,8 @@ export function useRunTracker(): RunTracker {
     // Cleared so a later idle screen doesn't prefer a minutes-old session
     // fix over the live idle watcher's fresh one.
     setLastFix(null);
+    setDegradedSignal(false);
+    consecutiveRejectsRef.current = 0;
     setStatus('idle');
   }, [clearSub]);
 
@@ -308,6 +373,7 @@ export function useRunTracker(): RunTracker {
     lastAccuracyM,
     rejectedFixes,
     lastFix,
+    degradedSignal,
     start,
     pause,
     resume,

@@ -205,3 +205,44 @@ describe('decimate', () => {
     expect(ascending).toBe(true);
   });
 });
+
+// Degenerate shapes. These are not edge cases dreamed up for coverage: a
+// straight there-and-stop walk is the most ordinary thing a person can do
+// with a tracking app, and until 2026-08-27 it CRASHED the Track tab —
+// simplify() threw "invalid polygon, fewer than 4 points" from inside turf
+// during render, at the moment the runner pressed Stop.
+describe('buildFence on shapes that enclose nothing', () => {
+  const O = { lat: 25.6866, lng: -100.3161 };
+  const m = (n: number) => n / 111_320;
+
+  it('returns null for a straight walk instead of throwing', () => {
+    const straight = Array.from({ length: 15 }, (_, i) => ({ lat: O.lat + m(i * 3.5), lng: O.lng }));
+    expect(() => buildFence(straight)).not.toThrow();
+    expect(buildFence(straight)).toBeNull();
+  });
+
+  it('returns null for an out-and-back along the same path', () => {
+    const out = Array.from({ length: 15 }, (_, i) => ({ lat: O.lat + m(i * 3.5), lng: O.lng }));
+    expect(() => buildFence([...out, ...out.slice().reverse()])).not.toThrow();
+    expect(buildFence([...out, ...out.slice().reverse()])).toBeNull();
+  });
+
+  it('never returns a zero-area fence', () => {
+    // A 0 m² territory is not something to offer the runner a Save button for.
+    const straight = Array.from({ length: 8 }, (_, i) => ({ lat: O.lat + m(i * 10), lng: O.lng }));
+    const fence = buildFence(straight);
+    expect(fence === null || fence.areaM2 > 0).toBe(true);
+  });
+
+  it('still builds a real fence from a small loop', () => {
+    const loop = [
+      ...Array.from({ length: 10 }, (_, i) => ({ lat: O.lat + m(i * 5), lng: O.lng })),
+      ...Array.from({ length: 6 }, (_, i) => ({ lat: O.lat + m(50), lng: O.lng + m(i * 5) })),
+      ...Array.from({ length: 10 }, (_, i) => ({ lat: O.lat + m(50 - i * 5), lng: O.lng + m(30) })),
+      ...Array.from({ length: 6 }, (_, i) => ({ lat: O.lat, lng: O.lng + m(30 - i * 5) })),
+    ];
+    const fence = buildFence(loop);
+    expect(fence).not.toBeNull();
+    expect(fence!.areaM2).toBeGreaterThan(500);
+  });
+});
