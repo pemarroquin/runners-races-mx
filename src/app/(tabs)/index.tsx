@@ -39,7 +39,7 @@ import {
   type SyncOutcome,
 } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
-import { enqueueRun, flushQueue, queuedCount } from '@/lib/upload-queue';
+import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
@@ -90,9 +90,12 @@ export default function TrackScreen() {
   // and kept in sync locally so the screen can say a run is safe rather than
   // leaving the runner to guess.
   const [pending, setPending] = useState(0);
-  // True once a failed run has been written to disk — which is what makes
-  // "your run is safe" a true statement rather than a hopeful one.
-  const [queuedThisRun, setQueuedThisRun] = useState(false);
+  // The queue id of this run once it has been written to disk, or null.
+  // An ID rather than a boolean because the run has to be REMOVABLE: a
+  // manual retry that succeeds, or a discard, must take it back out. With
+  // only a flag there was no handle, so a discarded run uploaded itself
+  // later and a successful retry uploaded the same run twice.
+  const [queuedId, setQueuedId] = useState<string | null>(null);
 
   // Drain the queue when the Track tab opens. This is the landing route, so
   // in practice it runs at app start — which is exactly when a run that
@@ -165,8 +168,8 @@ export default function TrackScreen() {
     //
     // This is deliberately a single object rather than two argument lists.
     // The two paths must never disagree about what a run contains — most
-    // sharply about `points`, which privacy masking rewrites (see
-    // privacy-zone.ts). Two separate literals auto-merge without conflict
+    // sharply about `points`, which the privacy-zone branch rewrites to a
+    // masked path. Two separate literals auto-merge without conflict
     // while quietly diverging, which would mean an upload that SUCCEEDS
     // sends the masked path and one that FAILS persists the unmasked one,
     // then ships it on the next app open. Keeping it in one place makes
@@ -183,6 +186,15 @@ export default function TrackScreen() {
     if (outcome.ok) {
       setSaveState('saved');
       setSavedRunId(outcome.runId);
+      // This run may already be queued from an earlier failed attempt. Take
+      // it out now that it is safely on the server, or the next app open
+      // uploads it a second time — a duplicate row whose fence carves
+      // territory off other runners all over again.
+      if (queuedId) {
+        removeQueued(queuedId);
+        setQueuedId(null);
+        setPending(queuedCount());
+      }
       // Best-effort: a failed read here just means no "you took territory"
       // line, never a failed save. The run is already banked.
       const taken = await fetchRunSpoils(outcome.runId);
@@ -195,22 +207,37 @@ export default function TrackScreen() {
       // AND persist it, so closing the tab no longer destroys it either.
       // Only claim it's queued if the write actually succeeded — blocked
       // storage must not produce a false "your run is safe".
-      if (outcome.reason === 'network') {
-        setQueuedThisRun(enqueueRun(payload));
+      // 'auth' as well as 'network' — and that is not defensive padding.
+      // uploadRun calls ensureSession() BEFORE it does anything it maps to
+      // 'network', and ensureSession signs in anonymously, which is itself
+      // a network call. So a first run with no signal fails as 'auth', not
+      // 'network' — precisely the 10km-on-a-trail case this queue exists
+      // for, and it was the one case not being caught.
+      // 'disabled' is excluded: that build cannot upload at all, so queuing
+      // would accumulate runs that never go anywhere.
+      if (outcome.reason === 'network' || outcome.reason === 'auth') {
+        setQueuedId(enqueueRun(payload));
         setPending(queuedCount());
       }
     }
-  }, [fence, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, queuedId, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   const discard = useCallback(() => {
     setSaveState('idle');
     setFailure(null);
     setSavedRunId(null);
     setSpoils(null);
-    setQueuedThisRun(false);
+    // Discard means discard. Leaving the entry on disk uploaded a run the
+    // runner had explicitly thrown away — it would appear in their
+    // territories and take ground off other people days later.
+    if (queuedId) {
+      removeQueued(queuedId);
+      setPending(queuedCount());
+    }
+    setQueuedId(null);
     setPastFencesFailed(false);
     tracker.reset();
-  }, [tracker]);
+  }, [tracker, queuedId]);
 
   // The finished run gets its own scrolling layout: there's a fence image,
   // three stats and two actions to fit, which is more than can sit legibly
@@ -260,7 +287,7 @@ export default function TrackScreen() {
             <Text style={[styles.notice, { color: c.textSecondary }]}>{t('track.noFence')}</Text>
           )}
 
-          {queuedThisRun && (
+          {queuedId !== null && saveState !== 'saved' && (
             <Text style={[styles.notice, { color: c.accent }]}>{t('track.queued')}</Text>
           )}
           {saveState === 'failed' && failure && !failure.ok && (

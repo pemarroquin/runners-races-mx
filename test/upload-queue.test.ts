@@ -13,6 +13,7 @@ import {
   enqueueRun,
   flushQueue,
   listQueued,
+  MAX_ATTEMPTS,
   MAX_QUEUED,
   queuedCount,
   removeQueued,
@@ -48,15 +49,17 @@ beforeEach(() => {
 
 describe('enqueueRun', () => {
   it('persists a failed run so closing the app cannot lose it', () => {
-    expect(enqueueRun(makeRun(1000))).toBe(true);
+    expect(enqueueRun(makeRun(1000))).toBeTypeOf('string');
     expect(queuedCount()).toBe(1);
     expect(listQueued()[0].run.startedAt).toBe(1000);
   });
 
-  it('does not duplicate the same run when a retry fails again', () => {
-    enqueueRun(makeRun(1000));
-    enqueueRun(makeRun(1000));
+  it('does not duplicate the same run, and returns the existing handle', () => {
+    const first = enqueueRun(makeRun(1000));
+    const again = enqueueRun(makeRun(1000));
     expect(queuedCount()).toBe(1);
+    // The caller must still be able to remove it after a retry/discard.
+    expect(again).toBe(first);
   });
 
   it('keeps distinct runs apart', () => {
@@ -86,6 +89,20 @@ describe('listQueued', () => {
     setPref(
       'runUploadQueue',
       JSON.stringify([{ id: 'x', queuedAt: 1, run: { nonsense: true } }]),
+    );
+    expect(listQueued()).toEqual([]);
+  });
+
+  it('rejects a PARTIALLY shaped entry that would crash uploadRun', () => {
+    // typeof [] === 'object', so an array fence used to pass validation and
+    // then threw on fence.geometry.geometry inside uploadRun — which
+    // flushQueue reads as a network failure, parking the bad entry at the
+    // head of the queue forever.
+    setPref(
+      'runUploadQueue',
+      JSON.stringify([
+        { id: 'x', queuedAt: 1, attempts: 0, run: { points: [], fence: [], distanceM: 0, startedAt: 0, endedAt: 0 } },
+      ]),
     );
     expect(listQueued()).toEqual([]);
   });
@@ -146,5 +163,41 @@ describe('removeQueued', () => {
     removeQueued(listQueued()[0].id);
     expect(queuedCount()).toBe(1);
     expect(listQueued()[0].run.startedAt).toBe(2000);
+  });
+});
+
+describe('flushQueue durability', () => {
+  it('abandons an entry that keeps failing instead of blocking the queue forever', async () => {
+    enqueueRun(makeRun(1000));
+    enqueueRun(makeRun(2000));
+    // Head entry always fails; flushQueue stops at the first failure, so
+    // without an attempt cap the second run could never upload.
+    let calls = 0;
+    const headAlwaysFails: Uploader = async (run) => {
+      calls++;
+      return run.startedAt === 1000
+        ? { ok: false, reason: 'network' }
+        : { ok: true, runId: 'r' };
+    };
+    for (let i = 0; i < MAX_ATTEMPTS + 1; i++) await flushQueue(headAlwaysFails);
+    expect(calls).toBeGreaterThan(0);
+    // The poison entry is gone and the good run made it up.
+    expect(queuedCount()).toBe(0);
+  });
+
+  it('refuses to start a second concurrent flush over the same snapshot', async () => {
+    enqueueRun(makeRun(1000));
+    let inFlight = 0;
+    let maxConcurrent = 0;
+    const slow: Uploader = async () => {
+      inFlight++;
+      maxConcurrent = Math.max(maxConcurrent, inFlight);
+      await new Promise((r) => setTimeout(r, 10));
+      inFlight--;
+      return { ok: true, runId: 'r' };
+    };
+    await Promise.all([flushQueue(slow), flushQueue(slow)]);
+    // Two overlapping flushes would upload the same run twice.
+    expect(maxConcurrent).toBe(1);
   });
 });

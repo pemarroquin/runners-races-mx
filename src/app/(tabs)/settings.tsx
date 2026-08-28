@@ -18,6 +18,7 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
+import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
@@ -139,7 +140,12 @@ export default function SettingsScreen() {
     // Once the OS has permanently denied, asking again silently no-ops —
     // the only real fix is the system settings app, so send them there
     // instead of showing a button that appears to do nothing.
-    if (locPerm && !locPerm.canAskAgain) {
+    // react-native-web's Linking shim has NO openSettings — calling it
+    // throws a TypeError inside an async handler with nobody to catch it,
+    // and tsc can't see that because the react-native types declare it.
+    // On web the runner unblocks the site in the browser's own UI, so the
+    // honest move is to say that rather than to fake a button.
+    if (locPerm && !locPerm.canAskAgain && Platform.OS !== 'web') {
       Linking.openSettings().catch(() => {});
       return;
     }
@@ -330,7 +336,9 @@ export default function SettingsScreen() {
               <Text style={[styles.locAction, { color: c.accent, opacity: locBusy ? 0.5 : 1 }]}>
                 {locPerm.canAskAgain
                   ? t('settings.locationEnable')
-                  : t('settings.locationOpenSettings')}
+                  : Platform.OS === 'web'
+                    ? t('settings.locationBrowserBlocked')
+                    : t('settings.locationOpenSettings')}
               </Text>
             </Pressable>
           )}
@@ -386,6 +394,10 @@ export default function SettingsScreen() {
             // of it.
             t('privacy.collectedTerritory'),
             t('privacy.collectedIdentity'),
+            // A failed run is now held on the device until it uploads —
+            // new at-rest location storage, so it is disclosed here in the
+            // same change that introduced it.
+            t('privacy.collectedQueue'),
             // Phase 2 made territory visible to other runners; this is the
             // paragraph that says so. Added in the same change as the
             // leaderboard, not after it.

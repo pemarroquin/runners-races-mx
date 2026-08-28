@@ -14,10 +14,16 @@
 // one JSON blob, which is fine at this size — see MAX_QUEUED.
 //
 // WHAT IT STORES. Exactly the RunUpload payload that uploadRun takes, built
-// by the caller. That matters for privacy: the Track screen passes the
-// MASKED path (see privacy-zone.ts), so the queue never holds coordinates
-// that wouldn't have been uploaded anyway. Nothing here re-derives the
-// payload, precisely so it can't diverge from what would have been sent.
+// by the caller — never re-derived here, precisely so the queued copy can't
+// diverge from what would have been sent.
+//
+// That property is what makes the privacy-zone work (a separate branch)
+// correct by construction rather than by remembering: whatever path the
+// caller decides to upload is the path that gets stored. TODAY, on this
+// branch, no masking exists, so this holds the RAW track — including the
+// runner's start and finish points — at rest in SQLite/localStorage until
+// it uploads. That is new at-rest storage of precise location, and the
+// privacy copy in settings.tsx says so.
 import { getPref, initDb, setPref } from '@/lib/db';
 import type { RunUpload } from '@/lib/territory-sync';
 
@@ -52,7 +58,19 @@ export interface QueuedRun {
   id: string;
   queuedAt: number;
   run: RunUpload;
+  /** Failed upload attempts. Without this a single un-uploadable entry sits
+   *  at the head of the queue forever and blocks every run behind it, since
+   *  flushQueue stops at the first failure. */
+  attempts: number;
 }
+
+/**
+ * Attempts before an entry is abandoned. A run that has failed this many
+ * times is not failing on the network — it is malformed, or violates a
+ * constraint the server will never accept — and keeping it costs every
+ * later run its upload.
+ */
+export const MAX_ATTEMPTS = 8;
 
 /** Local id — only ever used to remove the right entry from this queue, so
  *  it needs to be unique on one device, not globally. */
@@ -72,13 +90,26 @@ function isQueuedRun(value: unknown): value is QueuedRun {
   if (typeof q.id !== 'string' || typeof q.queuedAt !== 'number') return false;
   const run = q.run as Partial<RunUpload> | undefined;
   if (!run || typeof run !== 'object') return false;
-  return (
-    Array.isArray(run.points) &&
-    typeof run.distanceM === 'number' &&
-    typeof run.startedAt === 'number' &&
-    typeof run.endedAt === 'number' &&
-    typeof run.fence === 'object' &&
-    run.fence !== null
+  if (
+    !Array.isArray(run.points) ||
+    typeof run.distanceM !== 'number' ||
+    typeof run.startedAt !== 'number' ||
+    typeof run.endedAt !== 'number'
+  ) {
+    return false;
+  }
+  // `typeof [] === 'object'`, so an array fence passed the old check and
+  // then blew up inside uploadRun reading fence.geometry.geometry. Validate
+  // the shape that is actually dereferenced, not merely "is an object".
+  const fence = run.fence as Partial<RunUpload['fence']> | undefined;
+  if (!fence || typeof fence !== 'object' || Array.isArray(fence)) return false;
+  if (typeof fence.areaM2 !== 'number') return false;
+  const feature = fence.geometry as { geometry?: unknown } | undefined;
+  if (!feature || typeof feature !== 'object' || !feature.geometry) return false;
+  // Points must be real coordinates — an empty array is valid JSON and a
+  // useless upload.
+  return run.points.every(
+    (pt) => pt && typeof pt.lat === 'number' && typeof pt.lng === 'number',
   );
 }
 
@@ -106,26 +137,35 @@ function writeQueue(queue: QueuedRun[]): boolean {
 }
 
 /**
- * Persists a run that failed to upload. Returns false if storage rejected
- * the write — the caller must then keep telling the runner the run is only
- * in memory, because claiming it is safe when it isn't is the one outcome
- * this whole module exists to prevent.
+ * Persists a run that failed to upload.
+ *
+ * Returns the queue id, or null if storage rejected the write — the caller
+ * must then keep telling the runner the run is only in memory, because
+ * claiming it is safe when it isn't is the one outcome this whole module
+ * exists to prevent.
+ *
+ * The ID IS THE POINT, not a convenience: the caller has to be able to take
+ * the run back out again when a manual retry succeeds, or when the runner
+ * discards it. Returning a bare boolean left no handle, so a discarded run
+ * uploaded itself later and a successful retry uploaded twice.
  */
-export function enqueueRun(run: RunUpload): boolean {
+export function enqueueRun(run: RunUpload): string | null {
   const queue = listQueued();
   // Same run twice (a retry that failed again) — match on the timestamps,
-  // which uniquely identify a session on this device.
-  const duplicate = queue.some(
+  // which uniquely identify a session on this device. Return the EXISTING
+  // id so the caller still has a handle on it.
+  const duplicate = queue.find(
     (q) => q.run.startedAt === run.startedAt && q.run.endedAt === run.endedAt,
   );
-  if (duplicate) return true;
+  if (duplicate) return duplicate.id;
 
-  const next = [...queue, { id: localId(), queuedAt: Date.now(), run }];
+  const id = localId();
+  const next = [...queue, { id, queuedAt: Date.now(), run, attempts: 0 }];
   // Drop the OLDEST when full: the newest run is the one the runner just
   // finished and is actively watching, so losing that one would be the most
   // visible possible failure.
   const trimmed = next.length > MAX_QUEUED ? next.slice(next.length - MAX_QUEUED) : next;
-  return writeQueue(trimmed);
+  return writeQueue(trimmed) ? id : null;
 }
 
 export function removeQueued(id: string): boolean {
@@ -140,8 +180,18 @@ export interface FlushResult {
   uploaded: number;
   remaining: number;
   /** Why it stopped early, if it did. Null when the queue drained. */
-  stoppedBecause: SyncFailureReason | null;
+  stoppedBecause: SyncFailureReason | 'storage' | null;
+  /** Entries abandoned after MAX_ATTEMPTS. Non-zero means runs were thrown
+   *  away — the caller should say so rather than reporting a clean drain. */
+  abandoned: number;
 }
+
+// Module-level, deliberately: the guard has to hold across every caller and
+// every remount, not per component instance. Without it, leaving and
+// re-entering the Track tab starts a SECOND flush over the same un-drained
+// snapshot and uploads every run in it twice — React 19's double-invoked
+// effects reproduce that in development on their own.
+let flushing = false;
 
 /**
  * Tries to upload everything queued, oldest first.
@@ -152,25 +202,65 @@ export interface FlushResult {
  * times. The queue is preserved either way; the next flush picks it up.
  */
 export async function flushQueue(upload: Uploader): Promise<FlushResult> {
-  const queue = listQueued();
-  if (queue.length === 0) {
-    return { uploaded: 0, remaining: 0, stoppedBecause: null };
+  if (flushing) {
+    // Already draining. Reporting the current depth is honest; starting a
+    // second pass over the same entries is not.
+    return { uploaded: 0, remaining: queuedCount(), stoppedBecause: null, abandoned: 0 };
   }
-
-  let uploaded = 0;
-  for (const item of queue) {
-    const outcome = await upload(item.run);
-    if (!outcome.ok) {
-      return {
-        uploaded,
-        remaining: queue.length - uploaded,
-        stoppedBecause: outcome.reason,
-      };
+  flushing = true;
+  try {
+    const queue = listQueued();
+    if (queue.length === 0) {
+      return { uploaded: 0, remaining: 0, stoppedBecause: null, abandoned: 0 };
     }
-    // Removed one at a time, re-reading the queue each write, so an app kill
-    // mid-flush can at worst re-upload a run rather than lose the rest.
-    removeQueued(item.id);
-    uploaded++;
+
+    let uploaded = 0;
+    let abandoned = 0;
+    for (const item of queue) {
+      const outcome = await upload(item.run);
+
+      if (!outcome.ok) {
+        const attempts = item.attempts + 1;
+        if (attempts >= MAX_ATTEMPTS) {
+          // Give up on this one so it stops blocking everything behind it.
+          // Repeated failure at this point is a run the server will never
+          // accept, not a network blip.
+          removeQueued(item.id);
+          abandoned++;
+          continue;
+        }
+        bumpAttempts(item.id, attempts);
+        return {
+          uploaded,
+          remaining: queue.length - uploaded - abandoned,
+          stoppedBecause: outcome.reason,
+          abandoned,
+        };
+      }
+
+      // Removed one at a time, re-reading the queue each write, so an app kill
+      // mid-flush can at worst re-upload a run rather than lose the rest.
+      //
+      // The RESULT IS CHECKED. If the store refuses the write the run is
+      // still on disk, and reporting a clean drain would mean re-uploading
+      // it on every future launch — a duplicate row and duplicate territory
+      // theft each time, with the UI showing all-clear.
+      if (!removeQueued(item.id)) {
+        return {
+          uploaded,
+          remaining: queue.length - uploaded - abandoned,
+          stoppedBecause: 'storage',
+          abandoned,
+        };
+      }
+      uploaded++;
+    }
+    return { uploaded, remaining: 0, stoppedBecause: null, abandoned };
+  } finally {
+    flushing = false;
   }
-  return { uploaded, remaining: 0, stoppedBecause: null };
+}
+
+function bumpAttempts(id: string, attempts: number): void {
+  writeQueue(listQueued().map((q) => (q.id === id ? { ...q, attempts } : q)));
 }

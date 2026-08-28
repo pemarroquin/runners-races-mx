@@ -149,7 +149,20 @@ export function buildFence(path: LatLng[], toleranceDeg = DEFAULT_TOLERANCE_DEG)
     // runner a 0 m² territory to save.
     if (!Number.isFinite(areaM2) || areaM2 <= 0) return null;
     return { geometry: cleaned, areaM2 };
-  } catch {
+  } catch (e) {
+    // The catch spans cleanPolygon() too, whose union()/unkinkPolygon()
+    // backend is known to throw on numerically unstable input ("Unable to
+    // complete output ring") — which a long, messy city loop can produce.
+    // That is NOT the collinear case above, and silently returning null
+    // tells a runner who just did 15km that their "route was too short",
+    // with the Save button gated off and nothing recorded anywhere.
+    //
+    // Still returns null (the screen must not crash), but says so, so the
+    // difference between "you walked in a line" and "turf fell over on your
+    // real run" is recoverable from a log instead of invisible.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[buildFence] geometry pipeline threw; treating as no fence', e);
+    }
     return null;
   }
 }

@@ -137,6 +137,18 @@ const GLYPHS: Record<string, Glyph> = {
   // on native for a full session before anyone noticed they drew nothing on
   // web — the third time this exact trap has been hit. Add the glyph in the
   // SAME change as the call site.
+  location_on: (c) => (
+    <>
+      <path
+        d="M12 21.2s6.6-6.1 6.6-11a6.6 6.6 0 1 0-13.2 0c0 4.9 6.6 11 6.6 11z"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10.1" r="2.4" stroke={c} strokeWidth={1.8} fill="none" />
+    </>
+  ),
   warning: (c) => (
     <>
       <path
