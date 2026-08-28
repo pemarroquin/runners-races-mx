@@ -84,6 +84,12 @@ const translations = {
       syncDisabled: 'El guardado en línea no está configurado en esta versión.',
       retry: 'Reintentar',
       pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
+      queued:
+        'Guardamos tu sesión en el teléfono. La subiremos sola la próxima vez que abras la app con señal — ya no se pierde si cierras.',
+      pendingUploads: {
+        one: '1 sesión pendiente de subir. Lo intentamos de nuevo ahora.',
+        other: '%{count} sesiones pendientes de subir. Lo intentamos de nuevo ahora.',
+      } as PluralForm,
       tookArea: 'Le quitaste %{area}',
       tookFrom: {
         one: 'a 1 corredor',
@@ -330,6 +336,12 @@ const translations = {
       syncDisabled: 'Online saving is not configured in this build.',
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
+      queued:
+        "Saved to your phone. We'll upload it automatically next time you open the app with a signal — closing the app won't lose it now.",
+      pendingUploads: {
+        one: '1 session waiting to upload. Trying again now.',
+        other: '%{count} sessions waiting to upload. Trying again now.',
+      } as PluralForm,
       tookArea: 'You took %{area}',
       tookFrom: {
         one: 'from 1 runner',

@@ -39,6 +39,7 @@ import {
   type SyncOutcome,
 } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
+import { enqueueRun, flushQueue, queuedCount } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
@@ -85,6 +86,36 @@ export default function TrackScreen() {
   const [spoils, setSpoils] = useState<RunSpoils | null>(null);
   const [pastFences, setPastFences] = useState<MyFence[]>([]);
   const [pastFencesFailed, setPastFencesFailed] = useState(false);
+  // Runs that failed to upload and are waiting on the device. Read on mount
+  // and kept in sync locally so the screen can say a run is safe rather than
+  // leaving the runner to guess.
+  const [pending, setPending] = useState(0);
+  // True once a failed run has been written to disk — which is what makes
+  // "your run is safe" a true statement rather than a hopeful one.
+  const [queuedThisRun, setQueuedThisRun] = useState(false);
+
+  // Drain the queue when the Track tab opens. This is the landing route, so
+  // in practice it runs at app start — which is exactly when a run that
+  // failed on a trail yesterday should quietly go up.
+  useEffect(() => {
+    if (!isFocused) return;
+    let stale = false;
+    const id = setTimeout(() => {
+      const before = queuedCount();
+      if (before === 0) {
+        setPending(0);
+        return;
+      }
+      setPending(before);
+      flushQueue(uploadRun).then((result) => {
+        if (!stale) setPending(result.remaining);
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [isFocused]);
 
   // This run's fence colour — deterministic from startedAt, so the live
   // ribbon, the summary highlight, and the Saved tab all derive the same
@@ -148,6 +179,21 @@ export default function TrackScreen() {
       // a failed upload would destroy the thing the runner just earned.
       setSaveState('failed');
       setFailure(outcome);
+      // AND persist it, so closing the tab no longer destroys it either.
+      // Only claim it's queued if the write actually succeeded — blocked
+      // storage must not produce a false "your run is safe".
+      if (outcome.reason === 'network') {
+        setQueuedThisRun(
+          enqueueRun({
+            points: tracker.points,
+            fence,
+            distanceM: tracker.distanceM,
+            startedAt: tracker.startedAt,
+            endedAt: tracker.endedAt,
+          }),
+        );
+        setPending(queuedCount());
+      }
     }
   }, [fence, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
@@ -156,6 +202,7 @@ export default function TrackScreen() {
     setFailure(null);
     setSavedRunId(null);
     setSpoils(null);
+    setQueuedThisRun(false);
     setPastFencesFailed(false);
     tracker.reset();
   }, [tracker]);
@@ -208,6 +255,9 @@ export default function TrackScreen() {
             <Text style={[styles.notice, { color: c.textSecondary }]}>{t('track.noFence')}</Text>
           )}
 
+          {queuedThisRun && (
+            <Text style={[styles.notice, { color: c.accent }]}>{t('track.queued')}</Text>
+          )}
           {saveState === 'failed' && failure && !failure.ok && (
             <Text style={[styles.notice, { color: c.accent }]}>
               {failure.reason === 'disabled'
@@ -374,6 +424,11 @@ export default function TrackScreen() {
           ) : (
             <>
               <Text style={[styles.stageTitle, { color: c.text }]}>{t('track.newSession')}</Text>
+              {pending > 0 && (
+                <Text style={[styles.overlayNotice, { color: c.text }]}>
+                  {t('track.pendingUploads', { count: pending })}
+                </Text>
+              )}
               {tracker.error === 'permission' && (
                 <Text style={[styles.overlayNotice, { color: c.text }]}>{t('track.permission')}</Text>
               )}
