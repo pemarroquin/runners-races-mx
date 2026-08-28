@@ -160,13 +160,26 @@ export default function TrackScreen() {
     if (!fence || tracker.startedAt === null || tracker.endedAt === null) return;
     setSaveState('saving');
     setFailure(null);
-    const outcome = await uploadRun({
+
+    // ONE payload, built once, used by BOTH the upload and the retry queue.
+    //
+    // This is deliberately a single object rather than two argument lists.
+    // The two paths must never disagree about what a run contains — most
+    // sharply about `points`, which privacy masking rewrites (see
+    // privacy-zone.ts). Two separate literals auto-merge without conflict
+    // while quietly diverging, which would mean an upload that SUCCEEDS
+    // sends the masked path and one that FAILS persists the unmasked one,
+    // then ships it on the next app open. Keeping it in one place makes
+    // that divergence impossible to introduce by accident.
+    const payload = {
       points: tracker.points,
       fence,
       distanceM: tracker.distanceM,
       startedAt: tracker.startedAt,
       endedAt: tracker.endedAt,
-    });
+    };
+
+    const outcome = await uploadRun(payload);
     if (outcome.ok) {
       setSaveState('saved');
       setSavedRunId(outcome.runId);
@@ -183,15 +196,7 @@ export default function TrackScreen() {
       // Only claim it's queued if the write actually succeeded — blocked
       // storage must not produce a false "your run is safe".
       if (outcome.reason === 'network') {
-        setQueuedThisRun(
-          enqueueRun({
-            points: tracker.points,
-            fence,
-            distanceM: tracker.distanceM,
-            startedAt: tracker.startedAt,
-            endedAt: tracker.endedAt,
-          }),
-        );
+        setQueuedThisRun(enqueueRun(payload));
         setPending(queuedCount());
       }
     }
