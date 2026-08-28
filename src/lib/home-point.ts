@@ -7,7 +7,7 @@
 // it inherits that store's behaviour: it survives restarts, it is wiped by
 // deleting the app or clearing site data, and a browser that blocks storage
 // degrades to "no zone" rather than throwing.
-import { getPref, setPref } from '@/lib/db';
+import { getPref, initDb, setPref } from '@/lib/db';
 import { DEFAULT_ZONE_RADIUS_M, type PrivacyZone } from '@/lib/privacy-zone';
 import type { LatLng } from '@/lib/territory';
 
@@ -22,6 +22,17 @@ const PREF_HOME_POINT = 'privacyHomePoint';
  * strictly enough that a half-written record can't read as valid coordinates.
  */
 export function getHomeZone(): PrivacyZone | null {
+  // initDb() defensively, the same way races.ts and splash.tsx do: getPref
+  // returns null until the store is open, and this is read from the Track
+  // screen's finish handler, which has no ordering guarantee against the
+  // providers that would otherwise have opened it.
+  //
+  // The failure this prevents is silent and points the WRONG WAY. A null
+  // here does not read as an error — it reads as "this runner has no
+  // privacy zone", so masking is skipped and the run uploads real home
+  // coordinates. A privacy control that fails open must not depend on
+  // provider ordering. initDb is idempotent.
+  initDb();
   const raw = getPref(PREF_HOME_POINT);
   if (!raw) return null;
   try {
@@ -48,6 +59,7 @@ export function getHomeZone(): PrivacyZone | null {
 
 /** Saves the zone. Returns false if the store rejected it (blocked storage). */
 export function setHomeZone(home: LatLng, radiusM = DEFAULT_ZONE_RADIUS_M): boolean {
+  initDb();
   return setPref(
     PREF_HOME_POINT,
     JSON.stringify({ lat: home.lat, lng: home.lng, radiusM }),
@@ -56,5 +68,6 @@ export function setHomeZone(home: LatLng, radiusM = DEFAULT_ZONE_RADIUS_M): bool
 
 /** Removes the zone — runs upload unmasked again. */
 export function clearHomeZone(): boolean {
+  initDb();
   return setPref(PREF_HOME_POINT, '');
 }
