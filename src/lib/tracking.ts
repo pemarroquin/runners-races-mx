@@ -201,6 +201,15 @@ export function useRunTracker(): RunTracker {
   }, [status]);
 
   const onFix = useCallback((fix: GeoFix) => {
+    // Clear a stale error the moment a fix arrives. Per the W3C Geolocation
+    // spec, watchPosition's error callback fires on TIMEOUT WITHOUT tearing
+    // down the watch — so a runner passing under a bridge saw "location
+    // unavailable" and it never left for the rest of an otherwise fine run
+    // (Web-First Pilot P0.1, bug 2). Functional form: avoids capturing a
+    // stale `error` (keeps this callback's deps at []) and returning the
+    // same reference when already null lets React bail the re-render.
+    setError((cur) => (cur === null ? cur : null));
+
     const accuracy = fix.accuracyM;
     setLastAccuracyM(accuracy);
     // Raw position, before ANY filtering — the map follows this. See the
@@ -280,7 +289,7 @@ export function useRunTracker(): RunTracker {
     if (cached) onFix(cached);
 
     subRef.current = await watchPosition(
-      { timeIntervalMs: TIME_INTERVAL_MS, distanceIntervalM: DISTANCE_INTERVAL_M },
+      { timeIntervalMs: TIME_INTERVAL_MS, distanceIntervalM: DISTANCE_INTERVAL_M, highAccuracy: true },
       onFix,
       onWatchError,
     );

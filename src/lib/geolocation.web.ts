@@ -36,6 +36,11 @@ export interface GeoFix {
 export interface GeoWatchOptions {
   timeIntervalMs: number;
   distanceIntervalM: number;
+  /** Balanced accuracy for a watch that only has to keep a map pin honest
+   *  (use-current-location.ts); high accuracy for the run tracker, which
+   *  needs BestForNavigation-grade fixes. See tracking.ts / use-current-location.ts
+   *  callers. */
+  highAccuracy: boolean;
 }
 export interface GeoWatch {
   remove(): void;
@@ -43,13 +48,26 @@ export interface GeoWatch {
 export type GeoPermission = 'granted' | 'denied' | 'unavailable';
 export type GeoErrorKind = 'permission' | 'unavailable' | 'timeout';
 
-// Options for both the one-shot calls and the watch. maximumAge: 0 so a
-// stale OS-cached fix never masquerades as fresh — staleness is handled
-// explicitly by getLastKnown() below instead.
+// Options for the one-shot calls and (with enableHighAccuracy overridden per
+// GeoWatchOptions.highAccuracy) the watch. maximumAge: 0 so a stale OS-cached
+// fix never masquerades as fresh — staleness is handled explicitly by
+// getLastKnown() below instead.
 const POSITION_OPTIONS: PositionOptions = {
   enableHighAccuracy: true,
   maximumAge: 0,
   timeout: 30_000,
+};
+
+// The permission probe (requestPermission()'s fallback below) only needs to
+// answer "is this origin allowed to see location", not "where is the
+// device" — so it asks cheaply. Using POSITION_OPTIONS here (high accuracy,
+// 30s timeout) meant a cold high-accuracy fix in an urban canyon could blow
+// past 30s, and start() in tracking.ts awaits this probe, so Start refused
+// to begin on a phone with perfectly good GPS (Web-First Pilot P0.1, bug 1).
+const PERMISSION_PROBE_OPTIONS: PositionOptions = {
+  enableHighAccuracy: false,
+  maximumAge: Infinity,
+  timeout: 10_000,
 };
 
 function toFix(position: GeolocationPosition): GeoFix {
@@ -102,8 +120,19 @@ export async function requestPermission(): Promise<GeoPermission> {
         lastKnown = toFix(position);
         resolve('granted');
       },
-      (err) => resolve(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
-      POSITION_OPTIONS,
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          resolve('denied');
+          return;
+        }
+        // A TIMEOUT here means the user allowed access and the receiver is
+        // merely slow to produce a fix — a different code (PERMISSION_DENIED)
+        // covers an actual denial. Treating a slow probe as a denial refused
+        // Start on a phone with perfectly good GPS; the real watch (with its
+        // own, longer timeout) is what actually recovers.
+        resolve(err.code === err.TIMEOUT ? 'granted' : 'unavailable');
+      },
+      PERMISSION_PROBE_OPTIONS,
     );
   });
 }
@@ -170,7 +199,11 @@ export async function watch(
       if (removed) return;
       onError(mapError(err)); // defect c: the shim never wired this at all
     },
-    POSITION_OPTIONS, // defect b: enableHighAccuracy now actually reaches the browser
+    // defect b: enableHighAccuracy now actually reaches the browser.
+    // enableHighAccuracy itself comes from the caller (tracking.ts wants
+    // BestForNavigation-grade fixes; use-current-location.ts's idle pin
+    // doesn't and shouldn't pay that battery cost — P0.1 bug 3).
+    { ...POSITION_OPTIONS, enableHighAccuracy: opts.highAccuracy },
   );
 
   return {

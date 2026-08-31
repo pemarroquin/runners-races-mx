@@ -108,7 +108,7 @@ export function useCurrentLocation({
 
     (async () => {
       sub = await watchPosition(
-        { timeIntervalMs: 4000, distanceIntervalM: 10 },
+        { timeIntervalMs: 4000, distanceIntervalM: 10, highAccuracy: false },
         (fix) => {
           if (cancelled) return;
           setCoords({ lat: fix.lat, lng: fix.lng });

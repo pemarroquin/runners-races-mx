@@ -10,7 +10,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { GeoFix } from '../src/lib/geolocation.web';
-import { watch } from '../src/lib/geolocation.web';
+import { requestPermission, watch } from '../src/lib/geolocation.web';
 import { shouldAcceptFix } from '../src/lib/tracking';
 
 describe('shouldAcceptFix', () => {
@@ -90,11 +90,22 @@ describe('shouldAcceptFix', () => {
 class FakeGeolocation {
   private success: PositionCallback | null = null;
   private error: PositionErrorCallback | null = null;
+  private currentSuccess: PositionCallback | null = null;
+  private currentError: PositionErrorCallback | null = null;
   lastWatchId = 0;
+  /** Options watchPosition() was last called with — lets a test assert what
+   *  actually reaches the browser (e.g. enableHighAccuracy). */
+  lastWatchOptions: PositionOptions | undefined;
+  lastGetCurrentOptions: PositionOptions | undefined;
 
-  watchPosition(success: PositionCallback, error?: PositionErrorCallback | null): number {
+  watchPosition(
+    success: PositionCallback,
+    error?: PositionErrorCallback | null,
+    options?: PositionOptions,
+  ): number {
     this.success = success;
     this.error = error ?? null;
+    this.lastWatchOptions = options;
     this.lastWatchId += 1;
     return this.lastWatchId;
   }
@@ -103,8 +114,14 @@ class FakeGeolocation {
     // Intentionally a no-op — see the class comment.
   }
 
-  getCurrentPosition(): void {
-    // Unused by these tests.
+  getCurrentPosition(
+    success: PositionCallback,
+    error?: PositionErrorCallback | null,
+    options?: PositionOptions,
+  ): void {
+    this.currentSuccess = success;
+    this.currentError = error ?? null;
+    this.lastGetCurrentOptions = options;
   }
 
   trigger(position: GeolocationPosition): void {
@@ -113,6 +130,14 @@ class FakeGeolocation {
 
   triggerError(err: GeolocationPositionError): void {
     this.error?.(err);
+  }
+
+  triggerCurrent(position: GeolocationPosition): void {
+    this.currentSuccess?.(position);
+  }
+
+  triggerCurrentError(err: GeolocationPositionError): void {
+    this.currentError?.(err);
   }
 }
 
@@ -153,7 +178,7 @@ describe('geolocation.web watch()', () => {
     vi.stubGlobal('navigator', { geolocation: fakeGeo });
     const fixes: GeoFix[] = [];
 
-    await watch({ timeIntervalMs: 2000, distanceIntervalM: 5 }, (f) => fixes.push(f), () => {});
+    await watch({ timeIntervalMs: 2000, distanceIntervalM: 5, highAccuracy: true }, (f) => fixes.push(f), () => {});
 
     fakeGeo.trigger(makePosition(19.4, -99.1, 0)); // first fix — always emits
     fakeGeo.trigger(makePosition(19.4, -99.1, 1000)); // 1s, 0m — both fail, dropped
@@ -168,7 +193,7 @@ describe('geolocation.web watch()', () => {
     vi.stubGlobal('navigator', { geolocation: fakeGeo });
     const fixes: GeoFix[] = [];
 
-    await watch({ timeIntervalMs: 999_999, distanceIntervalM: 999_999 }, (f) => fixes.push(f), () => {});
+    await watch({ timeIntervalMs: 999_999, distanceIntervalM: 999_999, highAccuracy: true }, (f) => fixes.push(f), () => {});
     fakeGeo.trigger(makePosition(19.4, -99.1, 0));
 
     expect(fixes).toHaveLength(1);
@@ -179,7 +204,7 @@ describe('geolocation.web watch()', () => {
     vi.stubGlobal('navigator', { geolocation: fakeGeo });
     const fixes: GeoFix[] = [];
 
-    const sub = await watch({ timeIntervalMs: 0, distanceIntervalM: 0 }, (f) => fixes.push(f), () => {});
+    const sub = await watch({ timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true }, (f) => fixes.push(f), () => {});
     sub.remove();
     fakeGeo.trigger(makePosition(19.4, -99.1, 0));
 
@@ -195,9 +220,56 @@ describe('geolocation.web watch()', () => {
     vi.stubGlobal('navigator', { geolocation: fakeGeo });
     const kinds: string[] = [];
 
-    await watch({ timeIntervalMs: 0, distanceIntervalM: 0 }, () => {}, (kind) => kinds.push(kind));
+    await watch({ timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true }, () => {}, (kind) => kinds.push(kind));
     fakeGeo.triggerError(makeError(code));
 
     expect(kinds).toEqual([expectedKind]);
+  });
+
+  it("forwards GeoWatchOptions.highAccuracy as the browser's enableHighAccuracy", async () => {
+    const fakeGeoOff = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeoOff });
+    await watch({ timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: false }, () => {}, () => {});
+    expect(fakeGeoOff.lastWatchOptions?.enableHighAccuracy).toBe(false);
+
+    const fakeGeoOn = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeoOn });
+    await watch({ timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true }, () => {}, () => {});
+    expect(fakeGeoOn.lastWatchOptions?.enableHighAccuracy).toBe(true);
+  });
+});
+
+// requestPermission()'s fallback probe (navigator.permissions unavailable, or
+// its query resolved 'prompt'). P0.1 bug 1: the probe used to reuse the
+// high-accuracy, 30s-timeout POSITION_OPTIONS meant for the real watch — a
+// cold high-accuracy fix in an urban canyon can exceed 30s, and start() in
+// tracking.ts awaits this probe, so a TIMEOUT there hard-failed Start on a
+// phone with perfectly good GPS. A TIMEOUT means the user allowed access and
+// the receiver is merely slow (PERMISSION_DENIED is the separate code for an
+// actual denial) — the watcher, with its own longer timeout, is what
+// actually recovers.
+describe('geolocation.web requestPermission() probe', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('resolves granted on a probe TIMEOUT, not unavailable', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+
+    const resultPromise = requestPermission();
+    fakeGeo.triggerCurrentError(makeError(3)); // TIMEOUT
+
+    expect(await resultPromise).toBe('granted');
+  });
+
+  it('still resolves denied on PERMISSION_DENIED', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+
+    const resultPromise = requestPermission();
+    fakeGeo.triggerCurrentError(makeError(1)); // PERMISSION_DENIED
+
+    expect(await resultPromise).toBe('denied');
   });
 });

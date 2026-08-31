@@ -28,6 +28,11 @@ export interface GeoFix {
 export interface GeoWatchOptions {
   timeIntervalMs: number;
   distanceIntervalM: number;
+  /** BestForNavigation for the run tracker; Balanced for a watch that only
+   *  has to keep a map pin honest (use-current-location.ts's idle Track tab
+   *  pin — that doesn't need, and shouldn't pay for, navigation-grade GPS
+   *  power draw). Restores the pre-P0 native behaviour. */
+  highAccuracy: boolean;
 }
 export interface GeoWatch {
   remove(): void;
@@ -81,7 +86,7 @@ export async function watch(
   try {
     const sub = await Location.watchPositionAsync(
       {
-        accuracy: Location.Accuracy.BestForNavigation,
+        accuracy: opts.highAccuracy ? Location.Accuracy.BestForNavigation : Location.Accuracy.Balanced,
         timeInterval: opts.timeIntervalMs,
         distanceInterval: opts.distanceIntervalM,
       },
