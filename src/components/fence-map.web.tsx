@@ -6,6 +6,13 @@
 //
 // The new fence's fill fades in via a paint transition — GL interpolates
 // fill-opacity on the GPU, same trick as the wall rise on the live map.
+//
+// Every custom layer sets a `slot` and `*-emissive-strength` — see
+// track-map.web.tsx's header and constants/map.ts. The outline
+// (NEW_LINE_SRC) also gets a fallback `line-color` and now stages its real
+// data through setData() after an empty addSource(), same as the live
+// route — it was rendering pure black (Mapbox's default line-color) despite
+// line-gradient being set and lineMetrics being true (P3 §7c).
 import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
@@ -13,7 +20,10 @@ import { StyleSheet, View } from 'react-native';
 import type { Feature, MultiPolygon, Polygon as GeoPolygon, Position } from 'geojson';
 
 import {
+  EMISSIVE_STRENGTH_FULL,
   fenceColorForRun,
+  MAP_SLOT_FILL,
+  MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
   ROUTE_GRADIENT,
   ROUTE_LINE_WIDTH,
@@ -123,13 +133,20 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
           id: PAST_SRC,
           type: 'fill',
           source: PAST_SRC,
-          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.16 },
+          slot: MAP_SLOT_FILL,
+          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.16, 'fill-emissive-strength': EMISSIVE_STRENGTH_FULL },
         });
         map.addLayer({
           id: `${PAST_SRC}-line`,
           type: 'line',
           source: PAST_SRC,
-          paint: { 'line-color': ['get', 'color'], 'line-opacity': 0.5, 'line-width': 1 },
+          slot: MAP_SLOT_ROUTE,
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-opacity': 0.5,
+            'line-width': 1,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
         });
 
         map.addSource(NEW_SRC, {
@@ -140,10 +157,12 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
           id: NEW_SRC,
           type: 'fill',
           source: NEW_SRC,
+          slot: MAP_SLOT_FILL,
           paint: {
             'fill-color': c,
             'fill-opacity': 0,
             'fill-opacity-transition': { duration: 900, delay: 200 },
+            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
         // Kicked on the next frame so the transition actually runs — setting
@@ -156,10 +175,49 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
         // Gradient outline: line-gradient needs lineMetrics, which only
         // applies to LineStrings — so the outline is its own source built
         // from the outer ring(s), not the polygon reused.
+        //
+        // Created EMPTY, then setData()'d on the next frame — mirroring
+        // track-map.web.tsx's live route (the ONE call site where
+        // line-gradient is confirmed working on device) rather than baking
+        // the real FeatureCollection straight into addSource() as this used
+        // to. The two call sites otherwise looked identical (same
+        // lineMetrics:true, same flattened interpolate expression), so
+        // whatever GL JS needs internally to compute line-progress
+        // correctly, going through setData() is the one thing proven to
+        // trigger it.
         map.addSource(NEW_LINE_SRC, {
           type: 'geojson',
           lineMetrics: true,
-          data: {
+          data: { type: 'FeatureCollection', features: [] },
+        });
+        map.addLayer({
+          id: NEW_LINE_SRC,
+          type: 'line',
+          source: NEW_LINE_SRC,
+          slot: MAP_SLOT_ROUTE,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-width': ROUTE_LINE_WIDTH - 1,
+            // Fallback for if line-gradient is ever rejected. Mapbox's
+            // default line-color is #000000 — that default, rendering
+            // silently instead of the gradient, is exactly what this whole
+            // layer's outline used to look like (P3 §7c). An explicit
+            // fallback means a rejected gradient is a visibly WRONG colour
+            // rather than one that looks like a deliberate black outline.
+            'line-color': ROUTE_GRADIENT[0][1],
+            'line-gradient': [
+              'interpolate',
+              ['linear'],
+              ['line-progress'],
+              ...ROUTE_GRADIENT.flat(),
+            ] as unknown as string,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        });
+        requestAnimationFrame(() => {
+          if (cancelled) return;
+          const lineSource = map.getSource(NEW_LINE_SRC) as GeoJSONSource | undefined;
+          lineSource?.setData({
             type: 'FeatureCollection',
             features: outerRings(g).map(
               (ring): Feature => ({
@@ -168,22 +226,7 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
                 geometry: { type: 'LineString', coordinates: ring },
               }),
             ),
-          },
-        });
-        map.addLayer({
-          id: NEW_LINE_SRC,
-          type: 'line',
-          source: NEW_LINE_SRC,
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-width': ROUTE_LINE_WIDTH - 1,
-            'line-gradient': [
-              'interpolate',
-              ['linear'],
-              ['line-progress'],
-              ...ROUTE_GRADIENT.flat(),
-            ] as unknown as string,
-          },
+          });
         });
 
         // The entrance sweep: constructed at the fitted bounds, then eased

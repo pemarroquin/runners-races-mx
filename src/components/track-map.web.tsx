@@ -15,19 +15,34 @@
 // copied from route-map.web.tsx — see that file's header for why the CSS
 // cannot be a JS import (Metro hoists every CSS module into one global,
 // render-blocking stylesheet regardless of the import being dynamic).
+//
+// Every custom layer sets a `slot` and `*-emissive-strength` — see
+// constants/map.ts's MAP_SLOT_ROUTE / MAP_SLOT_FILL / EMISSIVE_STRENGTH_FULL.
+// Standard shades custom layers by the style's own light preset like any
+// basemap layer (this style's Standard import sets lightPreset: 'night'),
+// which is why every route/wall colour used to render at roughly a third of
+// its intended brightness (P3 §7a). The live territory fill (FILL_SRC) is
+// new for the same reason it was missing before: there was no fill layer at
+// all, only two lines and one fill-extrusion.
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 
 import {
+  EMISSIVE_STRENGTH_FULL,
   FENCE_LAG_M,
   FENCE_RISE_MS,
   FENCE_WALL_COLOR,
   FENCE_WALL_HEIGHT_M,
   FENCE_WALL_OPACITY,
   FENCE_WALL_WIDTH_M,
+  LIVE_FILL_OPACITY,
+  LIVE_FILL_RECOMPUTE_MS,
+  LIVE_FILL_RECOMPUTE_POINTS,
   MAP_DEFAULT_ZOOM,
+  MAP_SLOT_FILL,
+  MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
   ROUTE_GLOW_BLUR,
   ROUTE_GLOW_OPACITY,
@@ -41,12 +56,13 @@ import {
 } from '@/constants/map';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { useRegion } from '@/lib/region-context';
-import type { LatLng } from '@/lib/territory';
+import { buildFence, type LatLng } from '@/lib/territory';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
 const ROUTE_SRC = 'run-route';
 const WALL_SRC = 'run-wall';
+const FILL_SRC = 'run-fill';
 const PULSE_STYLE_ID = 'track-pulse-style';
 
 interface TrackMapProps {
@@ -121,6 +137,8 @@ export function TrackMap({
   const markerRef = useRef<Marker | null>(null);
   const readyRef = useRef(false);
   const flownRef = useRef(false);
+  // Throttle state for the live territory fill — see LIVE_FILL_RECOMPUTE_MS.
+  const lastFillRef = useRef({ atMs: 0, pointCount: 0 });
   const { region } = useRegion();
 
   // Only ever a fallback for the *initial* camera, and only while no real fix
@@ -166,26 +184,45 @@ export function TrackMap({
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
         });
+        // The live territory fill — was entirely missing (P3 §7b: two line
+        // layers and one fill-extrusion existed, no fill, so the enclosed
+        // area never shaded in while running). Fed by a throttled
+        // buildFence() below, not lineMetrics — a fill has no line-progress.
+        map.addSource(FILL_SRC, {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
 
         map.addLayer({
           id: `${ROUTE_SRC}-glow`,
           type: 'line',
           source: ROUTE_SRC,
+          slot: MAP_SLOT_ROUTE,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
             'line-color': ROUTE_LINE_COLOR,
             'line-width': ROUTE_GLOW_WIDTH,
             'line-blur': ROUTE_GLOW_BLUR,
             'line-opacity': ROUTE_GLOW_OPACITY,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
         map.addLayer({
           id: ROUTE_SRC,
           type: 'line',
           source: ROUTE_SRC,
+          slot: MAP_SLOT_ROUTE,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
             'line-width': ROUTE_LINE_WIDTH,
+            // Fallback for if line-gradient is ever rejected (unsupported
+            // source, dropped lineMetrics, etc.) — Mapbox's default
+            // line-color is #000000, and without this a rejected gradient
+            // silently renders pure black instead of failing loudly. Never
+            // fires today (the gradient renders — confirmed on device), but
+            // costs nothing and matches the fix applied to the summary
+            // outline below, which WAS silently falling back to black.
+            'line-color': ROUTE_GRADIENT[0][1],
             // Flattened [offset, color, ...] — the expression form
             // line-gradient requires.
             'line-gradient': [
@@ -194,6 +231,7 @@ export function TrackMap({
               ['line-progress'],
               ...ROUTE_GRADIENT.flat(),
             ] as unknown as string,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
 
@@ -204,14 +242,31 @@ export function TrackMap({
           id: WALL_SRC,
           type: 'fill-extrusion',
           source: WALL_SRC,
+          slot: MAP_SLOT_FILL,
           paint: {
             'fill-extrusion-color': FENCE_WALL_COLOR,
             'fill-extrusion-opacity': FENCE_WALL_OPACITY,
             'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
             'fill-extrusion-base': 0,
             'fill-extrusion-height-transition': { duration: FENCE_RISE_MS, delay: 0 },
+            'fill-extrusion-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
+        // Live territory fill. Below the wall in the layer list so the wall
+        // still reads as a distinct rising edge rather than being swallowed
+        // by the flat fill under it; same MAP_SLOT_FILL as the wall, so both
+        // sit above roads and below buildings/labels together.
+        map.addLayer({
+          id: FILL_SRC,
+          type: 'fill',
+          source: FILL_SRC,
+          slot: MAP_SLOT_FILL,
+          paint: {
+            'fill-color': FENCE_WALL_COLOR,
+            'fill-opacity': LIVE_FILL_OPACITY,
+            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        }, WALL_SRC);
 
         const el = document.createElement('div');
         el.className = 'track-dot';
@@ -288,13 +343,14 @@ export function TrackMap({
     });
   }, [active, points, here]);
 
-  // Per-run fence colour. The wall layer is created once at mount (before
-  // any session exists) with the default FENCE_WALL_COLOR, so the run's own
-  // colour is applied as a paint update — cheap, no layer churn.
+  // Per-run fence colour. The wall and fill layers are created once at mount
+  // (before any session exists) with the default FENCE_WALL_COLOR, so the
+  // run's own colour is applied as a paint update — cheap, no layer churn.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
+    map.setPaintProperty(FILL_SRC, 'fill-color', fenceColor);
   }, [fenceColor, active]);
 
   // Feed coordinates in. setData on an existing source is the cheap path —
@@ -320,6 +376,38 @@ export function TrackMap({
     wallSource?.setData(
       wall ? { type: 'FeatureCollection', features: [wall] } : { type: 'FeatureCollection', features: [] },
     );
+
+    // Live territory fill — throttled to every LIVE_FILL_RECOMPUTE_POINTS
+    // points or LIVE_FILL_RECOMPUTE_MS, whichever comes first, NOT on every
+    // fix: buildFence runs turf's clean/simplify/union pipeline, O(n) on a
+    // ring that only grows, and this effect re-runs on every accepted point
+    // for the whole length of a run. Uses the FULL point list, not `settled`
+    // (the wall's lag-trimmed input) — a fill lagging the same ~100m behind
+    // the runner would leave a visible, unshaded gap right where they
+    // currently are, which the wall's live-edge line segment already covers
+    // for the route itself.
+    const now = Date.now();
+    const last = lastFillRef.current;
+    const fillSource = map.getSource(FILL_SRC) as GeoJSONSource | undefined;
+    if (points.length < 3) {
+      // Below buildFence's own minimum — most commonly a fresh run just
+      // reset `points` to []. Cleared UNCONDITIONALLY, outside the throttle:
+      // without this the fill kept showing the PREVIOUS run's polygon (the
+      // throttle's own point-count baseline had reset too, so the "enough
+      // new points" branch below wouldn't trip again for a while).
+      lastFillRef.current = { atMs: now, pointCount: points.length };
+      fillSource?.setData({ type: 'FeatureCollection', features: [] });
+    } else if (
+      points.length - last.pointCount >= LIVE_FILL_RECOMPUTE_POINTS ||
+      now - last.atMs >= LIVE_FILL_RECOMPUTE_MS
+    ) {
+      lastFillRef.current = { atMs: now, pointCount: points.length };
+      // buildFence returns null for anything too short/collinear to enclose
+      // an area — that's "no fill yet", not an error (territory.ts's own
+      // contract; never throws).
+      const fence = buildFence(points);
+      fillSource?.setData(fence ? fence.geometry : { type: 'FeatureCollection', features: [] });
+    }
 
     // Follow only while recording: panning the camera under someone reading
     // their finished route would fight them. Follows the raw fix (`here`)

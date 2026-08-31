@@ -62,6 +62,65 @@ export const ROUTE_GLOW_OPACITY = 0.35;
 export const FENCE_FILL_OPACITY = 0.25;
 
 /**
+ * Full intensity for EVERY custom line/fill/fill-extrusion layer added to
+ * MAP_STYLE_GL (GL JS only — the Static Images API's classic dark-v11 style
+ * has no such concept and needs none). Mapbox Standard shades custom layers
+ * by the style's light preset exactly like its own basemap layers; this
+ * Studio style sets `lightPreset: 'night'` on its Standard import (confirmed
+ * via the Styles API, 2026-08-31), which is why every route/fence/wall
+ * colour rendered at roughly a third of its intended brightness — muddy,
+ * near-black, no contrast against the dark ground. Setting a layer's
+ * `*-emissive-strength` to this value makes it emit its own colour at full
+ * intensity regardless of scene lighting. Reported by Pedro three times
+ * before being traced to this.
+ */
+export const EMISSIVE_STRENGTH_FULL = 1;
+
+/**
+ * Named slot positions in Mapbox Standard's layer order — this style's
+ * `basemap` import (mapbox://styles/mapbox/standard) defines exactly these
+ * three: https://docs.mapbox.com/map-styles/guides/standard-styles/. A
+ * layer added with no `slot` renders wherever Standard's own composite step
+ * happens to place it relative to roads/labels/buildings — a second,
+ * independent way to look buried or to bury the basemap, on top of the
+ * emissive-strength issue above.
+ *
+ * - 'top': above POI layers, below only Place/Transit labels. Every route
+ *   line and outline uses this — a route must never render underneath a
+ *   road or building.
+ * - 'middle': above paths/roads, below buildings and every label. Every
+ *   fill/fill-extrusion uses this — a translucent territory fill is
+ *   SUPPOSED to shade the streets under it (that is the point of a fill),
+ *   while road and place names stay legible on top of it.
+ */
+export const MAP_SLOT_ROUTE = 'top';
+export const MAP_SLOT_FILL = 'middle';
+
+/**
+ * How often the live territory fill (buildFence() over the growing route)
+ * is recomputed while running, whichever trips first — see
+ * track-map.web.tsx. turf's clean/simplify/union pipeline is O(n) on a ring
+ * that only grows; recomputing it on every 2s fix would redo that work for
+ * the length of a 30+ minute run. buildFence itself is cheap to call when
+ * there's nothing new to give it, so the throttle lives at the call site,
+ * not inside territory.ts.
+ */
+export const LIVE_FILL_RECOMPUTE_MS = 5000;
+export const LIVE_FILL_RECOMPUTE_POINTS = 10;
+
+/**
+ * Live territory fill opacity (GL, web only) — deliberately its OWN
+ * constant, not FENCE_FILL_OPACITY, which is tuned for the Static Images
+ * API's classic dark-v11 style (no light preset, no emissive-strength,
+ * always fully lit). Once EMISSIVE_STRENGTH_FULL corrects the raw fill
+ * colour, it reads far more vivid than the same colour did muddied by the
+ * night preset — a lower opacity than FENCE_FILL_OPACITY reads as vibrant
+ * but subtle against the corrected colour, rather than needing the higher
+ * number that was really compensating for the colour being washed out.
+ */
+export const LIVE_FILL_OPACITY = 0.22;
+
+/**
  * The live route's vibrant gradient, as `line-gradient` stops (offset 0-1
  * along the drawn line). Reads as the iridescent Apple-AI ramp Pedro asked
  * for: cool at the tail, warm at the head, so the newest stretch is the
