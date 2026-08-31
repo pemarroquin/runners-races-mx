@@ -481,6 +481,18 @@ export default function TrackScreen() {
                   {t('track.weakSignal')}
                 </Text>
               )}
+              {/* A denied or dead watch, surfaced mid-run instead of quietly
+                  looking like a working (if quiet) recording — see
+                  geolocation.web.ts's header for the web watch-id bug this
+                  guards against. Reuses the same copy as the pre-start
+                  permission/unavailable notices; the difference is WHEN it
+                  can now fire — a watch that dies after start() succeeded
+                  used to have nowhere to surface at all. */}
+              {tracker.error && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t(tracker.error === 'permission' ? 'track.permission' : 'track.unavailable')}
+                </Text>
+              )}
 
               {/* Recording is foreground-only, so locking the phone ends the
                   run. Saying so is not optional: the failure is silent and

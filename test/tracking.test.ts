@@ -7,8 +7,10 @@
 // resume() clears `lastRef` and the first fix of a leg bypasses the filter.
 //
 // The rule that fixes it: reject OUTLIERS, never the environment.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { GeoFix } from '../src/lib/geolocation.web';
+import { watch } from '../src/lib/geolocation.web';
 import { shouldAcceptFix } from '../src/lib/tracking';
 
 describe('shouldAcceptFix', () => {
@@ -69,5 +71,133 @@ describe('shouldAcceptFix', () => {
     expect(
       shouldAcceptFix({ isFirst: false, accuracyM: 101, consecutiveRejects: 0, maxAccuracyM: 100 }),
     ).toBe(false);
+  });
+});
+
+// geolocation.web.ts's watch() — the fix for the three expo-location web-shim
+// defects (Web-First Pilot P0 brief, §2). These test the file directly by
+// its `.web` suffix rather than through the '@/lib/geolocation' alias tsc
+// resolves to geolocation.ts by default outside Metro; the point of these
+// tests is the browser-specific throttle/remove/error-mapping logic that
+// only geolocation.web.ts contains.
+//
+// A minimal stand-in for the browser's Geolocation API. Deliberately does
+// NOT gate `trigger()` on a prior clearWatch() call — a real browser can
+// still deliver an already-queued callback after clearWatch() runs, which is
+// exactly the "late callback" scenario defect (a) needs guarding against.
+// That guard has to live in geolocation.web.ts itself (the `removed` flag),
+// not in this fake.
+class FakeGeolocation {
+  private success: PositionCallback | null = null;
+  private error: PositionErrorCallback | null = null;
+  lastWatchId = 0;
+
+  watchPosition(success: PositionCallback, error?: PositionErrorCallback | null): number {
+    this.success = success;
+    this.error = error ?? null;
+    this.lastWatchId += 1;
+    return this.lastWatchId;
+  }
+
+  clearWatch(): void {
+    // Intentionally a no-op — see the class comment.
+  }
+
+  getCurrentPosition(): void {
+    // Unused by these tests.
+  }
+
+  trigger(position: GeolocationPosition): void {
+    this.success?.(position);
+  }
+
+  triggerError(err: GeolocationPositionError): void {
+    this.error?.(err);
+  }
+}
+
+function makePosition(lat: number, lng: number, ts: number, accuracy: number | null = 10): GeolocationPosition {
+  return {
+    coords: {
+      latitude: lat,
+      longitude: lng,
+      accuracy,
+      altitude: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+      toJSON: () => ({}),
+    },
+    timestamp: ts,
+    toJSON: () => ({}),
+  } as GeolocationPosition;
+}
+
+function makeError(code: number): GeolocationPositionError {
+  return {
+    code,
+    message: '',
+    PERMISSION_DENIED: 1,
+    POSITION_UNAVAILABLE: 2,
+    TIMEOUT: 3,
+  } as GeolocationPositionError;
+}
+
+describe('geolocation.web watch()', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('drops a fix that is both too soon and too close, but lets either threshold alone through', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+    const fixes: GeoFix[] = [];
+
+    await watch({ timeIntervalMs: 2000, distanceIntervalM: 5 }, (f) => fixes.push(f), () => {});
+
+    fakeGeo.trigger(makePosition(19.4, -99.1, 0)); // first fix — always emits
+    fakeGeo.trigger(makePosition(19.4, -99.1, 1000)); // 1s, 0m — both fail, dropped
+    fakeGeo.trigger(makePosition(19.4, -99.1, 3000)); // 3s, 0m — time alone passes
+    fakeGeo.trigger(makePosition(19.4001, -99.1, 3500)); // 0.5s, ~11m — distance alone passes
+
+    expect(fixes).toHaveLength(3);
+  });
+
+  it('always emits the first fix of a watch, however soon or close', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+    const fixes: GeoFix[] = [];
+
+    await watch({ timeIntervalMs: 999_999, distanceIntervalM: 999_999 }, (f) => fixes.push(f), () => {});
+    fakeGeo.trigger(makePosition(19.4, -99.1, 0));
+
+    expect(fixes).toHaveLength(1);
+  });
+
+  it('ignores a late callback after remove() — the watch-id-recycling bug', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+    const fixes: GeoFix[] = [];
+
+    const sub = await watch({ timeIntervalMs: 0, distanceIntervalM: 0 }, (f) => fixes.push(f), () => {});
+    sub.remove();
+    fakeGeo.trigger(makePosition(19.4, -99.1, 0));
+
+    expect(fixes).toHaveLength(0);
+  });
+
+  it.each([
+    [1, 'permission'],
+    [2, 'unavailable'],
+    [3, 'timeout'],
+  ])('maps browser error code %d to %s', async (code, expectedKind) => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+    const kinds: string[] = [];
+
+    await watch({ timeIntervalMs: 0, distanceIntervalM: 0 }, () => {}, (kind) => kinds.push(kind));
+    fakeGeo.triggerError(makeError(code));
+
+    expect(kinds).toEqual([expectedKind]);
   });
 });

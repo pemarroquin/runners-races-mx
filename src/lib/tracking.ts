@@ -1,6 +1,8 @@
-// Foreground GPS run recorder for Territory Mode. Owns the expo-location
-// subscription and the growing point list; the fence geometry itself is
-// computed separately by territory.ts (pure, tested) once the run stops.
+// Foreground GPS run recorder for Territory Mode. Owns the geolocation
+// subscription (src/lib/geolocation.ts / geolocation.web.ts — never
+// expo-location directly, see that module's header) and the growing point
+// list; the fence geometry itself is computed separately by territory.ts
+// (pure, tested) once the run stops.
 //
 // Foreground-only on purpose: background location needs an entitlement Expo
 // Go can't grant, which would force a custom dev client and break this
@@ -8,9 +10,17 @@
 // "Tracking mode" decision. Practical consequence: the run screen has to
 // stay open, and the OS may throttle fixes when the screen locks.
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  getCurrent,
+  getLastKnown,
+  requestPermission,
+  watch as watchPosition,
+  type GeoErrorKind,
+  type GeoFix,
+  type GeoWatch,
+} from '@/lib/geolocation';
 import { haversineM, type LatLng } from '@/lib/territory';
 
 export interface TrackPoint extends LatLng {
@@ -19,6 +29,15 @@ export interface TrackPoint extends LatLng {
 
 export type TrackStatus = 'idle' | 'starting' | 'running' | 'paused' | 'finished';
 export type TrackError = 'permission' | 'unavailable' | null;
+
+// GeoErrorKind carries a 'timeout' case the UI has no separate copy for yet
+// (see track.permission / track.unavailable in i18n.tsx) — surfacing a
+// denied or dead watch matters more than distinguishing "the receiver never
+// answered" from "it's not there at all", so timeout folds into the same
+// bucket as unavailable rather than looking like a working watch.
+function toTrackError(kind: GeoErrorKind): TrackError {
+  return kind === 'permission' ? 'permission' : 'unavailable';
+}
 
 // Fixes worse than this are dropped rather than recorded: a wild fix doesn't
 // just add noise, it inflates the distance total and the fence area with
@@ -135,7 +154,7 @@ export function useRunTracker(): RunTracker {
   // state value captured in the callback would be stale.
   const consecutiveRejectsRef = useRef(0);
 
-  const subRef = useRef<Location.LocationSubscription | null>(null);
+  const subRef = useRef<GeoWatch | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
 
   const clearSub = useCallback(() => {
@@ -181,18 +200,18 @@ export function useRunTracker(): RunTracker {
     return () => clearInterval(id);
   }, [status]);
 
-  const onFix = useCallback((loc: Location.LocationObject) => {
-    const accuracy = loc.coords.accuracy ?? null;
+  const onFix = useCallback((fix: GeoFix) => {
+    const accuracy = fix.accuracyM;
     setLastAccuracyM(accuracy);
     // Raw position, before ANY filtering — the map follows this. See the
     // interface comment on lastFix.
-    setLastFix({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+    setLastFix({ lat: fix.lat, lng: fix.lng });
 
     // Out-of-order guard: the fresh-fix seed in start()/resume() runs in
     // parallel with the watcher rather than blocking it, so a slow
-    // getCurrentPositionAsync can resolve AFTER the watcher has already
-    // delivered newer fixes. Appending it would draw the route backwards.
-    if (lastRef.current !== null && loc.timestamp < lastRef.current.ts) return;
+    // getCurrent() can resolve AFTER the watcher has already delivered newer
+    // fixes. Appending it would draw the route backwards.
+    if (lastRef.current !== null && fix.ts < lastRef.current.ts) return;
 
     const isFirst = lastRef.current === null;
     if (
@@ -214,9 +233,9 @@ export function useRunTracker(): RunTracker {
     consecutiveRejectsRef.current = 0;
 
     const point: TrackPoint = {
-      lat: loc.coords.latitude,
-      lng: loc.coords.longitude,
-      ts: loc.timestamp,
+      lat: fix.lat,
+      lng: fix.lng,
+      ts: fix.ts,
     };
     // The ref is advanced HERE, in the event handler — never inside a
     // setState updater. React can re-run an updater (StrictMode, and the
@@ -232,6 +251,14 @@ export function useRunTracker(): RunTracker {
     }
   }, []);
 
+  // A denied or dead watch used to be invisible — see geolocation.web.ts's
+  // header for why a web watch could silently stop delivering fixes forever.
+  // Surfacing it here means a mid-run failure looks like a failure, not like
+  // a working (if quiet) recording.
+  const onWatchError = useCallback((kind: GeoErrorKind) => {
+    setError(toTrackError(kind));
+  }, []);
+
   // Shared by start() and resume(): get the watcher live, seeded with an
   // origin, WITHOUT ever blocking on a slow GPS one-shot.
   //
@@ -242,45 +269,38 @@ export function useRunTracker(): RunTracker {
   // subscription, no clock, and no fixes: an entire walk could pass with
   // nothing tracked. Order is now:
   //
-  //   1. Instant origin from the OS's cached position (getLastKnownPosition
+  //   1. Instant origin from the OS's cached position (getLastKnown()
   //      resolves immediately) — the route has a starting point at once.
   //   2. Watcher starts — recording is live from here, unconditionally.
   //   3. A fresh precise fix is requested in PARALLEL, never awaited; if it
   //      resolves it refines things, if it hangs nothing is waiting on it.
   //      onFix's timestamp guard drops it if the watcher has moved on.
   const beginRecording = useCallback(async () => {
-    try {
-      const cached = await Location.getLastKnownPositionAsync({
-        maxAge: LAST_KNOWN_MAX_AGE_MS,
-      });
-      if (cached) onFix(cached);
-    } catch {
-      // No cached position — the watcher or the parallel fix supplies one.
-    }
+    const cached = await getLastKnown(LAST_KNOWN_MAX_AGE_MS);
+    if (cached) onFix(cached);
 
-    subRef.current = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: TIME_INTERVAL_MS,
-        distanceInterval: DISTANCE_INTERVAL_M,
-      },
+    subRef.current = await watchPosition(
+      { timeIntervalMs: TIME_INTERVAL_MS, distanceIntervalM: DISTANCE_INTERVAL_M },
       onFix,
+      onWatchError,
     );
 
-    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation })
-      .then(onFix)
+    getCurrent()
+      .then((fix) => {
+        if (fix) onFix(fix);
+      })
       .catch(() => {
         // Fine — the watcher is already delivering.
       });
-  }, [onFix]);
+  }, [onFix, onWatchError]);
 
   const start = useCallback(async () => {
     setError(null);
     setStatus('starting');
     try {
-      const { status: permission } = await Location.requestForegroundPermissionsAsync();
+      const permission = await requestPermission();
       if (permission !== 'granted') {
-        setError('permission');
+        setError(permission === 'denied' ? 'permission' : 'unavailable');
         setStatus('idle');
         return;
       }

@@ -11,9 +11,9 @@
 // clearly separated: `coords` is a real fix or null, and callers decide what
 // to show when it's null instead of being handed a city centre that is
 // indistinguishable from a GPS result.
-import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { getCurrent, requestPermission, watch as watchPosition, type GeoWatch } from '@/lib/geolocation';
 import type { LatLng } from '@/lib/territory';
 
 export type LocationStatus = 'idle' | 'locating' | 'ready' | 'denied' | 'unavailable';
@@ -60,38 +60,35 @@ export function useCurrentLocation({
   }, []);
 
   const request = useCallback(async (): Promise<LatLng | null> => {
-    try {
-      // The permission call comes FIRST, before any setState, so that calling
-      // this from an effect never updates state synchronously within the
-      // effect body — the React Compiler rules this project lints with
-      // reject that, and it causes a cascading render. It also reads more
-      // truthfully: we aren't locating until we're allowed to.
-      //
-      // requestForegroundPermissionsAsync (not getForegroundPermissionsAsync):
-      // the earlier version only *read* the existing grant, so a user who had
-      // never been asked never got a prompt and never got a position.
-      const { status: permission } = await Location.requestForegroundPermissionsAsync();
-      if (permission !== 'granted') {
-        if (mounted.current) setStatus('denied');
-        return null;
-      }
-      if (mounted.current) {
-        setGranted(true);
-        setStatus('locating');
-      }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const next: LatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      if (mounted.current) {
-        setCoords(next);
-        setStatus('ready');
-      }
-      return next;
-    } catch {
+    // The permission call comes FIRST, before any setState, so that calling
+    // this from an effect never updates state synchronously within the
+    // effect body — the React Compiler rules this project lints with reject
+    // that, and it causes a cascading render. It also reads more truthfully:
+    // we aren't locating until we're allowed to.
+    //
+    // requestPermission() always prompts when not yet decided (never just
+    // reads the existing grant) — a user who had never been asked must still
+    // get a prompt and a position.
+    const permission = await requestPermission();
+    if (permission !== 'granted') {
+      if (mounted.current) setStatus(permission === 'denied' ? 'denied' : 'unavailable');
+      return null;
+    }
+    if (mounted.current) {
+      setGranted(true);
+      setStatus('locating');
+    }
+    const fix = await getCurrent();
+    if (!fix) {
       if (mounted.current) setStatus('unavailable');
       return null;
     }
+    const next: LatLng = { lat: fix.lat, lng: fix.lng };
+    if (mounted.current) {
+      setCoords(next);
+      setStatus('ready');
+    }
+    return next;
   }, []);
 
   // Continuous updates while `watch` is on. Balanced accuracy and a 10m
@@ -106,25 +103,23 @@ export function useCurrentLocation({
   // therefore never started and the pin never moved.
   useEffect(() => {
     if (!watch || !granted) return;
-    let sub: Location.LocationSubscription | null = null;
+    let sub: GeoWatch | null = null;
     let cancelled = false;
 
     (async () => {
-      try {
-        if (cancelled) return;
-        sub = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 4000 },
-          (pos) => {
-            if (cancelled) return;
-            setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            setStatus('ready');
-          },
-        );
-        if (cancelled) sub.remove();
-      } catch {
-        // A failed watcher just means the pin stops updating; the one-shot
-        // fix above still gave us something to show.
-      }
+      sub = await watchPosition(
+        { timeIntervalMs: 4000, distanceIntervalM: 10 },
+        (fix) => {
+          if (cancelled) return;
+          setCoords({ lat: fix.lat, lng: fix.lng });
+          setStatus('ready');
+        },
+        () => {
+          // A failed watcher just means the pin stops updating; the one-shot
+          // fix above still gave us something to show.
+        },
+      );
+      if (cancelled) sub.remove();
     })();
 
     return () => {
