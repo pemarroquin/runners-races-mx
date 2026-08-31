@@ -226,7 +226,10 @@
         "lat": 25.6692,
         "lng": -100.3099,
         "approx": true
-      }
+      },
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Macroplaza, per Runera and Trotime listings. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "carrera-terra-regia-2026",
@@ -773,7 +776,10 @@
       "distanceTags": [
         "5K",
         "10K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Torre KOI, Valle Oriente, per Trotime and Compite.mx listings. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "fundacion-monterrey-2026",
@@ -1756,7 +1762,10 @@
       "distanceTags": [
         "5K",
         "10K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026, 06:30, per Asdeporte and Runera listings; registration reported sold out. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "feria-pulque-nopaltepec-2026",
@@ -1967,7 +1976,11 @@
       "distanceTags": [
         "15K",
         "30K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Still listed for 6 Sep 2026, San Rafael Tlalmanalco, 12K/30K, on the Tri Tour calendar. No cancellation/postponement/aviso signals found via web search (2026-08-31), though no independent source beyond the Tri Tour/Carreras México listing could be found to corroborate.",
+      "lastVerified": "2026-08-31",
+      "sourceNotes": "Direct fetch of tritour.org and carrerasmexico.com blocked by network policy this run — based on search-engine snippets only. No second independent source (news, organizer social media) found confirming this specific event beyond the original listing."
     },
     {
       "id": "terrex-hubtrail-marquesa-2026",
@@ -2525,7 +2538,10 @@
       "sourceUrl": "https://asdeporte.com/evento/37-medio-maraton-atlas-cardio-protegido-2026-kwv/datos-del-evento",
       "confidence": "high",
       "notes": "Reg open, from $660 MXN. 21.0975 km certified.",
-      "notesEs": "Registro abierto, desde $660 MXN. Certificado en 21.0975 km."
+      "notesEs": "Registro abierto, desde $660 MXN. Certificado en 21.0975 km.",
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026, 06:30, Av. Patria frente a Parque El Polvorín, Zapopan, per Asdeporte, Marcate and Compite.mx listings; awards ceremony same day at Club Atlas Colomos. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "carrera-de-las-antorchas-edici-n-72",
@@ -2796,7 +2812,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-y-maratones-mexico",
       "confidence": "medium",
       "notes": "Date/distances confirmed on tritour/carrerasmexico + AQ Sports page. Time/venue per press, not a rendered event page. $500 MXN; charity race.",
-      "notesEs": "Fecha/distancias confirmadas en tritour/carrerasmexico + la página de AQ Sports. Hora/sede según prensa, no de una página de evento renderizada. $500 MXN; carrera benéfica."
+      "notesEs": "Fecha/distancias confirmadas en tritour/carrerasmexico + la página de AQ Sports. Hora/sede según prensa, no de una página de evento renderizada. $500 MXN; carrera benéfica.",
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026 by DIF Estatal Querétaro's own event presentation, corroborated by Quadratín Querétaro, ContraRéplica and an AlertaQro social post. Benefits ~800 children from 15 shelter homes. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "snoopy-run-quer-taro-2026",
@@ -2822,7 +2841,10 @@
       "confidence": "low",
       "notes": "Snoopy-themed, dog-friendly run. Distances 3K/5K, from $600 MXN.",
       "notesEs": "Carrera temática de Snoopy, pet friendly. Distancias 3K/5K, desde $600 MXN.",
-      "sourceNotes": "Date conflict: tritour/press say Sep 6; Asdeporte page showed Sep 12 — used Sep 6 (two sources vs one). Venue TBC."
+      "sourceNotes": "Date conflict: tritour/press say Sep 6; Asdeporte page showed Sep 12 — used Sep 6 (two sources vs one). Venue TBC. Re-checked 2026-08-31: Asdeporte's own event page, Tri Tour, Runera, Solo Atletas and the organizer's own Instagram post now all agree on Sunday 6 Sep 2026, 07:00 — the earlier Sep 12 reading looks like a stale snapshot. Date conflict considered resolved.",
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, per Asdeporte, Tri Tour, Runera, Solo Atletas and an organizer Instagram post. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "quer-taro-marat-n-2026-16-edici-n",
@@ -3704,7 +3726,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo",
       "confidence": "medium",
       "notes": null,
-      "sourceNotes": "Distances/time not published. signupUrl (gotime.mx/canacintramva) is the link listed by tritour, not independently fetched. Single-calendar source. Distinct from the Torreón CANACINTRA race."
+      "sourceNotes": "Distances/time not published. signupUrl (gotime.mx/canacintramva) is the link listed by tritour, not independently fetched. Single-calendar source. Distinct from the Torreón CANACINTRA race. Re-checked 2026-08-31: local coverage (El Tiempo Monclova, El Siglo de Torreón, Periódico Zócalo, and a CANACINTRA Delegación Monclova Facebook post) confirms this is the 7th annual 5K, Sep 6, registration via gotime.mx or the CANACINTRA Monclova office, $380 MXN.",
+      "status": "ok",
+      "statusNote": "Confirmed for 6 Sep 2026 (7th edition, 5K) per El Tiempo Monclova, Periódico Zócalo and CANACINTRA Monclova's own Facebook announcement. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "dino-run-5k-saltillo-2026",
@@ -4186,8 +4211,8 @@
       "notesEs": "Formato Backyard Ultra — vueltas cronometradas y repetidas, gana el último corredor en pie, en vez de una distancia fija anunciada.",
       "sourceNotes": "Loop length/rules not shown on the fetched page. Single-source only.",
       "status": "ok",
-      "statusNote": "Confirmed for 5 Sep 2026, 17:00, at the beach area in front of Restaurant Bacalahu, Cozumel, per search-engine coverage of the Khronometraje registration page. No cancellation/postponement/aviso signals found (2026-08-28).",
-      "lastVerified": "2026-08-28"
+      "statusNote": "Confirmed for 5 Sep 2026, 17:00, at the beach area in front of Restaurant Bacalahu, Cozumel, per search-engine coverage of the Khronometraje registration page. No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "21k-chetumal-2026-5ta-edicion",
@@ -4421,8 +4446,8 @@
       "notesEs": "Formato de ultra de vueltas cronometradas, último corredor en pie (categorías: Ultra/Desafío/Xperience/Duo) — no es una carrera de kilometraje fijo. Limitado a 122 participantes.",
       "sourceNotes": "Exact beach municipality (Progreso vs. neighboring Chelem) not fully confirmed; set to Progreso as nearest listed metro city. Confirmed independently on khronometraje.com and tritour.org's Mérida calendar.",
       "status": "ok",
-      "statusNote": "No cancellation/postponement/aviso signals found (2026-08-28). Still listed on khronometraje.com and tritour.org's Mérida calendar for 5 Sep 2026, 17:00.",
-      "lastVerified": "2026-08-28"
+      "statusNote": "No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31). Still listed on khronometraje.com and tritour.org's Mérida calendar for 5 Sep 2026, 17:00.",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "cenote-san-ignacio-2026",
@@ -4619,8 +4644,8 @@
     {
       "id": "barbie-run-chihuahua-2026",
       "name": "Barbie Run Chihuahua 2026",
-      "date": "2026-09-06",
-      "time": "06:30",
+      "date": "2026-11-08",
+      "time": "07:30",
       "distances": [
         "3K",
         "5K",
@@ -4633,13 +4658,18 @@
       ],
       "city": "Chihuahua",
       "state": "Chihuahua",
-      "venue": null,
+      "venue": "Explanada de la Presidencia Municipal, Chihuahua",
       "organizer": "AsDeporte",
       "signupUrl": "https://www.asdeporte.com/evento/barbie-run-chihuahua-2026-0en/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/barbie-run-chihuahua-2026-0en/datos-del-evento",
       "confidence": "high",
-      "notes": "3km is a recreational walk (no awards); 5K/10K are competitive. Venue start/finish listed as 'por confirmar' at time of check. Price from $869 MXN regular / $782 MXN Plus. Cap 2,000 runners.",
-      "notesEs": "El 3K es caminata recreativa (sin premiación); 5K/10K son competitivos. La sede de salida/meta figuraba como 'por confirmar' al momento de la revisión. Precio desde $869 MXN regular / $782 MXN Plus. Cupo de 2,000 corredores."
+      "notes": "3km is a recreational walk (no awards); 5K/10K are competitive. Price from $869 MXN regular / $782 MXN Plus. Cap 2,000 runners.",
+      "notesEs": "El 3K es caminata recreativa (sin premiación); 5K/10K son competitivos. Precio desde $869 MXN regular / $782 MXN Plus. Cupo de 2,000 corredores.",
+      "status": "changed",
+      "statusNote": "Date corrected: this race is actually 8 November 2026, not 6 September as this record previously said, per the Chihuahua municipal government's official announcement and multiple local news outlets. Start/finish is the Explanada de la Presidencia Municipal.",
+      "statusNoteEs": "Fecha corregida: esta carrera es en realidad el 8 de noviembre de 2026, no el 6 de septiembre como indicaba antes este registro, según el comunicado oficial del Municipio de Chihuahua y varios medios locales. La salida y meta es en la Explanada de la Presidencia Municipal.",
+      "sourceNotes": "Date conflict found and resolved 2026-08-31: this record was originally populated from Asdeporte/Runera/Tri Tour, all showing 6 Sep 2026, 06:30. A web search turned up the Chihuahua municipal government's official 'Anuncia Municipio Barbie Run en la capital este 8 de noviembre' press release (municipiochihuahua.gob.mx, 2026-07-23) plus ~10 independently-bylined local news stories from the same week, all agreeing on Nov 8, 07:30, 3K/5K/10K, $869 MXN, start/finish at the Presidencia Municipal — consistent, specific detail across many independent local sources, output as a primary local-government announcement predating this race's original (wrong) Sep 6 listing. Kept Nov 8 as the better-evidenced date. Direct fetch of asdeporte.com, municipiochihuahua.gob.mx and the local news sites was blocked by network policy this run — based on search-engine snippets only; recommend a direct check of the Asdeporte page next cycle to see if it has since been corrected. signupUrl kept as-is (same registration path via Asdeporte for the Chihuahua edition; not a cancellation).",
+      "lastVerified": "2026-08-31"
     },
     {
       "id": "maraton-internacional-de-juarez-2026-incl-medio",
