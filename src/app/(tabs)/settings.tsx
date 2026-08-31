@@ -472,6 +472,13 @@ export default function SettingsScreen() {
             // new at-rest location storage, so it is disclosed here in the
             // same change that introduced it.
             t('privacy.collectedQueue'),
+            // Same reasoning, earlier in the run's life: an in-progress
+            // session is now checkpointed to the device every few seconds
+            // (run-checkpoint.ts), storing the RAW route before
+            // privacy-zone trimming applies — worth calling out precisely
+            // because it is more revealing at rest than the queue above,
+            // which only ever holds the already-trimmed path.
+            t('privacy.collectedCheckpoint'),
             // Phase 2 made territory visible to other runners; this is the
             // paragraph that says so. Added in the same change as the
             // leaderboard, not after it.

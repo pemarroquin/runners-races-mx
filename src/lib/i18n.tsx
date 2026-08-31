@@ -53,6 +53,7 @@ const translations = {
       pause: 'Pausar',
       resume: 'Reanudar',
       paused: 'En pausa',
+      checkpointFound: 'Tienes una sesión sin terminar. ¿La continuamos o la descartamos?',
       close: 'Cerrar',
       start: 'Iniciar',
       stop: 'Terminar',
@@ -67,6 +68,9 @@ const translations = {
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
       unavailable: 'No pudimos acceder al GPS en este dispositivo.',
       keepOpen: 'Mantén la pantalla encendida — si bloqueas el teléfono se detiene el registro.',
+      keepAwakeFailed:
+        'No pudimos mantener la pantalla encendida — evita bloquear el teléfono para no perder el registro.',
+      backgroundGap: 'El registro se pausó mientras la app estaba en segundo plano.',
       searching: 'Buscando señal GPS…',
       accuracy: 'Precisión: %{m} m',
       weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
@@ -275,6 +279,8 @@ const translations = {
         'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
       collectedQueue:
         'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si lo descartas.',
+      collectedCheckpoint:
+        'Progreso en curso: mientras grabas, guardamos tu recorrido completo (sin recortar por tu zona privada) en este teléfono cada pocos segundos, para no perderlo si la app se cierra sola. Se borra en cuanto guardas o descartas la sesión — el recorte de tu zona privada solo se aplica al guardar.',
       collectedIdentity:
         'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
       collectedZone:
@@ -329,6 +335,7 @@ const translations = {
       pause: 'Pause',
       resume: 'Resume',
       paused: 'Paused',
+      checkpointFound: 'You have an unfinished session. Continue it or discard it?',
       close: 'Close',
       start: 'Start',
       stop: 'Finish',
@@ -343,6 +350,9 @@ const translations = {
         'We need location permission to trace your route. Turn it on in your phone settings.',
       unavailable: "We couldn't access GPS on this device.",
       keepOpen: 'Keep the screen on — locking your phone stops recording.',
+      keepAwakeFailed:
+        "We couldn't keep the screen on — avoid locking your phone or recording may stop.",
+      backgroundGap: 'Recording paused while the app was in the background.',
       searching: 'Searching for GPS signal…',
       accuracy: 'Accuracy: %{m} m',
       weakSignal: 'Weak signal — move into open sky to start tracing.',
@@ -550,6 +560,8 @@ const translations = {
         'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
       collectedQueue:
         'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you discard it.',
+      collectedCheckpoint:
+        "In-progress runs: while you're recording, we save your full route (before privacy-zone trimming) on this phone every few seconds, so it isn't lost if the app closes on its own. It's cleared as soon as you save or discard the session — privacy-zone trimming only applies when you save.",
       collectedIdentity:
         'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
       collectedZone:

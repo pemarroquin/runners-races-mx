@@ -21,6 +21,7 @@ import {
   type GeoFix,
   type GeoWatch,
 } from '@/lib/geolocation';
+import { clearCheckpoint, saveCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { haversineM, type LatLng } from '@/lib/territory';
 
 export interface TrackPoint extends LatLng {
@@ -81,6 +82,10 @@ const MAX_CONSECUTIVE_REJECTS = 3;
 // nothing happen for an uncomfortably long time at the start of a session.
 const DISTANCE_INTERVAL_M = 3;
 const KEEP_AWAKE_TAG = 'territory-session';
+// Checkpoint write throttle — see run-checkpoint.ts. Whichever trips first:
+// 10 accepted points, or 15s since the last write.
+const CHECKPOINT_POINTS_INTERVAL = 10;
+const CHECKPOINT_MS_INTERVAL = 15_000;
 
 /**
  * Whether a fix should be recorded. Pure, so the rule can be tested without
@@ -131,11 +136,28 @@ export interface RunTracker {
    *  second with the filtered list froze the pin on the first fix whenever
    *  the filter was rejecting everything after it. */
   lastFix: LatLng | null;
+  /** True if the screen wake lock failed to acquire (or was refused) for the
+   *  current session. navigator.wakeLock.request() rejects when the document
+   *  isn't visible, and a swallowed rejection here looks identical to a held
+   *  lock — this is the workspace's "never report unverified success" rule
+   *  applied to the screen staying on. */
+  keepAwakeFailed: boolean;
+  /** True once this session has survived at least one background/foreground
+   *  cycle. Surfaced so the runner knows recording paused rather than
+   *  silently dropped a stretch of the route. */
+  hadBackgroundGap: boolean;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
   stop: () => void;
   reset: () => void;
+  /** Continues a run recovered from run-checkpoint.ts after a reload —
+   *  restores the recorded points/distance/elapsed time and reconnects the
+   *  watch. The first live fix after reconnecting is treated as a leg break
+   *  (see resume()): the gap between the checkpoint's last point and wherever
+   *  the runner is now was never recorded, so drawing a straight line across
+   *  it would be a phantom distance, not a real one. */
+  restoreFromCheckpoint: (checkpoint: RunCheckpoint) => Promise<void>;
 }
 
 export function useRunTracker(): RunTracker {
@@ -150,9 +172,16 @@ export function useRunTracker(): RunTracker {
   const [rejectedFixes, setRejectedFixes] = useState(0);
   const [lastFix, setLastFix] = useState<LatLng | null>(null);
   const [degradedSignal, setDegradedSignal] = useState(false);
+  const [keepAwakeFailed, setKeepAwakeFailed] = useState(false);
+  const [hadBackgroundGap, setHadBackgroundGap] = useState(false);
   // A ref, not state: onFix must read the CURRENT count synchronously, and a
   // state value captured in the callback would be stale.
   const consecutiveRejectsRef = useRef(0);
+  // Checkpoint write throttle: last wall-clock write time and the points
+  // count as of that write. Refs, not state — advancing them must not
+  // itself trigger a re-render/effect loop.
+  const lastCheckpointAtRef = useRef(0);
+  const lastCheckpointPointCountRef = useRef(0);
 
   const subRef = useRef<GeoWatch | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
@@ -178,15 +207,29 @@ export function useRunTracker(): RunTracker {
   // run. This doesn't defeat a manual lock — nothing available in Expo Go
   // can — but it does stop the most common way a run dies: the display
   // simply timing out in the runner's pocket.
+  //
+  // Wrapped in .then/.catch rather than the old bare `void` — a floating
+  // promise with no catch means a refused lock (navigator.wakeLock.request()
+  // REJECTS when the document isn't visible) was invisible, and the screen
+  // dimmed mid-run with nothing on screen to explain why. Shared with the
+  // visibilitychange handler below (Task 1.2), which needs the exact same
+  // acquire-and-report behaviour when re-requesting the lock after a
+  // background/foreground cycle.
+  const tryKeepAwake = useCallback(() => {
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG)
+      .then(() => setKeepAwakeFailed(false))
+      .catch(() => setKeepAwakeFailed(true));
+  }, []);
+
   useEffect(() => {
     if (status !== 'running' && status !== 'paused') return;
-    void activateKeepAwakeAsync(KEEP_AWAKE_TAG);
+    tryKeepAwake();
     return () => {
       // Wrapped rather than returned directly: deactivateKeepAwake returns a
       // promise, and an effect cleanup must return void.
       deactivateKeepAwake(KEEP_AWAKE_TAG);
     };
-  }, [status]);
+  }, [status, tryKeepAwake]);
 
   useEffect(() => {
     if (status !== 'running') return;
@@ -199,6 +242,42 @@ export function useRunTracker(): RunTracker {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [status]);
+
+  // Checkpoints the in-progress run against a backgrounded-tab eviction — see
+  // run-checkpoint.ts's header. Throttled to every 10 accepted points or 15s,
+  // whichever comes first: NOT on every fix, which would serialise the whole
+  // growing point array on every 2s tick. Reacting to `points`/`distanceM`
+  // rather than writing inside onFix keeps this effect the only place that
+  // decides WHEN to persist, while still always seeing the up-to-date values
+  // (onFix's own setState calls are async/batched, so reading them there
+  // would risk a stale array or total).
+  useEffect(() => {
+    if (status !== 'running' && status !== 'paused') return;
+    if (points.length === 0 || startedAt === null) return;
+    const now = Date.now();
+    const pointsSinceLast = points.length - lastCheckpointPointCountRef.current;
+    const msSinceLast = now - lastCheckpointAtRef.current;
+    if (pointsSinceLast < CHECKPOINT_POINTS_INTERVAL && msSinceLast < CHECKPOINT_MS_INTERVAL) {
+      return;
+    }
+    const legStart = legStartRef.current;
+    const legMs = legStart === null ? 0 : now - legStart;
+    const ok = saveCheckpoint({
+      startedAt,
+      points,
+      distanceM,
+      accumulatedMs: accumulatedRef.current + legMs,
+      savedAt: now,
+    });
+    if (ok) {
+      lastCheckpointAtRef.current = now;
+      lastCheckpointPointCountRef.current = points.length;
+    }
+    // A failed write just means the checkpoint is stale until the next
+    // threshold trips — the run itself is unaffected, only its crash
+    // recovery is degraded. Nothing to surface here that the runner could
+    // act on mid-run.
+  }, [status, points, distanceM, startedAt]);
 
   const onFix = useCallback((fix: GeoFix) => {
     // Clear a stale error the moment a fix arrives. Per the W3C Geolocation
@@ -303,6 +382,38 @@ export function useRunTracker(): RunTracker {
       });
   }, [onFix, onWatchError]);
 
+  // Survives backgrounding. The Screen Wake Lock spec releases the sentinel
+  // whenever the document is hidden, and — on web specifically — there is no
+  // guarantee the old watch subscription is still alive when the tab comes
+  // back (iOS Safari can suspend or evict a backgrounded tab outright). Only
+  // web has a `document.visibilitychange` event at all; on native this
+  // effect is a no-op (foreground-only recording already means the run ends
+  // if the OS backgrounds the app, which is the accepted limitation the file
+  // header documents — this task is scoped to the web pilot).
+  useEffect(() => {
+    if (status !== 'running') return;
+    if (typeof document === 'undefined') return;
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      tryKeepAwake();
+      // Restart the watch rather than trust the old subscription: same
+      // reasoning as resume() — never assume a subscription survived
+      // something that can tear it down.
+      clearSub();
+      // Leg break, exactly like resume(): the gap while hidden was never
+      // recorded, so the first fix after reconnecting must not draw a
+      // straight-line distance back to wherever the runner is now.
+      lastRef.current = null;
+      consecutiveRejectsRef.current = 0;
+      void beginRecording();
+      setHadBackgroundGap(true);
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [status, clearSub, beginRecording, tryKeepAwake]);
+
   const start = useCallback(async () => {
     setError(null);
     setStatus('starting');
@@ -319,12 +430,15 @@ export function useRunTracker(): RunTracker {
       consecutiveRejectsRef.current = 0;
       accumulatedRef.current = 0;
       legStartRef.current = Date.now();
+      lastCheckpointAtRef.current = 0;
+      lastCheckpointPointCountRef.current = 0;
       setPoints([]);
       setDistanceM(0);
       setElapsedS(0);
       setEndedAt(null);
       setRejectedFixes(0);
       setStartedAt(Date.now());
+      setHadBackgroundGap(false);
 
       await beginRecording();
       setStatus('running');
@@ -375,6 +489,8 @@ export function useRunTracker(): RunTracker {
     lastRef.current = null;
     accumulatedRef.current = 0;
     legStartRef.current = null;
+    lastCheckpointAtRef.current = 0;
+    lastCheckpointPointCountRef.current = 0;
     setPoints([]);
     setDistanceM(0);
     setElapsedS(0);
@@ -387,9 +503,63 @@ export function useRunTracker(): RunTracker {
     // fix over the live idle watcher's fresh one.
     setLastFix(null);
     setDegradedSignal(false);
+    setKeepAwakeFailed(false);
+    setHadBackgroundGap(false);
     consecutiveRejectsRef.current = 0;
     setStatus('idle');
+    // Always, not conditionally: reset() runs on discard AND is the general
+    // return-to-idle path, and a stale checkpoint from a run that's no
+    // longer live must never be offered for recovery later.
+    clearCheckpoint();
   }, [clearSub]);
+
+  /**
+   * Continues a run recovered from run-checkpoint.ts after a reload. Mirrors
+   * start(), except the origin is the checkpoint's own last point/distance/
+   * elapsed time rather than a fresh zero — and the reconnect is treated as
+   * a leg break (see restoreFromCheckpoint's interface doc / the
+   * visibilitychange handler above), so the untracked gap between the
+   * checkpoint and now never becomes a phantom straight-line distance.
+   */
+  const restoreFromCheckpoint = useCallback(
+    async (checkpoint: RunCheckpoint) => {
+      setError(null);
+      setStatus('starting');
+      try {
+        const permission = await requestPermission();
+        if (permission !== 'granted') {
+          setError(permission === 'denied' ? 'permission' : 'unavailable');
+          setStatus('idle');
+          return;
+        }
+
+        clearSub();
+        // Leg break: NOT seeded with the checkpoint's last point, so the
+        // next live fix starts a fresh leg instead of drawing a straight
+        // line across the untracked gap.
+        lastRef.current = null;
+        consecutiveRejectsRef.current = 0;
+        accumulatedRef.current = checkpoint.accumulatedMs;
+        legStartRef.current = Date.now();
+        lastCheckpointAtRef.current = Date.now();
+        lastCheckpointPointCountRef.current = checkpoint.points.length;
+        setPoints(checkpoint.points);
+        setDistanceM(checkpoint.distanceM);
+        setElapsedS(Math.floor(checkpoint.accumulatedMs / 1000));
+        setEndedAt(null);
+        setRejectedFixes(0);
+        setStartedAt(checkpoint.startedAt);
+        setHadBackgroundGap(true);
+
+        await beginRecording();
+        setStatus('running');
+      } catch {
+        setError('unavailable');
+        setStatus('idle');
+      }
+    },
+    [clearSub, beginRecording],
+  );
 
   return {
     status,
@@ -403,11 +573,14 @@ export function useRunTracker(): RunTracker {
     rejectedFixes,
     lastFix,
     degradedSignal,
+    keepAwakeFailed,
+    hadBackgroundGap,
     start,
     pause,
     resume,
     stop,
     reset,
+    restoreFromCheckpoint,
   };
 }
 

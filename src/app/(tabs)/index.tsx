@@ -31,6 +31,7 @@ import { useI18n } from '@/lib/i18n';
 import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { getHomeZone } from '@/lib/home-point';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
+import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import {
   fetchMyFences,
@@ -98,6 +99,36 @@ export default function TrackScreen() {
   // only a flag there was no handle, so a discarded run uploaded itself
   // later and a successful retry uploaded the same run twice.
   const [queuedId, setQueuedId] = useState<string | null>(null);
+
+  // An in-progress run recovered from run-checkpoint.ts after a reload —
+  // see that file's header. Read once on mount, not on every focus: a
+  // checkpoint only ever appears from a dead tab reloading, never while this
+  // component stays mounted, so re-checking on refocus would just find the
+  // same value or (worse) the one the runner already dismissed.
+  const [checkpoint, setCheckpoint] = useState<RunCheckpoint | null>(null);
+  useEffect(() => {
+    // Deferred by a tick, not called straight from the effect body — the
+    // React Compiler's lint rule traces a call through and flags any
+    // setState it can reach as a synchronous effect update. Same pattern as
+    // the queue-drain effect below and use-current-location.ts's
+    // autoRequest.
+    const id = setTimeout(() => {
+      setCheckpoint(loadCheckpoint());
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  const resumeCheckpoint = useCallback(() => {
+    if (!checkpoint) return;
+    const cp = checkpoint;
+    setCheckpoint(null);
+    void tracker.restoreFromCheckpoint(cp);
+  }, [checkpoint, tracker]);
+
+  const discardCheckpoint = useCallback(() => {
+    clearCheckpoint();
+    setCheckpoint(null);
+  }, []);
 
   // Drain the queue when the Track tab opens. This is the landing route, so
   // in practice it runs at app start — which is exactly when a run that
@@ -214,6 +245,10 @@ export default function TrackScreen() {
         setQueuedId(null);
         setPending(queuedCount());
       }
+      // The run-checkpoint copy exists ONLY to survive a crash before the
+      // run reaches durable storage. It just did — leaving the checkpoint
+      // behind would offer "Resume" on a run that's already saved.
+      clearCheckpoint();
       // Best-effort: a failed read here just means no "you took territory"
       // line, never a failed save. The run is already banked.
       const taken = await fetchRunSpoils(outcome.runId);
@@ -235,8 +270,14 @@ export default function TrackScreen() {
       // 'disabled' is excluded: that build cannot upload at all, so queuing
       // would accumulate runs that never go anywhere.
       if (outcome.reason === 'network' || outcome.reason === 'auth') {
-        setQueuedId(enqueueRun(payload));
+        const id = enqueueRun(payload);
+        setQueuedId(id);
         setPending(queuedCount());
+        // Same reasoning as the success branch — but ONLY once the run is
+        // actually durable in the upload queue. A failed enqueue write
+        // (id === null) leaves the run in memory alone, so the checkpoint
+        // is the only thing standing between it and a lost tab.
+        if (id) clearCheckpoint();
       }
     }
   }, [fence, masked, queuedId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
@@ -493,6 +534,26 @@ export default function TrackScreen() {
                   {t(tracker.error === 'permission' ? 'track.permission' : 'track.unavailable')}
                 </Text>
               )}
+              {/* navigator.wakeLock.request() rejects when the document
+                  isn't visible — a swallowed rejection here used to look
+                  identical to a held lock, and the screen just dimmed with
+                  nothing on screen explaining why. */}
+              {tracker.keepAwakeFailed && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t('track.keepAwakeFailed')}
+                </Text>
+              )}
+              {/* Set once the run has survived a background/foreground
+                  cycle — see the visibilitychange handler in tracking.ts.
+                  Sticky for the rest of the session rather than
+                  self-clearing: it happened, and the route now has a real
+                  gap in it, which is worth knowing even after the app is
+                  back in focus. */}
+              {tracker.hadBackgroundGap && (
+                <Text style={[styles.gpsState, { color: '#FFD166' }]}>
+                  {t('track.backgroundGap')}
+                </Text>
+              )}
 
               {/* Recording is foreground-only, so locking the phone ends the
                   run. Saying so is not optional: the failure is silent and
@@ -501,6 +562,24 @@ export default function TrackScreen() {
                 {t('track.keepOpen')}
               </Text>
             </Animated.View>
+          ) : checkpoint ? (
+            // An in-progress run recovered from run-checkpoint.ts after a
+            // reload (see that file's header). Resume/Discard only — no
+            // Start button here, so the runner can't accidentally abandon
+            // recoverable progress by starting a fresh session over it.
+            <>
+              <Text style={[styles.stageTitle, { color: c.text }]}>
+                {t('track.checkpointFound')}
+              </Text>
+              <View style={styles.summaryActions}>
+                <PrimaryButton label={t('track.resume')} onPress={resumeCheckpoint} c={c} />
+                <Pressable onPress={discardCheckpoint} accessibilityRole="button" hitSlop={10}>
+                  <Text style={[styles.secondary, { color: c.textSecondary }]}>
+                    {t('track.discard')}
+                  </Text>
+                </Pressable>
+              </View>
+            </>
           ) : (
             <>
               <Text style={[styles.stageTitle, { color: c.text }]}>{t('track.newSession')}</Text>
