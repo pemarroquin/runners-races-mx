@@ -88,13 +88,24 @@ describe('shouldAcceptFix', () => {
 // That guard has to live in geolocation.web.ts itself (the `removed` flag),
 // not in this fake.
 class FakeGeolocation {
-  private success: PositionCallback | null = null;
-  private error: PositionErrorCallback | null = null;
+  // Keyed by id so multiple concurrent watch() calls stay independent — see
+  // the P1 concurrency test below. Each registration keeps its OWN callbacks
+  // rather than sharing one slot, which is what lets a "late callback after
+  // remove()" test on one watch coexist with an untouched second watch.
+  private watchers = new Map<
+    number,
+    { success: PositionCallback; error: PositionErrorCallback | null }
+  >();
+  private nextId = 0;
   private currentSuccess: PositionCallback | null = null;
   private currentError: PositionErrorCallback | null = null;
   lastWatchId = 0;
-  /** Options watchPosition() was last called with — lets a test assert what
-   *  actually reaches the browser (e.g. enableHighAccuracy). */
+  /** Every id clearWatch() was called with, for asserting the RIGHT watch —
+   *  and only that one — was torn down. */
+  clearedIds: number[] = [];
+  /** Options watchPosition()/getCurrentPosition() were last called with —
+   *  lets a test assert what actually reaches the browser (e.g.
+   *  enableHighAccuracy). */
   lastWatchOptions: PositionOptions | undefined;
   lastGetCurrentOptions: PositionOptions | undefined;
 
@@ -103,15 +114,20 @@ class FakeGeolocation {
     error?: PositionErrorCallback | null,
     options?: PositionOptions,
   ): number {
-    this.success = success;
-    this.error = error ?? null;
+    this.nextId += 1;
+    this.watchers.set(this.nextId, { success, error: error ?? null });
+    this.lastWatchId = this.nextId;
     this.lastWatchOptions = options;
-    this.lastWatchId += 1;
-    return this.lastWatchId;
+    return this.nextId;
   }
 
-  clearWatch(): void {
-    // Intentionally a no-op — see the class comment.
+  clearWatch(id: number): void {
+    // Tracked but deliberately does NOT remove the handler — see the class
+    // comment: a real browser can still deliver an already-queued callback
+    // after clearWatch() runs, and that "late callback" case is exactly what
+    // geolocation.web.ts's own `removed` flag has to guard against, not this
+    // fake.
+    this.clearedIds.push(id);
   }
 
   getCurrentPosition(
@@ -124,12 +140,15 @@ class FakeGeolocation {
     this.lastGetCurrentOptions = options;
   }
 
-  trigger(position: GeolocationPosition): void {
-    this.success?.(position);
+  /** Defaults to the most recently registered watch, matching every
+   *  single-watch test below; pass an id explicitly to target a specific
+   *  one when more than one is live. */
+  trigger(position: GeolocationPosition, id: number = this.lastWatchId): void {
+    this.watchers.get(id)?.success(position);
   }
 
-  triggerError(err: GeolocationPositionError): void {
-    this.error?.(err);
+  triggerError(err: GeolocationPositionError, id: number = this.lastWatchId): void {
+    this.watchers.get(id)?.error?.(err);
   }
 
   triggerCurrent(position: GeolocationPosition): void {
@@ -236,6 +255,49 @@ describe('geolocation.web watch()', () => {
     vi.stubGlobal('navigator', { geolocation: fakeGeoOn });
     await watch({ timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true }, () => {}, () => {});
     expect(fakeGeoOn.lastWatchOptions?.enableHighAccuracy).toBe(true);
+  });
+
+  // P1 concurrency bug (tracking.ts's beginRecording(), fixed with an epoch
+  // guard): visibilitychange can fire more than once in quick succession, and
+  // with no guard the SECOND beginRecording() call's watch overwrites
+  // subRef.current before the FIRST's async watchPosition() resolves — so
+  // the first watch installs itself with nothing left pointing to it, and
+  // keeps feeding onFix for the rest of the run (duplicated points, inflated
+  // distance/area). The fix lives in tracking.ts, which this project's
+  // vitest setup can't unit-test (no React renderer — see
+  // vitest.config.ts's header). What CAN be tested here is the foundation
+  // that fix depends on: that two concurrent watch() calls stay fully
+  // independent, so abandoning one via remove() never touches the other.
+  it('keeps two concurrent watches independent — the foundation the epoch guard relies on', async () => {
+    const fakeGeo = new FakeGeolocation();
+    vi.stubGlobal('navigator', { geolocation: fakeGeo });
+    const fixesA: GeoFix[] = [];
+    const fixesB: GeoFix[] = [];
+
+    const subA = await watch(
+      { timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true },
+      (f) => fixesA.push(f),
+      () => {},
+    );
+    const idA = fakeGeo.lastWatchId;
+    const subB = await watch(
+      { timeIntervalMs: 0, distanceIntervalM: 0, highAccuracy: true },
+      (f) => fixesB.push(f),
+      () => {},
+    );
+    const idB = fakeGeo.lastWatchId;
+    expect(idA).not.toBe(idB);
+
+    // Abandon A — exactly what the epoch guard does to a beginRecording()
+    // call superseded by a later one.
+    subA.remove();
+    expect(fakeGeo.clearedIds).toEqual([idA]);
+
+    fakeGeo.trigger(makePosition(19.4, -99.1, 0), idA);
+    fakeGeo.trigger(makePosition(19.5, -99.2, 0), idB);
+
+    expect(fixesA).toHaveLength(0); // removed — a late callback is ignored
+    expect(fixesB).toHaveLength(1); // the surviving watch is untouched
   });
 });
 

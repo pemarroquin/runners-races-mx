@@ -185,8 +185,23 @@ export function useRunTracker(): RunTracker {
 
   const subRef = useRef<GeoWatch | null>(null);
   const lastRef = useRef<TrackPoint | null>(null);
+  // Guards beginRecording() against overlapping calls. watchPosition() is
+  // async and only assigns subRef.current once it resolves — with no guard,
+  // two calls to clearSub()+beginRecording() close together (visibilitychange
+  // fires more than once in quick succession on iOS around lock/unlock and
+  // app switching — this is not a hypothetical) race: the SECOND call's watch
+  // overwrites subRef.current before the FIRST's resolves, so when the first
+  // finally resolves it installs a watch that clearSub() can never reach
+  // again — nothing still references it. That watch keeps feeding onFix for
+  // the rest of the run: two watches, duplicated points, inflated distanceM,
+  // inflated fence area. Bumped by clearSub() (invalidates anything in
+  // flight) and by beginRecording() itself (claims a fresh generation);
+  // beginRecording() then checks its captured value is still current before
+  // installing anything.
+  const recordingEpochRef = useRef(0);
 
   const clearSub = useCallback(() => {
+    recordingEpochRef.current += 1;
     subRef.current?.remove();
     subRef.current = null;
   }, []);
@@ -364,18 +379,33 @@ export function useRunTracker(): RunTracker {
   //      resolves it refines things, if it hangs nothing is waiting on it.
   //      onFix's timestamp guard drops it if the watcher has moved on.
   const beginRecording = useCallback(async () => {
-    const cached = await getLastKnown(LAST_KNOWN_MAX_AGE_MS);
-    if (cached) onFix(cached);
+    // Claim a generation. If clearSub() (or another beginRecording()) runs
+    // before this one finishes, recordingEpochRef.current moves past this
+    // value, and every step below becomes a no-op instead of installing a
+    // subscription or fix nothing still wants — see recordingEpochRef.
+    const epoch = ++recordingEpochRef.current;
 
-    subRef.current = await watchPosition(
+    const cached = await getLastKnown(LAST_KNOWN_MAX_AGE_MS);
+    if (cached && epoch === recordingEpochRef.current) onFix(cached);
+
+    const sub = await watchPosition(
       { timeIntervalMs: TIME_INTERVAL_MS, distanceIntervalM: DISTANCE_INTERVAL_M, highAccuracy: true },
       onFix,
       onWatchError,
     );
+    if (epoch !== recordingEpochRef.current) {
+      // Superseded while the watch was being set up. This is the exact leak
+      // the epoch guard exists for: without removing it here, this watch
+      // would live on with nothing referencing it and keep calling onFix
+      // for the rest of the run.
+      sub.remove();
+      return;
+    }
+    subRef.current = sub;
 
     getCurrent()
       .then((fix) => {
-        if (fix) onFix(fix);
+        if (fix && epoch === recordingEpochRef.current) onFix(fix);
       })
       .catch(() => {
         // Fine — the watcher is already delivering.
