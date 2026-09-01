@@ -356,6 +356,22 @@ export default function TrackScreen() {
             <Text style={[styles.notice, { color: c.textSecondary }]}>{t('track.noFence')}</Text>
           )}
 
+          {/* Distance-gap instrumentation (Task B, 2026-08-31) — background/
+              foreground cycles are real but untracked ground, unlike a
+              pause, and this is the data that confirms or rules out the
+              background-gap hypothesis for a reported distance shortfall.
+              Diagnostic, not a claim: gapChordM is NEVER added to
+              distanceM above. */}
+          {tracker.gapCount > 0 && (
+            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
+              {t('track.gapNotice', {
+                count: tracker.gapCount,
+                duration: formatDuration(tracker.gapDurationMs / 1000),
+                chord: formatDistance(tracker.gapChordM),
+              })}
+            </Text>
+          )}
+
           {/* Masking changed the shape on screen, so say so rather than
               letting the runner wonder why their loop looks clipped. */}
           {masked?.masked && !masked.fullyInsideZone && (
@@ -441,6 +457,9 @@ export default function TrackScreen() {
         placeholder={t('track.waiting')}
         placeholderColor={c.textSecondary}
         unavailable={t('track.mapUnavailable')}
+        zoomInLabel={t('track.zoomIn')}
+        zoomOutLabel={t('track.zoomOut')}
+        recenterLabel={t('track.recenter')}
       />
 
       {/* The map is always dark (MAP_ALWAYS_DARK), so a plain white scrim
@@ -549,7 +568,7 @@ export default function TrackScreen() {
                   self-clearing: it happened, and the route now has a real
                   gap in it, which is worth knowing even after the app is
                   back in focus. */}
-              {tracker.hadBackgroundGap && (
+              {tracker.gapCount > 0 && (
                 <Text style={[styles.gpsState, { color: '#FFD166' }]}>
                   {t('track.backgroundGap')}
                 </Text>
