@@ -26,6 +26,7 @@ const RES = 11; // matches src/lib/tiles.ts's DEFAULT_TILE_RES
 function pathToTiles(points, res = RES) {
   const direct = new Set();
   const gapFilled = new Set();
+  let bridgeFailures = 0;
   let prevCell = null;
   for (const p of points) {
     const cell = latLngToCell(p.lat, p.lng, res);
@@ -35,12 +36,22 @@ function pathToTiles(points, res = RES) {
         for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
       } catch {
         // Fail open to the two endpoints — see tiles.ts's own comment.
+        // Counted, not silently swallowed: without this, "the bridge threw
+        // and left a hole" is indistinguishable from "already adjacent,
+        // nothing to bridge" — exactly the failure shape this session kept
+        // getting burned by.
+        bridgeFailures += 1;
       }
     }
     prevCell = cell;
   }
   for (const c of direct) gapFilled.delete(c);
-  return { cells: [...direct, ...gapFilled], directCount: direct.size, gapFilledCount: gapFilled.size };
+  return {
+    cells: [...direct, ...gapFilled],
+    directCount: direct.size,
+    gapFilledCount: gapFilled.size,
+    bridgeFailures,
+  };
 }
 
 function haversineM(a, b) {
@@ -141,7 +152,7 @@ if (!points) {
   synthetic = true;
 }
 
-const { cells, directCount, gapFilledCount } = pathToTiles(points);
+const { cells, directCount, gapFilledCount, bridgeFailures } = pathToTiles(points);
 const distanceM = pathDistanceM(points);
 
 const routeFeature = {
@@ -159,7 +170,7 @@ const tileFeatures = cells.map((h3) => ({
 
 const geojson = {
   type: 'FeatureCollection',
-  properties: { synthetic, generatedAt: new Date().toISOString() },
+  properties: { synthetic, bridgeFailures, generatedAt: new Date().toISOString() },
   features: [routeFeature, ...tileFeatures],
 };
 
@@ -172,6 +183,7 @@ console.log(`  distance:         ${(distanceM / 1000).toFixed(2)} km`);
 console.log(`  tiles claimed:    ${cells.length}`);
 console.log(`  tiles direct:     ${directCount}`);
 console.log(`  tiles gap-filled: ${gapFilledCount} (${gapPct}% of claimed tiles)`);
+console.log(`  bridge failures:  ${bridgeFailures}${bridgeFailures > 0 ? ' — some gaps left UNFILLED holes, see tiles.ts' : ''}`);
 console.log(`  wrote:            ${outputPath}`);
 if (synthetic) {
   console.log('  NOTE: synthetic data — not Pedro\'s or anyone\'s real run.');

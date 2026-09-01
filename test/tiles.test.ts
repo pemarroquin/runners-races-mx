@@ -28,6 +28,7 @@ describe('pathToTiles', () => {
     expect(result.cells).toEqual([]);
     expect(result.directCount).toBe(0);
     expect(result.gapFilledCount).toBe(0);
+    expect(result.bridgeFailures).toBe(0);
   });
 
   it('a single point yields exactly one cell, direct', () => {
@@ -131,5 +132,28 @@ describe('pathToTiles', () => {
     const path: LatLng[] = [pointEast(0), pointEast(60), pointEast(5)];
     const result = pathToTiles(path);
     expect(result.directCount + result.gapFilledCount).toBe(result.cells.length);
+  });
+
+  it('bridgeFailures stays 0 on ordinary paths, including realistic gaps', () => {
+    const path: LatLng[] = Array.from({ length: 10 }, (_, i) => pointEast(i * 45));
+    expect(pathToTiles(path).bridgeFailures).toBe(0);
+  });
+
+  it('counts a failed bridge rather than silently leaving an unobservable hole', () => {
+    // gridPathCells genuinely throws only for cells far beyond anything a
+    // real gap produces (empirically: thousands of km, not the tens of km
+    // a bad background-gap jump could plausibly cover) — a plain distance
+    // check couldn't stand in for the real library call here, so this
+    // exercises the actual throw path rather than asserting on a mock.
+    const here = pointEast(0);
+    const farAway = { lat: -LAT, lng: -LNG }; // antipodal-ish — thousands of km away
+    const result = pathToTiles([here, farAway]);
+
+    expect(result.bridgeFailures).toBe(1);
+    // Fails OPEN: both endpoints are still claimed even though nothing
+    // filled the (very real, very large) gap between them.
+    expect(result.cells).toHaveLength(2);
+    expect(result.directCount).toBe(2);
+    expect(result.gapFilledCount).toBe(0);
   });
 });

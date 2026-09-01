@@ -34,6 +34,17 @@ export interface PathToTilesResult {
    *  cadence really does leave holes without it); near zero means it's
    *  mostly cosmetic for this path. */
   gapFilledCount: number;
+  /** Times gridPathCells THREW trying to bridge a gap and this function
+   *  fell back to the two endpoints instead — an unrecorded hole in the
+   *  trail. Without this counter, "the fill threw and left a hole" is
+   *  indistinguishable from "the cells were already adjacent and needed no
+   *  bridging" — the exact shape of failure (a dead path looking identical
+   *  to a working one) this whole project keeps getting burned by. Should
+   *  be 0 for almost every real run; a non-zero value on a real one is the
+   *  direct signal of a background-gap leg-break jump (Task B) or a wild
+   *  outlier fix, worth surfacing rather than only inferring from a smaller
+   *  cell count than expected. */
+  bridgeFailures: number;
 }
 
 /**
@@ -53,6 +64,7 @@ export interface PathToTilesResult {
 export function pathToTiles(path: LatLng[], res: number = DEFAULT_TILE_RES): PathToTilesResult {
   const direct = new Set<string>();
   const gapFilled = new Set<string>();
+  let bridgeFailures = 0;
   let prevCell: string | null = null;
 
   for (const p of path) {
@@ -70,7 +82,9 @@ export function pathToTiles(path: LatLng[], res: number = DEFAULT_TILE_RES): Pat
         // bridge. Fail OPEN to just the two endpoints (already in `direct`)
         // rather than losing the rest of the path: a hole here is honest —
         // that ground genuinely wasn't tracked — unlike the ordinary
-        // between-fix gaps this function's whole job is to close.
+        // between-fix gaps this function's whole job is to close. Counted,
+        // not just swallowed — see bridgeFailures.
+        bridgeFailures += 1;
       }
     }
     prevCell = cell;
@@ -83,5 +97,6 @@ export function pathToTiles(path: LatLng[], res: number = DEFAULT_TILE_RES): Pat
     cells: [...direct, ...gapFilled],
     directCount: direct.size,
     gapFilledCount: gapFilled.size,
+    bridgeFailures,
   };
 }
