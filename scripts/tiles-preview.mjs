@@ -22,37 +22,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { cellToBoundary, gridPathCells, latLngToCell } from 'h3-js';
 
 const RES = 11; // matches src/lib/tiles.ts's DEFAULT_TILE_RES
-
-function pathToTiles(points, res = RES) {
-  const direct = new Set();
-  const gapFilled = new Set();
-  let bridgeFailures = 0;
-  let prevCell = null;
-  for (const p of points) {
-    const cell = latLngToCell(p.lat, p.lng, res);
-    direct.add(cell);
-    if (prevCell !== null && prevCell !== cell) {
-      try {
-        for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
-      } catch {
-        // Fail open to the two endpoints — see tiles.ts's own comment.
-        // Counted, not silently swallowed: without this, "the bridge threw
-        // and left a hole" is indistinguishable from "already adjacent,
-        // nothing to bridge" — exactly the failure shape this session kept
-        // getting burned by.
-        bridgeFailures += 1;
-      }
-    }
-    prevCell = cell;
-  }
-  for (const c of direct) gapFilled.delete(c);
-  return {
-    cells: [...direct, ...gapFilled],
-    directCount: direct.size,
-    gapFilledCount: gapFilled.size,
-    bridgeFailures,
-  };
-}
+// Fastest sustained human running speed the server's OWN anti-cheat
+// flagging already treats as implausible — see
+// supabase/migrations/20260827_anti_cheat_flag.sql's `max_kmh := 25`.
+// Reused rather than a second, possibly-disagreeing number.
+const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
 
 function haversineM(a, b) {
   const R = 6371008.8;
@@ -62,6 +36,51 @@ function haversineM(a, b) {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat));
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function pathToTiles(points, res = RES) {
+  const direct = new Set();
+  const gapFilled = new Set();
+  let bridgeFailures = 0;
+  let bridgesSkipped = 0;
+  let prevCell = null;
+  let prevPoint = null;
+  for (const p of points) {
+    const cell = latLngToCell(p.lat, p.lng, res);
+    direct.add(cell);
+    if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
+      const dtS = (p.ts - prevPoint.ts) / 1000;
+      const impliedSpeedMs = dtS > 0 ? haversineM(prevPoint, p) / dtS : Infinity;
+      if (impliedSpeedMs > MAX_BRIDGE_SPEED_MS) {
+        // Leave the hole — bridging would claim ground never run over.
+        // This is the actual bug fix (b8's review, 2026-09-01): a 2km
+        // background-gap jump used to be bridged exactly like a normal
+        // throttle gap, silently claiming ~95,000 m2 never covered.
+        bridgesSkipped += 1;
+      } else {
+        try {
+          for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
+        } catch {
+          // Fail open to the two endpoints — see tiles.ts's own comment.
+          // Counted, not silently swallowed: without this, "the bridge
+          // threw and left a hole" is indistinguishable from "already
+          // adjacent, nothing to bridge" — exactly the failure shape this
+          // session kept getting burned by.
+          bridgeFailures += 1;
+        }
+      }
+    }
+    prevCell = cell;
+    prevPoint = p;
+  }
+  for (const c of direct) gapFilled.delete(c);
+  return {
+    cells: [...direct, ...gapFilled],
+    directCount: direct.size,
+    gapFilledCount: gapFilled.size,
+    bridgeFailures,
+    bridgesSkipped,
+  };
 }
 
 function pathDistanceM(points) {
@@ -78,6 +97,13 @@ function pathDistanceM(points) {
 // lands in plain neighbouring cells with nothing to gap-fill and the demo
 // would report a misleadingly reassuring 0%. 55m reliably exercises the
 // fill, which is the whole point of running this on synthetic data at all.
+//
+// Timestamps are derived from a comfortable jogging pace (JOG_MS), NOT a
+// fixed 2s step — a fixed 2s/55m step implies ~27.5 m/s (99 km/h), which
+// the bridge speed cap now correctly refuses to bridge. Deriving ts from an
+// actual plausible speed keeps the demo showing what it's meant to (gap-
+// filling in action) instead of accidentally exercising the skip path.
+const JOG_MS = 3; // ~10.8 km/h, comfortably under MAX_BRIDGE_SPEED_MS
 function syntheticPath() {
   const LAT = 25.6866;
   const LNG = -100.3161;
@@ -97,12 +123,13 @@ function syntheticPath() {
     const [x1, y1] = corners[i + 1];
     const legM = Math.hypot(x1 - x0, y1 - y0);
     const steps = Math.max(1, Math.round(legM / 55)); // ~55m spacing
+    const stepM = legM / steps;
     for (let s = i === 0 ? 0 : 1; s <= steps; s++) {
       const t = s / steps;
       const x = x0 + (x1 - x0) * t;
       const y = y0 + (y1 - y0) * t;
       points.push({ lat: LAT + y / M_PER_DEG_LAT, lng: LNG + x / M_PER_DEG_LNG, ts });
-      ts += 2000;
+      ts += (stepM / JOG_MS) * 1000;
     }
   }
   return points;
@@ -152,7 +179,7 @@ if (!points) {
   synthetic = true;
 }
 
-const { cells, directCount, gapFilledCount, bridgeFailures } = pathToTiles(points);
+const { cells, directCount, gapFilledCount, bridgeFailures, bridgesSkipped } = pathToTiles(points);
 const distanceM = pathDistanceM(points);
 
 const routeFeature = {
@@ -170,7 +197,7 @@ const tileFeatures = cells.map((h3) => ({
 
 const geojson = {
   type: 'FeatureCollection',
-  properties: { synthetic, bridgeFailures, generatedAt: new Date().toISOString() },
+  properties: { synthetic, bridgeFailures, bridgesSkipped, generatedAt: new Date().toISOString() },
   features: [routeFeature, ...tileFeatures],
 };
 
@@ -184,6 +211,7 @@ console.log(`  tiles claimed:    ${cells.length}`);
 console.log(`  tiles direct:     ${directCount}`);
 console.log(`  tiles gap-filled: ${gapFilledCount} (${gapPct}% of claimed tiles)`);
 console.log(`  bridge failures:  ${bridgeFailures}${bridgeFailures > 0 ? ' — some gaps left UNFILLED holes, see tiles.ts' : ''}`);
+console.log(`  bridges skipped:  ${bridgesSkipped}${bridgesSkipped > 0 ? ' — gap(s) implied a superhuman speed, left unbridged (see MAX_BRIDGE_SPEED_MS)' : ''}`);
 console.log(`  wrote:            ${outputPath}`);
 if (synthetic) {
   console.log('  NOTE: synthetic data — not Pedro\'s or anyone\'s real run.');
