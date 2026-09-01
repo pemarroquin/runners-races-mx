@@ -76,6 +76,8 @@ const GLYPHS: Record<string, Glyph> = {
       <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
     </>
   ),
+  add: (c) => <path d="M12 5v14M5 12h14" stroke={c} strokeWidth={2} strokeLinecap="round" />,
+  remove: (c) => <path d="M5 12h14" stroke={c} strokeWidth={2} strokeLinecap="round" />,
   open_in_new: (c) => (
     <>
       <path

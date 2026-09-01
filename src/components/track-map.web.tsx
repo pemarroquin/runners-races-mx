@@ -31,12 +31,16 @@
 // the fill's own rim, FILL_OUTLINE_SRC) cycles through ROUTE_GRADIENT's
 // colours via rotateRouteGradient. Both are plain setInterval timers, not
 // requestAnimationFrame loops — see the pulse-dot comment below.
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
+  AUTO_RETURN_IDLE_MS,
   EMISSIVE_STRENGTH_FULL,
   FENCE_LAG_M,
   FENCE_RISE_MS,
@@ -65,6 +69,7 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
+  ZOOM_STEP,
 } from '@/constants/map';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { useRegion } from '@/lib/region-context';
@@ -92,6 +97,11 @@ interface TrackMapProps {
   placeholder: string;
   placeholderColor: ColorValue;
   unavailable: string;
+  /** Accessibility labels for the camera controls (Task D) — passed in
+   *  pre-translated, matching every other string on this component. */
+  zoomInLabel: string;
+  zoomOutLabel: string;
+  recenterLabel: string;
 }
 
 function ensureMapboxCss() {
@@ -144,6 +154,9 @@ export function TrackMap({
   placeholder,
   placeholderColor,
   unavailable,
+  zoomInLabel,
+  zoomOutLabel,
+  recenterLabel,
 }: TrackMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -159,7 +172,60 @@ export function TrackMap({
   // are guaranteed to already exist; cleared in the mount effect's cleanup.
   const fillPulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const routeCycleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Camera control during a session (Task D). preferredZoom is a REF, not
+  // state: the zoom buttons write it and the auto-return glide reads it
+  // imperatively from inside an event listener/timeout, seconds after the
+  // render that set it — a ref avoids both a stale closure and
+  // re-subscribing every listener on every zoom tap. Survives a session
+  // (not reset on pause/resume) because it is a user preference, not
+  // per-leg state.
+  const preferredZoomRef = useRef(SESSION_ZOOM);
+  // The runner's latest known position, mirrored from the "feed
+  // coordinates in" effect below (the same `head` it already computes) so
+  // the auto-return glide — fired from a setTimeout, not a render — always
+  // targets where the runner IS, not wherever they were when the 5s timer
+  // was scheduled.
+  const headRef = useRef<LatLng | null>(null);
+  const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Drives the re-center control's visibility — true from the moment a user
+  // gesture (drag/pinch) moves the camera until it glides back, whether
+  // that's the auto-return timer or an explicit tap.
+  const [cameraOffTarget, setCameraOffTarget] = useState(false);
   const { region } = useRegion();
+
+  // Glides the camera back to (runner position, preferredZoom,
+  // SESSION_PITCH) — the ONE definition auto-return, the re-center button,
+  // and the pin double-tap all share, so "deliberate zoom survives, stray
+  // drift doesn't" can't drift out of sync between the three entry points.
+  const returnToTarget = useCallback(() => {
+    const map = mapRef.current;
+    const head = headRef.current;
+    if (autoReturnTimerRef.current) {
+      clearTimeout(autoReturnTimerRef.current);
+      autoReturnTimerRef.current = null;
+    }
+    setCameraOffTarget(false);
+    if (!map || !head) return; // nothing to target yet — just clear the pending timer/flag
+    map.easeTo({
+      center: [head.lng, head.lat],
+      zoom: preferredZoomRef.current,
+      pitch: SESSION_PITCH,
+      duration: 900,
+    });
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const nextZoom = map.getZoom() + delta;
+    // The button IS the deliberate zoom — record it as the new preference
+    // before animating, so an auto-return firing mid-animation (a runner
+    // taps zoom-out right as their 5s idle timer was about to fire) still
+    // lands on the value they just chose, not the one before it.
+    preferredZoomRef.current = nextZoom;
+    map.easeTo({ zoom: nextZoom, duration: 300 });
+  }, []);
 
   // Only ever a fallback for the *initial* camera, and only while no real fix
   // exists. The marker is a separate decision below — it is never placed on a
@@ -191,6 +257,18 @@ export function TrackMap({
 
       map.on('load', () => {
         if (cancelled) return;
+
+        // Rotate/pitch gestures, gone entirely — not just during a session.
+        // SESSION_PITCH is set once for the 3D look and a runner has no
+        // reason to change it via gesture; on the idle (pre-session) map
+        // pitch is already flat, so there is nothing legitimate to disable
+        // FROM either way. This is the fix for the actual bug: one stray
+        // pinch or two-finger drag used to permanently change the framing,
+        // with no interaction detection and no way back (Pedro hit this
+        // mid-run: "normal at first, then weird").
+        map.dragRotate.disable();
+        map.touchPitch.disable();
+        map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
 
         // lineMetrics is REQUIRED for line-gradient. Without it the paint
         // property is ignored silently and the line renders flat — which
@@ -322,49 +400,25 @@ export function TrackMap({
           },
         });
 
-        // "Feels alive even standing still" — Pedro's ask. Both timers are
-        // plain setInterval, not requestAnimationFrame: see this file's
-        // pulse-dot comment for why a per-frame GL repaint for the whole
-        // length of a run is the specific trap being avoided. Each tick is
-        // one cheap setPaintProperty call, not a geometry rebuild.
-        //
-        // The fill breathes between LIVE_FILL_OPACITY_LOW/HIGH — GL
-        // interpolates fill-opacity on the GPU between calls via the
-        // fill-opacity-transition set above, so this reads as a smooth
-        // pulse from one JS call every LIVE_FILL_PULSE_MS.
-        let fillHigh = false;
-        fillPulseIntervalRef.current = setInterval(() => {
-          fillHigh = !fillHigh;
-          map.setPaintProperty(
-            FILL_SRC,
-            'fill-opacity',
-            fillHigh ? LIVE_FILL_OPACITY_HIGH : LIVE_FILL_OPACITY_LOW,
-          );
-        }, LIVE_FILL_PULSE_MS);
-
-        // The route (and its rim twin below) cycle colour instead: unlike
-        // fill-opacity, line-gradient is a ColorRampProperty with no
-        // `-transition` support at all (confirmed against the installed
-        // mapbox-gl typings) — every update SNAPS, there's no GPU tween to
-        // lean on. rotateRouteGradient keeps the offsets fixed and only
-        // rotates which colour sits at which one, so this reads as a
-        // stepped shift, not a silky flow — an honest limit of the API.
-        let step = 0;
-        routeCycleIntervalRef.current = setInterval(() => {
-          step += 1;
-          const gradient = [
-            'interpolate',
-            ['linear'],
-            ['line-progress'],
-            ...rotateRouteGradient(step).flat(),
-          ] as unknown as string;
-          map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
-          map.setPaintProperty(FILL_OUTLINE_SRC, 'line-gradient', gradient);
-        }, ROUTE_GRADIENT_CYCLE_MS);
+        // "Feels alive even standing still" (mid-run, not idling — see the
+        // dedicated effect below that arms these) — both timers are plain
+        // setInterval, not requestAnimationFrame: see this file's pulse-dot
+        // comment for why a per-frame GL repaint for the whole length of a
+        // run is the specific trap being avoided. Each tick is one cheap
+        // setPaintProperty call, not a geometry rebuild.
 
         const el = document.createElement('div');
         el.className = 'track-dot';
         el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
+        // Double-tap the pin to re-center (Pedro's original idea) —
+        // stopPropagation so a near-miss tap can't fall through to the
+        // canvas underneath and trigger Mapbox's OWN built-in
+        // double-click-to-zoom, which would zoom IN: the opposite of what
+        // tapping the pin means here.
+        el.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          returnToTarget();
+        });
         markerRef.current = new mapboxgl.Marker({ element: el });
         readyRef.current = true;
       });
@@ -374,10 +428,6 @@ export function TrackMap({
       cancelled = true;
       readyRef.current = false;
       flownRef.current = false;
-      if (fillPulseIntervalRef.current) clearInterval(fillPulseIntervalRef.current);
-      if (routeCycleIntervalRef.current) clearInterval(routeCycleIntervalRef.current);
-      fillPulseIntervalRef.current = null;
-      routeCycleIntervalRef.current = null;
       markerRef.current?.remove();
       markerRef.current = null;
       mapRef.current?.remove();
@@ -387,6 +437,107 @@ export function TrackMap({
     // than rebuilding it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Arms the fill-breathe and route-colour-cycle timers ONLY while a session
+  // is active — gated here, not inside the mount effect above, specifically
+  // because they used to run from map mount to unmount regardless of
+  // whether a run was in progress. Sitting on the Track tab with no run
+  // recording cost ~2.2 setPaintProperty calls per second, each forcing a
+  // map repaint, indefinitely, on an empty fill source — directly undoing
+  // P0.1 bug 3, which exists specifically to stop the idle screen burning
+  // battery (see GeoWatchOptions.highAccuracy). This is a running app; the
+  // phone has to survive 40+ minutes with the screen on. "Feels alive even
+  // standing still" means standing still MID-RUN, not idling in the app.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !active) return;
+
+    // The fill breathes between LIVE_FILL_OPACITY_LOW/HIGH — GL interpolates
+    // fill-opacity on the GPU between calls via the fill-opacity-transition
+    // set when the layer was created, so this reads as a smooth pulse from
+    // one JS call every LIVE_FILL_PULSE_MS.
+    let fillHigh = false;
+    fillPulseIntervalRef.current = setInterval(() => {
+      fillHigh = !fillHigh;
+      map.setPaintProperty(
+        FILL_SRC,
+        'fill-opacity',
+        fillHigh ? LIVE_FILL_OPACITY_HIGH : LIVE_FILL_OPACITY_LOW,
+      );
+    }, LIVE_FILL_PULSE_MS);
+
+    // The route (and its rim twin) cycle colour instead: unlike fill-opacity,
+    // line-gradient is a ColorRampProperty with no `-transition` support at
+    // all (confirmed against the installed mapbox-gl typings) — every update
+    // SNAPS, there's no GPU tween to lean on. rotateRouteGradient keeps the
+    // offsets fixed and only rotates which colour sits at which one, so this
+    // reads as a stepped shift, not a silky flow — an honest limit of the API.
+    let step = 0;
+    routeCycleIntervalRef.current = setInterval(() => {
+      step += 1;
+      const gradient = [
+        'interpolate',
+        ['linear'],
+        ['line-progress'],
+        ...rotateRouteGradient(step).flat(),
+      ] as unknown as string;
+      map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
+      map.setPaintProperty(FILL_OUTLINE_SRC, 'line-gradient', gradient);
+    }, ROUTE_GRADIENT_CYCLE_MS);
+
+    return () => {
+      if (fillPulseIntervalRef.current) clearInterval(fillPulseIntervalRef.current);
+      if (routeCycleIntervalRef.current) clearInterval(routeCycleIntervalRef.current);
+      fillPulseIntervalRef.current = null;
+      routeCycleIntervalRef.current = null;
+    };
+  }, [active]);
+
+  // Auto-return after AUTO_RETURN_IDLE_MS of no further interaction — gated
+  // on `active` the same way as the animation timers above: this exists to
+  // repair sweaty-hands drift mid-run, not to herd someone idly exploring
+  // the pre-session map back to their own position.
+  //
+  // `originalEvent` is present on Mapbox's own camera events ONLY when a
+  // user gesture triggered them — absent for our own easeTo/flyTo calls
+  // (the fly-in, the live follow, returnToTarget itself) — which is the one
+  // reliable way to tell "the runner touched the map" apart from every
+  // OTHER thing in this file that already moves the camera. Listens to
+  // dragend/zoomend specifically, not moveend: rotate/pitch are disabled
+  // above, so drag and pinch-zoom are the only gestures left that can
+  // actually originate a user move.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !active) return;
+
+    // Typed `unknown`, not Mapbox's own per-event shape: 'dragend' and
+    // 'zoomend' carry slightly different originalEvent union types, and the
+    // 'void' branch some of these events' types include resolves (via
+    // Mapbox's internal event-map machinery) to a bare {type, target} shape
+    // with no originalEvent at all — no single object type satisfies every
+    // variant. `unknown` is the top type, so this is valid for any of them;
+    // narrowed by hand at runtime instead.
+    const onUserMove = (e: unknown) => {
+      const originalEvent = (e as { originalEvent?: unknown } | null | undefined)?.originalEvent;
+      if (!originalEvent) return;
+      setCameraOffTarget(true);
+      if (autoReturnTimerRef.current) clearTimeout(autoReturnTimerRef.current);
+      autoReturnTimerRef.current = setTimeout(returnToTarget, AUTO_RETURN_IDLE_MS);
+    };
+
+    map.on('dragend', onUserMove);
+    map.on('zoomend', onUserMove);
+
+    return () => {
+      map.off('dragend', onUserMove);
+      map.off('zoomend', onUserMove);
+      if (autoReturnTimerRef.current) {
+        clearTimeout(autoReturnTimerRef.current);
+        autoReturnTimerRef.current = null;
+      }
+      setCameraOffTarget(false);
+    };
+  }, [active, returnToTarget]);
 
   // Marker placement is deliberately gated on a REAL fix. Showing the pin at
   // the region fallback is what made it look like the location was wrong —
@@ -400,6 +551,9 @@ export function TrackMap({
     // stays fresh even while fixes are rejected for accuracy — the accepted
     // point list is only the fallback for the moment before any raw fix.
     const head = here ?? (points.length > 0 ? points[points.length - 1] : null);
+    // Mirrored for returnToTarget (Task D), which reads this from a
+    // setTimeout/event listener rather than a render.
+    headRef.current = head;
     if (!head) {
       marker.remove();
       return;
@@ -547,7 +701,44 @@ export function TrackMap({
           <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
         </View>
       )}
+      {/* Camera controls (Task D) — reliable targets for sweaty hands where
+          pinch is not. Bottom-right, matching where a thumb naturally rests;
+          the app's own circular-button language (see index.tsx's
+          RoundButton), not Mapbox's NavigationControl — foreign styling,
+          and its compass would be meaningless with rotation disabled. */}
+      {active && (
+        <View style={styles.cameraControls} pointerEvents="box-none">
+          {cameraOffTarget && (
+            <MapButton label={recenterLabel} onPress={returnToTarget} ios="location.fill" android="my_location" />
+          )}
+          <MapButton label={zoomInLabel} onPress={() => zoomBy(ZOOM_STEP)} ios="plus" android="add" />
+          <MapButton label={zoomOutLabel} onPress={() => zoomBy(-ZOOM_STEP)} ios="minus" android="remove" />
+        </View>
+      )}
     </View>
+  );
+}
+
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
@@ -563,4 +754,29 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
   placeholderText: { fontSize: 14, textAlign: 'center' },
+  cameraControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    bottom: BottomTabInset + Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  // Same 52px circle + shadow language as index.tsx's RoundButton (the
+  // pause/stop cluster), but semi-transparent dark rather than a solid
+  // session-colour — these aren't destructive/session-critical actions,
+  // and need to read against whatever's under them on the map, not just
+  // the white idle scrim.
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
 });

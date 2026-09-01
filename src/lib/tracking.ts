@@ -142,10 +142,28 @@ export interface RunTracker {
    *  lock — this is the workspace's "never report unverified success" rule
    *  applied to the screen staying on. */
   keepAwakeFailed: boolean;
-  /** True once this session has survived at least one background/foreground
-   *  cycle. Surfaced so the runner knows recording paused rather than
-   *  silently dropped a stretch of the route. */
-  hadBackgroundGap: boolean;
+  /** Times this session has survived a background/foreground cycle while
+   *  running. Ground covered during a gap is real (the runner kept moving)
+   *  — unlike a deliberate pause, this is not "they stopped" — but it goes
+   *  untracked while the app is hidden. Surfaced so the runner knows
+   *  recording paused rather than silently dropping a stretch of the route,
+   *  and so a real run's numbers can confirm or rule out the background-gap
+   *  hypothesis for a reported distance discrepancy (2026-08-31: Pedro's
+   *  app read ~10m low vs. an Apple Watch, then stepped to ~20m low in the
+   *  last stretch — a step, not drift, points at one discrete gap). */
+  gapCount: number;
+  /** Total wall-clock time spent backgrounded across every gap this
+   *  session, ms. */
+  gapDurationMs: number;
+  /** Sum of the straight-line distance between the last point recorded
+   *  before each gap and the first point recorded after it, metres.
+   *  Instrumentation ONLY — this is never added to distanceM. Whether it
+   *  should be is exactly the open question this measurement answers: if a
+   *  real run's gapChordM is close to its distance shortfall against a
+   *  reference (a watch, say), that confirms the gap is where the missing
+   *  ground went and bridging it becomes a one-line, evidence-backed change
+   *  instead of a guess. */
+  gapChordM: number;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
@@ -173,7 +191,16 @@ export function useRunTracker(): RunTracker {
   const [lastFix, setLastFix] = useState<LatLng | null>(null);
   const [degradedSignal, setDegradedSignal] = useState(false);
   const [keepAwakeFailed, setKeepAwakeFailed] = useState(false);
-  const [hadBackgroundGap, setHadBackgroundGap] = useState(false);
+  const [gapCount, setGapCount] = useState(0);
+  const [gapDurationMs, setGapDurationMs] = useState(0);
+  const [gapChordM, setGapChordM] = useState(0);
+  // The point + wall-clock time when the document was last hidden while
+  // running, and a flag telling onFix its NEXT fix is the far end of an
+  // open gap's chord. Refs: onFix reads/sets them synchronously in the
+  // event handler, same reasoning as lastRef — a state value captured in
+  // the callback would be stale.
+  const gapStartRef = useRef<{ atMs: number; lastPoint: TrackPoint | null } | null>(null);
+  const awaitingGapChordRef = useRef(false);
   // A ref, not state: onFix must read the CURRENT count synchronously, and a
   // state value captured in the callback would be stale.
   const consecutiveRejectsRef = useRef(0);
@@ -310,6 +337,21 @@ export function useRunTracker(): RunTracker {
     // interface comment on lastFix.
     setLastFix({ lat: fix.lat, lng: fix.lng });
 
+    // Gap-chord instrumentation (Task B). This fix is the far end of an open
+    // gap — the visibilitychange handler set the flag and captured the near
+    // end (gapStartRef.lastPoint) before clearing lastRef for the leg break.
+    // Uses the RAW fix, same as lastFix above: recording quality and "how
+    // far did the gap actually span" are different questions.
+    if (awaitingGapChordRef.current) {
+      awaitingGapChordRef.current = false;
+      const gapStart = gapStartRef.current;
+      gapStartRef.current = null;
+      if (gapStart?.lastPoint) {
+        const chord = haversineM(gapStart.lastPoint, { lat: fix.lat, lng: fix.lng });
+        setGapChordM((cur) => cur + chord);
+      }
+    }
+
     // Out-of-order guard: the fresh-fix seed in start()/resume() runs in
     // parallel with the watcher rather than blocking it, so a slow
     // getCurrent() can resolve AFTER the watcher has already delivered newer
@@ -425,7 +467,16 @@ export function useRunTracker(): RunTracker {
     if (typeof document === 'undefined') return;
 
     const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Gap starts. Capture the last known point NOW — the 'visible'
+        // branch below clears lastRef.current (leg break) before this could
+        // be read again, and it's the near end of the chord instrumented
+        // in onFix.
+        gapStartRef.current = { atMs: Date.now(), lastPoint: lastRef.current };
+        return;
+      }
       if (document.visibilityState !== 'visible') return;
+
       tryKeepAwake();
       // Restart the watch rather than trust the old subscription: same
       // reasoning as resume() — never assume a subscription survived
@@ -437,7 +488,22 @@ export function useRunTracker(): RunTracker {
       lastRef.current = null;
       consecutiveRejectsRef.current = 0;
       void beginRecording();
-      setHadBackgroundGap(true);
+
+      const gapStart = gapStartRef.current;
+      if (gapStart) {
+        setGapCount((n) => n + 1);
+        setGapDurationMs((ms) => ms + (Date.now() - gapStart.atMs));
+        if (gapStart.lastPoint) {
+          // There's something to chord against — onFix computes it and
+          // clears both refs when the next fix lands.
+          awaitingGapChordRef.current = true;
+        } else {
+          // Gap started before any point had ever been recorded (e.g. right
+          // after Start, before the first fix arrived) — nothing to chord
+          // against, so there is nothing left for onFix to do here.
+          gapStartRef.current = null;
+        }
+      }
     };
 
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -468,7 +534,11 @@ export function useRunTracker(): RunTracker {
       setEndedAt(null);
       setRejectedFixes(0);
       setStartedAt(Date.now());
-      setHadBackgroundGap(false);
+      setGapCount(0);
+      setGapDurationMs(0);
+      setGapChordM(0);
+      gapStartRef.current = null;
+      awaitingGapChordRef.current = false;
 
       await beginRecording();
       setStatus('running');
@@ -534,7 +604,11 @@ export function useRunTracker(): RunTracker {
     setLastFix(null);
     setDegradedSignal(false);
     setKeepAwakeFailed(false);
-    setHadBackgroundGap(false);
+    setGapCount(0);
+    setGapDurationMs(0);
+    setGapChordM(0);
+    gapStartRef.current = null;
+    awaitingGapChordRef.current = false;
     consecutiveRejectsRef.current = 0;
     setStatus('idle');
     // Always, not conditionally: reset() runs on discard AND is the general
@@ -579,7 +653,17 @@ export function useRunTracker(): RunTracker {
         setEndedAt(null);
         setRejectedFixes(0);
         setStartedAt(checkpoint.startedAt);
-        setHadBackgroundGap(true);
+        // Zeroed, not carried over or counted as a gap itself: a checkpoint
+        // recovery is a full tab reload, a different (and less precisely
+        // measurable — there's no visibilitychange timestamp for it) event
+        // than the backgrounding gaps this instrumentation targets. Mixing
+        // the two into one metric would muddy the specific hypothesis this
+        // exists to test.
+        setGapCount(0);
+        setGapDurationMs(0);
+        setGapChordM(0);
+        gapStartRef.current = null;
+        awaitingGapChordRef.current = false;
 
         await beginRecording();
         setStatus('running');
@@ -604,7 +688,9 @@ export function useRunTracker(): RunTracker {
     lastFix,
     degradedSignal,
     keepAwakeFailed,
-    hadBackgroundGap,
+    gapCount,
+    gapDurationMs,
+    gapChordM,
     start,
     pause,
     resume,

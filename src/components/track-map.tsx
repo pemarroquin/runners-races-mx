@@ -56,6 +56,13 @@ interface TrackMapProps {
   placeholderColor: ColorValue;
   /** Web-only concern (missing Mapbox token); a MapView needs no token. */
   unavailable: string;
+  /** Web-only concern (Task D's camera controls — gesture drift is a
+   *  touchscreen-web problem specific to Mapbox GL's gesture handlers).
+   *  Accepted for interface parity with track-map.web.tsx; react-native-maps
+   *  has its own native pinch/rotate handling this component doesn't touch. */
+  zoomInLabel: string;
+  zoomOutLabel: string;
+  recenterLabel: string;
 }
 
 // react-native-maps reads `zoom` on Google and `altitude` on Apple, and each

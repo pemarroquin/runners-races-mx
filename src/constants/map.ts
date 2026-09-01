@@ -271,6 +271,21 @@ export const SESSION_PITCH = 60;
 export const SESSION_FLY_MS = 2200;
 
 /**
+ * Camera control during a run (track-map.web.tsx) — sweaty-hands gesture
+ * drift permanently changed the framing with no way back (Pedro hit this
+ * mid-run: "normal at first, then weird"). No interaction detection and no
+ * recenter control existed at all.
+ *
+ * How long the camera sits wherever a user gesture (drag/pinch) left it
+ * before gliding back to (runner position, preferredZoom, SESSION_PITCH).
+ * Long enough that a deliberate look-around isn't yanked back mid-glance;
+ * short enough that a stray pinch self-heals within a few strides.
+ */
+export const AUTO_RETURN_IDLE_MS = 5000;
+/** Zoom delta per tap of the +/- buttons. */
+export const ZOOM_STEP = 1;
+
+/**
  * Night styling for react-native-maps on Android (Google provider). The
  * native Track map (track-map.tsx) honours MAP_ALWAYS_DARK with this on
  * Android and `userInterfaceStyle="dark"` on iOS — Google ignores that prop

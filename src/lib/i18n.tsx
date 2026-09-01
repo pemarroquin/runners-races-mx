@@ -63,6 +63,11 @@ const translations = {
       area: 'Área',
       pace: 'Ritmo',
       waiting: 'Esperando tu primera ubicación…',
+      // Camera controls during a session (Task D) — accessibility labels
+      // for the zoom +/- and re-center buttons in track-map.web.tsx.
+      zoomIn: 'Acercar',
+      zoomOut: 'Alejar',
+      recenter: 'Centrar en mi ubicación',
       mapUnavailable: 'No pudimos cargar el mapa. Tu recorrido se sigue registrando.',
       permission:
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
@@ -71,6 +76,13 @@ const translations = {
       keepAwakeFailed:
         'No pudimos mantener la pantalla encendida — evita bloquear el teléfono para no perder el registro.',
       backgroundGap: 'El registro se pausó mientras la app estaba en segundo plano.',
+      // Distance-gap instrumentation on the finished-run summary — see
+      // tracking.ts's gapCount/gapDurationMs/gapChordM. %{duration} and
+      // %{chord} are pre-formatted strings from formatDuration/formatDistance.
+      gapNotice: {
+        one: '1 interrupción por segundo plano (%{duration}) — ~%{chord} sin registrar en línea recta.',
+        other: '%{count} interrupciones por segundo plano (%{duration}) — ~%{chord} sin registrar en línea recta.',
+      } as PluralForm,
       searching: 'Buscando señal GPS…',
       accuracy: 'Precisión: %{m} m',
       weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
@@ -358,6 +370,9 @@ const translations = {
       area: 'Area',
       pace: 'Pace',
       waiting: 'Waiting for your first location…',
+      zoomIn: 'Zoom in',
+      zoomOut: 'Zoom out',
+      recenter: 'Re-center on my location',
       mapUnavailable: "We couldn't load the map. Your route is still being recorded.",
       permission:
         'We need location permission to trace your route. Turn it on in your phone settings.',
@@ -366,6 +381,10 @@ const translations = {
       keepAwakeFailed:
         "We couldn't keep the screen on — avoid locking your phone or recording may stop.",
       backgroundGap: 'Recording paused while the app was in the background.',
+      gapNotice: {
+        one: '1 background interruption (%{duration}) — ~%{chord} unrecorded in a straight line.',
+        other: '%{count} background interruptions (%{duration}) — ~%{chord} unrecorded in a straight line.',
+      } as PluralForm,
       searching: 'Searching for GPS signal…',
       accuracy: 'Accuracy: %{m} m',
       weakSignal: 'Weak signal — move into open sky to start tracing.',
