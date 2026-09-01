@@ -327,6 +327,12 @@ export default function TrackScreen() {
             <Animated.View entering={FadeIn.duration(400)} style={styles.fenceMapWrap}>
               <FenceMap
                 geometry={fence.geometry.geometry}
+                // The MASKED path, never tracker.points — privacy-zone
+                // trimming exists precisely so start/end aren't exposed, and
+                // the summary map is a shareable surface. `masked` is only
+                // set once tracker.status is 'finished' (see the effect
+                // above), which is exactly when this branch renders.
+                path={masked?.points ?? []}
                 color={fenceColor}
                 others={pastFences}
                 excludeId={savedRunId}

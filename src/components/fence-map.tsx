@@ -1,8 +1,20 @@
 // The end-of-session territory map — NATIVE. A fully interactive MapView
 // (pan/zoom) showing every fence this runner has captured, with the run just
-// finished highlighted: its own colour set, a gradient outline, and the
-// camera animating to frame it. Replaces the static Mapbox fence image the
-// summary screen shipped with.
+// finished highlighted: its own colour set, the ACTUAL RECORDED PATH as a
+// gradient route, and the camera animating to frame it. Replaces the static
+// Mapbox fence image the summary screen shipped with.
+//
+// The route line used to be the fence POLYGON's boundary (polygonRings(g)),
+// not the path — structurally wrong two ways, both visible on a real out-
+// and-back run (Web-First Pilot follow-up, reported by Pedro): a thin sliver
+// polygon's boundary is two roughly-parallel strands that read as two
+// unrelated routes, and buildFence's unkink/union step can return a
+// MultiPolygon for any self-crossing run, which polygonRings then emits as
+// one ring PER LOBE — literally disconnected segments. The route is now
+// drawn from the masked path (never the raw one — see index.tsx) as its own
+// Polyline, and the polygon's boundary is demoted to a thin, translucent,
+// flat-coloured outline that still communicates the claimed shape without
+// competing with the route for "this is where I ran".
 //
 // Past fences render muted, each in ITS run's colour (fenceColorForRun of
 // its stored started_at — the same derivation every other screen uses), so
@@ -15,15 +27,21 @@ import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 import {
   fenceColorForRun,
   GOOGLE_DARK_MAP_STYLE,
+  ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
   withAlpha,
 } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
+import type { LatLng } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
 
 interface FenceMapProps {
   /** The fence just captured — highlighted and framed. */
   geometry: GeoPolygon | MultiPolygon;
+  /** The recorded route, MASKED (privacy-zone.ts) — never the raw path. This
+   *  is a shareable surface; the whole reason privacy-zone trimming exists
+   *  is so start/end aren't exposed here. */
+  path: LatLng[];
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -34,8 +52,14 @@ interface FenceMapProps {
 }
 
 const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
+// The fence boundary's subordinate weight, now that the route carries the
+// gradient — mirrors the muted "past fence" outline treatment (strokeWidth
+// 1, alpha 0.5) so the just-finished fence's boundary reads as claimed
+// territory, not as the run.
+const OUTLINE_WIDTH = 1.5;
+const OUTLINE_ALPHA = 0.55;
 
-export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) {
+export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapProps) {
   const mapRef = useRef<MapView | null>(null);
 
   const highlightRings = useMemo(() => polygonRings(geometry), [geometry]);
@@ -47,13 +71,14 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
       })),
     [highlightRings],
   );
-  // Gradient outline per polygon — the same iridescent ramp as the live
-  // route, closing the loop visually: the colour the run was drawn in is the
-  // colour its capture is celebrated in.
-  const outlineColors = useMemo(
-    () => highlightPolys.map((p) => gradientStrokeColors(p.outer.length)),
-    [highlightPolys],
+  // The ROUTE — the actual recorded path, not the fence boundary. Same
+  // per-vertex gradient sampling as the live map's edge (track-map.tsx),
+  // so the two screens agree.
+  const routeCoords = useMemo(
+    (): MapCoord[] => path.map((pt) => ({ latitude: pt.lat, longitude: pt.lng })),
+    [path],
   );
+  const routeColors = useMemo(() => gradientStrokeColors(routeCoords.length), [routeCoords.length]);
 
   const pastPolys = useMemo(
     () =>
@@ -128,16 +153,31 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
           />
         ))}
         {highlightPolys.map((p, i) => (
+          // The fence BOUNDARY — subordinate now that the route (below)
+          // carries the gradient: thin, translucent, flat colour. Still
+          // communicates the claimed shape; must never again read as the
+          // route.
           <Polyline
             key={`outline-${i}`}
             coordinates={p.outer}
-            strokeWidth={ROUTE_LINE_WIDTH - 1}
-            strokeColor={color}
-            strokeColors={outlineColors[i]}
+            strokeWidth={OUTLINE_WIDTH}
+            strokeColor={withAlpha(color, OUTLINE_ALPHA)}
             lineCap="round"
             lineJoin="round"
           />
         ))}
+        {routeCoords.length >= 2 && (
+          // The ROUTE — the actual recorded (masked) path, drawn after the
+          // outline so it renders on top wherever the two overlap.
+          <Polyline
+            coordinates={routeCoords}
+            strokeWidth={ROUTE_LINE_WIDTH}
+            strokeColor={ROUTE_LINE_COLOR}
+            strokeColors={routeColors}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
       </MapView>
     </View>
   );

@@ -1,18 +1,31 @@
 // The end-of-session territory map — WEB. Mapbox GL JS, same split rationale
 // as track-map.web.tsx (the custom Studio style only renders in GL). Fully
 // interactive; every captured fence is drawn (muted, each in its run's own
-// colour), the run just finished gets a stronger fill + a gradient outline,
-// and the camera fits to it with an animated sweep.
+// colour), the run just finished gets a stronger fill, the ACTUAL RECORDED
+// PATH is drawn as the vibrant gradient line, and the camera fits to it with
+// an animated sweep.
+//
+// The route line used to be the fence POLYGON's boundary (outerRings(g)),
+// not the path — structurally wrong two ways, both visible on a real out-
+// and-back run (Web-First Pilot follow-up, reported by Pedro): a thin sliver
+// polygon's boundary is two roughly-parallel strands that read as two
+// unrelated routes, and buildFence's unkink/union step can return a
+// MultiPolygon for any self-crossing run, which outerRings then emits as one
+// LineString PER LOBE — literally disconnected segments. The route is now
+// its OWN source/layer, drawn from the masked path (never the raw one — see
+// index.tsx), and the polygon's boundary is demoted to a thin, low-opacity
+// line that still communicates the claimed shape without competing with the
+// route for "this is where I ran".
 //
 // The new fence's fill fades in via a paint transition — GL interpolates
 // fill-opacity on the GPU, same trick as the wall rise on the live map.
 //
 // Every custom layer sets a `slot` and `*-emissive-strength` — see
-// track-map.web.tsx's header and constants/map.ts. The outline
-// (NEW_LINE_SRC) also gets a fallback `line-color` and now stages its real
-// data through setData() after an empty addSource(), same as the live
-// route — it was rendering pure black (Mapbox's default line-color) despite
-// line-gradient being set and lineMetrics being true (P3 §7c).
+// track-map.web.tsx's header and constants/map.ts. The gradient layers also
+// get a fallback `line-color` and stage their real data through setData()
+// after an empty addSource(), same as the live route — it was rendering pure
+// black (Mapbox's default line-color) despite line-gradient being set and
+// lineMetrics being true (P3 §7c).
 import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
@@ -25,21 +38,35 @@ import {
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
+  ROUTE_GLOW_BLUR,
+  ROUTE_GLOW_OPACITY,
+  ROUTE_GLOW_WIDTH,
   ROUTE_GRADIENT,
+  ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
 } from '@/constants/map';
-import { outerRings } from '@/lib/territory';
+import { outerRings, type LatLng } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
 const NEW_SRC = 'fence-new';
-const NEW_LINE_SRC = 'fence-new-line';
+const NEW_OUTLINE_SRC = 'fence-new-outline';
+const NEW_ROUTE_SRC = 'fence-new-route';
 const PAST_SRC = 'fence-past';
 const FIT_MS = 1600;
+// The fence boundary's subordinate weight, now that the route carries the
+// gradient — thin and translucent so it reads as "this is the claimed
+// shape" without ever being mistaken for the route.
+const OUTLINE_WIDTH = 1.5;
+const OUTLINE_OPACITY = 0.55;
 
 interface FenceMapProps {
   geometry: GeoPolygon | MultiPolygon;
+  /** The recorded route, MASKED (privacy-zone.ts) — never the raw path. This
+   *  is a shareable surface; the whole reason privacy-zone trimming exists
+   *  is so start/end aren't exposed here. */
+  path: LatLng[];
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -73,17 +100,17 @@ function boundsOf(geometry: GeoPolygon | MultiPolygon): [[number, number], [numb
   ];
 }
 
-export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) {
+export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
-  const dataRef = useRef({ geometry, color, others, excludeId });
+  const dataRef = useRef({ geometry, path, color, others, excludeId });
   useEffect(() => {
-    dataRef.current = { geometry, color, others, excludeId };
-  }, [geometry, color, others, excludeId]);
+    dataRef.current = { geometry, path, color, others, excludeId };
+  }, [geometry, path, color, others, excludeId]);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
@@ -107,7 +134,7 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
 
       map.on('load', () => {
         if (cancelled) return;
-        const { geometry: g, color: c, others: past, excludeId: skip } = dataRef.current;
+        const { geometry: g, path: p, color: c, others: past, excludeId: skip } = dataRef.current;
 
         map.addSource(PAST_SRC, {
           type: 'geojson',
@@ -167,32 +194,72 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
           if (!cancelled) map.setPaintProperty(NEW_SRC, 'fill-opacity', 0.3);
         });
 
-        // Gradient outline: line-gradient needs lineMetrics, which only
-        // applies to LineStrings — so the outline is its own source built
-        // from the outer ring(s), not the polygon reused.
-        //
-        // Created EMPTY, then setData()'d on the next frame — mirroring
-        // track-map.web.tsx's live route (the ONE call site where
-        // line-gradient is confirmed working on device) rather than baking
-        // the real FeatureCollection straight into addSource() as this used
-        // to. The two call sites otherwise looked identical (same
-        // lineMetrics:true, same flattened interpolate expression), so
-        // whatever GL JS needs internally to compute line-progress
-        // correctly, going through setData() is the one thing proven to
-        // trigger it.
-        map.addSource(NEW_LINE_SRC, {
+        // The fence BOUNDARY — subordinate now that the route (below) carries
+        // the gradient: thin, translucent, this run's flat fence colour. It
+        // still communicates the claimed shape; it must never again be
+        // mistaken for where the runner actually went. No line-gradient here
+        // (no lineMetrics need either), so this can bake its real data
+        // straight into addSource() — the setData()-after-empty-source dance
+        // below is specifically for the gradient layers.
+        map.addSource(NEW_OUTLINE_SRC, {
           type: 'geojson',
-          lineMetrics: true,
-          data: { type: 'FeatureCollection', features: [] },
+          data: {
+            type: 'FeatureCollection',
+            features: outerRings(g).map(
+              (ring): Feature => ({
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'LineString', coordinates: ring },
+              }),
+            ),
+          },
         });
         map.addLayer({
-          id: NEW_LINE_SRC,
+          id: NEW_OUTLINE_SRC,
           type: 'line',
-          source: NEW_LINE_SRC,
+          source: NEW_OUTLINE_SRC,
           slot: MAP_SLOT_ROUTE,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
-            'line-width': ROUTE_LINE_WIDTH - 1,
+            'line-width': OUTLINE_WIDTH,
+            'line-color': c,
+            'line-opacity': OUTLINE_OPACITY,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        });
+
+        // The ROUTE — the actual recorded (masked) path, not the fence
+        // boundary. Same two-layer treatment as the live map's ROUTE_SRC
+        // (track-map.web.tsx) so the two screens agree: a soft glow under a
+        // sharp gradient line. Added AFTER the outline so it draws on top of
+        // it within MAP_SLOT_ROUTE wherever the two overlap.
+        map.addSource(NEW_ROUTE_SRC, {
+          type: 'geojson',
+          lineMetrics: true,
+          data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
+        });
+        map.addLayer({
+          id: `${NEW_ROUTE_SRC}-glow`,
+          type: 'line',
+          source: NEW_ROUTE_SRC,
+          slot: MAP_SLOT_ROUTE,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': ROUTE_LINE_COLOR,
+            'line-width': ROUTE_GLOW_WIDTH,
+            'line-blur': ROUTE_GLOW_BLUR,
+            'line-opacity': ROUTE_GLOW_OPACITY,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        });
+        map.addLayer({
+          id: NEW_ROUTE_SRC,
+          type: 'line',
+          source: NEW_ROUTE_SRC,
+          slot: MAP_SLOT_ROUTE,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-width': ROUTE_LINE_WIDTH,
             // Fallback for if line-gradient is ever rejected. Mapbox's
             // default line-color is #000000 — that default, rendering
             // silently instead of the gradient, is exactly what this whole
@@ -209,18 +276,21 @@ export function FenceMap({ geometry, color, others, excludeId }: FenceMapProps) 
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
+        // Created EMPTY above, then setData()'d on the next frame — mirroring
+        // track-map.web.tsx's live route (the ONE call site where
+        // line-gradient is confirmed working on device) rather than baking
+        // the real Feature straight into addSource(). The two call sites
+        // otherwise looked identical (same lineMetrics:true, same flattened
+        // interpolate expression), so whatever GL JS needs internally to
+        // compute line-progress correctly, going through setData() is the
+        // one thing proven to trigger it.
         requestAnimationFrame(() => {
           if (cancelled) return;
-          const lineSource = map.getSource(NEW_LINE_SRC) as GeoJSONSource | undefined;
-          lineSource?.setData({
-            type: 'FeatureCollection',
-            features: outerRings(g).map(
-              (ring): Feature => ({
-                type: 'Feature',
-                properties: {},
-                geometry: { type: 'LineString', coordinates: ring },
-              }),
-            ),
+          const routeSource = map.getSource(NEW_ROUTE_SRC) as GeoJSONSource | undefined;
+          routeSource?.setData({
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: p.map(({ lng, lat }) => [lng, lat]) },
           });
         });
 
