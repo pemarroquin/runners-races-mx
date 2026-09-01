@@ -37,17 +37,28 @@ describe('buildFenceMapUrl', () => {
     expect(url).not.toContain('path-4');
   });
 
-  it('adds a path overlay ahead of the geojson overlay when a route is given', () => {
+  it('adds a path overlay in the same request as the geojson overlay when a route is given', () => {
     const url = buildFenceMapUrl(SQUARE, true, '#e4572e', SHORT_ROUTE);
     expect(url).not.toBeNull();
     expect(url).toContain('path-4+e4572e-0.9(');
     expect(url).toContain('geojson(');
+  });
+
+  it('draws the route overlay AFTER (on top of) the fence overlay — Mapbox Static Images stacks later overlays on top', () => {
+    // buildStaticMapUrl pushes its pin AFTER its path for the identical
+    // reason, and constants/map.ts's GL map convention puts the route slot
+    // above the fill slot for the identical reason: a route must never
+    // render underneath the fence's fill/stroke, or a loop run's boundary
+    // (which tracks close to the real path) buries the very detail this
+    // overlay exists to show.
+    const url = buildFenceMapUrl(SQUARE, true, '#e4572e', SHORT_ROUTE);
+    expect(url).not.toBeNull();
     // Same request: one comma-joined overlay list ahead of /auto/.
     const overlaySegment = url!.split('/static/')[1].split('/auto/')[0];
-    const pathIndex = overlaySegment.indexOf('path-4');
     const geojsonIndex = overlaySegment.indexOf('geojson(');
-    expect(pathIndex).toBeGreaterThanOrEqual(0);
-    expect(geojsonIndex).toBeGreaterThan(pathIndex);
+    const pathIndex = overlaySegment.indexOf('path-4');
+    expect(geojsonIndex).toBeGreaterThanOrEqual(0);
+    expect(pathIndex).toBeGreaterThan(geojsonIndex);
   });
 
   it('ignores a route with fewer than 2 points — same as no route at all', () => {
