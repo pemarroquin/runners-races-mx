@@ -10,7 +10,7 @@ import type { Session } from '@supabase/supabase-js';
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { LeaderboardRun } from '@/lib/leaderboard';
 import { nearestRegion } from '@/lib/regions';
-import type { FenceResult } from '@/lib/territory';
+import type { FenceResult, LatLng } from '@/lib/territory';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
@@ -113,6 +113,16 @@ export interface MyFence {
    * correct, there is simply no ground left to draw.
    */
   geometry: Polygon | MultiPolygon | null;
+  /**
+   * The actual recorded path (already privacy-masked at upload — see
+   * parseRawPath), for drawing the run's real route rather than the fence
+   * polygon's boundary (the bug `1df2ae6` fixed for the summary map, here
+   * for the Saved tab). Null whenever `raw_path` is missing or unparseable —
+   * a card with a good fence but no route still renders, just without the
+   * route line; this must NOT bump `skipped`, same defensive posture as the
+   * null-fence case below.
+   */
+  route: LatLng[] | null;
   areaM2: number;
   distanceM: number;
   /** m² other runners have carved out of this run since it was saved. */
@@ -157,6 +167,37 @@ function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | null {
 }
 
 /**
+ * `raw_path` is written on upload as `run.points.map((p) => [p.lat, p.lng,
+ * p.ts])` (see uploadRun above) — already privacy-masked by then
+ * (privacy-zone.ts trims the start/end before it ever reaches uploadRun), so
+ * there is nothing left to mask here, only to parse back defensively.
+ * PostgREST serialises a `jsonb` column as a real JSON value, so this is
+ * ordinarily an array already; the string branch covers the same
+ * older-stack case parseFenceGeometry guards against. Anything that isn't a
+ * clean array of `[lat, lng, ts]` triples returns null rather than throwing
+ * or drawing a corrupted line.
+ */
+export function parseRawPath(value: unknown): LatLng[] | null {
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  if (!Array.isArray(value)) return null;
+
+  const points: LatLng[] = [];
+  for (const entry of value) {
+    if (!Array.isArray(entry) || entry.length < 2) return null;
+    const [lat, lng] = entry;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+    points.push({ lat, lng });
+  }
+  return points;
+}
+
+/**
  * Every fence this device's (anonymous) identity has captured, newest first.
  * Same outcome-as-value contract as uploadRun, and for the same reason: the
  * callers render "why" (disabled/auth/network), never a bare empty list that
@@ -166,7 +207,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
   return withSession<{ fences: MyFence[]; skipped: number }>(async (session) => {
     const { data, error } = await supabase
       .from('runs')
-      .select('id, started_at, distance_m, area_m2, fence, flagged, flag_reason')
+      .select('id, started_at, distance_m, area_m2, fence, raw_path, flagged, flag_reason')
       .eq('user_id', session.user.id)
       .order('started_at', { ascending: false });
 
@@ -185,10 +226,15 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
         skipped++;
         continue;
       }
+      // A bad/missing raw_path is common (older rows predate this feature)
+      // and must not count toward `skipped` — that field means "fence
+      // present but unreadable, or a bad timestamp," not "no route line."
+      const route = parseRawPath(row.raw_path);
       fences.push({
         id: row.id,
         startedAtMs,
         geometry,
+        route,
         areaM2: Number(row.area_m2) || 0,
         distanceM: Number(row.distance_m) || 0,
         lostM2: 0, // filled in below

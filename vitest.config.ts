@@ -41,6 +41,16 @@ export default defineConfig({
         find: /^expo-keep-awake$/,
         replacement: path.resolve(__dirname, 'test/stubs/expo-keep-awake.ts'),
       },
+      // supabase.ts imports this before @supabase/supabase-js purely for its
+      // global.crypto.getRandomValues side effect; its real index.js does
+      // `require('react-native')` for NativeModules, which drags in the
+      // actual Flow-typed RN source (the react-native alias below doesn't
+      // reach a nested CJS require the same way) — same native-module
+      // problem the other stubs above solve.
+      {
+        find: /^react-native-get-random-values$/,
+        replacement: path.resolve(__dirname, 'test/stubs/react-native-get-random-values.ts'),
+      },
       { find: /^react-native$/, replacement: path.resolve(__dirname, 'test/stubs/react-native.ts') },
       { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'src/$1') },
     ],
@@ -48,5 +58,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    // mapbox.ts reads EXPO_PUBLIC_MAPBOX_TOKEN at module load and returns
+    // null from every URL builder when it's unset — a real token isn't
+    // needed to test the URL shape, just a truthy one.
+    env: { EXPO_PUBLIC_MAPBOX_TOKEN: 'pk.test-token' },
   },
 });

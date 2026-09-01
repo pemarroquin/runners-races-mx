@@ -150,6 +150,15 @@ export const FENCE_MAP_ASPECT = FENCE_IMG.w / FENCE_IMG.h;
  * above. A very long ring can also blow past Mapbox's ~8k URL limit — the
  * caller passes geometry that territory.ts has already simplified, and this
  * returns null rather than emitting a URL the API will reject outright.
+ *
+ * `route`, when given, draws the actual recorded path as a `path(...)`
+ * overlay in the SAME request, comma-joined ahead of the fence's
+ * `geojson(...)` overlay (same pattern buildStaticMapUrl uses to combine a
+ * path overlay with a pin overlay) — this is the fix for the Saved tab's
+ * thumbnails drawing the fence's polygon boundary instead of the run that
+ * was actually recorded (`1df2ae6` fixed the same bug for the summary map).
+ * Decimated the same way buildPathMapUrl decimates a live route, so a long
+ * run doesn't blow the URL budget on its own.
  */
 export function buildFenceMapUrl(
   geometry: Geometry,
@@ -157,6 +166,10 @@ export function buildFenceMapUrl(
   /** '#rrggbb' — the run's own fence colour (FENCE_COLOR_SETS). Defaults to
    *  the route colour for callers that predate per-run colours. */
   colorHex?: string,
+  /** The recorded route (already privacy-masked before it ever reached
+   *  storage — see territory-sync.ts's parseRawPath). Omitted or too short
+   *  to draw a line and the fence-only overlay renders exactly as before. */
+  route?: { lat: number; lng: number }[],
 ): string | null {
   if (!TOKEN) return null;
 
@@ -174,9 +187,17 @@ export function buildFenceMapUrl(
     geometry,
   };
 
-  const overlay = `geojson(${encodeURIComponent(JSON.stringify(feature))})`;
+  const overlays: string[] = [];
+  if (route && route.length > 1) {
+    const coords = decimate(route, 100).map((p): [number, number] => [p.lat, p.lng]);
+    overlays.push(`path-4+${ROUTE_COLOR}-0.9(${encodeURIComponent(encodePolyline(coords))})`);
+  }
+  overlays.push(`geojson(${encodeURIComponent(JSON.stringify(feature))})`);
+
   const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
-  const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlay}/auto/${size}?access_token=${TOKEN}&padding=40`;
+  const url = `https://api.mapbox.com/styles/v1/${styleId}/static/${overlays.join(
+    ',',
+  )}/auto/${size}?access_token=${TOKEN}&padding=40`;
 
   return url.length > 8000 ? null : url;
 }
