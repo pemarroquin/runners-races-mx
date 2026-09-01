@@ -33,6 +33,7 @@
     "expo-symbols": "~57.0.0",
     "expo-system-ui": "~57.0.0",
     "expo-web-browser": "~57.0.0",
+    "h3-js": "^4.5.0",
     "i18n-js": "^4.5.3",
     "mapbox-gl": "^3.25.0",
     "react": "19.2.3",
@@ -68,7 +69,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify-sweep": "node scripts/verify-sweep.mjs",
-    "check-env": "node scripts/check-web-env.mjs"
+    "check-env": "node scripts/check-web-env.mjs",
+    "tiles-preview": "node scripts/tiles-preview.mjs"
   },
   "private": true
 }
