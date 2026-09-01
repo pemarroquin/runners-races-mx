@@ -85,7 +85,14 @@ const translations = {
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
-      syncDisabled: 'El guardado en línea no está configurado en esta versión.',
+      // NOT the same string as leaderboard.disabled below, even though it
+      // used to read identically — that one genuinely has nothing to queue
+      // (there's no leaderboard entry to save for later). This one now
+      // does: 'disabled' saves are queued the same as a network failure
+      // (index.tsx), so the copy can't imply this is the end of it — the
+      // queued banner shows right alongside this one, and together they
+      // need to read as "not yet, but safe and will retry" not "give up".
+      syncDisabled: 'El guardado en línea no está disponible en esta versión por ahora.',
       retry: 'Reintentar',
       pastFencesFailed: 'No pudimos cargar tus territorios anteriores.',
       allInsideZone:
@@ -223,6 +230,10 @@ const translations = {
     settings: {
       title: 'Ajustes',
       version: 'Versión',
+      // Long-press on the version row — see last-run-debug.ts. Not surfaced
+      // anywhere a runner would find it by browsing.
+      debugCopied: 'Copiamos %{count} puntos al portapapeles.',
+      debugEmpty: 'Todavía no hay ninguna sesión terminada para copiar.',
       support: 'Soporte',
       theme: 'Apariencia',
       themeSystem: 'Sistema',
@@ -281,6 +292,8 @@ const translations = {
         'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si lo descartas.',
       collectedCheckpoint:
         'Progreso en curso: mientras grabas, guardamos tu recorrido completo (sin recortar por tu zona privada) en este teléfono cada pocos segundos, para no perderlo si la app se cierra sola. Se borra en cuanto guardas o descartas la sesión — el recorte de tu zona privada solo se aplica al guardar.',
+      collectedDebug:
+        'Diagnóstico técnico: guardamos el recorrido completo (sin recortar) de tu última sesión terminada en este teléfono, para poder revisar problemas de medición si nos avisas de uno. Solo se accede a mano desde Ajustes, y cada sesión nueva reemplaza a la anterior.',
       collectedIdentity:
         'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
       collectedZone:
@@ -367,7 +380,7 @@ const translations = {
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
-      syncDisabled: 'Online saving is not configured in this build.',
+      syncDisabled: "Online saving isn't available in this build yet.",
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
       allInsideZone:
@@ -504,6 +517,8 @@ const translations = {
     settings: {
       title: 'Settings',
       version: 'Version',
+      debugCopied: 'Copied %{count} points to clipboard.',
+      debugEmpty: 'No finished session to copy yet.',
       support: 'Support',
       theme: 'Appearance',
       themeSystem: 'System',
@@ -562,6 +577,8 @@ const translations = {
         'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you discard it.',
       collectedCheckpoint:
         "In-progress runs: while you're recording, we save your full route (before privacy-zone trimming) on this phone every few seconds, so it isn't lost if the app closes on its own. It's cleared as soon as you save or discard the session — privacy-zone trimming only applies when you save.",
+      collectedDebug:
+        "Technical diagnostics: we keep the full (untrimmed) route of your last finished session on this phone, so measurement issues can be investigated if you report one. Only accessed by hand from Settings, and each new session replaces the last.",
       collectedIdentity:
         'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
       collectedZone:

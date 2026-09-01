@@ -39,13 +39,54 @@ jobs:
 
       - run: npm ci
 
+      # Fails loudly, before anything else, if a required EXPO_PUBLIC_* var
+      # isn't set as a repo secret — a missing one otherwise builds a bundle
+      # that compiles and deploys fine while shipping a feature silently
+      # dead (Territory sync, 2026-08-31: EXPO_PUBLIC_SUPABASE_URL/ANON_KEY
+      # were absent from this workflow's secrets, and the app correctly
+      # detected that and reported 'disabled' on every save — nothing in
+      # the app code was wrong, only what this workflow gave it to build
+      # with). Fastest-failing first, same order this repo validates in
+      # everywhere else. See scripts/check-web-env.mjs for the full story.
+      - name: Check web env vars
+        env:
+          EXPO_PUBLIC_MAPBOX_TOKEN: ${{ secrets.EXPO_PUBLIC_MAPBOX_TOKEN }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npm run check-env
+
       - name: Type-check
         run: npx tsc --noEmit
 
       - name: Export web build
         env:
           EXPO_PUBLIC_MAPBOX_TOKEN: ${{ secrets.EXPO_PUBLIC_MAPBOX_TOKEN }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export -p web
+
+      # Checking that the env vars were SET (the step above) proves the
+      # workflow tried to pass them in — not that Expo's bundler actually
+      # inlined them into the artifact that ships. This is the check that
+      # would have caught the real bug: it tests dist/, the thing that
+      # actually deploys, not the environment the build ran in. Presence
+      # only, never echoed — `grep -q` prints nothing on a match, and the
+      # empty-string guard exists because `grep -F ""` matches every file
+      # trivially, which would make a genuinely-missing secret pass silently.
+      - name: Verify Supabase config shipped in the bundle
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || ! grep -rqF -- "$EXPO_PUBLIC_SUPABASE_URL" dist/; then
+            echo "::error::EXPO_PUBLIC_SUPABASE_URL is not present in the built dist/ bundle — the web export shipped without Territory sync configured."
+            exit 1
+          fi
+          if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ] || ! grep -rqF -- "$EXPO_PUBLIC_SUPABASE_ANON_KEY" dist/; then
+            echo "::error::EXPO_PUBLIC_SUPABASE_ANON_KEY is not present in the built dist/ bundle — the web export shipped without Territory sync configured."
+            exit 1
+          fi
+          echo "Confirmed: both Supabase env vars are present in the shipped bundle."
 
       - name: Inline critical CSS
         run: node scripts/inline-critical-css.mjs dist

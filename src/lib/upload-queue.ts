@@ -69,6 +69,12 @@ export interface QueuedRun {
  * times is not failing on the network — it is malformed, or violates a
  * constraint the server will never accept — and keeping it costs every
  * later run its upload.
+ *
+ * Does NOT apply to a 'disabled' failure (see flushQueue) — that means no
+ * server is configured on this BUILD, not that the server rejected this
+ * PAYLOAD, and unlike a malformed run it resolves itself the moment a build
+ * with real credentials loads. Counting those attempts would delete a
+ * safely-queued run before that fix ever gets a chance to land.
  */
 export const MAX_ATTEMPTS = 8;
 
@@ -220,16 +226,30 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
       const outcome = await upload(item.run);
 
       if (!outcome.ok) {
-        const attempts = item.attempts + 1;
-        if (attempts >= MAX_ATTEMPTS) {
-          // Give up on this one so it stops blocking everything behind it.
-          // Repeated failure at this point is a run the server will never
-          // accept, not a network blip.
-          removeQueued(item.id);
-          abandoned++;
-          continue;
+        // 'disabled' NEVER counts toward MAX_ATTEMPTS and is never
+        // abandoned. MAX_ATTEMPTS exists to stop retrying a payload the
+        // SERVER will never accept — 'disabled' means there is no server
+        // configured on THIS build at all, which is categorically
+        // different: no number of retries against a misconfigured client
+        // will ever succeed, but the run becomes uploadable the instant a
+        // build with real credentials loads (see check-web-env.mjs /
+        // deploy.yml). Counting these attempts would delete a safely-queued
+        // run before the actual fix — an env var, not a retry — ever gets a
+        // chance to land. Confirmed live 2026-08-31: a run queued under a
+        // misconfigured deploy sat through repeated flushes (every Track
+        // tab focus) with nothing to fix it except the deploy itself.
+        if (outcome.reason !== 'disabled') {
+          const attempts = item.attempts + 1;
+          if (attempts >= MAX_ATTEMPTS) {
+            // Give up on this one so it stops blocking everything behind it.
+            // Repeated failure at this point is a run the server will never
+            // accept, not a network blip.
+            removeQueued(item.id);
+            abandoned++;
+            continue;
+          }
+          bumpAttempts(item.id, attempts);
         }
-        bumpAttempts(item.id, attempts);
         return {
           uploaded,
           remaining: queue.length - uploaded - abandoned,

@@ -15,6 +15,7 @@
     "expo": "~57.0.2",
     "expo-blur": "~57.0.2",
     "expo-calendar": "~57.0.0",
+    "expo-clipboard": "~57.0.1",
     "expo-constants": "~57.0.3",
     "expo-device": "~57.0.0",
     "expo-font": "~57.0.0",
@@ -66,7 +67,8 @@
     "lint": "expo lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify-sweep": "node scripts/verify-sweep.mjs"
+    "verify-sweep": "node scripts/verify-sweep.mjs",
+    "check-env": "node scripts/check-web-env.mjs"
   },
   "private": true
 }

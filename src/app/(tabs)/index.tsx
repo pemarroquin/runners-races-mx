@@ -30,6 +30,7 @@ import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/th
 import { useI18n } from '@/lib/i18n';
 import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { getHomeZone } from '@/lib/home-point';
+import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
@@ -177,10 +178,24 @@ export default function TrackScreen() {
       // The fence is rebuilt from the MASKED path, never clipped from the
       // full one — see privacy-zone.ts for why cutting the finished polygon
       // would draw a circle around the runner's home.
-      setFence(result.points.length > 0 ? buildFence(result.points) : null);
+      const builtFence = result.points.length > 0 ? buildFence(result.points) : null;
+      setFence(builtFence);
+      // Diagnostic escape hatch (last-run-debug.ts) — the RAW, pre-mask
+      // points, so a suspicious area report can be re-run through
+      // buildFence() against exactly what was recorded, not what got
+      // trimmed for upload. Overwrites whatever the previous run left.
+      if (tracker.startedAt !== null && tracker.endedAt !== null) {
+        saveLastRunDebug({
+          points: tracker.points,
+          distanceM: tracker.distanceM,
+          areaM2: builtFence?.areaM2 ?? null,
+          startedAt: tracker.startedAt,
+          endedAt: tracker.endedAt,
+        });
+      }
     }, 0);
     return () => clearTimeout(id);
-  }, [tracker.status, tracker.points]);
+  }, [tracker.status, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   // Everything already captured, for the summary map. Fetched when the run
   // finishes (before any save), so the list never contains the run on
@@ -267,9 +282,20 @@ export default function TrackScreen() {
       // a network call. So a first run with no signal fails as 'auth', not
       // 'network' — precisely the 10km-on-a-trail case this queue exists
       // for, and it was the one case not being caught.
-      // 'disabled' is excluded: that build cannot upload at all, so queuing
-      // would accumulate runs that never go anywhere.
-      if (outcome.reason === 'network' || outcome.reason === 'auth') {
+      // 'disabled' too, as of 2026-08-31 — it used to be excluded on the
+      // reasoning that a build with no server configured can never upload,
+      // so queuing would just accumulate dead weight. That reasoning missed
+      // that the BUILD can change under the runner without them doing
+      // anything: a deploy that's missing EXPO_PUBLIC_SUPABASE_* is exactly
+      // as recoverable as a dead network once the config lands — the next
+      // build simply has TERRITORY_ENABLED=true. Excluding it meant a
+      // misconfigured deploy didn't just fail a save, it discarded the run
+      // outright — which is precisely what happened, and this queue exists
+      // to prevent exactly that. flushQueue's MAX_ATTEMPTS never fires for
+      // 'disabled' specifically (see upload-queue.ts) — otherwise the
+      // queue's own retry-exhaustion would delete the run before the fix
+      // ever landed.
+      if (outcome.reason === 'network' || outcome.reason === 'auth' || outcome.reason === 'disabled') {
         const id = enqueueRun(payload);
         setQueuedId(id);
         setPending(queuedCount());

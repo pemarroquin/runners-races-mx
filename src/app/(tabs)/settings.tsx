@@ -3,11 +3,13 @@
 // flows disclosed here are src/lib/location.ts's IP-geolocation fallback and
 // src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
 // home for build/support metadata, since there's no other about screen.
+import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
   Linking,
   Pressable,
   ScrollView,
@@ -27,6 +29,7 @@ import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { clearHomeZone, getHomeZone, setHomeZone } from '@/lib/home-point';
 import { useI18n } from '@/lib/i18n';
+import { lastRunDebugToJSON, loadLastRunDebug } from '@/lib/last-run-debug';
 import type { PrivacyZone } from '@/lib/privacy-zone';
 import { useReminders } from '@/lib/reminders-provider';
 import {
@@ -67,11 +70,17 @@ function Row({
   label,
   value,
   onPress,
+  onLongPress,
   c,
 }: {
   label: string;
   value: string;
   onPress?: () => void;
+  /** A long-press affordance with no visual hint of its own (no icon, no
+   *  styling change) — see the version row below. `onPress`'s arrow icon
+   *  means "this opens something"; a silent long-press is deliberately not
+   *  advertised the same way. */
+  onLongPress?: () => void;
   c: Record<ThemeColor, string>;
 }) {
   const content = (
@@ -83,8 +92,8 @@ function Row({
       </View>
     </View>
   );
-  return onPress ? (
-    <Pressable accessibilityRole="button" onPress={onPress}>
+  return onPress || onLongPress ? (
+    <Pressable accessibilityRole="button" onPress={onPress} onLongPress={onLongPress}>
       {content}
     </Pressable>
   ) : (
@@ -254,6 +263,20 @@ export default function SettingsScreen() {
   // expoConfig.version stays in sync with app.json/package.json, so this
   // reads the shipped build number instead of a value that can drift.
   const version = Constants.expoConfig?.version ?? '—';
+
+  // Diagnostic escape hatch — see last-run-debug.ts. Long-press the version
+  // row (below) to copy the last finished run's raw path + reported area,
+  // so a suspicious measurement can be replayed through buildFence() as a
+  // test fixture rather than argued about from a screenshot.
+  const copyLastRunDebug = useCallback(async () => {
+    const debug = loadLastRunDebug();
+    if (!debug) {
+      Alert.alert(t('settings.debugEmpty'));
+      return;
+    }
+    await Clipboard.setStringAsync(lastRunDebugToJSON(debug));
+    Alert.alert(t('settings.debugCopied', { count: debug.points.length }));
+  }, [t]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -443,7 +466,12 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.rowGroup}>
-          <Row label={t('settings.version')} value={version} c={c} />
+          <Row
+            label={t('settings.version')}
+            value={version}
+            onLongPress={() => void copyLastRunDebug()}
+            c={c}
+          />
           <Row
             label={t('settings.support')}
             value={SUPPORT_EMAIL}
@@ -479,6 +507,11 @@ export default function SettingsScreen() {
             // because it is more revealing at rest than the queue above,
             // which only ever holds the already-trimmed path.
             t('privacy.collectedCheckpoint'),
+            // last-run-debug.ts: the last finished run's raw route, kept
+            // for a developer diagnostic (see the version row below), same
+            // "disclose it in the change that adds it" rule as the two
+            // above.
+            t('privacy.collectedDebug'),
             // Phase 2 made territory visible to other runners; this is the
             // paragraph that says so. Added in the same change as the
             // leaderboard, not after it.

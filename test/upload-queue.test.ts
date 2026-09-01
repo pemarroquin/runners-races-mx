@@ -185,6 +185,22 @@ describe('flushQueue durability', () => {
     expect(queuedCount()).toBe(0);
   });
 
+  it('never abandons a run failing with "disabled", however many times it is flushed', async () => {
+    // 'disabled' means no server is configured on THIS build at all — a
+    // categorically different failure from a rejected payload. Retrying
+    // against a misconfigured client will never succeed, but abandoning the
+    // run after MAX_ATTEMPTS would delete it before the actual fix (an env
+    // var, not a retry) ever lands.
+    enqueueRun(makeRun(1000));
+    const alwaysDisabled: Uploader = async () => ({ ok: false, reason: 'disabled' });
+    for (let i = 0; i < MAX_ATTEMPTS + 5; i++) {
+      const result = await flushQueue(alwaysDisabled);
+      expect(result.stoppedBecause).toBe('disabled');
+      expect(result.abandoned).toBe(0);
+    }
+    expect(queuedCount()).toBe(1);
+  });
+
   it('refuses to start a second concurrent flush over the same snapshot', async () => {
     enqueueRun(makeRun(1000));
     let inFlight = 0;
