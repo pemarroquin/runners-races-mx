@@ -9,7 +9,7 @@
 import { useIsFocused } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -63,6 +63,21 @@ export default function TrackScreen() {
   const running = tracker.status === 'running';
   const starting = tracker.status === 'starting';
   const paused = tracker.status === 'paused';
+  // Local, not derived from tracker.status: status stays 'paused' for the
+  // ENTIRE resume() async gap (beginRecording() awaits the watcher before
+  // flipping to 'running'). The duplicate-watch race that gap used to open
+  // is already closed (65d8f3d's epoch guard), so a double-tap here is
+  // harmless — but nothing told the runner a tap had registered, so nothing
+  // stopped one anyway (2026-09-01 review finding, the remaining UX half).
+  const [resuming, setResuming] = useState(false);
+  const toggleRun = useCallback(() => {
+    if (paused) {
+      setResuming(true);
+      void tracker.resume().finally(() => setResuming(false));
+    } else {
+      tracker.pause();
+    }
+  }, [paused, tracker]);
   // A session "owns" the screen from the moment Start is pressed: the map
   // goes full-bleed 3D, and the idle chrome (scrim + title + Start) gets out
   // of the way rather than sitting on top of the run.
@@ -100,6 +115,17 @@ export default function TrackScreen() {
   // only a flag there was no handle, so a discarded run uploaded itself
   // later and a successful retry uploaded the same run twice.
   const [queuedId, setQueuedId] = useState<string | null>(null);
+  // Guards save() against a discard() that lands while its upload is still
+  // in flight. discard() bumps this; save() captures the value BEFORE
+  // awaiting uploadRun() and checks it's unchanged before applying the
+  // outcome. Without this, tapping Discard mid-upload reset the screen
+  // immediately, but the suspended save() call still ran to completion on
+  // its stale `payload` closure and unconditionally enqueued it on failure
+  // (or banked spoils on success) — a run the runner explicitly threw away
+  // silently re-entered the persistent upload queue and reappeared later
+  // (2026-09-01 review finding). A ref, not state: needs to be read
+  // synchronously inside the async continuation, never a stale closure.
+  const saveTokenRef = useRef(0);
 
   // An in-progress run recovered from run-checkpoint.ts after a reload —
   // see that file's header. Read once on mount, not on every focus: a
@@ -224,6 +250,7 @@ export default function TrackScreen() {
     if (!fence || masked === null || tracker.startedAt === null || tracker.endedAt === null) {
       return;
     }
+    const token = ++saveTokenRef.current;
     setSaveState('saving');
     setFailure(null);
     // ONE payload, built once, used by BOTH the upload and the retry queue.
@@ -248,6 +275,12 @@ export default function TrackScreen() {
     };
 
     const outcome = await uploadRun(payload);
+    // A discard() landed while this upload was still in flight — the runner
+    // has already moved on and the screen has already reset. Applying this
+    // outcome now would resurrect a thrown-away run: enqueue it on failure,
+    // or bank stale spoils/saved state over a screen that no longer shows
+    // this run. See saveTokenRef's own comment.
+    if (token !== saveTokenRef.current) return;
     if (outcome.ok) {
       setSaveState('saved');
       setSavedRunId(outcome.runId);
@@ -309,6 +342,8 @@ export default function TrackScreen() {
   }, [fence, masked, queuedId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   const discard = useCallback(() => {
+    // Invalidate any in-flight save FIRST — see saveTokenRef's own comment.
+    saveTokenRef.current++;
     setSaveState('idle');
     setFailure(null);
     setSavedRunId(null);
@@ -341,6 +376,10 @@ export default function TrackScreen() {
             foreground={c.text}
             ios="xmark"
             android="close"
+            // Belt-and-suspenders alongside save()'s own token guard: the
+            // guard makes a mid-save discard SAFE, this makes it hard to
+            // trigger by accident in the first place.
+            disabled={saveState === 'saving'}
           />
         </View>
         <ScrollView contentContainerStyle={styles.summary}>
@@ -465,8 +504,17 @@ export default function TrackScreen() {
                 c={c}
               />
             )}
-            <Pressable onPress={discard} accessibilityRole="button" hitSlop={10}>
-              <Text style={[styles.secondary, { color: c.textSecondary }]}>
+            <Pressable
+              onPress={discard}
+              disabled={saveState === 'saving'}
+              accessibilityRole="button"
+              accessibilityState={saveState === 'saving' ? { disabled: true } : {}}
+              hitSlop={10}>
+              <Text
+                style={[
+                  styles.secondary,
+                  { color: c.textSecondary, opacity: saveState === 'saving' ? 0.5 : 1 },
+                ]}>
                 {saveState === 'saved' ? t('track.close') : t('track.discard')}
               </Text>
             </Pressable>
@@ -514,11 +562,12 @@ export default function TrackScreen() {
           <Animated.View entering={FadeIn.duration(400)} style={styles.controlRow}>
             <RoundButton
               label={paused ? t('track.resume') : t('track.pause')}
-              onPress={paused ? tracker.resume : tracker.pause}
+              onPress={toggleRun}
               background={PAUSE_COLOR}
               foreground="#1A1A1A"
               ios={paused ? 'play.fill' : 'pause.fill'}
               android={paused ? 'play_arrow' : 'pause'}
+              disabled={resuming}
             />
             <RoundButton
               label={t('track.stop')}
@@ -661,6 +710,7 @@ function RoundButton({
   foreground,
   ios,
   android,
+  disabled,
 }: {
   label: string;
   onPress: () => void;
@@ -668,16 +718,19 @@ function RoundButton({
   foreground: string;
   ios: SFSymbol;
   android: AndroidSymbol;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={disabled ? { disabled: true } : {}}
       hitSlop={8}
       style={({ pressed }) => [
         styles.round,
-        { backgroundColor: background, opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: background, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
       ]}>
       <Icon ios={ios} android={android} size={20} color={foreground} />
     </Pressable>

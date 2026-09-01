@@ -7,6 +7,13 @@
 -- (`user_id <> new.user_id`), so with one phone and one anonymous account
 -- there is no way to exercise it in the app — this is the only way to know
 -- it works before a second real runner exists.
+--
+-- raw_path below traces each square's own boundary (real closed loops, not
+-- '[]') — required since 20260901_fence_path_forgery_guard.sql. Before that
+-- guard existed, this script's own '[]'::jsonb + hand-drawn-fence fixture
+-- was itself proof of the bug it fixes (see that migration's header); once
+-- applied, an empty raw_path next to a real fence is rejected before this
+-- script's overlap assertions ever get to run.
 
 -- ---------------------------------------------------------------------
 -- PART 1 — do the objects exist? (read-only, safe to run any time)
@@ -45,12 +52,15 @@ insert into profiles (id, display_name) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'Test A'),
   ('bbbbbbbb-0000-4000-8000-000000000002', 'Test B');
 
--- User A: a ~1.1km square.
+-- User A: a ~1.1km square. raw_path traces the same ring the fence is —
+-- exactly what buildFence() actually does client-side (closeRing() auto-
+-- closes the path, then only simplifies/unions it).
 insert into runs (id, user_id, region, started_at, ended_at, distance_m, duration_s, raw_path, fence, area_m2)
 values (
   'aaaaaaaa-1111-4000-8000-000000000001',
   'aaaaaaaa-0000-4000-8000-000000000001',
-  'mty', now() - interval '1 hour', now(), 4000, 1800, '[]'::jsonb,
+  'mty', now() - interval '1 hour', now(), 4452, 1800,
+  '[[25.68,-100.32,1756296400000],[25.68,-100.31,1756296800000],[25.69,-100.31,1756297200000],[25.69,-100.32,1756297600000],[25.68,-100.32,1756298000000]]'::jsonb,
   ST_GeomFromText('POLYGON((-100.32 25.68, -100.31 25.68, -100.31 25.69, -100.32 25.69, -100.32 25.68))', 4326),
   ST_Area(ST_GeomFromText('POLYGON((-100.32 25.68, -100.31 25.68, -100.31 25.69, -100.32 25.69, -100.32 25.68))', 4326)::geography)
 );
@@ -63,7 +73,8 @@ insert into runs (id, user_id, region, started_at, ended_at, distance_m, duratio
 values (
   'bbbbbbbb-1111-4000-8000-000000000002',
   'bbbbbbbb-0000-4000-8000-000000000002',
-  'mty', now() - interval '30 minutes', now(), 4000, 1800, '[]'::jsonb,
+  'mty', now() - interval '30 minutes', now(), 4452, 1800,
+  '[[25.68,-100.315,1756298600000],[25.68,-100.305,1756299000000],[25.69,-100.305,1756299400000],[25.69,-100.315,1756299800000],[25.68,-100.315,1756300200000]]'::jsonb,
   ST_GeomFromText('POLYGON((-100.315 25.68, -100.305 25.68, -100.305 25.69, -100.315 25.69, -100.315 25.68))', 4326),
   ST_Area(ST_GeomFromText('POLYGON((-100.315 25.68, -100.305 25.68, -100.305 25.69, -100.315 25.69, -100.315 25.68))', 4326)::geography)
 );

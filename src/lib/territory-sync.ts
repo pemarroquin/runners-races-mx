@@ -5,12 +5,45 @@
 // is reported to the caller as a value, never thrown, and the run stays on
 // screen for a manual retry.
 import type { MultiPolygon, Polygon } from 'geojson';
+import type { Session } from '@supabase/supabase-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { LeaderboardRun } from '@/lib/leaderboard';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult } from '@/lib/territory';
 import type { TrackPoint } from '@/lib/tracking';
+
+/** Every outcome type below is this same shape with a different `ok: true`
+ *  payload — `{ ok: true, ...payload } | { ok: false, reason: ... }`. */
+type Outcome<T> = ({ ok: true } & T) | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * Every exported function in this file opened with the identical
+ * TERRITORY_ENABLED / ensureSession guard, then wrapped its Supabase calls in
+ * a try/catch that folded any thrown error into `{ reason: 'network' }` —
+ * six copies of the same skeleton (2026-09-01 review finding). Factored here
+ * so the failure taxonomy lives in exactly one place: the next sync function
+ * — or a fix to this one, e.g. a future 'maintenance' reason — only has to
+ * change this function, not remember to touch every call site by hand.
+ *
+ * `fn` still owns its own internal errors (a `{ ok: false, reason: 'network' }`
+ * for a specific failed step, same as before) — this only removes the
+ * boilerplate that was IDENTICAL across every caller.
+ */
+async function withSession<T>(
+  fn: (session: Session) => Promise<({ ok: true } & T) | { ok: false; reason: 'network' }>,
+): Promise<Outcome<T>> {
+  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+
+  const session = await ensureSession();
+  if (!session) return { ok: false, reason: 'auth' };
+
+  try {
+    return await fn(session);
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
 
 export interface RunUpload {
   points: TrackPoint[];
@@ -32,15 +65,10 @@ export type SyncOutcome =
  * bitten by before.
  */
 export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+  return withSession<{ runId: string }>(async (session) => {
+    const first = run.points[0];
+    const region = first ? nearestRegion(first.lat, first.lng)?.id ?? null : null;
 
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  const first = run.points[0];
-  const region = first ? nearestRegion(first.lat, first.lng)?.id ?? null : null;
-
-  try {
     // The profile row is what `runs.user_id` references, and an anonymous
     // user has none until we make one — upsert (not insert) because the
     // second run from the same device would otherwise collide on the PK.
@@ -68,9 +96,7 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     if (error || !data) return { ok: false, reason: 'network' };
     return { ok: true, runId: data.id };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
 
 /** One previously-captured fence, ready to draw. */
@@ -137,12 +163,7 @@ function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | null {
  * could mean anything.
  */
 export async function fetchMyFences(): Promise<FencesOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
-
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  try {
+  return withSession<{ fences: MyFence[]; skipped: number }>(async (session) => {
     const { data, error } = await supabase
       .from('runs')
       .select('id, started_at, distance_m, area_m2, fence, flagged, flag_reason')
@@ -203,9 +224,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
     }
 
     return { ok: true, fences, skipped };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
 
 /** What one run took from other runners — Phase 3's payoff, read back after
@@ -231,12 +250,7 @@ export type SpoilsOutcome =
  * from Phase 1 and simply stays empty.
  */
 export async function fetchRunSpoils(runId: string): Promise<SpoilsOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
-
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  try {
+  return withSession<{ spoils: RunSpoils }>(async () => {
     const { data: events, error } = await supabase
       .from('territory_events')
       .select('loser_run_id, area_taken_m2')
@@ -266,9 +280,7 @@ export async function fetchRunSpoils(runId: string): Promise<SpoilsOutcome> {
       ok: true,
       spoils: { areaTakenM2, runnersAffected, runsAffected: events.length },
     };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
 
 export type LeaderboardOutcome =
@@ -285,12 +297,7 @@ export type LeaderboardOutcome =
  * second round-trip.
  */
 export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
-
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  try {
+  return withSession<{ runs: LeaderboardRun[]; meUserId: string; skipped: number }>(async (session) => {
     // The embedded profile comes from runs.user_id's FK to profiles.id.
     // PostgREST returns it as an object (or null if the row is missing).
     const { data, error } = await supabase
@@ -324,9 +331,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
       });
     }
     return { ok: true, runs, meUserId: session.user.id, skipped };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
 
 export type ProfileOutcome =
@@ -335,12 +340,7 @@ export type ProfileOutcome =
 
 /** This device's own profile row (anonymous identity — see supabase.ts). */
 export async function fetchMyProfile(): Promise<ProfileOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
-
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  try {
+  return withSession<{ displayName: string | null }>(async (session) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('display_name')
@@ -352,9 +352,7 @@ export async function fetchMyProfile(): Promise<ProfileOutcome> {
     // must not read as an error.
     if (error) return { ok: false, reason: 'network' };
     return { ok: true, displayName: data?.display_name ?? null };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
 
 /** Longer names get truncated in every row that renders them; cap at the
@@ -367,23 +365,16 @@ export const DISPLAY_NAME_MAX = 24;
  * profile row.
  */
 export async function updateDisplayName(name: string): Promise<ProfileOutcome> {
-  if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
+  return withSession<{ displayName: string | null }>(async (session) => {
+    const trimmed = name.trim().slice(0, DISPLAY_NAME_MAX);
+    // An empty string would render as a nameless row; store a real null so
+    // the UI's "anonymous" fallback is the single code path for "no name".
+    const value = trimmed.length > 0 ? trimmed : null;
 
-  const session = await ensureSession();
-  if (!session) return { ok: false, reason: 'auth' };
-
-  const trimmed = name.trim().slice(0, DISPLAY_NAME_MAX);
-  // An empty string would render as a nameless row; store a real null so
-  // the UI's "anonymous" fallback is the single code path for "no name".
-  const value = trimmed.length > 0 ? trimmed : null;
-
-  try {
     const { error } = await supabase
       .from('profiles')
       .upsert({ id: session.user.id, display_name: value }, { onConflict: 'id' });
     if (error) return { ok: false, reason: 'network' };
     return { ok: true, displayName: value };
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
+  });
 }
