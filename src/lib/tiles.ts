@@ -37,9 +37,33 @@ export interface TilePoint extends LatLng {
  * 25 is already generous).
  *
  * A gap whose implied speed exceeds this is never bridged — see
- * PathToTilesResult.bridgesSkipped.
+ * PathToTilesResult.bridgesSkippedSpeed.
  */
 export const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
+
+/**
+ * Longest gap between two consecutive fixes that gets bridged at all, even
+ * when the implied speed is a perfectly ordinary jog. This is a SEPARATE
+ * question from MAX_BRIDGE_SPEED_MS (b8's review, 2026-09-01): speed asks
+ * "was this physically possible" (catches a car, a GPS spoof, a teleport);
+ * distance asks "do we know what path they took." A runner really can cover
+ * 2km in 11 minutes (3.03 m/s — comfortably under the speed cap) while their
+ * phone sat locked in a pocket the whole way. gridPathCells only knows how
+ * to draw a STRAIGHT LINE between the two fixes; the runner's real path
+ * followed streets, which the straight line can cut through buildings, a
+ * river, or another runner's yard. Under first-to-claim that isn't merely
+ * generous — a wrongly claimed tile is permanently taken from whoever
+ * actually ran it, which is the sharpest version of "you cannot claim
+ * ground you did not touch."
+ *
+ * 150m: roughly three sampling intervals at the tracker's real fix spacing
+ * (empirically ~30-50m apart at the 2s/3m throttle — see tracking.ts's
+ * TIME_INTERVAL_MS/DISTANCE_INTERVAL_M and this file's own gap-fill test
+ * fixtures). That comfortably absorbs one or two dropped fixes (a brief GPS
+ * hiccup, a short tunnel) while staying far short of anything that could be
+ * a real route deviation.
+ */
+export const MAX_BRIDGE_DISTANCE_M = 150;
 
 export interface PathToTilesResult {
   /** Every unique H3 cell the path covers — direct fixes plus gap-fill,
@@ -58,31 +82,39 @@ export interface PathToTilesResult {
   gapFilledCount: number;
   /** Times gridPathCells THREW trying to bridge a gap and this function
    *  fell back to the two endpoints instead — an unrecorded hole in the
-   *  trail. Counted, not silently swallowed, for the same reason
-   *  bridgesSkipped is: "the fill failed and left a hole" must never be
-   *  indistinguishable from "there was nothing to fill". */
+   *  trail. Counted, not silently swallowed, for the same reason the
+   *  skipped-bridge counters are: "the fill failed and left a hole" must
+   *  never be indistinguishable from "there was nothing to fill". */
   bridgeFailures: number;
   /**
    * Gaps deliberately left UNFILLED because bridging them would imply a
-   * speed above MAX_BRIDGE_SPEED_MS. This is not defensive padding — it is
-   * the fix for a real bug found reviewing this exact file: an earlier
-   * version bridged EVERY gap regardless of implied speed, which is the
-   * enclosure model's auto-close bug wearing different clothes. closeRing
-   * connected two distant points and claimed everything between them (a
-   * one-way 3.77km arc claimed 1.82 km² it never ran around); an unbounded
-   * gridPathCells bridge does the same thing tile-by-tile — a 2km
-   * background-gap jump silently claimed ~95,000 m² of ground never
-   * covered, with bridgeFailures staying 0 the whole time because nothing
-   * THREW — the bridge worked exactly as designed, across a gap it should
-   * never have spanned.
+   * speed above MAX_BRIDGE_SPEED_MS — "this was not physically possible for
+   * a runner" (a car, a spoofed fix, a teleport). See MAX_BRIDGE_SPEED_MS's
+   * own doc for the history: an earlier version bridged EVERY gap
+   * regardless of implied speed, which is the enclosure model's auto-close
+   * bug wearing different clothes.
    *
-   * The single most common real trigger is a runner locking their phone
-   * mid-run: tracking.ts's visibilitychange handler clears `lastRef` on
-   * reconnect (a leg break, protecting distanceM and the drawn route line),
-   * but this function reads the raw, still-continuous `points` array and
-   * never sees that seam — the speed check is what catches it here instead.
+   * Kept separate from bridgesSkippedDistance on purpose (b8's review,
+   * 2026-09-01): "we could not bridge", "we chose not to because it was
+   * impossible", and "we chose not to because we don't know the path taken"
+   * are three different facts, and only reporting one combined number would
+   * make it impossible to tell which reason actually fired on a real run.
    */
-  bridgesSkipped: number;
+  bridgesSkippedSpeed: number;
+  /**
+   * Gaps deliberately left UNFILLED because they exceed MAX_BRIDGE_DISTANCE_M
+   * — "this was physically possible, but we don't know which streets they
+   * actually ran, so we won't guess with a straight line." This is the more
+   * common real trigger: a runner locking their phone mid-run.
+   * tracking.ts's visibilitychange handler clears `lastRef` on reconnect (a
+   * leg break, protecting distanceM and the drawn route line), but this
+   * function reads the raw, still-continuous `points` array and never sees
+   * that seam — the distance check is what catches it here instead. Expect
+   * this to roughly track tracking.ts's own `gapCount` (Task B) on a real
+   * run; if the two ever disagree once real data exists, treat that as a
+   * bug in one of them, not two independent facts.
+   */
+  bridgesSkippedDistance: number;
 }
 
 /**
@@ -106,7 +138,8 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
   const direct = new Set<string>();
   const gapFilled = new Set<string>();
   let bridgeFailures = 0;
-  let bridgesSkipped = 0;
+  let bridgesSkippedSpeed = 0;
+  let bridgesSkippedDistance = 0;
   let prevCell: string | null = null;
   let prevPoint: TilePoint | null = null;
 
@@ -125,9 +158,12 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
 
       if (impliedSpeedMs > MAX_BRIDGE_SPEED_MS) {
         // Leave the hole. Bridging here would claim ground the runner
-        // never ran over — see bridgesSkipped's own doc for why this
-        // matters.
-        bridgesSkipped += 1;
+        // never ran over at all — see MAX_BRIDGE_SPEED_MS's own doc.
+        bridgesSkippedSpeed += 1;
+      } else if (distM > MAX_BRIDGE_DISTANCE_M) {
+        // Physically possible, but a straight line here is a guess about
+        // which streets they took — see MAX_BRIDGE_DISTANCE_M's own doc.
+        bridgesSkippedDistance += 1;
       } else {
         try {
           const line = gridPathCells(prevCell, cell);
@@ -154,6 +190,7 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
     directCount: direct.size,
     gapFilledCount: gapFilled.size,
     bridgeFailures,
-    bridgesSkipped,
+    bridgesSkippedSpeed,
+    bridgesSkippedDistance,
   };
 }

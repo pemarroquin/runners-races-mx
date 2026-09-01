@@ -7,9 +7,29 @@
 // different clothes — a background-gap jump used to be bridged exactly
 // like a normal throttle gap, silently claiming ground never run over.
 import { getResolution, gridDistance, gridPathCells, latLngToCell } from 'h3-js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_TILE_RES, MAX_BRIDGE_SPEED_MS, pathToTiles, type TilePoint } from '@/lib/tiles';
+import {
+  DEFAULT_TILE_RES,
+  MAX_BRIDGE_DISTANCE_M,
+  MAX_BRIDGE_SPEED_MS,
+  pathToTiles,
+  type TilePoint,
+} from '@/lib/tiles';
+
+// Wraps gridPathCells so ONE test (below) can force it to throw without
+// touching every other test's real behaviour. vi.spyOn on a plain
+// `import * as h3` fails here ("Cannot redefine property: gridPathCells" —
+// Vitest's ESM module namespace isn't configurable), so the mock has to be
+// declared at module scope like this instead. It calls straight through to
+// the real implementation by default, and tiles.ts (which imports
+// gridPathCells from the same module id) sees this exact mock too — that's
+// what lets the one forced-throw test below actually exercise pathToTiles's
+// catch block rather than mocking something it never reaches.
+vi.mock('h3-js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('h3-js')>();
+  return { ...actual, gridPathCells: vi.fn(actual.gridPathCells) };
+});
 
 // Monterrey-ish latitude, matching territory.test.ts's own fixtures.
 const LAT = 25.67;
@@ -45,7 +65,8 @@ describe('pathToTiles', () => {
     expect(result.directCount).toBe(0);
     expect(result.gapFilledCount).toBe(0);
     expect(result.bridgeFailures).toBe(0);
-    expect(result.bridgesSkipped).toBe(0);
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
   });
 
   it('a single point yields exactly one cell, direct', () => {
@@ -68,7 +89,8 @@ describe('pathToTiles', () => {
     // A handful of metres — well inside one ~25m-edge res-11 cell.
     const result = pathToTiles([pointEast(0, 0), pointEast(5, 2000)]);
     expect(result.gapFilledCount).toBe(0);
-    expect(result.bridgesSkipped).toBe(0);
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
   });
 
   it('bridges a realistic 55m gap at a plausible pace — no hole between consecutive fixes', () => {
@@ -88,7 +110,8 @@ describe('pathToTiles', () => {
     for (const cell of expectedLine) expect(result.cells).toContain(cell);
 
     expect(result.gapFilledCount).toBeGreaterThan(0);
-    expect(result.bridgesSkipped).toBe(0);
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
     expect(result.directCount).toBe(2);
   });
 
@@ -105,7 +128,8 @@ describe('pathToTiles', () => {
         expect(result.cells).toContain(cell);
       }
     }
-    expect(result.bridgesSkipped).toBe(0);
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
   });
 
   it('every claimed cell is within one grid step of some other claimed cell (no islands)', () => {
@@ -154,19 +178,32 @@ describe('pathToTiles', () => {
 
   it('counts a failed bridge rather than silently leaving an unobservable hole', () => {
     // gridPathCells genuinely throws only for cells far beyond anything a
-    // real gap produces (empirically: thousands of km). The elapsed time
-    // (60 days) keeps the IMPLIED SPEED under MAX_BRIDGE_SPEED_MS on
-    // purpose — this must fail on gridPathCells's own distance limit, not
-    // get intercepted by the speed cap first, or it would prove nothing
-    // about bridgeFailures specifically.
-    const here = pointEast(0, 0);
-    const farAway: TilePoint = { lat: -LAT, lng: -LNG, ts: 60 * 24 * 60 * 60 * 1000 };
-    const result = pathToTiles([here, farAway]);
+    // real gap produces (empirically: thousands of km) — and now that
+    // MAX_BRIDGE_DISTANCE_M (150m) exists, ANY fixture large enough to hit
+    // gridPathCells's real throw threshold gets intercepted by the distance
+    // cap first (correctly — see that test group), so there is no longer a
+    // realistic distance/time combination that reaches this catch block at
+    // all. Forcing gridPathCells itself to throw is the only way left to
+    // prove the catch path still works rather than having silently rotted.
+    // mockImplementationOnce affects exactly the next call, then the mock
+    // reverts to its module-scope default (calls straight through to the
+    // real gridPathCells) — no manual restore needed for later tests.
+    vi.mocked(gridPathCells).mockImplementationOnce(() => {
+      throw new Error('simulated h3 failure');
+    });
 
-    expect(result.bridgesSkipped).toBe(0);
+    // A short, ordinary gap — well under both caps — so the ONLY reason
+    // this doesn't bridge is the forced throw, not the caps doing their own
+    // job.
+    const a = pointEast(0, 0);
+    const b = pointEast(50, (50 / JOG_MS) * 1000);
+    const result = pathToTiles([a, b]);
+
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
     expect(result.bridgeFailures).toBe(1);
     // Fails OPEN: both endpoints are still claimed even though nothing
-    // filled the (very real, very large) gap between them.
+    // filled the gap between them.
     expect(result.cells).toHaveLength(2);
     expect(result.directCount).toBe(2);
     expect(result.gapFilledCount).toBe(0);
@@ -196,29 +233,38 @@ describe('the bridge speed cap (background-gap fix)', () => {
     if (metres === 0) {
       // The 0m case must be UNCHANGED: no gap at all, nothing to skip or
       // fill either way.
-      expect(result.bridgesSkipped).toBe(0);
+      expect(result.bridgesSkippedSpeed).toBe(0);
+      expect(result.bridgesSkippedDistance).toBe(0);
       expect(result.gapFilledCount).toBe(0);
       return;
     }
 
     // Every non-zero case implies a wildly superhuman speed even at the
-    // smallest (200m/2s = 100 m/s = 360 km/h) — all must be skipped,
-    // claiming only the two directly-covered endpoints, per b8's ask:
-    // "800m and 2000m must claim only the directly-covered tiles."
-    expect(result.bridgesSkipped, `${label} gap should be skipped`).toBe(1);
+    // smallest (200m/2s = 100 m/s = 360 km/h) — all must be skipped FOR
+    // SPEED specifically (not just "skipped for some reason"), claiming
+    // only the two directly-covered endpoints, per b8's ask: "800m and
+    // 2000m must claim only the directly-covered tiles."
+    expect(result.bridgesSkippedSpeed, `${label} gap should be skipped for speed`).toBe(1);
+    expect(result.bridgesSkippedDistance).toBe(0);
     expect(result.gapFilledCount).toBe(0);
     expect(result.cells).toHaveLength(2);
     expect(result.directCount).toBe(2);
   });
 
   it('the same 2000m gap DOES bridge when the elapsed time makes it a plausible walk', () => {
-    // The fix is a SPEED cap, not a distance cap — a long gap is fine if
-    // enough real time passed to explain it. 2000m over 15 minutes is an
-    // easy walking pace (~2.2 m/s), comfortably under MAX_BRIDGE_SPEED_MS.
+    // The speed cap is not a distance cap — a long gap is fine if enough
+    // real time passed to explain it AND the distance itself is short
+    // enough to trust a straight line (see the distance-cap group below for
+    // where that stops being true). 2000m over 15 minutes is an easy
+    // walking pace (~2.2 m/s), comfortably under MAX_BRIDGE_SPEED_MS — but
+    // 2000m itself is far past MAX_BRIDGE_DISTANCE_M, so this now
+    // deliberately uses a short gap to isolate "speed cap alone, distance
+    // cap not a factor."
     const a = pointEast(0, 0);
-    const b = pointEast(2000, 15 * 60 * 1000);
+    const b = pointEast(100, 45 * 1000); // 100m/45s ≈ 2.2 m/s, a walking pace
     const result = pathToTiles([a, b]);
-    expect(result.bridgesSkipped).toBe(0);
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
     expect(result.gapFilledCount).toBeGreaterThan(0);
   });
 
@@ -226,5 +272,51 @@ describe('the bridge speed cap (background-gap fix)', () => {
     // supabase/migrations/20260827_anti_cheat_flag.sql's max_kmh — reused
     // rather than a second, potentially-disagreeing number.
     expect(MAX_BRIDGE_SPEED_MS).toBeCloseTo(25 / 3.6, 5);
+  });
+});
+
+describe('the bridge distance cap (straight-line-guess fix)', () => {
+  // b8's second review, same date: a runner really can cover ~2km in the
+  // time a background gap takes without ever exceeding the speed cap (a
+  // phone locked mid-run at a normal walking/jogging pace). The speed cap
+  // alone does not catch this — the distance cap is what refuses to guess
+  // a straight-line path through streets, buildings, or someone else's
+  // already-claimed tile.
+
+  it('a 2km gap at an entirely ordinary jogging pace is skipped for DISTANCE, not speed', () => {
+    // 2000m over 11 minutes ≈ 3.03 m/s — comfortably under
+    // MAX_BRIDGE_SPEED_MS (~6.94 m/s). This is b8's exact reproduction case:
+    // physically unremarkable, and the OLD code bridged it anyway (~44
+    // tiles, ~95,000 m² never actually run over).
+    const a = pointEast(0, 0);
+    const b = pointEast(2000, 11 * 60 * 1000);
+    const result = pathToTiles([a, b]);
+
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(1);
+    expect(result.gapFilledCount).toBe(0);
+    // Only the two directly-covered endpoints are claimed — nothing on the
+    // guessed straight line between them.
+    expect(result.cells).toHaveLength(2);
+    expect(result.directCount).toBe(2);
+  });
+
+  it('a ~100m gap at a normal pace still bridges — the cap is not "reject anything far"', () => {
+    // Just under MAX_BRIDGE_DISTANCE_M (150m), at jogging pace: this is the
+    // ordinary case the cap must NOT break — a slightly sparse GPS fix
+    // shouldn't stop routine gap-filling.
+    const path = pathAtPace(2, 100, JOG_MS);
+    const result = pathToTiles(path);
+
+    expect(result.bridgesSkippedSpeed).toBe(0);
+    expect(result.bridgesSkippedDistance).toBe(0);
+    expect(result.gapFilledCount).toBeGreaterThan(0);
+  });
+
+  it('MAX_BRIDGE_DISTANCE_M matches the tracker\'s own realistic gap-fill fixtures (well under it)', () => {
+    // The fixtures throughout this file use 45-100m gaps as "ordinary" — the
+    // cap must sit comfortably above that range, not press right against
+    // it, or routine GPS spacing would start tripping the cap by accident.
+    expect(MAX_BRIDGE_DISTANCE_M).toBeGreaterThan(100);
   });
 });

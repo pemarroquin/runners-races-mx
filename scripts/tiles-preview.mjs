@@ -27,6 +27,12 @@ const RES = 11; // matches src/lib/tiles.ts's DEFAULT_TILE_RES
 // supabase/migrations/20260827_anti_cheat_flag.sql's `max_kmh := 25`.
 // Reused rather than a second, possibly-disagreeing number.
 const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
+// Longest gap bridged even at an ordinary jogging speed — a straight line
+// between two fixes 150m+ apart is a guess about which streets were run,
+// not an observation. See src/lib/tiles.ts's MAX_BRIDGE_DISTANCE_M for the
+// full reasoning (b8's review, 2026-09-01): speed and distance answer two
+// different questions ("was this possible" vs "do we know the path").
+const MAX_BRIDGE_DISTANCE_M = 150;
 
 function haversineM(a, b) {
   const R = 6371008.8;
@@ -42,7 +48,8 @@ function pathToTiles(points, res = RES) {
   const direct = new Set();
   const gapFilled = new Set();
   let bridgeFailures = 0;
-  let bridgesSkipped = 0;
+  let bridgesSkippedSpeed = 0;
+  let bridgesSkippedDistance = 0;
   let prevCell = null;
   let prevPoint = null;
   for (const p of points) {
@@ -50,13 +57,20 @@ function pathToTiles(points, res = RES) {
     direct.add(cell);
     if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
       const dtS = (p.ts - prevPoint.ts) / 1000;
-      const impliedSpeedMs = dtS > 0 ? haversineM(prevPoint, p) / dtS : Infinity;
+      const distM = haversineM(prevPoint, p);
+      const impliedSpeedMs = dtS > 0 ? distM / dtS : Infinity;
       if (impliedSpeedMs > MAX_BRIDGE_SPEED_MS) {
-        // Leave the hole — bridging would claim ground never run over.
-        // This is the actual bug fix (b8's review, 2026-09-01): a 2km
-        // background-gap jump used to be bridged exactly like a normal
-        // throttle gap, silently claiming ~95,000 m2 never covered.
-        bridgesSkipped += 1;
+        // Leave the hole — bridging would claim ground never run over at
+        // all. b8's review, 2026-09-01: a 2km background-gap jump used to
+        // be bridged exactly like a normal throttle gap, silently claiming
+        // ~95,000 m2 never covered.
+        bridgesSkippedSpeed += 1;
+      } else if (distM > MAX_BRIDGE_DISTANCE_M) {
+        // Physically possible (e.g. a phone locked mid-run at a normal
+        // walking/jogging pace), but a straight line between the fixes is a
+        // guess about which streets were actually run — b8's follow-up
+        // review, same date: speed alone doesn't catch this case.
+        bridgesSkippedDistance += 1;
       } else {
         try {
           for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
@@ -79,7 +93,8 @@ function pathToTiles(points, res = RES) {
     directCount: direct.size,
     gapFilledCount: gapFilled.size,
     bridgeFailures,
-    bridgesSkipped,
+    bridgesSkippedSpeed,
+    bridgesSkippedDistance,
   };
 }
 
@@ -179,7 +194,8 @@ if (!points) {
   synthetic = true;
 }
 
-const { cells, directCount, gapFilledCount, bridgeFailures, bridgesSkipped } = pathToTiles(points);
+const { cells, directCount, gapFilledCount, bridgeFailures, bridgesSkippedSpeed, bridgesSkippedDistance } =
+  pathToTiles(points);
 const distanceM = pathDistanceM(points);
 
 const routeFeature = {
@@ -197,7 +213,13 @@ const tileFeatures = cells.map((h3) => ({
 
 const geojson = {
   type: 'FeatureCollection',
-  properties: { synthetic, bridgeFailures, bridgesSkipped, generatedAt: new Date().toISOString() },
+  properties: {
+    synthetic,
+    bridgeFailures,
+    bridgesSkippedSpeed,
+    bridgesSkippedDistance,
+    generatedAt: new Date().toISOString(),
+  },
   features: [routeFeature, ...tileFeatures],
 };
 
@@ -205,14 +227,21 @@ writeFileSync(outputPath, JSON.stringify(geojson, null, 2));
 
 const gapPct = cells.length > 0 ? ((gapFilledCount / cells.length) * 100).toFixed(0) : '0';
 console.log(`[tiles-preview] ${synthetic ? 'SYNTHETIC demo path (not a real run)' : inputPath}`);
-console.log(`  points:           ${points.length}`);
-console.log(`  distance:         ${(distanceM / 1000).toFixed(2)} km`);
-console.log(`  tiles claimed:    ${cells.length}`);
-console.log(`  tiles direct:     ${directCount}`);
-console.log(`  tiles gap-filled: ${gapFilledCount} (${gapPct}% of claimed tiles)`);
-console.log(`  bridge failures:  ${bridgeFailures}${bridgeFailures > 0 ? ' — some gaps left UNFILLED holes, see tiles.ts' : ''}`);
-console.log(`  bridges skipped:  ${bridgesSkipped}${bridgesSkipped > 0 ? ' — gap(s) implied a superhuman speed, left unbridged (see MAX_BRIDGE_SPEED_MS)' : ''}`);
-console.log(`  wrote:            ${outputPath}`);
+console.log(`  points:                  ${points.length}`);
+console.log(`  distance:                ${(distanceM / 1000).toFixed(2)} km`);
+console.log(`  tiles claimed:           ${cells.length}`);
+console.log(`  tiles direct:            ${directCount}`);
+console.log(`  tiles gap-filled:        ${gapFilledCount} (${gapPct}% of claimed tiles)`);
+console.log(
+  `  bridge failures:        ${bridgeFailures}${bridgeFailures > 0 ? ' — some gaps left UNFILLED holes, see tiles.ts' : ''}`,
+);
+console.log(
+  `  bridges skipped (speed): ${bridgesSkippedSpeed}${bridgesSkippedSpeed > 0 ? ' — gap(s) implied a superhuman speed, left unbridged (see MAX_BRIDGE_SPEED_MS)' : ''}`,
+);
+console.log(
+  `  bridges skipped (dist):  ${bridgesSkippedDistance}${bridgesSkippedDistance > 0 ? ' — gap(s) exceeded MAX_BRIDGE_DISTANCE_M, path unknown, left unbridged' : ''}`,
+);
+console.log(`  wrote:                   ${outputPath}`);
 if (synthetic) {
   console.log('  NOTE: synthetic data — not Pedro\'s or anyone\'s real run.');
 }
