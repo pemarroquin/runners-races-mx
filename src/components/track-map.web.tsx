@@ -24,6 +24,13 @@
 // its intended brightness (P3 §7a). The live territory fill (FILL_SRC) is
 // new for the same reason it was missing before: there was no fill layer at
 // all, only two lines and one fill-extrusion.
+//
+// Two things animate continuously while a session is live, so the map
+// doesn't read as flat/static even when the runner is standing still: the
+// fill breathes between LIVE_FILL_OPACITY_LOW/HIGH, and the route line (plus
+// the fill's own rim, FILL_OUTLINE_SRC) cycles through ROUTE_GRADIENT's
+// colours via rotateRouteGradient. Both are plain setInterval timers, not
+// requestAnimationFrame loops — see the pulse-dot comment below.
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
@@ -37,7 +44,10 @@ import {
   FENCE_WALL_HEIGHT_M,
   FENCE_WALL_OPACITY,
   FENCE_WALL_WIDTH_M,
-  LIVE_FILL_OPACITY,
+  LIVE_FILL_OPACITY_HIGH,
+  LIVE_FILL_OPACITY_LOW,
+  LIVE_FILL_OUTLINE_WIDTH,
+  LIVE_FILL_PULSE_MS,
   LIVE_FILL_RECOMPUTE_MS,
   LIVE_FILL_RECOMPUTE_POINTS,
   MAP_DEFAULT_ZOOM,
@@ -48,21 +58,24 @@ import {
   ROUTE_GLOW_OPACITY,
   ROUTE_GLOW_WIDTH,
   ROUTE_GRADIENT,
+  ROUTE_GRADIENT_CYCLE_MS,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  rotateRouteGradient,
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
 } from '@/constants/map';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { useRegion } from '@/lib/region-context';
-import { buildFence, type LatLng } from '@/lib/territory';
+import { buildFence, outerRings, type LatLng } from '@/lib/territory';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
 const ROUTE_SRC = 'run-route';
 const WALL_SRC = 'run-wall';
 const FILL_SRC = 'run-fill';
+const FILL_OUTLINE_SRC = 'run-fill-outline';
 const PULSE_STYLE_ID = 'track-pulse-style';
 
 interface TrackMapProps {
@@ -139,6 +152,13 @@ export function TrackMap({
   const flownRef = useRef(false);
   // Throttle state for the live territory fill — see LIVE_FILL_RECOMPUTE_MS.
   const lastFillRef = useRef({ atMs: 0, pointCount: 0 });
+  // The two "feels alive even standing still" animation timers — JS
+  // intervals, not requestAnimationFrame loops (see the pulse-dot comment
+  // below for why that distinction matters for the length of a run).
+  // Started inside the map's 'load' handler, where the layers they animate
+  // are guaranteed to already exist; cleared in the mount effect's cleanup.
+  const fillPulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const routeCycleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { region } = useRegion();
 
   // Only ever a fallback for the *initial* camera, and only while no real fix
@@ -190,6 +210,15 @@ export function TrackMap({
         // buildFence() below, not lineMetrics — a fill has no line-progress.
         map.addSource(FILL_SRC, {
           type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
+        // The fill's chromatic rim — same technique as the route line and
+        // the (now fixed) summary outline, traced around the growing
+        // territory's edge instead of the path. Fed alongside FILL_SRC by
+        // the same throttled buildFence() below.
+        map.addSource(FILL_OUTLINE_SRC, {
+          type: 'geojson',
+          lineMetrics: true,
           data: { type: 'FeatureCollection', features: [] },
         });
 
@@ -256,6 +285,12 @@ export function TrackMap({
         // still reads as a distinct rising edge rather than being swallowed
         // by the flat fill under it; same MAP_SLOT_FILL as the wall, so both
         // sit above roads and below buildings/labels together.
+        //
+        // fill-opacity starts LOW, not LIVE_FILL_OPACITY_HIGH: the pulse
+        // interval below immediately starts alternating it, and starting at
+        // the low end means the very first fence that appears fades UP
+        // rather than snapping straight to full — same "eases in" feel as
+        // the wall's own rise.
         map.addLayer({
           id: FILL_SRC,
           type: 'fill',
@@ -263,10 +298,69 @@ export function TrackMap({
           slot: MAP_SLOT_FILL,
           paint: {
             'fill-color': FENCE_WALL_COLOR,
-            'fill-opacity': LIVE_FILL_OPACITY,
+            'fill-opacity': LIVE_FILL_OPACITY_LOW,
+            'fill-opacity-transition': { duration: LIVE_FILL_PULSE_MS, delay: 0 },
             'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         }, WALL_SRC);
+        map.addLayer({
+          id: FILL_OUTLINE_SRC,
+          type: 'line',
+          source: FILL_OUTLINE_SRC,
+          slot: MAP_SLOT_ROUTE,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-width': LIVE_FILL_OUTLINE_WIDTH,
+            'line-color': ROUTE_GRADIENT[0][1], // fallback — see the route line's own comment above
+            'line-gradient': [
+              'interpolate',
+              ['linear'],
+              ['line-progress'],
+              ...ROUTE_GRADIENT.flat(),
+            ] as unknown as string,
+            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        });
+
+        // "Feels alive even standing still" — Pedro's ask. Both timers are
+        // plain setInterval, not requestAnimationFrame: see this file's
+        // pulse-dot comment for why a per-frame GL repaint for the whole
+        // length of a run is the specific trap being avoided. Each tick is
+        // one cheap setPaintProperty call, not a geometry rebuild.
+        //
+        // The fill breathes between LIVE_FILL_OPACITY_LOW/HIGH — GL
+        // interpolates fill-opacity on the GPU between calls via the
+        // fill-opacity-transition set above, so this reads as a smooth
+        // pulse from one JS call every LIVE_FILL_PULSE_MS.
+        let fillHigh = false;
+        fillPulseIntervalRef.current = setInterval(() => {
+          fillHigh = !fillHigh;
+          map.setPaintProperty(
+            FILL_SRC,
+            'fill-opacity',
+            fillHigh ? LIVE_FILL_OPACITY_HIGH : LIVE_FILL_OPACITY_LOW,
+          );
+        }, LIVE_FILL_PULSE_MS);
+
+        // The route (and its rim twin below) cycle colour instead: unlike
+        // fill-opacity, line-gradient is a ColorRampProperty with no
+        // `-transition` support at all (confirmed against the installed
+        // mapbox-gl typings) — every update SNAPS, there's no GPU tween to
+        // lean on. rotateRouteGradient keeps the offsets fixed and only
+        // rotates which colour sits at which one, so this reads as a
+        // stepped shift, not a silky flow — an honest limit of the API.
+        let step = 0;
+        routeCycleIntervalRef.current = setInterval(() => {
+          step += 1;
+          const gradient = [
+            'interpolate',
+            ['linear'],
+            ['line-progress'],
+            ...rotateRouteGradient(step).flat(),
+          ] as unknown as string;
+          map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
+          map.setPaintProperty(FILL_OUTLINE_SRC, 'line-gradient', gradient);
+        }, ROUTE_GRADIENT_CYCLE_MS);
 
         const el = document.createElement('div');
         el.className = 'track-dot';
@@ -280,6 +374,10 @@ export function TrackMap({
       cancelled = true;
       readyRef.current = false;
       flownRef.current = false;
+      if (fillPulseIntervalRef.current) clearInterval(fillPulseIntervalRef.current);
+      if (routeCycleIntervalRef.current) clearInterval(routeCycleIntervalRef.current);
+      fillPulseIntervalRef.current = null;
+      routeCycleIntervalRef.current = null;
       markerRef.current?.remove();
       markerRef.current = null;
       mapRef.current?.remove();
@@ -389,14 +487,17 @@ export function TrackMap({
     const now = Date.now();
     const last = lastFillRef.current;
     const fillSource = map.getSource(FILL_SRC) as GeoJSONSource | undefined;
+    const outlineSource = map.getSource(FILL_OUTLINE_SRC) as GeoJSONSource | undefined;
     if (points.length < 3) {
       // Below buildFence's own minimum — most commonly a fresh run just
       // reset `points` to []. Cleared UNCONDITIONALLY, outside the throttle:
-      // without this the fill kept showing the PREVIOUS run's polygon (the
-      // throttle's own point-count baseline had reset too, so the "enough
-      // new points" branch below wouldn't trip again for a while).
+      // without this the fill (and its rim) kept showing the PREVIOUS run's
+      // polygon (the throttle's own point-count baseline had reset too, so
+      // the "enough new points" branch below wouldn't trip again for a
+      // while).
       lastFillRef.current = { atMs: now, pointCount: points.length };
       fillSource?.setData({ type: 'FeatureCollection', features: [] });
+      outlineSource?.setData({ type: 'FeatureCollection', features: [] });
     } else if (
       points.length - last.pointCount >= LIVE_FILL_RECOMPUTE_POINTS ||
       now - last.atMs >= LIVE_FILL_RECOMPUTE_MS
@@ -407,6 +508,18 @@ export function TrackMap({
       // contract; never throws).
       const fence = buildFence(points);
       fillSource?.setData(fence ? fence.geometry : { type: 'FeatureCollection', features: [] });
+      outlineSource?.setData(
+        fence
+          ? {
+              type: 'FeatureCollection',
+              features: outerRings(fence.geometry.geometry).map((ring) => ({
+                type: 'Feature' as const,
+                properties: {},
+                geometry: { type: 'LineString' as const, coordinates: ring },
+              })),
+            }
+          : { type: 'FeatureCollection', features: [] },
+      );
     }
 
     // Follow only while recording: panning the camera under someone reading

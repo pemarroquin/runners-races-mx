@@ -17,7 +17,7 @@ import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { Feature, MultiPolygon, Polygon as GeoPolygon, Position } from 'geojson';
+import type { Feature, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import {
   EMISSIVE_STRENGTH_FULL,
@@ -28,6 +28,7 @@ import {
   ROUTE_GRADIENT,
   ROUTE_LINE_WIDTH,
 } from '@/constants/map';
+import { outerRings } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -51,12 +52,6 @@ function ensureMapboxCss() {
   link.rel = 'stylesheet';
   link.href = MAPBOX_CSS_URL;
   document.head.appendChild(link);
-}
-
-function outerRings(geometry: GeoPolygon | MultiPolygon): Position[][] {
-  return geometry.type === 'Polygon'
-    ? [geometry.coordinates[0]]
-    : geometry.coordinates.map((p) => p[0]);
 }
 
 function boundsOf(geometry: GeoPolygon | MultiPolygon): [[number, number], [number, number]] {

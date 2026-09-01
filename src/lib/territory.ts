@@ -166,3 +166,22 @@ export function buildFence(path: LatLng[], toleranceDeg = DEFAULT_TOLERANCE_DEG)
     return null;
   }
 }
+
+/**
+ * The outer boundary ring(s) of a fence's geometry, as plain [lng,lat]
+ * coordinate arrays — a Polygon has one, a MultiPolygon (a self-crossing
+ * route split into separate lobes, see cleanPolygon) has one per lobe.
+ * Ignores interior rings (holes): a fence never has any, since buildFence's
+ * pipeline only ever unions simple lobes together, never subtracts area.
+ *
+ * Pulled out as its own tested function because more than one map surface
+ * needs to trace the SAME boundary as a LineString rather than a filled
+ * area — a gradient outline needs `line-progress`, which only exists for
+ * lines, not fills. Was duplicated locally in fence-map.web.tsx before
+ * track-map.web.tsx needed the identical thing for the live fill's rim.
+ */
+export function outerRings(geometry: Polygon | MultiPolygon): Position[][] {
+  return geometry.type === 'Polygon'
+    ? [geometry.coordinates[0]]
+    : geometry.coordinates.map((p) => p[0]);
+}

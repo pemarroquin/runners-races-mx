@@ -58,8 +58,18 @@ export const ROUTE_GLOW_WIDTH = 14;
 export const ROUTE_GLOW_BLUR = 3;
 export const ROUTE_GLOW_OPACITY = 0.35;
 
-/** Closed-fence fill on the summary. */
-export const FENCE_FILL_OPACITY = 0.25;
+/**
+ * Fill opacity for buildFenceMapUrl's static-image overlay (mapbox.ts) —
+ * the Saved > Territories list thumbnails (myraces.tsx). Was 0.25, which
+ * read as muddy/near-invisible against the classic dark-v11 style's near-
+ * black ground (reported by Pedro, 2026-08-31, from a real device
+ * screenshot). No emissive-strength or slot tuning applies here the way it
+ * does to MAP_STYLE_GL's Standard layers — the Static Images API is a flat
+ * pre-rendered image, plain alpha compositing, no scene lighting to
+ * correct for. Opacity is the only lever, so it has to carry the whole
+ * "vibrant" ask alone; bumped to actually read as one on a dark ground.
+ */
+export const FENCE_FILL_OPACITY = 0.45;
 
 /**
  * Full intensity for EVERY custom line/fill/fill-extrusion layer added to
@@ -110,15 +120,42 @@ export const LIVE_FILL_RECOMPUTE_POINTS = 10;
 
 /**
  * Live territory fill opacity (GL, web only) — deliberately its OWN
- * constant, not FENCE_FILL_OPACITY, which is tuned for the Static Images
+ * constants, not FENCE_FILL_OPACITY, which is tuned for the Static Images
  * API's classic dark-v11 style (no light preset, no emissive-strength,
  * always fully lit). Once EMISSIVE_STRENGTH_FULL corrects the raw fill
  * colour, it reads far more vivid than the same colour did muddied by the
- * night preset — a lower opacity than FENCE_FILL_OPACITY reads as vibrant
- * but subtle against the corrected colour, rather than needing the higher
- * number that was really compensating for the colour being washed out.
+ * night preset — these read as vibrant but subtle against the corrected
+ * colour, rather than needing the higher number that was really
+ * compensating for the colour being washed out.
+ *
+ * Two values, not one: the fill BREATHES between them while a session is
+ * live (see track-map.web.tsx's pulse effect) rather than sitting at a flat
+ * opacity — Pedro's ask was for something animated and alive, not a static
+ * colour wash. Each `setPaintProperty` call is cheap (fires once per
+ * LIVE_FILL_PULSE_MS, not every frame); `fill-opacity-transition`, set once
+ * when the layer is created, is what makes the GPU interpolate smoothly
+ * between the two values in between calls — the same trick already used for
+ * the wall's rise and the summary fence's fade-in, NOT a
+ * requestAnimationFrame loop repainting the whole map every frame for the
+ * length of a run (see the "you are here" pulse dot's own comment for why
+ * that specific trap matters here).
  */
-export const LIVE_FILL_OPACITY = 0.22;
+export const LIVE_FILL_OPACITY_LOW = 0.14;
+export const LIVE_FILL_OPACITY_HIGH = 0.3;
+/** One full breathe (low → high → low) takes roughly 2x this, since each
+ *  call flips to the opposite value. */
+export const LIVE_FILL_PULSE_MS = 2600;
+
+/**
+ * Chromatic rim traced around the live fill's growing boundary — the same
+ * `line-gradient` technique as the route line and the summary outline
+ * (ROUTE_GRADIENT), applied to the territory's EDGE instead of the path.
+ * This is the closest a flat 2D map layer gets to a rim-lit glow: the fill
+ * itself stays each run's own identity colour (FENCE_COLOR_SETS — needed to
+ * tell territories apart when several are shown together), so only the
+ * outline carries the shared iridescent gradient.
+ */
+export const LIVE_FILL_OUTLINE_WIDTH = 2.5;
 
 /**
  * The live route's vibrant gradient, as `line-gradient` stops (offset 0-1
@@ -138,6 +175,36 @@ export const ROUTE_GRADIENT: [number, string][] = [
   [0.85, '#FA7E1E'],
   [1.0, '#FEDA75'],
 ];
+
+/**
+ * Rotates ROUTE_GRADIENT's colours through its own FIXED offsets, one step
+ * per call — the route line's "feels alive even standing still" animation.
+ * The offsets never move: `interpolate` requires strictly increasing stops,
+ * so shifting the numbers themselves risks an invalid (unsorted) expression
+ * on wraparound. Only which colour sits at which offset cycles.
+ *
+ * `line-gradient` has NO `-transition` support (confirmed against the
+ * installed mapbox-gl typings — it's a ColorRampProperty, not a
+ * DataDrivenProperty/DataConstantProperty, neither of which line-gradient
+ * is either) — every update SNAPS instantly, there is no GPU interpolation
+ * to lean on the way LIVE_FILL_OPACITY's pulse does. So this reads as a
+ * stepped colour shift, not a silky continuous flow — an honest limit of
+ * the API, not a corner cut. `step` can be any integer; the double-mod
+ * wraps negative values correctly too.
+ */
+export function rotateRouteGradient(step: number): [number, string][] {
+  const n = ROUTE_GRADIENT.length;
+  const colors = ROUTE_GRADIENT.map(([, c]) => c);
+  return ROUTE_GRADIENT.map(([offset], i) => [offset, colors[(((i + step) % n) + n) % n]]);
+}
+
+/** Cadence for rotateRouteGradient — a JS interval, deliberately NOT a
+ *  requestAnimationFrame loop (see the "you are here" pulse dot's own
+ *  comment in track-map.web.tsx for why a per-frame GL repaint for the
+ *  whole length of a run is the trap this avoids). One step every 450ms
+ *  means a full 6-colour cycle every 2.7s — close to LIVE_FILL_PULSE_MS's
+ *  own rhythm, so the two animations don't visibly fight for attention. */
+export const ROUTE_GRADIENT_CYCLE_MS = 450;
 
 /** Trailing distance that stays a flat line before the route sets into wall. */
 export const FENCE_LAG_M = 100;

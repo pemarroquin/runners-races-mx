@@ -7,6 +7,7 @@ import {
   closeRing,
   cleanPolygon,
   haversineM,
+  outerRings,
   pathDistanceM,
   type LatLng,
 } from '@/lib/territory';
@@ -105,6 +106,29 @@ describe('buildFence', () => {
         { lat: 25.67, lng: -100.31 },
       ]),
     ).toBeNull();
+  });
+});
+
+describe('outerRings', () => {
+  it('returns the single ring of a Polygon', () => {
+    const fence = buildFence(SQUARE_OPEN, 0);
+    expect(fence).not.toBeNull();
+    const rings = outerRings(fence!.geometry.geometry);
+    expect(rings).toHaveLength(1);
+    // Closed — first and last coordinate match.
+    expect(rings[0][0]).toEqual(rings[0][rings[0].length - 1]);
+  });
+
+  it('returns one ring per lobe of a MultiPolygon', () => {
+    const fence = buildFence(BOWTIE, 0);
+    expect(fence).not.toBeNull();
+    expect(fence!.geometry.geometry.type).toBe('MultiPolygon');
+    const rings = outerRings(fence!.geometry.geometry);
+    // The bowtie splits into two simple lobes at the crossing.
+    expect(rings.length).toBeGreaterThan(1);
+    for (const ring of rings) {
+      expect(ring[0]).toEqual(ring[ring.length - 1]);
+    }
   });
 });
 
