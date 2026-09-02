@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setPref } from '../src/lib/db';
+import { getPilotCounters } from '../src/lib/pilot-instrumentation';
 import {
   clearCheckpoint,
   loadCheckpoint,
@@ -16,6 +17,7 @@ import {
 } from '../src/lib/run-checkpoint';
 
 const PREF_KEY = 'run.checkpoint.v1';
+const PILOT_COUNTERS_PREF_KEY = 'pilot.counters.v1';
 
 function makeCheckpoint(overrides: Partial<RunCheckpoint> = {}): RunCheckpoint {
   return {
@@ -33,6 +35,7 @@ function makeCheckpoint(overrides: Partial<RunCheckpoint> = {}): RunCheckpoint {
 
 beforeEach(() => {
   setPref(PREF_KEY, '');
+  setPref(PILOT_COUNTERS_PREF_KEY, '');
 });
 
 describe('saveCheckpoint / loadCheckpoint', () => {
@@ -111,5 +114,56 @@ describe('clearCheckpoint', () => {
     expect(loadCheckpoint()).not.toBeNull();
     expect(clearCheckpoint()).toBe(true);
     expect(loadCheckpoint()).toBeNull();
+  });
+});
+
+// Regression coverage for a validator-caught defect: loadCheckpoint()'s
+// runsLost instrumentation must fire ONLY on a genuine loss — malformed or
+// stale raw data — never on clearCheckpoint()'s own deliberate JSON `null`
+// sentinel. `typeof null === 'object'` means a naive shape check treats that
+// sentinel exactly like malformed data; before the fix this incremented
+// runsLost on every ordinary app open following a user's very first
+// completed-and-cleared run, which would have swamped the real signal this
+// counter exists to measure.
+describe('loadCheckpoint pilot instrumentation (runsLost)', () => {
+  it('does NOT increment runsLost on the clearCheckpoint() sentinel — a normal, successful app open', () => {
+    saveCheckpoint(makeCheckpoint());
+    clearCheckpoint();
+    const before = getPilotCounters().runsLost;
+    expect(loadCheckpoint()).toBeNull();
+    expect(getPilotCounters().runsLost).toBe(before);
+  });
+
+  it('does NOT increment runsLost when nothing has ever been saved', () => {
+    const before = getPilotCounters().runsLost;
+    expect(loadCheckpoint()).toBeNull();
+    expect(getPilotCounters().runsLost).toBe(before);
+  });
+
+  it('increments runsLost on genuinely malformed (corrupted, non-JSON) data', () => {
+    setPref(PREF_KEY, 'not json at all');
+    const before = getPilotCounters().runsLost;
+    expect(loadCheckpoint()).toBeNull();
+    expect(getPilotCounters().runsLost).toBe(before + 1);
+  });
+
+  it('increments runsLost on a checkpoint that fails the shape check', () => {
+    setPref(PREF_KEY, JSON.stringify({ startedAt: 1000, points: 'nonsense' }));
+    const before = getPilotCounters().runsLost;
+    expect(loadCheckpoint()).toBeNull();
+    expect(getPilotCounters().runsLost).toBe(before + 1);
+  });
+
+  it('increments runsLost on a genuinely stale checkpoint', () => {
+    vi.useFakeTimers();
+    try {
+      saveCheckpoint(makeCheckpoint({ savedAt: Date.now() }));
+      vi.advanceTimersByTime(MAX_AGE_MS + 1000);
+      const before = getPilotCounters().runsLost;
+      expect(loadCheckpoint()).toBeNull();
+      expect(getPilotCounters().runsLost).toBe(before + 1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

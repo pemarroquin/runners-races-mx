@@ -83,6 +83,13 @@ export function loadCheckpoint(): RunCheckpoint | null {
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
+    // clearCheckpoint()'s deliberate "no checkpoint" sentinel — JSON `null`,
+    // not an empty string (see that function's comment). This is the
+    // ordinary post-finish/post-discard state, not a loss: `typeof null ===
+    // 'object'` means isRunCheckpoint(null) below would otherwise reject it
+    // as malformed and increment runsLost on every normal app open after a
+    // user's very first completed run.
+    if (parsed === null) return null;
     if (!isRunCheckpoint(parsed)) {
       // Raw data existed but was malformed — a run silently lost before it
       // was ever offered for recovery. Invisible today; see
