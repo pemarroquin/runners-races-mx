@@ -29,7 +29,8 @@ import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { clearHomeZone, getHomeZone, setHomeZone } from '@/lib/home-point';
 import { useI18n } from '@/lib/i18n';
-import { lastRunDebugToJSON, loadLastRunDebug } from '@/lib/last-run-debug';
+import { loadLastRunDebug } from '@/lib/last-run-debug';
+import { getPilotCounters } from '@/lib/pilot-instrumentation';
 import type { PrivacyZone } from '@/lib/privacy-zone';
 import { useReminders } from '@/lib/reminders-provider';
 import {
@@ -264,18 +265,28 @@ export default function SettingsScreen() {
   // reads the shipped build number instead of a value that can drift.
   const version = Constants.expoConfig?.version ?? '—';
 
-  // Diagnostic escape hatch — see last-run-debug.ts. Long-press the version
-  // row (below) to copy the last finished run's raw path + reported area,
-  // so a suspicious measurement can be replayed through buildFence() as a
-  // test fixture rather than argued about from a screenshot.
+  // Diagnostic escape hatch — see last-run-debug.ts and
+  // pilot-instrumentation.ts. Long-press the version row (below) to copy the
+  // last finished run's raw path + reported area (so a suspicious
+  // measurement can be replayed through buildFence() as a test fixture
+  // rather than argued about from a screenshot) ALONGSIDE the pilot
+  // instrumentation counters — the only way to get those four numbers off
+  // the device without a debug build or console access. Pilot counters are
+  // included even when there's no finished run to report: a lost run is
+  // exactly the case where last-run-debug has nothing (it's only saved on a
+  // successful finish), so gating the counters behind a finished run would
+  // hide the runsLost signal specifically.
   const copyLastRunDebug = useCallback(async () => {
     const debug = loadLastRunDebug();
-    if (!debug) {
-      Alert.alert(t('settings.debugEmpty'));
-      return;
-    }
-    await Clipboard.setStringAsync(lastRunDebugToJSON(debug));
-    Alert.alert(t('settings.debugCopied', { count: debug.points.length }));
+    const pilotCounters = getPilotCounters();
+    await Clipboard.setStringAsync(
+      JSON.stringify({ pilotCounters, lastRun: debug }, null, 2),
+    );
+    Alert.alert(
+      debug
+        ? t('settings.debugCopied', { count: debug.points.length })
+        : t('settings.debugCopiedCountersOnly'),
+    );
   }, [t]);
 
   return (

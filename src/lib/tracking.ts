@@ -21,6 +21,7 @@ import {
   type GeoFix,
   type GeoWatch,
 } from '@/lib/geolocation';
+import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { clearCheckpoint, saveCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { haversineM, type LatLng } from '@/lib/territory';
 
@@ -488,10 +489,17 @@ export function useRunTracker(): RunTracker {
       lastRef.current = null;
       consecutiveRejectsRef.current = 0;
       void beginRecording();
+      // A restart of an already-running session's watch — never a fresh
+      // run's first start(). See pilot-instrumentation.ts.
+      incrementPilotCounter('watchRestarts');
 
       const gapStart = gapStartRef.current;
       if (gapStart) {
         setGapCount((n) => n + 1);
+        // Cross-run persisted total — see pilot-instrumentation.ts. Shares
+        // this trigger point with gapCount above (a real backgrounding gap
+        // during an active run) rather than a new one.
+        incrementPilotCounter('backgroundEvents');
         setGapDurationMs((ms) => ms + (Date.now() - gapStart.atMs));
         if (gapStart.lastPoint) {
           // There's something to chord against — onFix computes it and
@@ -569,6 +577,8 @@ export function useRunTracker(): RunTracker {
       consecutiveRejectsRef.current = 0;
       legStartRef.current = Date.now();
       await beginRecording();
+      // Restarting the watch after a pause — see pilot-instrumentation.ts.
+      incrementPilotCounter('watchRestarts');
       setStatus('running');
     } catch {
       setError('unavailable');
@@ -666,6 +676,9 @@ export function useRunTracker(): RunTracker {
         awaitingGapChordRef.current = false;
 
         await beginRecording();
+        // Restarting the watch after a checkpoint recovery — see
+        // pilot-instrumentation.ts.
+        incrementPilotCounter('watchRestarts');
         setStatus('running');
       } catch {
         setError('unavailable');
