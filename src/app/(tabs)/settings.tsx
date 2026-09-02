@@ -11,7 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Alert,
   Linking,
@@ -240,16 +240,38 @@ export default function SettingsScreen() {
   const [nameState, setNameState] = useState<'loading' | 'ready' | 'saving' | 'saved' | 'failed' | 'off'>(
     'loading',
   );
+  // The last value this screen actually confirmed with the server — via a
+  // fetch or a successful save. saveName() below diffs `displayName`
+  // against this to become a no-op when nothing changed, and the
+  // refetch-on-focus effect uses it to tell "the runner hasn't touched the
+  // field since we last synced it" (safe to adopt the fetched value) apart
+  // from "the runner is mid-edit" (must not clobber what they're typing). A
+  // ref, not state: it's read inside a setState updater and inside an
+  // async callback, and must never itself trigger a re-render.
+  const lastSyncedName = useRef('');
 
+  // Re-fetch on every focus, not once on mount — same reasoning as the
+  // location-permission effect above: NamePrompt (the run-summary flow) can
+  // write display_name from off-screen while this tab stays mounted (expo-
+  // router keeps tab screens alive; there's no unmountOnBlur/freezeOnBlur
+  // anywhere in this app), so a mount-only fetch would keep showing the
+  // stale value after that. The functional setDisplayName below only
+  // adopts the fetched value when the field still matches what was last
+  // synced — if the runner has since typed something new, a refetch
+  // landing mid-edit must not overwrite it.
   useEffect(() => {
+    if (!isFocused) return;
     let stale = false;
     // Deferred so no setState runs synchronously in the effect body.
     const id = setTimeout(() => {
       fetchMyProfile().then((outcome) => {
         if (stale) return;
         if (outcome.ok) {
-          setDisplayName(outcome.displayName ?? '');
-          setNameState('ready');
+          const fetched = outcome.displayName ?? '';
+          setDisplayName((prev) => (prev === lastSyncedName.current ? fetched : prev));
+          lastSyncedName.current = fetched;
+          // Don't stomp a save that's currently in flight.
+          setNameState((prev) => (prev === 'saving' ? prev : 'ready'));
         } else {
           // 'disabled' is a build configuration, not a failure — hide the
           // field entirely rather than showing one that can't save.
@@ -261,14 +283,23 @@ export default function SettingsScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, []);
+  }, [isFocused]);
 
   // Saved on blur rather than per keystroke: one write when the runner is
-  // done, instead of a request per character.
+  // done, instead of a request per character. Dirty-checked against
+  // lastSyncedName so a blur/submit on a field the runner merely tapped
+  // into and back out of is a no-op, not a write — onBlur/onSubmitEditing
+  // fire unconditionally, and this screen can go stale while mounted (see
+  // the refetch effect above), so without this check that no-op tap can
+  // silently overwrite a name set from elsewhere with a stale local value.
   const saveName = useCallback(async () => {
     if (nameState === 'off' || nameState === 'loading') return;
+    if (displayName === lastSyncedName.current) return;
     setNameState('saving');
     const outcome = await updateDisplayName(displayName);
+    // Sync to the server-confirmed value (trimmed/nulled server-side), not
+    // the raw input, so the next dirty-check compares against the truth.
+    if (outcome.ok) lastSyncedName.current = outcome.displayName ?? '';
     setNameState(outcome.ok ? 'saved' : 'failed');
   }, [displayName, nameState]);
 
@@ -351,10 +382,11 @@ export default function SettingsScreen() {
             <Text style={[styles.paragraph, { color: c.textSecondary }]}>
               {t('settings.accountBody')}
             </Text>
-            {/* No dead sign-in button — see CLAUDE.md: OAuth needs a dev
-                client and a paid Apple Developer account, deliberately
-                deferred. One honest line instead of a button that promises
-                a feature that doesn't exist. */}
+            {/* No dead sign-in button: Apple Sign In needs a custom dev
+                client plus a paid Apple Developer account — the same EAS
+                ceiling that blocks locked-screen GPS recording — so it's
+                deliberately deferred. One honest line instead of a button
+                that promises a feature that doesn't exist. */}
             <Text style={[styles.paragraph, { color: c.textSecondary }]}>
               {t('settings.accountSignInNote')}
             </Text>
