@@ -36,9 +36,11 @@ import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import {
+  deleteRun as deleteRunRequest,
   fetchMyFences,
   fetchRunSpoils,
   uploadRun,
+  type DeleteOutcome,
   type MyFence,
   type RunSpoils,
   type SyncOutcome,
@@ -127,6 +129,29 @@ export default function TrackScreen() {
   // (2026-09-01 review finding). A ref, not state: needs to be read
   // synchronously inside the async continuation, never a stale closure.
   const saveTokenRef = useRef(0);
+
+  // Task 1 — the one-shot guard for auto-save. A ref, not state: state would
+  // still be `false` on the SAME render that flips tracker.status/masked/
+  // fence to their post-finish values (state updates from an effect aren't
+  // visible until the next render), so an effect gated on state alone can
+  // read a stale `false` and fire save() twice across fast re-renders. A
+  // ref is written synchronously the instant the effect body runs, closing
+  // that window. Reset to false only when the summary screen is fully torn
+  // down (resetLocal, below) — that's what lets the NEXT run auto-save too.
+  const autoSavedRef = useRef(false);
+
+  // Task 2 — deleteRun() outcome. Separate from saveState/failure: a run
+  // can be successfully SAVED and then fail to DELETE — two different
+  // network calls, two different failure surfaces, and conflating them
+  // would show "your save failed" copy for a delete that failed instead.
+  const [deleteState, setDeleteState] = useState<'idle' | 'deleting' | 'failed'>('idle');
+  const [deleteFailure, setDeleteFailure] = useState<DeleteOutcome | null>(null);
+  // One tap arms the honest confirmation copy (deleteRun does not undo
+  // territory already taken from other runners); a second tap actually
+  // deletes. Inline rather than a native Alert.alert — react-native-web's
+  // Alert.alert is a documented no-op (`static alert() {}`), which would
+  // make "Delete run" silently do nothing on the web build.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // An in-progress run recovered from run-checkpoint.ts after a reload —
   // see that file's header. Read once on mount, not on every focus: a
@@ -348,26 +373,86 @@ export default function TrackScreen() {
     }
   }, [fence, masked, queuedId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
-  const discard = useCallback(() => {
+  // Task 1 — fire save() itself, exactly once, the moment the finished run
+  // has everything save() needs (fence + masked path). Gated on the REF, not
+  // on saveState: saveState starts 'idle' and save() itself flips it to
+  // 'saving' synchronously, so a state-only guard would race a fast
+  // re-render between "fence just became non-null" and "saveState just
+  // became 'saving'" and could invoke save() twice. The ref closes that
+  // window because it's set before save() is even called, in the same
+  // synchronous effect body.
+  //
+  // autoSavedRef is reset to false only inside resetLocal (below), which
+  // only runs once the summary is torn down — so a manual retry (tapping
+  // "Reintentar", which calls save() directly, not through this effect) and
+  // a failed-then-later-successful delete both leave the ref untouched and
+  // this effect correctly never fires again for the SAME run.
+  useEffect(() => {
+    if (tracker.status !== 'finished') return;
+    if (!fence || masked === null) return;
+    if (autoSavedRef.current) return;
+    autoSavedRef.current = true;
+    void save();
+  }, [tracker.status, fence, masked, save]);
+
+  // Shared local teardown for both "close the summary" (X, always safe —
+  // never deletes anything, the server row if any stays exactly as saved)
+  // and "delete finished/failed" (handleDeleteRun, below — only reached
+  // once the server side of a delete has either succeeded or was never
+  // needed in the first place). Renamed from the pre-auto-save `discard`:
+  // this function itself no longer decides whether anything is thrown
+  // away, it only resets the SCREEN once that decision has already been
+  // made and (if needed) already carried out against the server.
+  const resetLocal = useCallback(() => {
     // Invalidate any in-flight save FIRST — see saveTokenRef's own comment.
     saveTokenRef.current++;
+    // Let the NEXT run auto-save too.
+    autoSavedRef.current = false;
     setSaveState('idle');
     setFailure(null);
     setSavedRunId(null);
     setSpoils(null);
     setMasked(null);
     setFence(null);
-    // Discard means discard. Leaving the entry on disk uploaded a run the
-    // runner had explicitly thrown away — it would appear in their
-    // territories and take ground off other people days later.
+    // A run that never made it past 'failed' only exists in the queue, not
+    // on the server — take it out so a later app-open doesn't upload a run
+    // the runner just walked away from.
     if (queuedId) {
       removeQueued(queuedId);
       setPending(queuedCount());
     }
     setQueuedId(null);
     setPastFencesFailed(false);
+    setDeleteState('idle');
+    setDeleteFailure(null);
+    setConfirmingDelete(false);
     tracker.reset();
   }, [tracker, queuedId]);
+
+  // Task 2 — replaces the old unconditional discard(). By the time this is
+  // reachable the run has usually already auto-saved, so "throwing it away"
+  // now means actually deleting the server row, not just forgetting local
+  // state. Only calls deleteRun() when there IS a server row (saveState
+  // 'saved' with a savedRunId) — a run still 'saving', or one that only ever
+  // reached 'failed' (nothing was ever inserted), has nothing to delete and
+  // goes straight to the same local cleanup discard() always did.
+  const handleDeleteRun = useCallback(async () => {
+    if (saveState === 'saved' && savedRunId) {
+      setDeleteState('deleting');
+      setDeleteFailure(null);
+      const outcome = await deleteRunRequest(savedRunId);
+      if (!outcome.ok) {
+        // Keep the run on screen exactly like a failed save does — it is
+        // still safely on the server, and closing this screen now would
+        // just make it harder to find, never actually lose it.
+        setDeleteState('failed');
+        setDeleteFailure(outcome);
+        setConfirmingDelete(false);
+        return;
+      }
+    }
+    resetLocal();
+  }, [saveState, savedRunId, resetLocal]);
 
   // The finished run gets its own scrolling layout: there's a fence image,
   // three stats and two actions to fit, which is more than can sit legibly
@@ -378,15 +463,18 @@ export default function TrackScreen() {
         <View style={styles.summaryClose}>
           <RoundButton
             label={t('track.close')}
-            onPress={discard}
+            onPress={resetLocal}
             background={c.backgroundElement}
             foreground={c.text}
             ios="xmark"
             android="close"
             // Belt-and-suspenders alongside save()'s own token guard: the
             // guard makes a mid-save discard SAFE, this makes it hard to
-            // trigger by accident in the first place.
-            disabled={saveState === 'saving'}
+            // trigger by accident in the first place. Also disabled mid-
+            // delete: closing while deleteRun() is in flight is fine
+            // correctness-wise (handleDeleteRun keeps its own state), but
+            // letting it fire mid-tap invites a second delete request.
+            disabled={saveState === 'saving' || deleteState === 'deleting'}
           />
         </View>
         <ScrollView contentContainerStyle={styles.summary}>
@@ -470,12 +558,26 @@ export default function TrackScreen() {
                   : t('track.syncFailedNetwork')}
             </Text>
           )}
-          {saveState === 'saved' && (
+          {saveState === 'saved' && deleteState !== 'deleting' && (
             <Animated.Text
               entering={FadeInDown.duration(320)}
               style={[styles.notice, { color: c.accent }]}>
               {t('track.saved')}
             </Animated.Text>
+          )}
+          {/* Task 2 — deleteRun() failed. This is an honest failure, not a
+              placeholder: until the delete-own policy migration is applied
+              by hand (supabase/migrations/*_runs_delete_own.sql), it always
+              will. The run stays fully intact on screen either way — same
+              posture as a failed save. */}
+          {deleteState === 'failed' && deleteFailure && !deleteFailure.ok && (
+            <Text style={[styles.notice, { color: c.accent }]}>
+              {deleteFailure.reason === 'disabled'
+                ? t('track.deleteFailedDisabled')
+                : deleteFailure.reason === 'auth'
+                  ? t('track.deleteFailedAuth')
+                  : t('track.deleteFailedNetwork')}
+            </Text>
           )}
 
           {/* Phase 3's payoff. Deliberately its own banner rather than a
@@ -497,6 +599,11 @@ export default function TrackScreen() {
 
           <View style={styles.summaryActions}>
             {fence && saveState !== 'saved' && (
+              // Task 1 — this still exists for the manual-retry path
+              // (saveState 'failed') and as a visual fallback for the brief
+              // instant before the auto-save effect has fired; it is no
+              // longer the runner's only way to save; save() itself already
+              // fired automatically the moment the run finished.
               <PrimaryButton
                 label={
                   saveState === 'saving'
@@ -506,25 +613,67 @@ export default function TrackScreen() {
                       : t('track.save')
                 }
                 onPress={save}
-                disabled={saveState === 'saving'}
+                disabled={saveState === 'saving' || deleteState === 'deleting'}
                 busy={saveState === 'saving'}
                 c={c}
               />
             )}
-            <Pressable
-              onPress={discard}
-              disabled={saveState === 'saving'}
-              accessibilityRole="button"
-              accessibilityState={saveState === 'saving' ? { disabled: true } : {}}
-              hitSlop={10}>
-              <Text
-                style={[
-                  styles.secondary,
-                  { color: c.textSecondary, opacity: saveState === 'saving' ? 0.5 : 1 },
-                ]}>
-                {saveState === 'saved' ? t('track.close') : t('track.discard')}
-              </Text>
-            </Pressable>
+
+            {/* Task 2 — "Discard" replaced with "Delete run". Confirms
+                inline (never a native Alert.alert — see confirmingDelete's
+                own comment) ONLY when there is a real server row to lose;
+                a run still 'saving' can't be tapped (disabled below), and
+                one that only ever reached 'failed' never reached the
+                server, so there's nothing to confirm — it goes straight to
+                local cleanup, same as the old unconditional Discard did. */}
+            {confirmingDelete ? (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.deleteConfirm}>
+                <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
+                  {t('track.deleteConfirmBody')}
+                </Text>
+                <View style={styles.deleteConfirmActions}>
+                  <Pressable
+                    onPress={() => setConfirmingDelete(false)}
+                    accessibilityRole="button"
+                    hitSlop={10}>
+                    <Text style={[styles.secondary, { color: c.textSecondary }]}>
+                      {t('common.cancel')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => void handleDeleteRun()}
+                    accessibilityRole="button"
+                    hitSlop={10}>
+                    <Text style={[styles.secondary, { color: c.accent }]}>
+                      {t('track.deleteConfirmAction')}
+                    </Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  if (saveState === 'saved' && savedRunId) setConfirmingDelete(true);
+                  else void handleDeleteRun();
+                }}
+                disabled={saveState === 'saving' || deleteState === 'deleting'}
+                accessibilityRole="button"
+                accessibilityState={
+                  saveState === 'saving' || deleteState === 'deleting' ? { disabled: true } : {}
+                }
+                hitSlop={10}>
+                <Text
+                  style={[
+                    styles.secondary,
+                    {
+                      color: c.textSecondary,
+                      opacity: saveState === 'saving' || deleteState === 'deleting' ? 0.5 : 1,
+                    },
+                  ]}>
+                  {deleteState === 'deleting' ? t('track.deleting') : t('track.deleteRun')}
+                </Text>
+              </Pressable>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -836,6 +985,8 @@ const styles = StyleSheet.create({
     aspectRatio: FENCE_MAP_ASPECT,
   },
   summaryActions: { gap: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
+  deleteConfirm: { gap: Spacing.two, alignItems: 'center', maxWidth: 300 },
+  deleteConfirmActions: { flexDirection: 'row', gap: Spacing.four },
 
   stats: { flexDirection: 'row', gap: Spacing.three },
   stat: { flex: 1, gap: Spacing.half },
