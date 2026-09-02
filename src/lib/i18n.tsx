@@ -289,6 +289,16 @@ const translations = {
         'Es el nombre que ven los demás en la tabla de posiciones. Déjalo vacío para aparecer como Anónimo.',
       displayNameSaved: 'Nombre guardado',
       displayNameFailed: 'No pudimos guardar tu nombre. Revisa tu conexión.',
+      // First-save name prompt (name-prompt.tsx) — asked once, at the
+      // moment a run is first saved, never on first app open.
+      namePromptTitle: '¿Cómo quieres aparecer en la tabla?',
+      namePromptBody:
+        'Ponle un nombre a tu territorio. Si prefieres no hacerlo, sigues apareciendo como Anónimo.',
+      namePromptSave: 'Guardar',
+      namePromptSkip: 'Ahora no',
+      namePromptSaving: 'Guardando…',
+      namePromptFailed:
+        'No pudimos guardar tu nombre. Puedes intentarlo de nuevo o dejarlo para después.',
     },
     privacy: {
       title: 'Privacidad',
@@ -581,6 +591,15 @@ const translations = {
         'The name others see on the leaderboard. Leave it empty to show up as Anonymous.',
       displayNameSaved: 'Name saved',
       displayNameFailed: "We couldn't save your name. Check your connection.",
+      // First-save name prompt (name-prompt.tsx) — asked once, at the
+      // moment a run is first saved, never on first app open.
+      namePromptTitle: 'How do you want to show up on the leaderboard?',
+      namePromptBody:
+        "Give your territory a name. If you'd rather not, you'll keep showing up as Anonymous.",
+      namePromptSave: 'Save',
+      namePromptSkip: 'Not now',
+      namePromptSaving: 'Saving…',
+      namePromptFailed: "We couldn't save your name. You can try again or leave it for later.",
     },
     privacy: {
       title: 'Privacy',
