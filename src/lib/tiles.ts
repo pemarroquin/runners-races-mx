@@ -9,6 +9,7 @@
 // gridPathCells, cellToBoundary, cellToParent.
 import { gridPathCells, latLngToCell } from 'h3-js';
 
+import { MAX_BRIDGE_DISTANCE_M, MAX_BRIDGE_SPEED_MS } from '@/lib/gap-policy';
 import { haversineM, type LatLng } from '@/lib/territory';
 
 /**
@@ -28,42 +29,13 @@ export interface TilePoint extends LatLng {
   ts: number;
 }
 
-/**
- * Fastest sustained human running speed the server's OWN anti-cheat
- * flagging already treats as implausible — reused rather than inventing a
- * second number, so the two subsystems agree on what "physically possible
- * for a runner" means. See supabase/migrations/20260827_anti_cheat_flag.sql:
- * `max_kmh constant numeric := 25` (marathon world record pace is ~21 km/h;
- * 25 is already generous).
- *
- * A gap whose implied speed exceeds this is never bridged — see
- * PathToTilesResult.bridgesSkippedSpeed.
- */
-export const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
-
-/**
- * Longest gap between two consecutive fixes that gets bridged at all, even
- * when the implied speed is a perfectly ordinary jog. This is a SEPARATE
- * question from MAX_BRIDGE_SPEED_MS (b8's review, 2026-09-01): speed asks
- * "was this physically possible" (catches a car, a GPS spoof, a teleport);
- * distance asks "do we know what path they took." A runner really can cover
- * 2km in 11 minutes (3.03 m/s — comfortably under the speed cap) while their
- * phone sat locked in a pocket the whole way. gridPathCells only knows how
- * to draw a STRAIGHT LINE between the two fixes; the runner's real path
- * followed streets, which the straight line can cut through buildings, a
- * river, or another runner's yard. Under first-to-claim that isn't merely
- * generous — a wrongly claimed tile is permanently taken from whoever
- * actually ran it, which is the sharpest version of "you cannot claim
- * ground you did not touch."
- *
- * 150m: roughly three sampling intervals at the tracker's real fix spacing
- * (empirically ~30-50m apart at the 2s/3m throttle — see tracking.ts's
- * TIME_INTERVAL_MS/DISTANCE_INTERVAL_M and this file's own gap-fill test
- * fixtures). That comfortably absorbs one or two dropped fixes (a brief GPS
- * hiccup, a short tunnel) while staying far short of anything that could be
- * a real route deviation.
- */
-export const MAX_BRIDGE_DISTANCE_M = 150;
+// MAX_BRIDGE_SPEED_MS / MAX_BRIDGE_DISTANCE_M used to be defined here alone.
+// They now live in src/lib/gap-policy.ts, shared with tracking.ts's distance
+// credit — see that module's header for why (the 2026-09-02 geometry audit
+// caught the recorder and the tile builder disagreeing about the same real
+// gap). Re-exported so every existing import of these two names from this
+// module keeps working unchanged.
+export { MAX_BRIDGE_DISTANCE_M, MAX_BRIDGE_SPEED_MS } from '@/lib/gap-policy';
 
 export interface PathToTilesResult {
   /** Every unique H3 cell the path covers — direct fixes plus gap-fill,
