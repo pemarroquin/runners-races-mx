@@ -41,6 +41,7 @@ import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
   AUTO_RETURN_IDLE_MS,
+  type CameraMode,
   EMISSIVE_STRENGTH_FULL,
   FENCE_LAG_M,
   FENCE_RISE_MS,
@@ -48,6 +49,7 @@ import {
   FENCE_WALL_HEIGHT_M,
   FENCE_WALL_OPACITY,
   FENCE_WALL_WIDTH_M,
+  FOLLOW_OFFSET_RATIO,
   LIVE_FILL_OPACITY_HIGH,
   LIVE_FILL_OPACITY_LOW,
   LIVE_FILL_OUTLINE_WIDTH,
@@ -58,6 +60,9 @@ import {
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
+  MAX_BEARING_STEP_DEG,
+  MIN_BEARING_SEPARATION_M,
+  OVERVIEW_FIT_PADDING_PX,
   ROUTE_GLOW_BLUR,
   ROUTE_GLOW_OPACITY,
   ROUTE_GLOW_WIDTH,
@@ -71,6 +76,7 @@ import {
   SESSION_ZOOM,
   ZOOM_STEP,
 } from '@/constants/map';
+import { bearingFromPath, boundsOfPath, smoothBearing } from '@/lib/camera';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { useRegion } from '@/lib/region-context';
 import { buildFence, outerRings, type LatLng } from '@/lib/territory';
@@ -97,11 +103,15 @@ interface TrackMapProps {
   placeholder: string;
   placeholderColor: ColorValue;
   unavailable: string;
-  /** Accessibility labels for the camera controls (Task D) — passed in
-   *  pre-translated, matching every other string on this component. */
+  /** Accessibility labels for the camera controls (Task D / P4) — passed in
+   *  pre-translated, matching every other string on this component.
+   *  recenterLabel is shown while in overview mode (tapping switches to
+   *  follow); overviewLabel is shown while in follow mode (tapping switches
+   *  to overview) — the single control cycles between the two modes. */
   zoomInLabel: string;
   zoomOutLabel: string;
   recenterLabel: string;
+  overviewLabel: string;
 }
 
 function ensureMapboxCss() {
@@ -157,6 +167,7 @@ export function TrackMap({
   zoomInLabel,
   zoomOutLabel,
   recenterLabel,
+  overviewLabel,
 }: TrackMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -173,13 +184,13 @@ export function TrackMap({
   const fillPulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const routeCycleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Camera control during a session (Task D). preferredZoom is a REF, not
-  // state: the zoom buttons write it and the auto-return glide reads it
-  // imperatively from inside an event listener/timeout, seconds after the
-  // render that set it — a ref avoids both a stale closure and
-  // re-subscribing every listener on every zoom tap. Survives a session
-  // (not reset on pause/resume) because it is a user preference, not
-  // per-leg state.
+  // Camera control during a session (Task D / P4). preferredZoom is a REF,
+  // not state: the zoom buttons (and now pinch-zoom, see the gesture effect
+  // below) write it and the camera-apply function reads it imperatively
+  // from inside an event listener/timeout, seconds after the render that
+  // set it — a ref avoids both a stale closure and re-subscribing every
+  // listener on every zoom tap. Survives a session (not reset on
+  // pause/resume) because it is a user preference, not per-leg state.
   const preferredZoomRef = useRef(SESSION_ZOOM);
   // The runner's latest known position, mirrored from the "feed
   // coordinates in" effect below (the same `head` it already computes) so
@@ -187,33 +198,89 @@ export function TrackMap({
   // targets where the runner IS, not wherever they were when the 5s timer
   // was scheduled.
   const headRef = useRef<LatLng | null>(null);
+  // Mirrors `points` for the same reason headRef mirrors `here` — overview
+  // mode's bounds fit is computed from inside the same imperative call sites
+  // (auto-return timeout, mode-toggle tap) that read headRef, so it needs
+  // the same "always current, no stale closure" treatment.
+  const pointsRef = useRef<LatLng[]>([]);
   const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Drives the re-center control's visibility — true from the moment a user
-  // gesture (drag/pinch) moves the camera until it glides back, whether
-  // that's the auto-return timer or an explicit tap.
-  const [cameraOffTarget, setCameraOffTarget] = useState(false);
+
+  // P4: cameraMode replaces the old cameraOffTarget visibility flag
+  // entirely. The control is now ALWAYS rendered while a session is active
+  // (see the render below) — its icon/label reflect whichever mode is
+  // CURRENT, and a tap cycles to the other one. cameraModeRef mirrors the
+  // state for the same stale-closure reason as preferredZoomRef/headRef:
+  // read from the gesture handlers' setTimeout and from the marker's
+  // dblclick listener, not just from render.
+  const [cameraMode, setCameraMode] = useState<CameraMode>('follow');
+  const cameraModeRef = useRef<CameraMode>('follow');
+  // Smoothed camera heading for follow mode (degrees, 0-360) — null until
+  // bearingFromPath (camera.ts) has enough separation to derive one. Reset
+  // to null at the start of each session (see the `active` effect below):
+  // a new session has no known direction yet, and the old one's heading is
+  // meaningless for it.
+  const bearingRef = useRef<number | null>(null);
   const { region } = useRegion();
 
-  // Glides the camera back to (runner position, preferredZoom,
-  // SESSION_PITCH) — the ONE definition auto-return, the re-center button,
-  // and the pin double-tap all share, so "deliberate zoom survives, stray
-  // drift doesn't" can't drift out of sync between the three entry points.
-  const returnToTarget = useCallback(() => {
+  // Applies whichever camera cameraModeRef.current currently names — the
+  // ONE definition the continuous while-running follow, the auto-return
+  // glide, the mode-toggle tap, and the pin double-tap all share, so
+  // "deliberate zoom survives, stray drift doesn't, and both modes glide to
+  // the same place their button promised" can't drift out of sync between
+  // the four entry points.
+  const applyCameraForMode = useCallback((durationMs: number) => {
     const map = mapRef.current;
-    const head = headRef.current;
+    if (!map) return;
     if (autoReturnTimerRef.current) {
       clearTimeout(autoReturnTimerRef.current);
       autoReturnTimerRef.current = null;
     }
-    setCameraOffTarget(false);
-    if (!map || !head) return; // nothing to target yet — just clear the pending timer/flag
+
+    if (cameraModeRef.current === 'overview') {
+      const head = headRef.current;
+      const path = head ? [...pointsRef.current, head] : pointsRef.current;
+      const bounds = boundsOfPath(path);
+      if (!bounds) return; // nothing recorded yet — nothing to fit
+      map.fitBounds(
+        [
+          [bounds.west, bounds.south],
+          [bounds.east, bounds.north],
+        ],
+        { padding: OVERVIEW_FIT_PADDING_PX, bearing: 0, pitch: 0, duration: durationMs },
+      );
+      return;
+    }
+
+    const head = headRef.current;
+    if (!head) return; // nothing to target yet
+    const containerHeight = containerRef.current?.clientHeight ?? 0;
     map.easeTo({
       center: [head.lng, head.lat],
       zoom: preferredZoomRef.current,
       pitch: SESSION_PITCH,
-      duration: 900,
+      // Falls back to the map's current bearing (not 0) when no heading has
+      // been derived yet — standing still at the very start of a session
+      // shouldn't snap the camera to north, it should just hold whatever
+      // it's already at until a real course is known.
+      bearing: bearingRef.current ?? map.getBearing(),
+      // Pushes the runner toward the lower third of the viewport (Mapbox's
+      // `offset` is screen-space pixels, not world-space) — see
+      // FOLLOW_OFFSET_RATIO.
+      offset: [0, containerHeight * FOLLOW_OFFSET_RATIO],
+      duration: durationMs,
     });
   }, []);
+
+  // The mode-cycle button's tap handler. Updates the ref BEFORE calling
+  // setCameraMode/applyCameraForMode — never inside a setState updater (a
+  // documented trap in this codebase: a side effect inside an updater can
+  // silently no-op under the React Compiler in production builds).
+  const toggleCameraMode = useCallback(() => {
+    const next: CameraMode = cameraModeRef.current === 'follow' ? 'overview' : 'follow';
+    cameraModeRef.current = next;
+    setCameraMode(next);
+    applyCameraForMode(900);
+  }, [applyCameraForMode]);
 
   const zoomBy = useCallback((delta: number) => {
     const map = mapRef.current;
@@ -417,7 +484,7 @@ export function TrackMap({
         // tapping the pin means here.
         el.addEventListener('dblclick', (e) => {
           e.stopPropagation();
-          returnToTarget();
+          applyCameraForMode(900);
         });
         markerRef.current = new mapboxgl.Marker({ element: el });
         readyRef.current = true;
@@ -493,15 +560,38 @@ export function TrackMap({
     };
   }, [active]);
 
+  // Resets the camera mode to 'follow' at the start of every session — the
+  // mode is session-scoped, not a persisted user setting. Gated to fire only
+  // on the false→true edge (the effect body no-ops while active stays
+  // false, and re-running on active→false does nothing either): a pause
+  // mid-run does not touch `active`, so cameraMode survives a pause exactly
+  // like preferredZoomRef already does. bearingRef also resets — a new
+  // session has no known heading yet, and the previous session's is
+  // meaningless for it.
+  useEffect(() => {
+    if (!active) return;
+    cameraModeRef.current = 'follow';
+    bearingRef.current = null;
+    // Deferred by a tick, not called straight from the effect body — the
+    // React Compiler's lint rule traces a call through and flags any
+    // setState it can reach as a synchronous effect update. Same pattern as
+    // index.tsx's checkpoint-load effect.
+    const id = setTimeout(() => setCameraMode('follow'), 0);
+    return () => clearTimeout(id);
+  }, [active]);
+
   // Auto-return after AUTO_RETURN_IDLE_MS of no further interaction — gated
   // on `active` the same way as the animation timers above: this exists to
   // repair sweaty-hands drift mid-run, not to herd someone idly exploring
-  // the pre-session map back to their own position.
+  // the pre-session map back to their own position. The re-center/overview
+  // control is now ALWAYS rendered (see the render below) — this effect no
+  // longer drives its visibility, only when the camera glides back to
+  // whatever cameraModeRef currently names.
   //
   // `originalEvent` is present on Mapbox's own camera events ONLY when a
   // user gesture triggered them — absent for our own easeTo/flyTo calls
-  // (the fly-in, the live follow, returnToTarget itself) — which is the one
-  // reliable way to tell "the runner touched the map" apart from every
+  // (the fly-in, the live follow, applyCameraForMode itself) — which is the
+  // one reliable way to tell "the runner touched the map" apart from every
   // OTHER thing in this file that already moves the camera. Listens to
   // dragend/zoomend specifically, not moveend: rotate/pitch are disabled
   // above, so drag and pinch-zoom are the only gestures left that can
@@ -510,6 +600,11 @@ export function TrackMap({
     const map = mapRef.current;
     if (!map || !readyRef.current || !active) return;
 
+    const armAutoReturn = () => {
+      if (autoReturnTimerRef.current) clearTimeout(autoReturnTimerRef.current);
+      autoReturnTimerRef.current = setTimeout(() => applyCameraForMode(900), AUTO_RETURN_IDLE_MS);
+    };
+
     // Typed `unknown`, not Mapbox's own per-event shape: 'dragend' and
     // 'zoomend' carry slightly different originalEvent union types, and the
     // 'void' branch some of these events' types include resolves (via
@@ -517,27 +612,36 @@ export function TrackMap({
     // with no originalEvent at all — no single object type satisfies every
     // variant. `unknown` is the top type, so this is valid for any of them;
     // narrowed by hand at runtime instead.
-    const onUserMove = (e: unknown) => {
+    const onUserDragEnd = (e: unknown) => {
       const originalEvent = (e as { originalEvent?: unknown } | null | undefined)?.originalEvent;
       if (!originalEvent) return;
-      setCameraOffTarget(true);
-      if (autoReturnTimerRef.current) clearTimeout(autoReturnTimerRef.current);
-      autoReturnTimerRef.current = setTimeout(returnToTarget, AUTO_RETURN_IDLE_MS);
+      armAutoReturn();
+    };
+    // The core fix (P4): a pinch-zoom is a deliberate zoom exactly like the
+    // +/- buttons, and must survive auto-return the same way — previously
+    // ONLY the buttons wrote preferredZoomRef, so a runner who pinched to
+    // max zoom got yanked back to SESSION_ZOOM 5s later with no way to tell
+    // why, since the button that would explain it was hidden at the time
+    // too (cameraOffTarget's old visibility bug, now gone).
+    const onUserZoomEnd = (e: unknown) => {
+      const originalEvent = (e as { originalEvent?: unknown } | null | undefined)?.originalEvent;
+      if (!originalEvent) return;
+      preferredZoomRef.current = map.getZoom();
+      armAutoReturn();
     };
 
-    map.on('dragend', onUserMove);
-    map.on('zoomend', onUserMove);
+    map.on('dragend', onUserDragEnd);
+    map.on('zoomend', onUserZoomEnd);
 
     return () => {
-      map.off('dragend', onUserMove);
-      map.off('zoomend', onUserMove);
+      map.off('dragend', onUserDragEnd);
+      map.off('zoomend', onUserZoomEnd);
       if (autoReturnTimerRef.current) {
         clearTimeout(autoReturnTimerRef.current);
         autoReturnTimerRef.current = null;
       }
-      setCameraOffTarget(false);
     };
-  }, [active, returnToTarget]);
+  }, [active, applyCameraForMode]);
 
   // Marker placement is deliberately gated on a REAL fix. Showing the pin at
   // the region fallback is what made it look like the location was wrong —
@@ -551,7 +655,7 @@ export function TrackMap({
     // stays fresh even while fixes are rejected for accuracy — the accepted
     // point list is only the fallback for the moment before any raw fix.
     const head = here ?? (points.length > 0 ? points[points.length - 1] : null);
-    // Mirrored for returnToTarget (Task D), which reads this from a
+    // Mirrored for applyCameraForMode (Task D / P4), which reads this from a
     // setTimeout/event listener rather than a render.
     headRef.current = head;
     if (!head) {
@@ -590,6 +694,14 @@ export function TrackMap({
       center: [target.lng, target.lat],
       zoom: SESSION_ZOOM,
       pitch: SESSION_PITCH,
+      // Explicit, not omitted: a second-or-later run in the same screen
+      // session can start with the map still rotated from the PREVIOUS
+      // run's follow mode (bearing is never reset back to 0 when a session
+      // ends — same pre-existing gap as pitch, which also stays tilted).
+      // Forcing 0 here gives every fly-in a deterministic, north-up start;
+      // follow mode rotates it to the real course within a fix or two once
+      // bearingRef has enough separation to derive one.
+      bearing: 0,
       duration: SESSION_FLY_MS,
       essential: true,
     });
@@ -610,6 +722,26 @@ export function TrackMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
+
+    // Mirrored for applyCameraForMode's overview branch, which reads this
+    // from a setTimeout/event listener rather than a render — same reason
+    // headRef mirrors `here` in the marker effect above.
+    pointsRef.current = points;
+
+    // Heading-up source for follow mode. Derives a new bearing only when
+    // there's enough separation to trust one (bearingFromPath returns null
+    // otherwise — standing still, or too early in the run) and smooths
+    // toward it along the shortest arc rather than snapping, so a jittery
+    // fix doesn't wobble the map. The FIRST bearing of a session jumps
+    // straight to its target (maxStepDeg: Infinity) — there's no prior
+    // heading to smooth from.
+    const rawBearing = bearingFromPath(points, MIN_BEARING_SEPARATION_M);
+    if (rawBearing !== null) {
+      bearingRef.current =
+        bearingRef.current === null
+          ? rawBearing
+          : smoothBearing(bearingRef.current, rawBearing, MAX_BEARING_STEP_DEG);
+    }
 
     const { settled, active: liveEdge } = splitTrailing(points, FENCE_LAG_M);
 
@@ -676,14 +808,22 @@ export function TrackMap({
       );
     }
 
-    // Follow only while recording: panning the camera under someone reading
-    // their finished route would fight them. Follows the raw fix (`here`)
-    // when there is one, for the same reason as the marker above.
+    // Camera only while recording: panning the map under someone reading
+    // their finished route would fight them. Re-applies whichever mode is
+    // current on every fix — follow re-centers on the runner (and rotates
+    // to their latest smoothed bearing); overview re-fits the growing
+    // bounds. This is what makes gesture drift mostly self-heal within a
+    // fix or two while running, well before AUTO_RETURN_IDLE_MS would fire
+    // — that timer's real job is covering the gap this can't: a paused
+    // session, where no new fix arrives to trigger it. Gated on `head`
+    // existing (not just `running`) for the same reason as the marker
+    // effect above — there's nothing to center or fit until a real fix
+    // exists.
     const head = here ?? points[points.length - 1];
     if (head && running && flownRef.current) {
-      map.easeTo({ center: [head.lng, head.lat], duration: 900 });
+      applyCameraForMode(900);
     }
-  }, [points, running, here]);
+  }, [points, running, here, applyCameraForMode]);
 
   if (!TOKEN) {
     return (
@@ -701,15 +841,28 @@ export function TrackMap({
           <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
         </View>
       )}
-      {/* Camera controls (Task D) — reliable targets for sweaty hands where
-          pinch is not. Bottom-right, matching where a thumb naturally rests;
-          the app's own circular-button language (see index.tsx's
+      {/* Camera controls (Task D / P4) — reliable targets for sweaty hands
+          where pinch is not. Bottom-right, matching where a thumb naturally
+          rests; the app's own circular-button language (see index.tsx's
           RoundButton), not Mapbox's NavigationControl — foreign styling,
-          and its compass would be meaningless with rotation disabled. */}
+          and its compass would be meaningless with rotation disabled.
+
+          The mode-cycle button is ALWAYS rendered here, never conditionally
+          mounted — that was problem 1's root cause (a pinch to max zoom
+          didn't write preferredZoomRef, so 5s later auto-return yanked the
+          camera back to SESSION_ZOOM AND hid the button in the same
+          instant). Its icon/label reflect the action a tap performs next,
+          not the current mode: 'map' while in follow (tap → overview),
+          'my_location' while in overview (tap → follow, reusing the same
+          icon/copy as the old always-present recenter button). Fixed order
+          — it and the +/- buttons never mount/unmount, so this cluster
+          never shifts. */}
       {active && (
         <View style={styles.cameraControls} pointerEvents="box-none">
-          {cameraOffTarget && (
-            <MapButton label={recenterLabel} onPress={returnToTarget} ios="location.fill" android="my_location" />
+          {cameraMode === 'follow' ? (
+            <MapButton label={overviewLabel} onPress={toggleCameraMode} ios="map" android="map" />
+          ) : (
+            <MapButton label={recenterLabel} onPress={toggleCameraMode} ios="location.fill" android="my_location" />
           )}
           <MapButton label={zoomInLabel} onPress={() => zoomBy(ZOOM_STEP)} ios="plus" android="add" />
           <MapButton label={zoomOutLabel} onPress={() => zoomBy(-ZOOM_STEP)} ios="minus" android="remove" />
