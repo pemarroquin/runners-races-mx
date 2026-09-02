@@ -269,7 +269,7 @@ function FenceCard({
   // Null once the run has been fully taken — there is no shape left to draw,
   // but the card stays as history.
   const mapUrl = fence.geometry
-    ? buildFenceMapUrl(fence.geometry, scheme === 'dark', color)
+    ? buildFenceMapUrl(fence.geometry, scheme === 'dark', color, fence.route ?? undefined)
     : null;
   const fullyTaken = fence.geometry === null;
   const date = new Date(fence.startedAtMs).toLocaleDateString(
