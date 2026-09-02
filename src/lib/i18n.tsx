@@ -245,7 +245,10 @@ const translations = {
       // Long-press on the version row — see last-run-debug.ts. Not surfaced
       // anywhere a runner would find it by browsing.
       debugCopied: 'Copiamos %{count} puntos al portapapeles.',
-      debugEmpty: 'Todavía no hay ninguna sesión terminada para copiar.',
+      // No finished run to report, but the pilot counters (backgrounding,
+      // watch restarts, runs recovered/lost) still copied — see
+      // pilot-instrumentation.ts.
+      debugCopiedCountersOnly: 'Copiamos los contadores del piloto al portapapeles.',
       support: 'Soporte',
       theme: 'Apariencia',
       themeSystem: 'Sistema',
@@ -537,7 +540,7 @@ const translations = {
       title: 'Settings',
       version: 'Version',
       debugCopied: 'Copied %{count} points to clipboard.',
-      debugEmpty: 'No finished session to copy yet.',
+      debugCopiedCountersOnly: 'Copied pilot counters to clipboard.',
       support: 'Support',
       theme: 'Appearance',
       themeSystem: 'System',

@@ -32,6 +32,7 @@ import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { getHomeZone } from '@/lib/home-point';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
+import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import {
@@ -149,12 +150,18 @@ export default function TrackScreen() {
     if (!checkpoint) return;
     const cp = checkpoint;
     setCheckpoint(null);
+    // A recoverable checkpoint was actually accepted and used — see
+    // pilot-instrumentation.ts.
+    incrementPilotCounter('runsRecovered');
     void tracker.restoreFromCheckpoint(cp);
   }, [checkpoint, tracker]);
 
   const discardCheckpoint = useCallback(() => {
     clearCheckpoint();
     setCheckpoint(null);
+    // The runner explicitly gave up a recoverable run — see
+    // pilot-instrumentation.ts.
+    incrementPilotCounter('runsLost');
   }, []);
 
   // Drain the queue when the Track tab opens. This is the landing route, so
