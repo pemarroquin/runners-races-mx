@@ -289,6 +289,19 @@ const translations = {
         'Es el nombre que ven los demás en la tabla de posiciones. Déjalo vacío para aparecer como Anónimo.',
       displayNameSaved: 'Nombre guardado',
       displayNameFailed: 'No pudimos guardar tu nombre. Revisa tu conexión.',
+      // Profile section (Settings tab redesign) — the identity concerns
+      // grouped at the top of the screen, plus the honest statement of
+      // account status the owner asked for.
+      sectionProfile: 'Perfil',
+      sectionPreferences: 'Preferencias',
+      sectionLocation: 'Ubicación y privacidad',
+      sectionAbout: 'Acerca de',
+      accountTitle: 'Tu cuenta',
+      accountBody:
+        'Este teléfono tiene una cuenta anónima para guardar tus territorios en la tabla de posiciones. No pedimos correo, teléfono ni contraseña. Si borras la app o los datos del sitio, pierdes esa cuenta y el territorio que tenga guardado.',
+      // Deliberately no Google/Apple sign-in row — Apple Sign In needs a dev
+      // client and a paid Apple Developer account, out of scope for now.
+      accountSignInNote: 'Por ahora no hay inicio de sesión con Google ni Apple.',
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: '¿Cómo quieres aparecer en la tabla?',
@@ -591,6 +604,19 @@ const translations = {
         'The name others see on the leaderboard. Leave it empty to show up as Anonymous.',
       displayNameSaved: 'Name saved',
       displayNameFailed: "We couldn't save your name. Check your connection.",
+      // Profile section (Settings tab redesign) — the identity concerns
+      // grouped at the top of the screen, plus the honest statement of
+      // account status the owner asked for.
+      sectionProfile: 'Profile',
+      sectionPreferences: 'Preferences',
+      sectionLocation: 'Location & privacy',
+      sectionAbout: 'About',
+      accountTitle: 'Your account',
+      accountBody:
+        "This phone has an anonymous account for saving your territories to the leaderboard. We don't ask for an email, phone number, or password. Deleting the app or clearing site data loses that account and any territory it holds.",
+      // Deliberately no Google/Apple sign-in row — Apple Sign In needs a dev
+      // client and a paid Apple Developer account, out of scope for now.
+      accountSignInNote: "No Google or Apple sign-in yet.",
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: 'How do you want to show up on the leaderboard?',

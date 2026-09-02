@@ -1,13 +1,17 @@
-// Settings tab — the app's only settings-adjacent surface (no accounts, no
-// backend, nothing else to configure). Owns the privacy notice: the two data
-// flows disclosed here are src/lib/location.ts's IP-geolocation fallback and
-// src/lib/db.ts / db.web.ts's local-only saved-races store. Also the natural
-// home for build/support metadata, since there's no other about screen.
+// Settings tab — the app's only settings-adjacent surface, and the account
+// surface too (person icon in the tab bar, deliberately): the Profile
+// section at the top owns the leaderboard display name and states plainly
+// what the anonymous, device-only Territory Mode account is and isn't (no
+// email/phone/password sign-in — see settings.accountBody). Also owns the
+// privacy notice: the two data flows disclosed there are
+// src/lib/location.ts's IP-geolocation fallback and src/lib/db.ts /
+// db.web.ts's local-only saved-races store. Also the natural home for
+// build/support metadata, since there's no other about screen.
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   Alert,
   Linking,
@@ -46,23 +50,30 @@ const IPAPI_PRIVACY_URL = 'https://ipapi.co/privacy/';
 const SUPPORT_EMAIL = 'support@racesmx.com';
 const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
+// `body` renders the privacy-prose paragraphs this originally shipped for;
+// `children` (added for the Settings redesign) lets a section wrap arbitrary
+// content — the Profile/Preferences/Location groups below — under the same
+// title style instead of a second, competing "section header" pattern.
 function Section({
   title,
   body,
+  children,
   c,
 }: {
   title: string;
-  body: string[];
+  body?: string[];
+  children?: ReactNode;
   c: Record<ThemeColor, string>;
 }) {
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: c.text }]}>{title}</Text>
-      {body.map((line) => (
+      {body?.map((line) => (
         <Text key={line} style={[styles.paragraph, { color: c.textSecondary }]}>
           {line}
         </Text>
       ))}
+      {children}
     </View>
   );
 }
@@ -293,203 +304,231 @@ export default function SettingsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
       <Text style={[styles.title, { color: c.text }]}>{t('settings.title')}</Text>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.themeRow}>
-          <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.theme')}</Text>
-          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
-            {THEME_MODES.map((m) => (
-              <Pressable
-                key={m}
-                onPress={() => setMode(m)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: mode === m }}
-                // react-native-web (0.21) doesn't translate accessibilityState
-                // into ARIA attributes for View-based components — only flat
-                // aria-* props are forwarded — so role="radio" was shipping
-                // with no aria-checked at all (PageSpeed Insights, 2026-08-11).
-                aria-checked={mode === m}
-                // Segment renders ~24pt tall — hitSlop brings the tappable
-                // area close to Apple HIG's 44pt default control size
-                // without inflating the compact segmented control.
-                hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
-                style={[styles.segment, mode === m && { backgroundColor: c.text }]}>
-                <Text
-                  maxFontSizeMultiplier={1.3}
-                  style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
-                  {themeModeLabel(m, t)}
-                </Text>
-              </Pressable>
-            ))}
-          </GlassSurface>
-        </View>
-
-        <View style={styles.themeRow}>
-          <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.language')}</Text>
-          <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
-            {(['es', 'en'] as const).map((l) => (
-              <Pressable
-                key={l}
-                onPress={() => setLocale(l)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: locale === l }}
-                // Same react-native-web ARIA gap as the theme segment above —
-                // role="radio" alone doesn't reach the DOM as aria-checked.
-                aria-checked={locale === l}
-                hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
-                style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
-                <Text
-                  maxFontSizeMultiplier={1.3}
-                  style={[styles.segmentText, { color: locale === l ? c.background : c.textSecondary }]}>
-                  {l.toUpperCase()}
-                </Text>
-              </Pressable>
-            ))}
-          </GlassSurface>
-        </View>
-
-        {/* Privacy zone. Set from wherever the runner is standing rather
-            than a map picker: "here" is the common case (you set it at
-            home), and it needs no new screen. The point NEVER leaves the
-            device — see privacy-zone.ts. */}
-        <View style={styles.nameBlock}>
-          <View style={styles.themeRow}>
-            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
-              {t('settings.privacyZone')}
-            </Text>
-            <Pressable
-              onPress={zone ? clearZone : setZoneHere}
-              disabled={zoneBusy}
-              accessibilityRole="button"
-              hitSlop={10}>
-              <Text style={[styles.zoneAction, { color: c.accent, opacity: zoneBusy ? 0.5 : 1 }]}>
-                {zoneBusy
-                  ? t('settings.zoneSetting')
-                  : zone
-                    ? t('settings.zoneRemove')
-                    : t('settings.zoneSetHere')}
-              </Text>
-            </Pressable>
-          </View>
-          <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
-            {zoneError
-              ? t('settings.zoneFailed')
-              : zone
-                ? t('settings.zoneOnHint', { m: zone.radiusM })
-                : t('settings.zoneOffHint')}
-          </Text>
-        </View>
-
+        {/* Profile — the identity concerns grouped at the top, since this
+            tab IS the account surface (person icon in the tab bar). The
+            display name field used to sit loose in the middle of app
+            preferences; it belongs here instead, next to the honest
+            statement of what the anonymous account actually is. Hidden
+            entirely when nameState is 'off': a build with no server
+            configured has no account to describe and no name that can
+            save. */}
         {nameState !== 'off' && (
-          <View style={styles.nameBlock}>
-            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
-              {t('settings.displayName')}
-            </Text>
-            <TextInput
-              value={displayName}
-              onChangeText={(next) => {
-                setDisplayName(next);
-                if (nameState === 'saved' || nameState === 'failed') setNameState('ready');
-              }}
-              onBlur={saveName}
-              onSubmitEditing={saveName}
-              editable={nameState !== 'loading' && nameState !== 'saving'}
-              maxLength={DISPLAY_NAME_MAX}
-              placeholder={t('settings.displayNamePlaceholder')}
-              placeholderTextColor={c.textSecondary}
-              returnKeyType="done"
-              autoCapitalize="words"
-              accessibilityLabel={t('settings.displayName')}
-              style={[
-                styles.nameInput,
-                { backgroundColor: c.backgroundElement, color: c.text },
-              ]}
-            />
-            <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
-              {nameState === 'failed'
-                ? t('settings.displayNameFailed')
-                : nameState === 'saved'
-                  ? t('settings.displayNameSaved')
-                  : t('settings.displayNameHint')}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.reminderBlock}>
-          <View style={styles.themeRow}>
-            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
-              {t('settings.location')}
-            </Text>
-            <View style={styles.locStatusWrap}>
-              <View
+          <Section title={t('settings.sectionProfile')} c={c}>
+            <View style={styles.nameBlock}>
+              <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+                {t('settings.displayName')}
+              </Text>
+              <TextInput
+                value={displayName}
+                onChangeText={(next) => {
+                  setDisplayName(next);
+                  if (nameState === 'saved' || nameState === 'failed') setNameState('ready');
+                }}
+                onBlur={saveName}
+                onSubmitEditing={saveName}
+                editable={nameState !== 'loading' && nameState !== 'saving'}
+                maxLength={DISPLAY_NAME_MAX}
+                placeholder={t('settings.displayNamePlaceholder')}
+                placeholderTextColor={c.textSecondary}
+                returnKeyType="done"
+                autoCapitalize="words"
+                accessibilityLabel={t('settings.displayName')}
                 style={[
-                  styles.locDot,
-                  { backgroundColor: locPerm?.granted ? '#2FBF71' : c.accent },
+                  styles.nameInput,
+                  { backgroundColor: c.backgroundElement, color: c.text },
                 ]}
               />
-              <Text style={[styles.rowValue, { color: c.text }]}>
-                {locPerm === null
-                  ? t('settings.locationUnknown')
-                  : locPerm.granted
-                    ? t('settings.locationOn')
-                    : locPerm.canAskAgain
-                      ? t('settings.locationNotSet')
-                      : t('settings.locationOff')}
+              <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
+                {nameState === 'failed'
+                  ? t('settings.displayNameFailed')
+                  : nameState === 'saved'
+                    ? t('settings.displayNameSaved')
+                    : t('settings.displayNameHint')}
               </Text>
             </View>
-          </View>
-          <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
-            {locPerm?.granted ? t('settings.locationOnHint') : t('settings.locationOffHint')}
-          </Text>
-          {locPerm !== null && !locPerm.granted && (
-            <Pressable onPress={onFixLocation} disabled={locBusy} accessibilityRole="button" hitSlop={10}>
-              <Text style={[styles.locAction, { color: c.accent, opacity: locBusy ? 0.5 : 1 }]}>
-                {locPerm.canAskAgain
-                  ? t('settings.locationEnable')
-                  : Platform.OS === 'web'
-                    ? t('settings.locationBrowserBlocked')
-                    : t('settings.locationOpenSettings')}
-              </Text>
-            </Pressable>
-          )}
-        </View>
 
-        {/* Off by default and opt-in from here, rather than prompting on
-            first save: the OS permission dialog only makes sense once the
-            user has actually asked for reminders. */}
-        <View style={styles.reminderBlock}>
-          <View style={styles.themeRow}>
-            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
-              {t('settings.reminders')}
+            <Text style={[styles.accountTitle, { color: c.text }]}>{t('settings.accountTitle')}</Text>
+            <Text style={[styles.paragraph, { color: c.textSecondary }]}>
+              {t('settings.accountBody')}
             </Text>
-            <Switch
-              value={remindersOn}
-              onValueChange={onToggleReminders}
-              accessibilityLabel={t('settings.reminders')}
+            {/* No dead sign-in button — see CLAUDE.md: OAuth needs a dev
+                client and a paid Apple Developer account, deliberately
+                deferred. One honest line instead of a button that promises
+                a feature that doesn't exist. */}
+            <Text style={[styles.paragraph, { color: c.textSecondary }]}>
+              {t('settings.accountSignInNote')}
+            </Text>
+          </Section>
+        )}
+
+        <Section title={t('settings.sectionPreferences')} c={c}>
+          <View style={styles.themeRow}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.theme')}</Text>
+            <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
+              {THEME_MODES.map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => setMode(m)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: mode === m }}
+                  // react-native-web (0.21) doesn't translate accessibilityState
+                  // into ARIA attributes for View-based components — only flat
+                  // aria-* props are forwarded — so role="radio" was shipping
+                  // with no aria-checked at all (PageSpeed Insights, 2026-08-11).
+                  aria-checked={mode === m}
+                  // Segment renders ~24pt tall — hitSlop brings the tappable
+                  // area close to Apple HIG's 44pt default control size
+                  // without inflating the compact segmented control.
+                  hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
+                  style={[styles.segment, mode === m && { backgroundColor: c.text }]}>
+                  <Text
+                    maxFontSizeMultiplier={1.3}
+                    style={[styles.segmentText, { color: mode === m ? c.background : c.textSecondary }]}>
+                    {themeModeLabel(m, t)}
+                  </Text>
+                </Pressable>
+              ))}
+            </GlassSurface>
+          </View>
+
+          <View style={styles.themeRow}>
+            <Text style={[styles.rowLabel, { color: c.textSecondary }]}>{t('settings.language')}</Text>
+            <GlassSurface scheme={scheme} radius={GlassRadii.pill} contentStyle={styles.segmentTrack}>
+              {(['es', 'en'] as const).map((l) => (
+                <Pressable
+                  key={l}
+                  onPress={() => setLocale(l)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: locale === l }}
+                  // Same react-native-web ARIA gap as the theme segment above —
+                  // role="radio" alone doesn't reach the DOM as aria-checked.
+                  aria-checked={locale === l}
+                  hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
+                  style={[styles.segment, locale === l && { backgroundColor: c.text }]}>
+                  <Text
+                    maxFontSizeMultiplier={1.3}
+                    style={[styles.segmentText, { color: locale === l ? c.background : c.textSecondary }]}>
+                    {l.toUpperCase()}
+                  </Text>
+                </Pressable>
+              ))}
+            </GlassSurface>
+          </View>
+
+          {/* Off by default and opt-in from here, rather than prompting on
+              first save: the OS permission dialog only makes sense once the
+              user has actually asked for reminders. */}
+          <View style={[styles.reminderBlock, styles.noMarginBottom]}>
+            <View style={styles.themeRow}>
+              <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+                {t('settings.reminders')}
+              </Text>
+              <Switch
+                value={remindersOn}
+                onValueChange={onToggleReminders}
+                accessibilityLabel={t('settings.reminders')}
+              />
+            </View>
+            <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
+              {remindersOn ? t('settings.remindersOnHint') : t('settings.remindersHint')}
+            </Text>
+            {reminderDenied && (
+              <Text style={[styles.reminderDenied, { color: c.accent }]}>
+                {t('settings.remindersDenied')}
+              </Text>
+            )}
+          </View>
+        </Section>
+
+        <Section title={t('settings.sectionLocation')} c={c}>
+          {/* Privacy zone. Set from wherever the runner is standing rather
+              than a map picker: "here" is the common case (you set it at
+              home), and it needs no new screen. The point NEVER leaves the
+              device — see privacy-zone.ts. */}
+          <View style={styles.nameBlock}>
+            <View style={styles.themeRow}>
+              <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+                {t('settings.privacyZone')}
+              </Text>
+              <Pressable
+                onPress={zone ? clearZone : setZoneHere}
+                disabled={zoneBusy}
+                accessibilityRole="button"
+                hitSlop={10}>
+                <Text style={[styles.zoneAction, { color: c.accent, opacity: zoneBusy ? 0.5 : 1 }]}>
+                  {zoneBusy
+                    ? t('settings.zoneSetting')
+                    : zone
+                      ? t('settings.zoneRemove')
+                      : t('settings.zoneSetHere')}
+                </Text>
+              </Pressable>
+            </View>
+            <Text style={[styles.reminderHint, { color: c.textSecondary }, styles.nameHint]}>
+              {zoneError
+                ? t('settings.zoneFailed')
+                : zone
+                  ? t('settings.zoneOnHint', { m: zone.radiusM })
+                  : t('settings.zoneOffHint')}
+            </Text>
+          </View>
+
+          <View style={[styles.reminderBlock, styles.noMarginBottom]}>
+            <View style={styles.themeRow}>
+              <Text style={[styles.rowLabel, { color: c.textSecondary }]}>
+                {t('settings.location')}
+              </Text>
+              <View style={styles.locStatusWrap}>
+                <View
+                  style={[
+                    styles.locDot,
+                    { backgroundColor: locPerm?.granted ? '#2FBF71' : c.accent },
+                  ]}
+                />
+                <Text style={[styles.rowValue, { color: c.text }]}>
+                  {locPerm === null
+                    ? t('settings.locationUnknown')
+                    : locPerm.granted
+                      ? t('settings.locationOn')
+                      : locPerm.canAskAgain
+                        ? t('settings.locationNotSet')
+                        : t('settings.locationOff')}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
+              {locPerm?.granted ? t('settings.locationOnHint') : t('settings.locationOffHint')}
+            </Text>
+            {locPerm !== null && !locPerm.granted && (
+              <Pressable onPress={onFixLocation} disabled={locBusy} accessibilityRole="button" hitSlop={10}>
+                <Text style={[styles.locAction, { color: c.accent, opacity: locBusy ? 0.5 : 1 }]}>
+                  {locPerm.canAskAgain
+                    ? t('settings.locationEnable')
+                    : Platform.OS === 'web'
+                      ? t('settings.locationBrowserBlocked')
+                      : t('settings.locationOpenSettings')}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </Section>
+
+        <Section title={t('settings.sectionAbout')} c={c}>
+          <View style={styles.rowGroup}>
+            <Row
+              label={t('settings.version')}
+              value={version}
+              onLongPress={() => void copyLastRunDebug()}
+              c={c}
+            />
+            <Row
+              label={t('settings.support')}
+              value={SUPPORT_EMAIL}
+              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {})}
+              c={c}
             />
           </View>
-          <Text style={[styles.reminderHint, { color: c.textSecondary }]}>
-            {remindersOn ? t('settings.remindersOnHint') : t('settings.remindersHint')}
-          </Text>
-          {reminderDenied && (
-            <Text style={[styles.reminderDenied, { color: c.accent }]}>
-              {t('settings.remindersDenied')}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.rowGroup}>
-          <Row
-            label={t('settings.version')}
-            value={version}
-            onLongPress={() => void copyLastRunDebug()}
-            c={c}
-          />
-          <Row
-            label={t('settings.support')}
-            value={SUPPORT_EMAIL}
-            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {})}
-            c={c}
-          />
-        </View>
+        </Section>
 
         <Text style={[styles.privacyTitle, { color: c.text }]}>{t('privacy.title')}</Text>
 
@@ -577,6 +616,8 @@ const styles = StyleSheet.create({
   },
   segmentText: { fontSize: 12, fontWeight: '700' },
   reminderBlock: { marginBottom: Spacing.five, gap: Spacing.one },
+  noMarginBottom: { marginBottom: 0 },
+  accountTitle: { fontSize: 13, fontWeight: '700', marginBottom: -Spacing.one },
   reminderHint: { fontSize: 13, lineHeight: 19, marginTop: -Spacing.four },
   nameBlock: { marginBottom: Spacing.five, gap: Spacing.two },
   nameInput: {
