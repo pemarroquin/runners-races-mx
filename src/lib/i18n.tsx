@@ -67,7 +67,11 @@ const translations = {
       // for the zoom +/- and re-center buttons in track-map.web.tsx.
       zoomIn: 'Acercar',
       zoomOut: 'Alejar',
+      // Camera-mode cycle button (P4): recenter is the label shown while in
+      // overview mode (tapping switches to follow); overview is the label
+      // shown while in follow mode (tapping switches to overview).
       recenter: 'Centrar en mi ubicación',
+      overview: 'Ver todo el recorrido',
       mapUnavailable: 'No pudimos cargar el mapa. Tu recorrido se sigue registrando.',
       permission:
         'Necesitamos permiso de ubicación para trazar tu recorrido. Actívalo en los ajustes de tu teléfono.',
@@ -376,6 +380,7 @@ const translations = {
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
       recenter: 'Re-center on my location',
+      overview: 'View whole route',
       mapUnavailable: "We couldn't load the map. Your route is still being recorded.",
       permission:
         'We need location permission to trace your route. Turn it on in your phone settings.',

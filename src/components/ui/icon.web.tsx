@@ -76,6 +76,22 @@ const GLYPHS: Record<string, Glyph> = {
       <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
     </>
   ),
+  // Added for the Track tab's camera-mode cycle button (track-map.web.tsx) —
+  // the icon it shows while in follow mode, offering a switch to overview.
+  // A folded map: outer zigzag panel plus two fold-crease lines.
+  map: (c) => (
+    <>
+      <path
+        d="M4 6.5l5-2 6 2 5-2v13l-5 2-6-2-5 2V6.5z"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path d="M9 4.5v13M15 6.5v13" stroke={c} strokeWidth={1.4} strokeLinecap="round" />
+    </>
+  ),
   add: (c) => <path d="M12 5v14M5 12h14" stroke={c} strokeWidth={2} strokeLinecap="round" />,
   remove: (c) => <path d="M5 12h14" stroke={c} strokeWidth={2} strokeLinecap="round" />,
   open_in_new: (c) => (
