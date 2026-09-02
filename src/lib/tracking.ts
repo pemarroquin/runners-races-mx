@@ -12,6 +12,7 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { evaluateGap } from '@/lib/gap-policy';
 import {
   getCurrent,
   getLastKnown,
@@ -157,14 +158,22 @@ export interface RunTracker {
    *  session, ms. */
   gapDurationMs: number;
   /** Sum of the straight-line distance between the last point recorded
-   *  before each gap and the first point recorded after it, metres.
-   *  Instrumentation ONLY — this is never added to distanceM. Whether it
-   *  should be is exactly the open question this measurement answers: if a
-   *  real run's gapChordM is close to its distance shortfall against a
-   *  reference (a watch, say), that confirms the gap is where the missing
-   *  ground went and bridging it becomes a one-line, evidence-backed change
-   *  instead of a guess. */
+   *  before each gap and the first point recorded after it, metres, for
+   *  EVERY gap regardless of plausibility. Instrumentation: the raw
+   *  measurement, not a claim about what's been credited to distanceM — see
+   *  creditedGapM for the credited subset. The 2026-09-02 geometry audit
+   *  (Source Data/Outputs/Running App/Geometry Audit — Saved Runs vs
+   *  Recomputed (2026-09-02).md) confirmed this is where a real run's
+   *  distance shortfall against `raw_path` came from. */
   gapChordM: number;
+  /** Subset of gapChordM already added to distanceM, under the shared gap
+   *  policy in src/lib/gap-policy.ts — the SAME distance/speed caps the
+   *  tile builder (tiles.ts) uses to decide whether to bridge a gap into
+   *  contiguous tiles, so the two subsystems can never independently decide
+   *  a gap "happened" for one purpose but not the other. A gap that fails
+   *  either cap still counts in gapChordM above but not here and not in
+   *  distanceM — the hole stays a hole, exactly as before this existed. */
+  creditedGapM: number;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
@@ -195,6 +204,7 @@ export function useRunTracker(): RunTracker {
   const [gapCount, setGapCount] = useState(0);
   const [gapDurationMs, setGapDurationMs] = useState(0);
   const [gapChordM, setGapChordM] = useState(0);
+  const [creditedGapM, setCreditedGapM] = useState(0);
   // The point + wall-clock time when the document was last hidden while
   // running, and a flag telling onFix its NEXT fix is the far end of an
   // open gap's chord. Refs: onFix reads/sets them synchronously in the
@@ -338,18 +348,34 @@ export function useRunTracker(): RunTracker {
     // interface comment on lastFix.
     setLastFix({ lat: fix.lat, lng: fix.lng });
 
-    // Gap-chord instrumentation (Task B). This fix is the far end of an open
-    // gap — the visibilitychange handler set the flag and captured the near
-    // end (gapStartRef.lastPoint) before clearing lastRef for the leg break.
-    // Uses the RAW fix, same as lastFix above: recording quality and "how
-    // far did the gap actually span" are different questions.
+    // Gap-chord instrumentation and credit (Task B → the 2026-09-02 gap
+    // policy). This fix is the far end of an open gap — the visibilitychange
+    // handler set the flag and captured the near end (gapStartRef.lastPoint)
+    // before clearing lastRef for the leg break. Uses the RAW fix, same as
+    // lastFix above: recording quality and "how far did the gap actually
+    // span" are different questions.
     if (awaitingGapChordRef.current) {
       awaitingGapChordRef.current = false;
       const gapStart = gapStartRef.current;
       gapStartRef.current = null;
-      if (gapStart?.lastPoint) {
-        const chord = haversineM(gapStart.lastPoint, { lat: fix.lat, lng: fix.lng });
-        setGapChordM((cur) => cur + chord);
+      const gap = evaluateGap({
+        from: gapStart?.lastPoint ?? null,
+        to: { lat: fix.lat, lng: fix.lng },
+        // Duration from the two RECORDED fixes' own timestamps, not
+        // wall-clock hidden-time — this is what tiles.ts's own gap check
+        // uses when it recomputes from raw_path later, so a gap's
+        // plausibility reads the same way from both directions.
+        dtMs: gapStart?.lastPoint ? fix.ts - gapStart.lastPoint.ts : 0,
+      });
+      if (gap) {
+        setGapChordM((cur) => cur + gap.chordM);
+        if (gap.credited) {
+          // Only the credited subset reaches distanceM. A gap that fails
+          // either shared cap is left out exactly as before this existed —
+          // see creditedGapM's own interface doc.
+          setCreditedGapM((cur) => cur + gap.chordM);
+          setDistanceM((cur) => cur + gap.chordM);
+        }
       }
     }
 
@@ -545,6 +571,7 @@ export function useRunTracker(): RunTracker {
       setGapCount(0);
       setGapDurationMs(0);
       setGapChordM(0);
+      setCreditedGapM(0);
       gapStartRef.current = null;
       awaitingGapChordRef.current = false;
 
@@ -617,6 +644,7 @@ export function useRunTracker(): RunTracker {
     setGapCount(0);
     setGapDurationMs(0);
     setGapChordM(0);
+    setCreditedGapM(0);
     gapStartRef.current = null;
     awaitingGapChordRef.current = false;
     consecutiveRejectsRef.current = 0;
@@ -672,6 +700,7 @@ export function useRunTracker(): RunTracker {
         setGapCount(0);
         setGapDurationMs(0);
         setGapChordM(0);
+        setCreditedGapM(0);
         gapStartRef.current = null;
         awaitingGapChordRef.current = false;
 
@@ -704,6 +733,7 @@ export function useRunTracker(): RunTracker {
     gapCount,
     gapDurationMs,
     gapChordM,
+    creditedGapM,
     start,
     pause,
     resume,
