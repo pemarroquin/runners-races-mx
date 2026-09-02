@@ -2,13 +2,14 @@
 // you've bookmarked, and the territories (fences) you've captured in
 // Territory Mode. Pedro's call (2026-08-27): past fences live HERE, not on
 // the live Track map — a run-history surface, not run-time chrome.
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   SectionList,
   StyleSheet,
   Text,
@@ -49,6 +50,7 @@ export default function MyRacesScreen() {
   const today = useToday();
 
   const [view, setView] = useState<SavedView>('races');
+  const isFocused = useIsFocused();
 
   const races = useMemo(
     () => allRaces.filter((r) => savedIds.has(r.id)),
@@ -95,12 +97,16 @@ export default function MyRacesScreen() {
   }, [races, t, today]);
 
   // Fences load lazily — fetched (or refetched) each time the Territories
-  // view is opened, so a run saved since the last visit shows up. Kept as
-  // the raw outcome so the three non-data states (loading / disabled /
-  // failed) each render as themselves, never as a fake "no territory yet".
+  // view is opened OR the tab regains focus, so a run saved on the Track
+  // tab shows up without the runner having to toggle the segment (reported
+  // bug: "I have to switch from Races to Territories to trigger the
+  // update"). Kept as the raw outcome so the three non-data states
+  // (loading / disabled / failed) each render as themselves, never as a
+  // fake "no territory yet" — same `isFocused` gate index.tsx's queue-drain
+  // effect uses, not a new abstraction.
   const [fences, setFences] = useState<FencesOutcome | null>(null);
   useEffect(() => {
-    if (view !== 'fences') return;
+    if (view !== 'fences' || !isFocused) return;
     let stale = false;
     // Deferred by a tick so no setState runs synchronously in the effect
     // body (React Compiler rule — same pattern as the run tracker's clock).
@@ -114,7 +120,19 @@ export default function MyRacesScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [view]);
+  }, [view, isFocused]);
+
+  // Pull-to-refresh — same refreshing-boolean pattern as leaderboard.tsx's
+  // onRefresh, kept separate from the `fences === null` loading state above
+  // so a manual pull shows the RefreshControl spinner rather than replacing
+  // the whole list with the full-screen ActivityIndicator.
+  const [fencesRefreshing, setFencesRefreshing] = useState(false);
+  const onRefreshFences = useCallback(async () => {
+    setFencesRefreshing(true);
+    const outcome = await fetchMyFences();
+    setFences(outcome);
+    setFencesRefreshing(false);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -195,7 +213,13 @@ export default function MyRacesScreen() {
           }
         />
       ) : (
-        <FencesView fences={fences} locale={locale} scheme={scheme} />
+        <FencesView
+          fences={fences}
+          locale={locale}
+          scheme={scheme}
+          refreshing={fencesRefreshing}
+          onRefresh={onRefreshFences}
+        />
       )}
     </SafeAreaView>
   );
@@ -205,14 +229,24 @@ function FencesView({
   fences,
   locale,
   scheme,
+  refreshing,
+  onRefresh,
 }: {
   fences: FencesOutcome | null;
   locale: string;
   scheme: 'dark' | 'light';
+  refreshing: boolean;
+  onRefresh: () => void;
 }) {
   const c = Colors[scheme];
   const { t } = useI18n();
 
+  // Loading and disabled/failed stay their own distinct states — a failure
+  // must never quietly render as the empty "no territory yet" copy below.
+  // Neither one grows a RefreshControl of its own here, same as
+  // leaderboard.tsx's Empty/loading states: pull-to-refresh lives on the
+  // data list, matched to that existing pattern rather than inventing a
+  // third one.
   if (fences === null) {
     return (
       <View style={styles.emptyWrap}>
@@ -238,6 +272,9 @@ function FencesView({
       data={fences.fences}
       keyExtractor={(f) => f.id}
       contentContainerStyle={styles.list}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
+      }
       renderItem={({ item, index }) => (
         <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
           <FenceCard fence={item} locale={locale} scheme={scheme} />
