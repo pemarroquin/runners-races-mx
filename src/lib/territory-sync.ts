@@ -99,6 +99,58 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
   });
 }
 
+export type DeleteOutcome =
+  | { ok: true }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * Deletes one of this device's own runs. Same non-throwing, best-effort
+ * contract as every other function here.
+ *
+ * CRITICAL: as of this writing there is NO delete policy on `runs` — the
+ * Phase 1 migration (20260826222037_territory_mode.sql) only ever granted
+ * "runs: read all" and "runs: insert own". Under Postgres RLS, a DELETE
+ * that matches no policy deletes ZERO rows and Postgres reports NO error —
+ * so `.delete().eq('id', runId)` alone would report {ok:true} while
+ * touching nothing, which is exactly the silent-no-op this codebase has a
+ * standing rule against (never report unverified success). Chaining
+ * `.select('id')` on the delete makes Postgres return the rows it actually
+ * removed, and an empty result is treated as a failure, not a success —
+ * this is the ONLY way to tell "deleted" from "matched nothing" apart, since
+ * both otherwise come back as `{ error: null }`.
+ *
+ * See supabase/migrations/<timestamp>_runs_delete_own.sql for the (currently
+ * UNAPPLIED) policy that will make this actually work. Until Pedro applies
+ * it by hand, every call here correctly reports `{ ok: false, reason:
+ * 'network' }` — a true failure, not a lie.
+ */
+export async function deleteRun(runId: string): Promise<DeleteOutcome> {
+  // `unknown`, not `Record<string, never>` — withSession intersects this
+  // with `{ ok: true }` to build the success shape, and Record<string,
+  // never>'s index signature makes `ok: true` impossible to intersect with
+  // it (every key would have to be `never`). `unknown` is the intersection
+  // identity (`{ ok: true } & unknown` is just `{ ok: true }`), which is
+  // exactly "no extra success fields" — deleteRun has nothing to report
+  // beyond ok/fail, unlike uploadRun's `runId`.
+  return withSession<unknown>(
+    async (session): Promise<{ ok: true } | { ok: false; reason: 'network' }> => {
+      const { data, error } = await supabase
+        .from('runs')
+        .delete()
+        .eq('id', runId)
+        // Redundant with the eventual RLS policy (auth.uid() = user_id), but
+        // cheap and explicit: this call must never even ATTEMPT to delete a
+        // row it doesn't own, policy or no policy.
+        .eq('user_id', session.user.id)
+        .select('id');
+
+      if (error) return { ok: false, reason: 'network' };
+      if (!data || data.length === 0) return { ok: false, reason: 'network' };
+      return { ok: true };
+    },
+  );
+}
+
 /** One previously-captured fence, ready to draw. */
 export interface MyFence {
   id: string;
