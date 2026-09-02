@@ -40,6 +40,7 @@ const translations = {
       back: 'Volver',
       unconfirmed: 'Sin confirmar',
       retry: 'Reintentar',
+      cancel: 'Cancelar',
     },
     tabs: {
       track: 'Correr',
@@ -94,6 +95,29 @@ const translations = {
       saving: 'Guardando…',
       saved: 'Territorio guardado',
       discard: 'Descartar',
+      // Task 2 — auto-save means there is usually already a server row by
+      // the time the summary renders, so "Descartar" (which never touched
+      // the server) stopped being honest. deleteRun() actually removes that
+      // row; these keys are for that flow specifically, distinct from
+      // `discard` above (still used by the unfinished-checkpoint recovery
+      // prompt, which never reaches the server at all).
+      deleteRun: 'Eliminar territorio',
+      deleting: 'Eliminando…',
+      // Shown once, inline, before the delete actually happens — see
+      // apply_territory_overlap() in 20260827020000_phase3_overlap.sql:
+      // ground this run took from other runners during the overlap was
+      // already carved out of their fences at save time, and nothing reads
+      // territory_events back to reverse that. Saying "elimina tu
+      // territorio" without this line would imply a clean undo that does
+      // not exist.
+      deleteConfirmBody:
+        'Esto borra tu registro y este territorio. El terreno que ya le quitaste a otros corredores durante esta sesión no se les devuelve.',
+      deleteConfirmAction: 'Eliminar de todas formas',
+      deleteFailedNetwork:
+        'No pudimos eliminar tu territorio — revisa tu conexión. Sigue guardado, puedes reintentar.',
+      deleteFailedAuth: 'No pudimos confirmar tu sesión para eliminarlo. Vuelve a intentarlo.',
+      deleteFailedDisabled:
+        'El guardado en línea no está disponible en esta versión, así que no podemos eliminarlo desde aquí.',
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
@@ -350,6 +374,7 @@ const translations = {
       back: 'Back',
       unconfirmed: 'Unconfirmed',
       retry: 'Retry',
+      cancel: 'Cancel',
     },
     tabs: {
       track: 'Run',
@@ -399,6 +424,21 @@ const translations = {
       saving: 'Saving…',
       saved: 'Territory saved',
       discard: 'Discard',
+      // Task 2 — see the Spanish keys' comment: auto-save means there is
+      // usually already a server row by the time the summary renders, so
+      // "Discard" (which never touched the server) stopped being honest.
+      // `discard` above stays as-is — it's still used by the unfinished-
+      // checkpoint recovery prompt, which never reaches the server.
+      deleteRun: 'Delete run',
+      deleting: 'Deleting…',
+      deleteConfirmBody:
+        "This deletes your record and this territory. Ground you already took from other runners during this session won't be returned to them.",
+      deleteConfirmAction: 'Delete anyway',
+      deleteFailedNetwork:
+        "We couldn't delete your territory — check your connection. It's still saved, you can retry.",
+      deleteFailedAuth: "We couldn't confirm your session to delete it. Please try again.",
+      deleteFailedDisabled:
+        "Online saving isn't available in this build, so we can't delete it from here.",
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
