@@ -33,6 +33,16 @@ import { DISPLAY_NAME_MAX, fetchMyProfile, updateDisplayName } from '@/lib/terri
 // the prompt never blocks anything.
 const PREF_NAME_PROMPT_ASKED = 'namePromptAsked';
 
+// In-memory fallback for the same "have I already asked" check, alongside
+// the persisted pref above — not a replacement for it. When localStorage is
+// blocked/unavailable, getPref() always reads back null, so the persisted
+// check alone would re-show this prompt after every save for the rest of
+// the session even though the runner just answered it. Module-level (not
+// state) so it survives this component unmounting/remounting between runs
+// within one app session; it intentionally does NOT persist across app
+// restarts — that's what the pref is for when storage works.
+let askedThisSession = false;
+
 type PromptState =
   | 'checking' // deciding whether to show anything at all
   | 'hidden' // decided: nothing to show (named already / already asked / disabled / fetch failed)
@@ -49,6 +59,16 @@ export function NamePrompt() {
   const [state, setState] = useState<PromptState>('checking');
   const [name, setName] = useState('');
 
+  const markAsked = useCallback(() => {
+    // Best-effort persisted write: a blocked store just means this device
+    // gets asked again next save, which is a nag, not a data-loss bug. The
+    // in-memory flag below is what actually covers that blocked-store case
+    // for the rest of THIS session (see askedThisSession above).
+    askedThisSession = true;
+    initDb();
+    setPref(PREF_NAME_PROMPT_ASKED, '1');
+  }, []);
+
   // Runs once, on mount — the host only mounts this component right after a
   // run finishes saving, so "on mount" IS "at the moment of first save".
   useEffect(() => {
@@ -57,20 +77,28 @@ export function NamePrompt() {
     // pattern as settings.tsx's own profile fetch).
     const id = setTimeout(() => {
       initDb();
-      const alreadyAsked = getPref(PREF_NAME_PROMPT_ASKED) === '1';
+      const alreadyAsked = askedThisSession || getPref(PREF_NAME_PROMPT_ASKED) === '1';
       if (alreadyAsked) {
         if (!stale) setState('hidden');
         return;
       }
       fetchMyProfile().then((outcome) => {
         if (stale) return;
-        // 'disabled' (no server configured), 'auth'/'network' (can't tell
-        // right now), or a name already set — none of those are "ask".
-        // Fetch failures fail CLOSED: stay quiet rather than nag on top of
-        // a run the runner just finished.
         if (outcome.ok && outcome.displayName === null) {
+          // Nothing set yet — this is the one case that shows the form.
           setState('ask');
+        } else if (outcome.ok) {
+          // Name already set (via Settings, before this runner ever saw the
+          // prompt) — record it now so every future save doesn't spend
+          // another profile fetch re-discovering the same answer.
+          markAsked();
+          setState('hidden');
         } else {
+          // 'disabled' (no server configured) or 'auth'/'network' (can't
+          // tell right now) — fail CLOSED: stay quiet rather than nag on
+          // top of a run the runner just finished, and don't mark asked so
+          // a transient failure gets retried next save instead of going
+          // silent for the rest of the session.
           setState('hidden');
         }
       });
@@ -79,14 +107,7 @@ export function NamePrompt() {
       stale = true;
       clearTimeout(id);
     };
-  }, []);
-
-  const markAsked = useCallback(() => {
-    // Best-effort: a blocked store just means this device gets asked again
-    // next save, which is a nag, not a data-loss bug.
-    initDb();
-    setPref(PREF_NAME_PROMPT_ASKED, '1');
-  }, []);
+  }, [markAsked]);
 
   const skip = useCallback(() => {
     markAsked();
