@@ -204,6 +204,14 @@ export function TrackMap({
   // the same "always current, no stale closure" treatment.
   const pointsRef = useRef<LatLng[]>([]);
   const autoReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True from the moment a user gesture arms auto-return until that timer
+  // actually fires (or is cancelled by a mode toggle / new session). Overview
+  // mode's whole point is to let the runner step back and read the shape of
+  // what they've covered — the per-fix re-fit effect below checks this and
+  // stays hands-off while it's true, so a deliberate pan/zoom survives until
+  // AUTO_RETURN_IDLE_MS, not just until the next GPS fix (~1s). Follow mode
+  // is unaffected: it's meant to stay glued to the runner, fix to fix.
+  const overviewManualPendingRef = useRef(false);
 
   // P4: cameraMode replaces the old cameraOffTarget visibility flag
   // entirely. The control is now ALWAYS rendered while a session is active
@@ -279,6 +287,7 @@ export function TrackMap({
     const next: CameraMode = cameraModeRef.current === 'follow' ? 'overview' : 'follow';
     cameraModeRef.current = next;
     setCameraMode(next);
+    overviewManualPendingRef.current = false;
     applyCameraForMode(900);
   }, [applyCameraForMode]);
 
@@ -572,6 +581,7 @@ export function TrackMap({
     if (!active) return;
     cameraModeRef.current = 'follow';
     bearingRef.current = null;
+    overviewManualPendingRef.current = false;
     // Deferred by a tick, not called straight from the effect body — the
     // React Compiler's lint rule traces a call through and flags any
     // setState it can reach as a synchronous effect update. Same pattern as
@@ -602,7 +612,11 @@ export function TrackMap({
 
     const armAutoReturn = () => {
       if (autoReturnTimerRef.current) clearTimeout(autoReturnTimerRef.current);
-      autoReturnTimerRef.current = setTimeout(() => applyCameraForMode(900), AUTO_RETURN_IDLE_MS);
+      overviewManualPendingRef.current = true;
+      autoReturnTimerRef.current = setTimeout(() => {
+        overviewManualPendingRef.current = false;
+        applyCameraForMode(900);
+      }, AUTO_RETURN_IDLE_MS);
     };
 
     // Typed `unknown`, not Mapbox's own per-event shape: 'dragend' and
@@ -819,8 +833,23 @@ export function TrackMap({
     // existing (not just `running`) for the same reason as the marker
     // effect above — there's nothing to center or fit until a real fix
     // exists.
+    //
+    // Overview is the one exception: it's the mode a runner switches to
+    // specifically to step back and read the whole shape of what they've
+    // covered, so a fix landing mid-inspection must not snap it back out
+    // from under them. `overviewManualPendingRef` is true for exactly the
+    // AUTO_RETURN_IDLE_MS window after a manual pan/zoom in overview — while
+    // it's true, this effect stays hands-off and the armed auto-return timer
+    // (not this per-fix path) is what eventually re-fits. Follow mode never
+    // sets this ref's check path in play; it keeps its existing glued
+    // behaviour unchanged.
     const head = here ?? points[points.length - 1];
-    if (head && running && flownRef.current) {
+    if (
+      head &&
+      running &&
+      flownRef.current &&
+      !(cameraModeRef.current === 'overview' && overviewManualPendingRef.current)
+    ) {
       applyCameraForMode(900);
     }
   }, [points, running, here, applyCameraForMode]);
