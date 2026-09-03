@@ -279,6 +279,10 @@ const translations = {
         'Marcamos esta sesión: la velocidad no parece de carrera a pie. Sigue contando para tu territorio.',
       fenceLost: 'Perdiste %{area} de este territorio',
       fenceFullyTaken: 'Te quitaron todo este territorio',
+      // Territories map detail card (2026-09-02) — a run still in the
+      // offline retry queue, drawn in its own dashed/muted state on the
+      // map, gets this badge instead of the usual stats-only card.
+      pendingLabel: 'Sin subir todavía — se reintentará solo',
     },
     city: {
       title: 'Elige tu ciudad',
@@ -631,6 +635,8 @@ const translations = {
         "We flagged this session \u2014 the speed doesn't look like running. It still counts toward your territory.",
       fenceLost: 'You lost %{area} of this territory',
       fenceFullyTaken: 'This territory was taken from you entirely',
+      // Territories map detail card — see the ES entry's comment.
+      pendingLabel: "Not uploaded yet — will retry on its own",
     },
     city: {
       title: 'Choose your city',
