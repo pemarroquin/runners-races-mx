@@ -13,7 +13,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -29,23 +28,13 @@ import { Icon } from '@/components/ui/icon';
 import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
-import { FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { getHomeZone } from '@/lib/home-point';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
-import {
-  deleteRun as deleteRunRequest,
-  fetchMyFences,
-  fetchRunSpoils,
-  uploadRun,
-  type DeleteOutcome,
-  type MyFence,
-  type RunSpoils,
-  type SyncOutcome,
-} from '@/lib/territory-sync';
+import { fetchRunSpoils, uploadRun, type RunSpoils } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
@@ -101,21 +90,11 @@ export default function TrackScreen() {
   const here = inSession ? (tracker.lastFix ?? location.coords) : location.coords;
 
   const [saveState, setSaveState] = useState<SaveState>('idle');
-  // 'abandoned' is never returned by uploadRun itself (SyncOutcome doesn't
-  // carry it) — it's a fourth, client-only reason this screen assigns after
-  // the background flush effect below learns upload-queue.ts gave up on a
-  // queued retry past MAX_ATTEMPTS, so that permanently-dropped run can
-  // still be shown through the same banner uploadRun's own failures use.
-  const [failure, setFailure] = useState<
-    SyncOutcome | { ok: false; reason: 'abandoned' } | null
-  >(null);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
   // What this run took from other runners. Null until the upload lands —
   // the Phase 3 trigger runs during the insert, so the answer exists by the
   // time uploadRun returns, but only a read can tell us what it was.
   const [spoils, setSpoils] = useState<RunSpoils | null>(null);
-  const [pastFences, setPastFences] = useState<MyFence[]>([]);
-  const [pastFencesFailed, setPastFencesFailed] = useState(false);
   // Runs that failed to upload and are waiting on the device. Read on mount
   // and kept in sync locally so the screen can say a run is safe rather than
   // leaving the runner to guess.
@@ -157,18 +136,9 @@ export default function TrackScreen() {
   // down (resetLocal, below) — that's what lets the NEXT run auto-save too.
   const autoSavedRef = useRef(false);
 
-  // Task 2 — deleteRun() outcome. Separate from saveState/failure: a run
-  // can be successfully SAVED and then fail to DELETE — two different
-  // network calls, two different failure surfaces, and conflating them
-  // would show "your save failed" copy for a delete that failed instead.
-  const [deleteState, setDeleteState] = useState<'idle' | 'deleting' | 'failed'>('idle');
-  const [deleteFailure, setDeleteFailure] = useState<DeleteOutcome | null>(null);
-  // One tap arms the honest confirmation copy (deleteRun does not undo
-  // territory already taken from other runners); a second tap actually
-  // deletes. Inline rather than a native Alert.alert — react-native-web's
-  // Alert.alert is a documented no-op (`static alert() {}`), which would
-  // make "Delete run" silently do nothing on the web build.
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // Deleting a saved run is no longer an action on THIS screen (2026-09-02
+  // redesign) — it moved to the Territories map's per-fence bubble, which
+  // keeps its own independent delete state. See myraces.tsx.
 
   // An in-progress run recovered from run-checkpoint.ts after a reload —
   // see that file's header. Read once on mount, not on every focus: a
@@ -227,13 +197,12 @@ export default function TrackScreen() {
         // the whole on-disk queue, not just "the run the summary is
         // currently displaying" — so if the run on screen is the one that
         // just resolved, local state (saveState/savedRunId/queuedId) would
-        // otherwise go stale: still reading 'failed'/queued even though the
-        // server row now exists (or, on abandonment, will never exist).
-        // Left unreconciled, that staleness makes "Delete run" silently
-        // skip the real delete (nothing left to confirm, per its own
-        // 'saved' && savedRunId guard) and makes a manual "Reintentar"
-        // upload the SAME run a second time — a duplicate row whose fence
-        // carves territory off other runners all over again.
+        // otherwise go stale. The session-end screen no longer has any
+        // Delete/Retry UI to defend (that moved to the Territories map —
+        // see myraces.tsx), but `saveState === 'saved'` still gates the
+        // first-save name prompt (NamePrompt, below) — without this, a
+        // save that completes in the background while this screen is still
+        // open would never trigger it.
         const current = queuedIdRef.current;
         if (!current) return;
         const resolved = result.resolved.find((r) => r.id === current);
@@ -241,7 +210,6 @@ export default function TrackScreen() {
           setSaveState('saved');
           setSavedRunId(resolved.runId);
           setQueuedId(null);
-          setFailure(null);
           clearCheckpoint();
           // Best-effort, same as save()'s own success path — a failed read
           // here just means no "you took territory" line, never a lost save.
@@ -250,10 +218,9 @@ export default function TrackScreen() {
           });
         } else if (result.abandonedIds.includes(current)) {
           // Retried MAX_ATTEMPTS times and given up — the run genuinely
-          // will not upload. Say so rather than leaving "queued" showing
-          // for a run that's actually gone.
-          setSaveState('failed');
-          setFailure({ ok: false, reason: 'abandoned' });
+          // will not upload. Not surfaced with copy on this screen (see the
+          // file header above the 'finished' branch); this only stops
+          // `queuedId` from pointing at a queue entry that no longer exists.
           setQueuedId(null);
         }
       });
@@ -307,36 +274,12 @@ export default function TrackScreen() {
     return () => clearTimeout(id);
   }, [tracker.status, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
-  // Everything already captured, for the summary map. Fetched when the run
-  // finishes (before any save), so the list never contains the run on
-  // screen; `savedRunId` guards the refetch-after-save case anyway.
-  const finished = tracker.status === 'finished';
-  useEffect(() => {
-    if (!finished) return;
-    let stale = false;
-    fetchMyFences().then((outcome) => {
-      if (stale) return;
-      if (outcome.ok) {
-        setPastFences(outcome.fences);
-        setPastFencesFailed(false);
-      } else {
-        // 'disabled' is a configuration state, not a failure — nothing to
-        // load, nothing to apologise for.
-        setPastFencesFailed(outcome.reason !== 'disabled');
-      }
-    });
-    return () => {
-      stale = true;
-    };
-  }, [finished]);
-
   const save = useCallback(async () => {
     if (!fence || masked === null || tracker.startedAt === null || tracker.endedAt === null) {
       return;
     }
     const token = ++saveTokenRef.current;
     setSaveState('saving');
-    setFailure(null);
     // ONE payload, built once, used by BOTH the upload and the retry queue.
     //
     // The two paths must never disagree about what a run contains — most
@@ -389,7 +332,6 @@ export default function TrackScreen() {
       // Keep the run on screen. It only exists in memory, so clearing it on
       // a failed upload would destroy the thing the runner just earned.
       setSaveState('failed');
-      setFailure(outcome);
       // AND persist it, so closing the tab no longer destroys it either.
       // Only claim it's queued if the write actually succeeded — blocked
       // storage must not produce a false "your run is safe".
@@ -447,155 +389,117 @@ export default function TrackScreen() {
     void save();
   }, [tracker.status, fence, masked, save]);
 
-  // Shared local teardown for both "close the summary" (X, always safe —
-  // never deletes anything, server OR queue: the server row if any stays
-  // exactly as saved, and a still-queued run is left on disk for a later
-  // flush to pick up rather than thrown away just because the screen
-  // closed) and "delete finished/failed" (handleDeleteRun, below — only
-  // reached once the server side of a delete has either succeeded or was
-  // never needed, AND after handleDeleteRun has already removed the queue
-  // entry itself if that's what's being deleted). Renamed from the
-  // pre-auto-save `discard`: this function itself no longer decides
-  // whether anything is thrown away, it only resets the SCREEN once that
-  // decision has already been made and (if needed) already carried out.
+  // Local teardown for closing the finished-run map screen (the ✓ button) —
+  // always safe, never deletes anything, server OR queue: the server row if
+  // any stays exactly as saved, and a still-queued run is left on disk for
+  // a later flush to pick up. Renamed from the pre-auto-save `discard`: this
+  // function no longer decides whether anything is thrown away (there is no
+  // delete action on this screen any more — see below), it only resets the
+  // SCREEN so the next run can start.
   //
-  // This does NOT touch queuedId/removeQueued — it used to, and that was
-  // the bug: "always safe" was a comment, not a guarantee, because closing
-  // the summary silently deleted the runner's only copy of a run that
-  // hadn't reached the server yet. The whole point of the retry queue (see
-  // upload-queue.ts's own header) is surviving exactly that "runner closed
-  // the tab" moment; a close button that empties the queue defeats it.
+  // This does NOT touch queuedId/removeQueued — it used to, and that was a
+  // bug: closing the screen silently deleted the runner's only copy of a
+  // run that hadn't reached the server yet, defeating the whole point of
+  // the retry queue (see upload-queue.ts's own header).
   const resetLocal = useCallback(() => {
     // Invalidate any in-flight save FIRST — see saveTokenRef's own comment.
     saveTokenRef.current++;
     // Let the NEXT run auto-save too.
     autoSavedRef.current = false;
     setSaveState('idle');
-    setFailure(null);
     setSavedRunId(null);
     setSpoils(null);
     setMasked(null);
     setFence(null);
     setQueuedId(null);
-    setPastFencesFailed(false);
-    setDeleteState('idle');
-    setDeleteFailure(null);
-    setConfirmingDelete(false);
     tracker.reset();
   }, [tracker]);
 
-  // Task 2 — replaces the old unconditional discard(). By the time this is
-  // reachable the run has usually already auto-saved, so "throwing it away"
-  // now means actually deleting the server row, not just forgetting local
-  // state. Only calls deleteRun() when there IS a server row (saveState
-  // 'saved' with a savedRunId) — a run still 'saving', or one that only ever
-  // reached 'failed' (nothing was ever inserted), has nothing to delete and
-  // goes straight to the same local cleanup discard() always did.
-  const handleDeleteRun = useCallback(async () => {
-    if (saveState === 'saved' && savedRunId) {
-      setDeleteState('deleting');
-      setDeleteFailure(null);
-      const outcome = await deleteRunRequest(savedRunId);
-      if (!outcome.ok) {
-        // Keep the run on screen exactly like a failed save does — it is
-        // still safely on the server, and closing this screen now would
-        // just make it harder to find, never actually lose it.
-        setDeleteState('failed');
-        setDeleteFailure(outcome);
-        setConfirmingDelete(false);
-        return;
-      }
-    } else if (queuedId) {
-      // The run never reached the server — it only exists in the retry
-      // queue. Unlike closing the summary (resetLocal, above), an explicit
-      // delete IS the runner choosing to throw it away, so take it out of
-      // the queue now — otherwise a later flush uploads a run the runner
-      // just deleted.
-      removeQueued(queuedId);
-      setPending(queuedCount());
-    }
-    resetLocal();
-  }, [saveState, savedRunId, queuedId, resetLocal]);
-
-  // The finished run gets its own scrolling layout: there's a fence image,
-  // three stats and two actions to fit, which is more than can sit legibly
-  // over a live map.
+  // The finished run gets a full-screen map of just what it captured
+  // (2026-09-02 redesign, replacing the old scrolling stats-card summary):
+  // saving already happens automatically and silently (see the auto-save
+  // effect above), so there is nothing left to DECIDE here — this screen
+  // only shows what happened and gets out of the way. No Save/Retry/Delete
+  // UI: a failed or still-queued upload stays invisible here (it resolves
+  // itself via the background flush effect, or is visible with Retry/Delete
+  // once the runner reaches the Territories map — see myraces.tsx) and is
+  // never surfaced with copy on this screen. The only control is ✓, top
+  // right, which tears the screen down and readies the app for a new run —
+  // same resetLocal() the old X button called.
   if (tracker.status === 'finished') {
-    return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
-        <View style={styles.summaryClose}>
-          <RoundButton
-            label={t('track.close')}
-            onPress={resetLocal}
-            background={c.backgroundElement}
-            foreground={c.text}
-            ios="xmark"
-            android="close"
-            // Belt-and-suspenders alongside save()'s own token guard: the
-            // guard makes a mid-save discard SAFE, this makes it hard to
-            // trigger by accident in the first place. Also disabled mid-
-            // delete: closing while deleteRun() is in flight is fine
-            // correctness-wise (handleDeleteRun keeps its own state), but
-            // letting it fire mid-tap invites a second delete request.
-            disabled={saveState === 'saving' || deleteState === 'deleting'}
-          />
-        </View>
-        <ScrollView contentContainerStyle={styles.summary}>
-          <Text style={[styles.summaryTitle, { color: c.text }]}>{t('track.summaryTitle')}</Text>
-
-          {fence && (
-            // A real interactive map, not a baked image: pan/zoom over the
-            // territory just captured (gradient outline, this run's colour)
-            // with every previous fence drawn muted around it.
-            <Animated.View entering={FadeIn.duration(400)} style={styles.fenceMapWrap}>
-              <FenceMap
-                geometry={fence.geometry.geometry}
-                // The MASKED path, never tracker.points — privacy-zone
-                // trimming exists precisely so start/end aren't exposed, and
-                // the summary map is a shareable surface. `masked` is only
-                // set once tracker.status is 'finished' (see the effect
-                // above), which is exactly when this branch renders.
-                path={masked?.points ?? []}
-                color={fenceColor}
-                others={pastFences}
-                excludeId={savedRunId}
-              />
-            </Animated.View>
-          )}
-          {pastFencesFailed && (
-            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
-              {t('track.pastFencesFailed')}
-            </Text>
-          )}
-
-          <View style={styles.stats}>
-            <Stat label={t('track.time')} value={formatDuration(tracker.elapsedS)} c={c} />
-            <Stat label={t('track.distance')} value={formatDistance(tracker.distanceM)} c={c} />
-            <Stat label={t('track.area')} value={fence ? formatArea(fence.areaM2) : '—'} c={c} />
+    // Edge case: nothing to put on a map. Either genuinely nothing was
+    // recorded, or the whole run fell inside the runner's privacy zone
+    // (maskPath trims it to nothing rather than upload a route that would
+    // expose home). No FenceMap in either case — just say why, plus ✓.
+    if (!fence) {
+      return (
+        <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
+          <View style={styles.summaryClose}>
+            <RoundButton
+              label={t('track.done')}
+              onPress={resetLocal}
+              background={c.backgroundElement}
+              foreground={c.text}
+              ios="checkmark"
+              android="check"
+            />
           </View>
+          <View style={styles.overlayInner}>
+            <Text style={[styles.summaryTitle, { color: c.text }]}>{t('track.summaryTitle')}</Text>
+            <Text style={[styles.notice, { color: masked?.fullyInsideZone ? c.accent : c.textSecondary }]}>
+              {masked?.fullyInsideZone ? t('track.allInsideZone') : t('track.noFence')}
+            </Text>
+          </View>
+        </SafeAreaView>
+      );
+    }
 
-          {/* The whole run happened inside the privacy zone, so there is
-              nothing that can be uploaded without revealing it. Said plainly
-              — silently refusing to save would look like a bug. */}
-          {masked?.fullyInsideZone && (
-            <Text style={[styles.notice, { color: c.accent }]}>{t('track.allInsideZone')}</Text>
-          )}
+    return (
+      <View style={styles.stage}>
+        {/* Top-down (bearing 0, pitch 0), fit to just this fence — only the
+            territory THIS session captured, no other saved territories (see
+            the Territories map, myraces.tsx, for "all of them at once"). */}
+        <FenceMap
+          geometry={fence.geometry.geometry}
+          // The MASKED path, never tracker.points — privacy-zone trimming
+          // exists precisely so start/end aren't exposed, and this map is a
+          // shareable surface. `masked` is only set once tracker.status is
+          // 'finished' (see the effect above), which is exactly when this
+          // branch renders.
+          path={masked?.points ?? []}
+          color={fenceColor}
+          others={[]}
+          excludeId={savedRunId}
+          controls={{
+            zoomInLabel: t('track.zoomIn'),
+            zoomOutLabel: t('track.zoomOut'),
+            recenterLabel: t('track.recenterFence'),
+          }}
+        />
+        <SafeAreaView style={styles.overlay} edges={['top']} pointerEvents="box-none">
+          <View style={styles.sessionEndTopBar} pointerEvents="box-none">
+            <View style={[styles.sessionEndStatsBar, { backgroundColor: 'rgba(20,20,20,0.65)' }]}>
+              <Stat label={t('track.time')} value={formatDuration(tracker.elapsedS)} c={STATS_ON_DARK} />
+              <Stat label={t('track.distance')} value={formatDistance(tracker.distanceM)} c={STATS_ON_DARK} />
+              <Stat label={t('track.area')} value={formatArea(fence.areaM2)} c={STATS_ON_DARK} />
+            </View>
+            <RoundButton
+              label={t('track.done')}
+              onPress={resetLocal}
+              background="rgba(20,20,20,0.65)"
+              foreground="#ffffff"
+              ios="checkmark"
+              android="check"
+            />
+          </View>
+        </SafeAreaView>
 
-          {!fence && !masked?.fullyInsideZone && (
-            <Text style={[styles.notice, { color: c.textSecondary }]}>{t('track.noFence')}</Text>
-          )}
-
-          {/* Distance-gap instrumentation (Task B, 2026-08-31) — background/
-              foreground cycles are real but untracked ground, unlike a
-              pause, and this is the data that confirms or rules out the
-              background-gap hypothesis for a reported distance shortfall.
-              Split into credited/uncredited (2026-09-02, gap-distance-policy):
-              a plausible gap's chord now DOES count toward the Distance stat
-              a few lines above, under src/lib/gap-policy.ts's caps — this
-              notice must say so, or a runner reconciling against a watch
-              would double-add the credited portion right back on top. */}
+        {/* Informational-only notices — none of these are actionable here,
+            they just explain the number/shape above. Bottom of the screen,
+            above the map's own zoom/recenter controls. */}
+        <View style={styles.sessionEndBottomOverlay} pointerEvents="box-none">
           {tracker.gapCount > 0 && (
-            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
               {t('track.gapNotice', {
                 count: tracker.gapCount,
                 duration: formatDuration(tracker.gapDurationMs / 1000),
@@ -606,51 +510,8 @@ export default function TrackScreen() {
               })}
             </Text>
           )}
-
-          {/* Masking changed the shape on screen, so say so rather than
-              letting the runner wonder why their loop looks clipped. */}
           {masked?.masked && !masked.fullyInsideZone && (
-            <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
-              {t('track.zoneMasked')}
-            </Text>
-          )}
-
-          {queuedId !== null && saveState !== 'saved' && (
-            <Text style={[styles.notice, { color: c.accent }]}>{t('track.queued')}</Text>
-          )}
-          {saveState === 'failed' && failure && !failure.ok && (
-            <Text style={[styles.notice, { color: c.accent }]}>
-              {failure.reason === 'disabled'
-                ? t('track.syncDisabled')
-                : failure.reason === 'auth'
-                  ? t('track.syncFailedAuth')
-                  : failure.reason === 'abandoned'
-                    ? t('track.syncFailedAbandoned')
-                    : t('track.syncFailedNetwork')}
-            </Text>
-          )}
-          {saveState === 'saved' && deleteState !== 'deleting' && (
-            <Animated.Text
-              entering={FadeInDown.duration(320)}
-              style={[styles.notice, { color: c.accent }]}>
-              {t('track.saved')}
-            </Animated.Text>
-          )}
-          {/* Task 2 — deleteRun() failed. This is an honest failure, not a
-              placeholder: until the delete-own policy migration is applied
-              by hand (supabase/migrations/*_runs_delete_own.sql), it always
-              will. The run stays fully intact on screen either way — same
-              posture as a failed save. */}
-          {deleteState === 'failed' && deleteFailure && !deleteFailure.ok && (
-            <Text style={[styles.notice, { color: c.accent }]}>
-              {deleteFailure.reason === 'disabled'
-                ? t('track.deleteFailedDisabled')
-                : deleteFailure.reason === 'auth'
-                  ? t('track.deleteFailedAuth')
-                  : deleteFailure.reason === 'denied'
-                    ? t('track.deleteFailedDenied')
-                    : t('track.deleteFailedNetwork')}
-            </Text>
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>{t('track.zoneMasked')}</Text>
           )}
 
           {/* First-save leaderboard name prompt — fully self-contained,
@@ -659,103 +520,23 @@ export default function TrackScreen() {
               succeeded, never before or during. */}
           {saveState === 'saved' && <NamePrompt />}
 
-          {/* Phase 3's payoff. Deliberately its own banner rather than a
-              line in the stats row: taking ground off another runner is the
-              most interesting thing that can happen in a session, and it
-              only appears when it actually happened. */}
+          {/* Phase 3's payoff. Taking ground off another runner is the most
+              interesting thing that can happen in a session, so it earns a
+              banner even on this stripped-down screen. */}
           {spoils && (
             <Animated.View
               entering={FadeInDown.duration(400).delay(200)}
-              style={[styles.spoils, { borderColor: fenceColor }]}>
-              <Text style={[styles.spoilsArea, { color: c.text }]}>
+              style={[styles.spoils, { borderColor: fenceColor, backgroundColor: 'rgba(20,20,20,0.65)' }]}>
+              <Text style={[styles.spoilsArea, { color: '#ffffff' }]}>
                 {t('track.tookArea', { area: formatArea(spoils.areaTakenM2) })}
               </Text>
-              <Text style={[styles.spoilsFrom, { color: c.textSecondary }]}>
+              <Text style={[styles.spoilsFrom, { color: 'rgba(255,255,255,0.7)' }]}>
                 {t('track.tookFrom', { count: spoils.runnersAffected })}
               </Text>
             </Animated.View>
           )}
-
-          <View style={styles.summaryActions}>
-            {fence && saveState !== 'saved' && (
-              // Task 1 — this still exists for the manual-retry path
-              // (saveState 'failed') and as a visual fallback for the brief
-              // instant before the auto-save effect has fired; it is no
-              // longer the runner's only way to save; save() itself already
-              // fired automatically the moment the run finished.
-              <PrimaryButton
-                label={
-                  saveState === 'saving'
-                    ? t('track.saving')
-                    : saveState === 'failed'
-                      ? t('track.retry')
-                      : t('track.save')
-                }
-                onPress={save}
-                disabled={saveState === 'saving' || deleteState === 'deleting'}
-                busy={saveState === 'saving'}
-                c={c}
-              />
-            )}
-
-            {/* Task 2 — "Discard" replaced with "Delete run". Confirms
-                inline (never a native Alert.alert — see confirmingDelete's
-                own comment) ONLY when there is a real server row to lose;
-                a run still 'saving' can't be tapped (disabled below), and
-                one that only ever reached 'failed' never reached the
-                server, so there's nothing to confirm — it goes straight to
-                local cleanup, same as the old unconditional Discard did. */}
-            {confirmingDelete ? (
-              <Animated.View entering={FadeIn.duration(200)} style={styles.deleteConfirm}>
-                <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
-                  {t('track.deleteConfirmBody')}
-                </Text>
-                <View style={styles.deleteConfirmActions}>
-                  <Pressable
-                    onPress={() => setConfirmingDelete(false)}
-                    accessibilityRole="button"
-                    hitSlop={10}>
-                    <Text style={[styles.secondary, { color: c.textSecondary }]}>
-                      {t('common.cancel')}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => void handleDeleteRun()}
-                    accessibilityRole="button"
-                    hitSlop={10}>
-                    <Text style={[styles.secondary, { color: c.accent }]}>
-                      {t('track.deleteConfirmAction')}
-                    </Text>
-                  </Pressable>
-                </View>
-              </Animated.View>
-            ) : (
-              <Pressable
-                onPress={() => {
-                  if (saveState === 'saved' && savedRunId) setConfirmingDelete(true);
-                  else void handleDeleteRun();
-                }}
-                disabled={saveState === 'saving' || deleteState === 'deleting'}
-                accessibilityRole="button"
-                accessibilityState={
-                  saveState === 'saving' || deleteState === 'deleting' ? { disabled: true } : {}
-                }
-                hitSlop={10}>
-                <Text
-                  style={[
-                    styles.secondary,
-                    {
-                      color: c.textSecondary,
-                      opacity: saveState === 'saving' || deleteState === 'deleting' ? 0.5 : 1,
-                    },
-                  ]}>
-                  {deleteState === 'deleting' ? t('track.deleting') : t('track.deleteRun')}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </View>
     );
   }
 
@@ -973,7 +754,15 @@ function RoundButton({
   );
 }
 
-function Stat({ label, value, c }: { label: string; value: string; c: Record<ThemeColor, string> }) {
+function Stat({
+  label,
+  value,
+  c,
+}: {
+  label: string;
+  value: string;
+  c: { text: string; textSecondary: string };
+}) {
   return (
     <View style={styles.stat}>
       <Text style={[styles.statLabel, { color: c.textSecondary }]}>{label.toUpperCase()}</Text>
@@ -981,6 +770,11 @@ function Stat({ label, value, c }: { label: string; value: string; c: Record<The
     </View>
   );
 }
+
+// The session-end map's stats bar always sits over a dark map, regardless
+// of the app's own light/dark theme — same reasoning as track-map's
+// camera-control icons being hardcoded white (see fence-map's MapButton).
+const STATS_ON_DARK = { text: '#ffffff', textSecondary: 'rgba(255,255,255,0.7)' };
 
 function PrimaryButton({
   label,
@@ -1057,18 +851,38 @@ const styles = StyleSheet.create({
   keepOpen: { fontSize: 12, textAlign: 'center', marginTop: Spacing.two, maxWidth: 260 },
   gpsState: { fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: Spacing.two, maxWidth: 280 },
 
-  summary: { padding: Spacing.three, gap: Spacing.three, paddingBottom: BottomTabInset },
-  summaryTitle: { fontSize: 28, fontWeight: '700' },
-  fenceMapWrap: {
-    borderRadius: Spacing.three,
-    overflow: 'hidden',
-    aspectRatio: FENCE_MAP_ASPECT,
-  },
+  summaryTitle: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   summaryActions: { gap: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
-  deleteConfirm: { gap: Spacing.two, alignItems: 'center', maxWidth: 300 },
-  deleteConfirmActions: { flexDirection: 'row', gap: Spacing.four },
 
-  stats: { flexDirection: 'row', gap: Spacing.three },
+  // Session-end map screen (2026-09-02 redesign) — chrome floating over
+  // FenceMap, not a scrolling card. Fixed dark tint regardless of the app's
+  // own theme, same reasoning as STATS_ON_DARK above: this always sits over
+  // a dark map, never over the app's own background.
+  sessionEndTopBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    padding: Spacing.three,
+  },
+  sessionEndStatsBar: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: Spacing.three,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+  },
+  sessionEndBottomOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: Spacing.two,
+    padding: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.three,
+  },
+  onDarkNotice: { color: 'rgba(255,255,255,0.85)' },
+
   stat: { flex: 1, gap: Spacing.half },
   statLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   statValue: { fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] },
