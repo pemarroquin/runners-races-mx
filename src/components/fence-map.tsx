@@ -19,17 +19,20 @@
 // Past fences render muted, each in ITS run's colour (fenceColorForRun of
 // its stored started_at — the same derivation every other screen uses), so
 // territories stay tellable apart without a legend.
-import { useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
+import { Icon } from '@/components/ui/icon';
 import {
   fenceColorForRun,
   GOOGLE_DARK_MAP_STYLE,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
   withAlpha,
+  ZOOM_STEP,
 } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import type { LatLng } from '@/lib/territory';
@@ -49,6 +52,9 @@ interface FenceMapProps {
    *  id via `excludeId` so it isn't drawn twice. */
   others: MyFence[];
   excludeId?: string | null;
+  /** Zoom +/- and re-fit controls, bottom-right — see fence-map.web.tsx's
+   *  own doc comment on the same prop. */
+  controls?: { zoomInLabel: string; zoomOutLabel: string; recenterLabel: string };
 }
 
 const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
@@ -59,7 +65,7 @@ const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 const OUTLINE_WIDTH = 1.5;
 const OUTLINE_ALPHA = 0.55;
 
-export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapProps) {
+export function FenceMap({ geometry, path, color, others, excludeId, controls }: FenceMapProps) {
   const mapRef = useRef<MapView | null>(null);
 
   const highlightRings = useMemo(() => polygonRings(geometry), [geometry]);
@@ -116,6 +122,23 @@ export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapP
     }, 350);
     return () => clearTimeout(id);
   }, [allHighlightCoords]);
+
+  // The "recenter" control's target — same fitToCoordinates call as the
+  // mount effect above, callable again after a manual pan/zoom.
+  const refit = useCallback(() => {
+    mapRef.current?.fitToCoordinates(allHighlightCoords, {
+      edgePadding: FIT_PADDING,
+      animated: true,
+    });
+  }, [allHighlightCoords]);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    void map.getCamera().then((camera) => {
+      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+    });
+  }, []);
 
   const initialRegion = useMemo(() => regionAround(allHighlightCoords), [allHighlightCoords]);
 
@@ -179,7 +202,54 @@ export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapP
           />
         )}
       </MapView>
+      {controls && (
+        <View style={styles.mapControls} pointerEvents="box-none">
+          <MapButton
+            label={controls.recenterLabel}
+            onPress={refit}
+            ios="map"
+            android="map"
+          />
+          <MapButton
+            label={controls.zoomInLabel}
+            onPress={() => zoomBy(ZOOM_STEP)}
+            ios="plus"
+            android="add"
+          />
+          <MapButton
+            label={controls.zoomOutLabel}
+            onPress={() => zoomBy(-ZOOM_STEP)}
+            ios="minus"
+            android="remove"
+          />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Byte-identical to track-map.tsx's own MapButton — see fence-map.web.tsx's
+// matching comment on why this is duplicated rather than shared.
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
@@ -209,4 +279,24 @@ function regionAround(coords: MapCoord[]) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    alignItems: 'center',
+    gap: 10,
+  },
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
 });

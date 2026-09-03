@@ -56,6 +56,12 @@ const translations = {
       paused: 'En pausa',
       checkpointFound: 'Tienes una sesión sin terminar. ¿La continuamos o la descartamos?',
       close: 'Cerrar',
+      // Session-end map screen (2026-09-02 redesign): the ✓ that closes the
+      // just-finished-run map and readies the app for a new session — a
+      // distinct action from `close` above (which still closes a plain X),
+      // so it gets its own label rather than reusing that string.
+      done: 'Listo',
+      recenterFence: 'Centrar en el territorio',
       start: 'Iniciar',
       stop: 'Terminar',
       starting: 'Buscando señal…',
@@ -432,6 +438,9 @@ const translations = {
       paused: 'Paused',
       checkpointFound: 'You have an unfinished session. Continue it or discard it?',
       close: 'Close',
+      // Session-end map screen — see the ES entry's comment.
+      done: 'Done',
+      recenterFence: 'Center on the territory',
       start: 'Start',
       stop: 'Finish',
       starting: 'Finding signal…',

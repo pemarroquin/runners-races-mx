@@ -28,10 +28,12 @@
 // lineMetrics being true (P3 §7c).
 import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { useCallback, useEffect, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { Feature, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
+import { Icon } from '@/components/ui/icon';
 import {
   EMISSIVE_STRENGTH_FULL,
   fenceColorForRun,
@@ -44,6 +46,7 @@ import {
   ROUTE_GRADIENT,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  ZOOM_STEP,
 } from '@/constants/map';
 import { outerRings, type LatLng } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
@@ -70,6 +73,12 @@ interface FenceMapProps {
   color: string;
   others: MyFence[];
   excludeId?: string | null;
+  /** Zoom +/- and re-fit controls, bottom-right — same visual language as
+   *  the live Track map's camera controls (track-map.web.tsx's MapButton).
+   *  Optional: the Territories map (a future caller showing every fence at
+   *  once) may not want a single "recenter on THIS fence" button the same
+   *  way the just-finished-run screen does. */
+  controls?: { zoomInLabel: string; zoomOutLabel: string; recenterLabel: string };
 }
 
 function ensureMapboxCss() {
@@ -100,7 +109,7 @@ function boundsOf(geometry: GeoPolygon | MultiPolygon): [[number, number], [numb
   ];
 }
 
-export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapProps) {
+export function FenceMap({ geometry, path, color, others, excludeId, controls }: FenceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
@@ -330,15 +339,97 @@ export function FenceMap({ geometry, path, color, others, excludeId }: FenceMapP
     });
   }, [others, excludeId]);
 
+  // The "recenter" control's target — re-fit to the highlighted fence,
+  // shorter/snappier than the mount effect's entrance sweep (that one is a
+  // deliberate reveal; this is a correction after a manual pan/zoom, same
+  // duration as track-map.web.tsx's own camera moves).
+  const refit = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    map.fitBounds(boundsOf(dataRef.current.geometry), { padding: 80, duration: 900 });
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.easeTo({ zoom: map.getZoom() + delta, duration: 300 });
+  }, []);
+
   if (!TOKEN) return null;
 
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {controls && (
+        <View style={styles.mapControls} pointerEvents="box-none">
+          <MapButton
+            label={controls.recenterLabel}
+            onPress={refit}
+            ios="map"
+            android="map"
+          />
+          <MapButton
+            label={controls.zoomInLabel}
+            onPress={() => zoomBy(ZOOM_STEP)}
+            ios="plus"
+            android="add"
+          />
+          <MapButton
+            label={controls.zoomOutLabel}
+            onPress={() => zoomBy(-ZOOM_STEP)}
+            ios="minus"
+            android="remove"
+          />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Byte-identical to track-map.web.tsx's own MapButton (same circular dark
+// chrome, same size) — deliberately duplicated rather than shared, matching
+// this codebase's existing per-platform-file convention (track-map.tsx has
+// its own copy too) rather than introducing a new shared import for one
+// small component.
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    alignItems: 'center',
+    gap: 10,
+  },
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    boxShadow: '0px 3px 8px rgba(0,0,0,0.3)',
+  },
 });
