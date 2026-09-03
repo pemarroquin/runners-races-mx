@@ -14,26 +14,44 @@
 // the Expo Go testing workflow), and the extruded 3D fence wall — no
 // fill-extrusion primitive here, so the settled fence renders as a flat
 // filled ribbon in the run's colour instead. The camera choreography — idle
-// follow,
-// fly-in to a tilted close-up on start, follow while running — uses the same
-// constants as web so both platforms feel like the same feature.
+// follow, fly-in to a tilted close-up on start, the follow/overview mode
+// cycle while running — uses the same constants as web so both platforms
+// feel like the same feature; see src/lib/camera.ts for the shared pure
+// geometry.
+//
+// P4 native gap this file used to leave unfixed: it accepted zoomInLabel /
+// zoomOutLabel / recenterLabel purely for interface parity with
+// track-map.web.tsx and drew NO camera controls at all — a runner on
+// Android/iOS had no way to zoom, recenter, or see the whole route, and the
+// camera was hardcoded `heading: 0` (never rotated to face the direction of
+// travel). Both are fixed below, reusing this repo's existing camera-control
+// button language 1:1 with web.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 
+import { Icon } from '@/components/ui/icon';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
+  type CameraMode,
   FENCE_LAG_M,
   FENCE_RIBBON_WIDTH_M,
   FENCE_WALL_OPACITY,
+  FOLLOW_LOOKAHEAD_M,
   GOOGLE_DARK_MAP_STYLE,
   MAP_DEFAULT_ZOOM,
+  MAX_BEARING_STEP_DEG,
+  MIN_BEARING_SEPARATION_M,
+  OVERVIEW_FIT_PADDING_PX,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
   withAlpha,
+  ZOOM_STEP,
 } from '@/constants/map';
+import { bearingFromPath, boundsOfPath, destinationPoint, smoothBearing } from '@/lib/camera';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
 import { gradientStrokeColors, ringToCoords } from '@/lib/fence-draw';
 import { useRegion } from '@/lib/region-context';
@@ -56,13 +74,14 @@ interface TrackMapProps {
   placeholderColor: ColorValue;
   /** Web-only concern (missing Mapbox token); a MapView needs no token. */
   unavailable: string;
-  /** Web-only concern (Task D's camera controls — gesture drift is a
-   *  touchscreen-web problem specific to Mapbox GL's gesture handlers).
-   *  Accepted for interface parity with track-map.web.tsx; react-native-maps
-   *  has its own native pinch/rotate handling this component doesn't touch. */
+  /** Accessibility labels for the camera controls — pre-translated, matching
+   *  every other string on this component. recenterLabel is shown while in
+   *  overview mode (tapping switches to follow); overviewLabel is shown
+   *  while in follow mode (tapping switches to overview). */
   zoomInLabel: string;
   zoomOutLabel: string;
   recenterLabel: string;
+  overviewLabel: string;
 }
 
 // react-native-maps reads `zoom` on Google and `altitude` on Apple, and each
@@ -73,15 +92,26 @@ function altitudeForZoom(zoom: number): number {
   return 60 * Math.pow(2, 19 - zoom);
 }
 
-function cameraFor(center: LatLng, zoom: number, pitch: number) {
+function cameraFor(center: LatLng, zoom: number, pitch: number, heading = 0) {
   return {
     center: { latitude: center.lat, longitude: center.lng },
     zoom,
     altitude: altitudeForZoom(zoom),
     pitch,
-    heading: 0,
+    heading,
   };
 }
+
+// Padding for MapView.fitToCoordinates in overview mode. EdgePadding wants
+// all four sides, unlike web's single-number OVERVIEW_FIT_PADDING_PX for
+// Mapbox GL's fitBounds — bottom gets extra so the fitted route doesn't
+// duck under the camera-controls cluster / bottom tab bar sitting there.
+const OVERVIEW_EDGE_PADDING = {
+  top: OVERVIEW_FIT_PADDING_PX,
+  right: OVERVIEW_FIT_PADDING_PX,
+  bottom: OVERVIEW_FIT_PADDING_PX + BottomTabInset + 96,
+  left: OVERVIEW_FIT_PADDING_PX,
+};
 
 export function TrackMap({
   points,
@@ -91,11 +121,35 @@ export function TrackMap({
   fenceColor,
   placeholder,
   placeholderColor,
+  zoomInLabel,
+  zoomOutLabel,
+  recenterLabel,
+  overviewLabel,
 }: TrackMapProps) {
   const mapRef = useRef<MapView | null>(null);
   const readyRef = useRef(false);
   const flownRef = useRef(false);
   const { region } = useRegion();
+
+  // Camera mode — same product decision as web (track-map.web.tsx): the
+  // control CYCLES between 'follow' (heading-up, tilted, zoomed to the
+  // runner's own preference) and 'overview' (north-up/flat, fitted to the
+  // whole run so far), session-scoped, defaulting to 'follow'. See
+  // src/lib/camera.ts for the shared pure geometry both platforms use.
+  const [cameraMode, setCameraMode] = useState<CameraMode>('follow');
+  // A user preference, not per-leg state — survives a pause/resume within a
+  // session, same as web's preferredZoomRef. Native has no reliable
+  // cross-platform way to detect "was this zoom change a user pinch"
+  // (react-native-maps' ChangeEvent.isGesture is Android-only and
+  // undocumented for reliability — see this file's own report), so unlike
+  // web, only the +/- buttons write this; native's own pinch-zoom keeps
+  // working independently via react-native-maps' built-in gesture handling,
+  // exactly as before, and simply isn't reflected back into this value.
+  const preferredZoomRef = useRef(SESSION_ZOOM);
+  // Smoothed camera heading (degrees, 0-360) — null until bearingFromPath
+  // (camera.ts) has enough separation to derive one. Reset at the start of
+  // each session, same as web: a new session has no known direction yet.
+  const bearingRef = useRef<number | null>(null);
 
   // Only ever a fallback for the *initial* camera, and only while no real
   // fix exists — a map of your metro beats an empty rectangle, and it needs
@@ -108,6 +162,88 @@ export function TrackMap({
   // through animateCamera, never through this value.
   const [initialCamera] = useState(() => cameraFor(initial, MAP_DEFAULT_ZOOM, 0));
 
+  // Applies whichever `mode` names — the ONE definition the continuous
+  // while-running update, the fly-in-adjacent follow, and the mode-toggle
+  // button all share (mirrors applyCameraForMode in track-map.web.tsx,
+  // adapted to react-native-maps' API). A plain function, not useCallback:
+  // unlike web there is no long-lived Mapbox event listener capturing a
+  // stale closure over this — every call site here is either a fresh
+  // render's onPress handler or an effect whose own dependency array already
+  // covers everything this function reads, so recreating it each render
+  // costs nothing and needs no ref-mirroring for points/here.
+  function applyCamera(mode: CameraMode, durationMs: number) {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (mode === 'overview') {
+      const path = here ? [...points, here] : points;
+      const bounds = boundsOfPath(path);
+      if (!bounds) return; // nothing recorded yet — nothing to fit
+      map.fitToCoordinates(
+        [
+          { latitude: bounds.south, longitude: bounds.west },
+          { latitude: bounds.north, longitude: bounds.east },
+        ],
+        { edgePadding: OVERVIEW_EDGE_PADDING, animated: true },
+      );
+      // fitToCoordinates has no bearing/pitch/duration parameters of its
+      // own (a react-native-maps limitation, not a choice here) — flatten
+      // to north-up/flat right after, so overview doesn't inherit follow's
+      // tilt. NOT verified on a device: whether this reads as one motion or
+      // two depends on how each platform's native SDK sequences an
+      // in-flight fitToCoordinates against a second camera call in the same
+      // tick, which nothing in this repo's test suite (environment: 'node',
+      // no React renderer — see vitest.config.ts) can exercise.
+      map.animateCamera({ heading: 0, pitch: 0 }, { duration: durationMs });
+      return;
+    }
+
+    const head = here ?? points[points.length - 1];
+    if (!head) return; // nothing to target yet
+    const bearing = bearingRef.current;
+    // "More map ahead than behind" (Apple/Google Maps turn-by-turn framing)
+    // — react-native-maps has no pixel-offset camera option the way Mapbox
+    // GL's `offset` does (see track-map.web.tsx), so this is done in
+    // world-space instead: center on a point FOLLOW_LOOKAHEAD_M ahead of the
+    // runner along their heading, rather than on the runner's own
+    // coordinate. Falls back to centering exactly on the runner when no
+    // bearing is known yet (session just started, standing still) — there
+    // is no direction to look ahead along.
+    const center = bearing !== null ? destinationPoint(head, bearing, FOLLOW_LOOKAHEAD_M) : head;
+    map.animateCamera(cameraFor(center, preferredZoomRef.current, SESSION_PITCH, bearing ?? 0), {
+      duration: durationMs,
+    });
+  }
+
+  // Resets the camera mode to 'follow' (and clears the known bearing) at the
+  // start of every session — session-scoped, not a persisted user setting.
+  // Fires only on the false→true edge (a pause mid-run doesn't touch
+  // `active`), matching web's identical effect.
+  useEffect(() => {
+    if (!active) return;
+    bearingRef.current = null;
+    // Deferred by a tick, not called straight from the effect body — the
+    // React Compiler's lint rule traces a call through and flags any
+    // setState it can reach as a synchronous effect update. Same pattern as
+    // index.tsx's checkpoint-load effect.
+    const id = setTimeout(() => setCameraMode('follow'), 0);
+    return () => clearTimeout(id);
+  }, [active]);
+
+  // Heading-up source for follow mode. Derives a new bearing only when
+  // there's enough separation to trust one and smooths toward it along the
+  // shortest arc, so a jittery fix doesn't wobble the camera — same logic as
+  // track-map.web.tsx's equivalent effect, sharing camera.ts's pure
+  // functions. Declared BEFORE the camera-update effects below so
+  // bearingRef is fresh by the time they read it in the same commit.
+  useEffect(() => {
+    if (!active) return;
+    const rawBearing = bearingFromPath(points, MIN_BEARING_SEPARATION_M);
+    if (rawBearing === null) return;
+    bearingRef.current =
+      bearingRef.current === null ? rawBearing : smoothBearing(bearingRef.current, rawBearing, MAX_BEARING_STEP_DEG);
+  }, [points, active]);
+
   // Idle: keep the camera over the runner as they move, so the map isn't
   // still framing wherever they were when the tab opened. Skipped during a
   // session — the fly-in and follow below own the camera then.
@@ -118,7 +254,10 @@ export function TrackMap({
   }, [here, active]);
 
   // Fly in when a session starts: tilt and close on the runner. Runs once
-  // per session (flownRef), so a later GPS fix doesn't re-trigger it.
+  // per session (flownRef), so a later GPS fix doesn't re-trigger it. Always
+  // flies to the FOLLOW framing regardless of cameraMode — a session always
+  // starts in follow mode (see the reset effect above), so this and that
+  // effect can never disagree about where the camera opens.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
@@ -133,19 +272,39 @@ export function TrackMap({
     if (!target) return; // wait for a real position rather than flying to a city centre
 
     flownRef.current = true;
-    map.animateCamera(cameraFor(target, SESSION_ZOOM, SESSION_PITCH), {
+    map.animateCamera(cameraFor(target, preferredZoomRef.current, SESSION_PITCH), {
       duration: SESSION_FLY_MS,
     });
   }, [active, points, here]);
 
-  // Follow while recording. Driven by `here` (the tracker's RAW fix stream),
-  // not by the accepted point list: the camera should stay on the runner
-  // even while fixes are being rejected for accuracy.
+  // Camera only while recording: panning the map under someone reading
+  // their finished route would fight them. Re-applies whichever mode is
+  // current on every fix, mirroring track-map.web.tsx's equivalent effect.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !readyRef.current || !running || !flownRef.current || !here) return;
-    map.animateCamera(cameraFor(here, SESSION_ZOOM, SESSION_PITCH), { duration: 900 });
-  }, [here, running]);
+    if (!running || !flownRef.current) return;
+    const head = here ?? points[points.length - 1];
+    if (!head) return;
+    applyCamera(cameraMode, 900);
+    // applyCamera is a fresh function each render closing over this same
+    // render's points/here/cameraMode — including it in the deps array
+    // would just restate points/here/cameraMode, which are already listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points, here, running, cameraMode]);
+
+  const toggleCameraMode = () => {
+    const next: CameraMode = cameraMode === 'follow' ? 'overview' : 'follow';
+    setCameraMode(next);
+    applyCamera(next, 900);
+  };
+
+  const zoomBy = (delta: number) => {
+    preferredZoomRef.current += delta;
+    // A manual zoom tap only makes sense in follow mode — overview's zoom
+    // is derived from fitToCoordinates, and immediately overridden by it on
+    // the next fix while running (see applyCamera's overview branch), so a
+    // tap here while in overview would visibly do nothing useful.
+    if (cameraMode === 'follow') applyCamera('follow', 300);
+  };
 
   // Same split as web (fence-3d.ts): everything older than the trailing
   // FENCE_LAG_M "sets" into the fence — here a flat filled ribbon in this
@@ -208,7 +367,50 @@ export function TrackMap({
           <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
         </View>
       )}
+
+      {/* Camera controls — same button language and bottom-right placement
+          as track-map.web.tsx, added here for the first time (this map had
+          none before P4). ALWAYS rendered while a session is active, never
+          conditionally mounted, and in a fixed order — there is no
+          visibility-flapping bug to dissolve here (native never had one),
+          but the always-mounted contract matches web's for the same reason:
+          a stable cluster reads as calmer than one whose buttons
+          appear/disappear. */}
+      {active && (
+        <View style={styles.cameraControls} pointerEvents="box-none">
+          {cameraMode === 'follow' ? (
+            <MapButton label={overviewLabel} onPress={toggleCameraMode} ios="map" android="map" />
+          ) : (
+            <MapButton label={recenterLabel} onPress={toggleCameraMode} ios="location.fill" android="my_location" />
+          )}
+          <MapButton label={zoomInLabel} onPress={() => zoomBy(ZOOM_STEP)} ios="plus" android="add" />
+          <MapButton label={zoomOutLabel} onPress={() => zoomBy(-ZOOM_STEP)} ios="minus" android="remove" />
+        </View>
+      )}
     </View>
+  );
+}
+
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: Parameters<typeof Icon>[0]['ios'];
+  android: Parameters<typeof Icon>[0]['android'];
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
@@ -223,4 +425,28 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
   placeholderText: { fontSize: 14, textAlign: 'center' },
+  // Same geometry and colour language as track-map.web.tsx's own
+  // cameraControls/mapButton styles — kept as a literal copy rather than a
+  // shared import, matching this file's existing "no cross-import between
+  // the platform components" split (see this file's header).
+  cameraControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    bottom: BottomTabInset + Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
 });

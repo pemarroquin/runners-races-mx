@@ -547,6 +547,7 @@ export default function TrackScreen() {
         zoomInLabel={t('track.zoomIn')}
         zoomOutLabel={t('track.zoomOut')}
         recenterLabel={t('track.recenter')}
+        overviewLabel={t('track.overview')}
       />
 
       {/* The map is always dark (MAP_ALWAYS_DARK), so a plain white scrim

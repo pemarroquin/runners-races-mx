@@ -286,6 +286,66 @@ export const AUTO_RETURN_IDLE_MS = 5000;
 export const ZOOM_STEP = 1;
 
 /**
+ * Camera modes during a session — the re-center control CYCLES between
+ * these on each tap (product decision, not a two-tap-then-reset button):
+ * 'follow' is the Apple/Google Maps turn-by-turn view (heading-up, tilted,
+ * zoomed to the runner's own preference); 'overview' is north-up/flat,
+ * fitted to the whole run so far. See src/lib/camera.ts for the pure
+ * geometry (bearing, bounds) behind both, and track-map.web.tsx /
+ * track-map.tsx for how each platform applies it.
+ */
+export type CameraMode = 'follow' | 'overview';
+
+/**
+ * Minimum distance (metres) an earlier point must be from the latest fix
+ * before bearingFromPath() (camera.ts) will derive a heading from it. Below
+ * this, two fixes can be 1-2m apart from GPS jitter alone — deriving a
+ * bearing from that would swing the camera's heading wildly while the
+ * runner is simply standing still. Comfortably above typical fix-to-fix GPS
+ * noise, comfortably below a single running stride's worth of distance.
+ */
+export const MIN_BEARING_SEPARATION_M = 8;
+
+/**
+ * Max degrees the follow camera's heading moves per camera update
+ * (smoothBearing, camera.ts) — caps how far one jittery fix can swing the
+ * bearing, so a real turn reads as a smooth arc rather than the camera
+ * snapping. Generous enough that an actual corner (a runner turning onto a
+ * cross street) still completes in one or two updates, not a slow crawl.
+ */
+export const MAX_BEARING_STEP_DEG = 45;
+
+/**
+ * Web only (Mapbox GL's `offset` camera option, in pixels, is screen-space
+ * and zoom-independent — see track-map.web.tsx). Fraction of the map
+ * container's height the follow camera's target is pushed DOWN-screen, so
+ * the runner sits toward the lower third of the viewport and more map shows
+ * ahead of them than behind — the Apple/Google Maps turn-by-turn framing
+ * Pedro asked to match. 0.28 reads as "lower third" without crowding the
+ * camera-controls cluster that already sits bottom-right.
+ */
+export const FOLLOW_OFFSET_RATIO = 0.28;
+
+/**
+ * Native only (track-map.tsx). react-native-maps has no pixel-offset camera
+ * option the way Mapbox GL's `offset` does, so the same "more map ahead"
+ * framing is done in world-space instead: the follow camera centers on a
+ * point this many metres AHEAD of the runner along their heading
+ * (destinationPoint, camera.ts), not on the runner's own coordinate. Chosen
+ * to read similarly to FOLLOW_OFFSET_RATIO at SESSION_ZOOM's ground scale —
+ * both are a "look a bit further up the road" framing, just implemented on
+ * whichever axis each platform's camera API actually exposes.
+ */
+export const FOLLOW_LOOKAHEAD_M = 25;
+
+/**
+ * Padding (px) around the fitted bounds in overview mode (fitBounds on web,
+ * fitToCoordinates's edgePadding on native) — without this the route runs
+ * flush to the viewport edge, which reads as clipped rather than framed.
+ */
+export const OVERVIEW_FIT_PADDING_PX = 56;
+
+/**
  * Night styling for react-native-maps on Android (Google provider). The
  * native Track map (track-map.tsx) honours MAP_ALWAYS_DARK with this on
  * Android and `userInterfaceStyle="dark"` on iOS — Google ignores that prop
