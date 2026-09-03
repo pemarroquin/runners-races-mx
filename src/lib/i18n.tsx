@@ -351,10 +351,24 @@ const translations = {
       sectionAbout: 'Acerca de',
       accountTitle: 'Tu cuenta',
       accountBody:
-        'Este teléfono tiene una cuenta anónima para guardar tus territorios en la tabla de posiciones. No pedimos correo, teléfono ni contraseña. Si borras la app o los datos del sitio, pierdes esa cuenta y el territorio que tenga guardado.',
-      // Deliberately no Google/Apple sign-in row — Apple Sign In needs a dev
-      // client and a paid Apple Developer account, out of scope for now.
-      accountSignInNote: 'Por ahora no hay inicio de sesión con Google ni Apple.',
+        'Este dispositivo tiene una cuenta anónima para guardar tus territorios. Si cambias de navegador, de dispositivo o se borran los datos del sitio, esa cuenta —y el territorio que tenga guardado— deja de aparecer. Agrega tu correo para que tu progreso te siga a donde entres.',
+      accountEmailPlaceholder: 'tu@correo.com',
+      accountSendCode: 'Enviar código',
+      accountSending: 'Enviando…',
+      accountEmailInvalid: 'Escribe un correo válido.',
+      accountCodeSent: 'Enviamos un código a %{email}. Revisa tu correo.',
+      accountCodePlaceholder: 'Código de 6 dígitos',
+      accountVerify: 'Confirmar',
+      accountVerifying: 'Confirmando…',
+      accountCodeInvalid: 'Ese código no es válido o ya venció. Inténtalo de nuevo.',
+      accountChangeEmail: 'Cambiar correo',
+      accountFailed: 'Algo falló. Revisa tu conexión e inténtalo otra vez.',
+      // Only the SIGN IN path (account.ts) replaces this device's local
+      // identity — shown only when startEmailAuth reports mode:'signin',
+      // i.e. the email already belongs to an account linked elsewhere.
+      accountSwitchWarning:
+        'Ese correo ya tiene una cuenta. Al confirmar, este dispositivo pasará a usarla — cualquier territorio guardado solo aquí dejará de verse.',
+      accountLinked: 'Cuenta vinculada: %{email}',
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: '¿Cómo quieres aparecer en la tabla?',
@@ -386,7 +400,7 @@ const translations = {
       collectedDebug:
         'Diagnóstico técnico: guardamos el recorrido completo (sin recortar) de tu última sesión terminada en este teléfono, para poder revisar problemas de medición si nos avisas de uno. Solo se accede a mano desde Ajustes, y cada sesión nueva reemplaza a la anterior.',
       collectedIdentity:
-        'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo, teléfono ni contraseña, y no sabemos quién eres.',
+        'Identidad: al guardar tu primer territorio creamos una cuenta anónima ligada a este dispositivo. No pedimos correo ni contraseña para eso. Si desde Ajustes agregas tu correo para que tu progreso te siga a otro dispositivo, ese correo se guarda junto con tu cuenta — es opcional, nunca se pide para usar la app.',
       collectedZone:
         'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
@@ -700,10 +714,24 @@ const translations = {
       sectionAbout: 'About',
       accountTitle: 'Your account',
       accountBody:
-        "This phone has an anonymous account for saving your territories to the leaderboard. We don't ask for an email, phone number, or password. Deleting the app or clearing site data loses that account and any territory it holds.",
-      // Deliberately no Google/Apple sign-in row — Apple Sign In needs a dev
-      // client and a paid Apple Developer account, out of scope for now.
-      accountSignInNote: "No Google or Apple sign-in yet.",
+        "This device has an anonymous account for saving your territories. Switch browsers or devices, or clear site data, and that account — and any territory it holds — stops showing up. Add your email so your progress follows you wherever you sign in.",
+      accountEmailPlaceholder: 'you@email.com',
+      accountSendCode: 'Send code',
+      accountSending: 'Sending…',
+      accountEmailInvalid: 'Enter a valid email address.',
+      accountCodeSent: 'We sent a code to %{email}. Check your inbox.',
+      accountCodePlaceholder: '6-digit code',
+      accountVerify: 'Confirm',
+      accountVerifying: 'Confirming…',
+      accountCodeInvalid: "That code is wrong or expired. Try again.",
+      accountChangeEmail: 'Change email',
+      accountFailed: "Something failed. Check your connection and try again.",
+      // Only the SIGN IN path (account.ts) replaces this device's local
+      // identity — shown only when startEmailAuth reports mode:'signin',
+      // i.e. the email already belongs to an account linked elsewhere.
+      accountSwitchWarning:
+        "That email already has an account. Confirming will switch this device to it — any territory saved only here will stop showing.",
+      accountLinked: 'Account linked: %{email}',
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: 'How do you want to show up on the leaderboard?',
@@ -734,7 +762,7 @@ const translations = {
       collectedDebug:
         "Technical diagnostics: we keep the full (untrimmed) route of your last finished session on this phone, so measurement issues can be investigated if you report one. Only accessed by hand from Settings, and each new session replaces the last.",
       collectedIdentity:
-        'Identity: saving your first territory creates an anonymous account tied to this device. We ask for no email, phone, or password, and we do not know who you are.',
+        "Identity: saving your first territory creates an anonymous account tied to this device — no email or password required. If you add your email from Settings so your progress follows you to another device, that email is stored with your account — it's optional and never required to use the app.",
       collectedZone:
         'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:

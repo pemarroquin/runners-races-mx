@@ -36,8 +36,12 @@ type Outcome<T, R extends string = never> =
  * boilerplate that was IDENTICAL across every caller. `R` lets a specific
  * caller report one extra reason beyond 'network' without widening every
  * other caller's type (see `deleteRun`'s 'denied').
+ *
+ * Exported (2026-09-03) so account.ts's email-link/sign-in functions share
+ * the exact same guard rather than a second hand-copy of it — the whole
+ * point of factoring this out in the first place.
  */
-async function withSession<T, R extends string = never>(
+export async function withSession<T, R extends string = never>(
   fn: (session: Session) => Promise<({ ok: true } & T) | { ok: false; reason: 'network' | R }>,
 ): Promise<Outcome<T, R>> {
   if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };

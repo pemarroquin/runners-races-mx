@@ -27,6 +27,7 @@ import {
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccountLink } from '@/components/account-link';
 import { Icon } from '@/components/ui/icon';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { GlassRadii } from '@/constants/glass';
@@ -378,18 +379,14 @@ export default function SettingsScreen() {
               </Text>
             </View>
 
-            <Text style={[styles.accountTitle, { color: c.text }]}>{t('settings.accountTitle')}</Text>
-            <Text style={[styles.paragraph, { color: c.textSecondary }]}>
-              {t('settings.accountBody')}
-            </Text>
-            {/* No dead sign-in button: Apple Sign In needs a custom dev
-                client plus a paid Apple Developer account — the same EAS
-                ceiling that blocks locked-screen GPS recording — so it's
-                deliberately deferred. One honest line instead of a button
-                that promises a feature that doesn't exist. */}
-            <Text style={[styles.paragraph, { color: c.textSecondary }]}>
-              {t('settings.accountSignInNote')}
-            </Text>
+            {/* Email OTP link/sign-in (account.ts, account-link.tsx) —
+                added 2026-09-03 after an anonymous identity mismatch made a
+                runner's own saved territories disappear from the unified
+                map on a "same browser" that had actually drifted to a new
+                local session. Google/Apple OAuth stays deferred (Apple
+                needs a paid dev account, the same EAS ceiling that blocks
+                locked-screen GPS) — this is the lighter fix that doesn't. */}
+            <AccountLink c={c} />
           </Section>
         )}
 
