@@ -23,6 +23,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FenceMap } from '@/components/fence-map';
+import { NamePrompt } from '@/components/name-prompt';
 import { TrackMap } from '@/components/track-map';
 import { Icon } from '@/components/ui/icon';
 import { fenceColorForRun } from '@/constants/map';
@@ -651,6 +652,12 @@ export default function TrackScreen() {
                     : t('track.deleteFailedNetwork')}
             </Text>
           )}
+
+          {/* First-save leaderboard name prompt — fully self-contained,
+              decides on its own whether there's anything to ask (see
+              name-prompt.tsx). Mounted only once a save has actually
+              succeeded, never before or during. */}
+          {saveState === 'saved' && <NamePrompt />}
 
           {/* Phase 3's payoff. Deliberately its own banner rather than a
               line in the stats row: taking ground off another runner is the
