@@ -1,13 +1,22 @@
 // The Saved tab — two collections behind one segmented switch: the races
-// you've bookmarked, and the territories (fences) you've captured in
-// Territory Mode. Pedro's call (2026-08-27): past fences live HERE, not on
-// the live Track map — a run-history surface, not run-time chrome.
+// you've bookmarked, and the territories you've captured in Territory Mode.
+// Pedro's call (2026-08-27): past fences live HERE, not on the live Track
+// map — a run-history surface, not run-time chrome.
+//
+// Territories redesign (2026-09-02, Pedro's ask): one map showing every
+// saved territory at once (fit to bounds around ALL of them, however far
+// the spread — his call over per-city scoping), not a scrolling list of
+// fence-card thumbnails. Tapping a territory opens a detail card with its
+// stats and actions. A run still in the offline retry queue (see
+// upload-queue.ts) shows too, in a visually distinct PENDING state — Pedro,
+// mid-session: "let's show it on the unified map but ... a different state
+// that reflects that area haven't been uploaded", with Retry/Delete in its
+// card; it promotes to the normal saved look automatically the moment its
+// upload succeeds.
 import { useIsFocused, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -21,17 +30,25 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RaceCard } from '@/components/race-card';
+import { TerritoriesMap, type TerritoryFeature } from '@/components/territories-map';
 import { Icon } from '@/components/ui/icon';
-import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
-import { buildFenceMapUrl, FENCE_MAP_ASPECT } from '@/lib/mapbox';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
 import { useSaved } from '@/lib/saved';
-import { fetchMyFences, type FencesOutcome, type MyFence } from '@/lib/territory-sync';
+import {
+  deleteRun,
+  fetchMyFences,
+  uploadRun,
+  type DeleteOutcome,
+  type FencesOutcome,
+  type MyFence,
+  type SyncOutcome,
+} from '@/lib/territory-sync';
 import { useToday } from '@/lib/today';
 import { formatArea, formatDistance } from '@/lib/tracking';
+import { listQueued, removeQueued, type QueuedRun } from '@/lib/upload-queue';
 
 interface RaceSection {
   key: 'upcoming' | 'past';
@@ -40,6 +57,14 @@ interface RaceSection {
 }
 
 type SavedView = 'races' | 'fences';
+
+/** What the detail card is currently showing — the id plus enough to route
+ *  the right actions (kind) without re-deriving it from the two lists on
+ *  every render. */
+interface Selection {
+  id: string;
+  kind: 'saved' | 'pending';
+}
 
 export default function MyRacesScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -106,6 +131,14 @@ export default function MyRacesScreen() {
   // fake "no territory yet" — same `isFocused` gate index.tsx's queue-drain
   // effect uses, not a new abstraction.
   const [fences, setFences] = useState<FencesOutcome | null>(null);
+  // The offline retry queue — local, synchronous (see upload-queue.ts), so
+  // this is a plain read rather than a fetch. Refreshed on the same
+  // trigger as `fences` so a run that finishes uploading in the background
+  // (index.tsx's own flush effect) shows up here promoted to `fences`
+  // without the runner having to leave and come back.
+  const [queued, setQueued] = useState<QueuedRun[]>([]);
+  const refreshQueued = useCallback(() => setQueued(listQueued()), []);
+
   useEffect(() => {
     if (view !== 'fences' || !isFocused) return;
     let stale = false;
@@ -113,6 +146,7 @@ export default function MyRacesScreen() {
     // body (React Compiler rule — same pattern as the run tracker's clock).
     const id = setTimeout(() => {
       setFences(null);
+      refreshQueued();
       fetchMyFences().then((outcome) => {
         if (!stale) setFences(outcome);
       });
@@ -121,7 +155,7 @@ export default function MyRacesScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [view, isFocused]);
+  }, [view, isFocused, refreshQueued]);
 
   // Pull-to-refresh — same refreshing-boolean pattern as leaderboard.tsx's
   // onRefresh, kept separate from the `fences === null` loading state above
@@ -130,10 +164,13 @@ export default function MyRacesScreen() {
   const [fencesRefreshing, setFencesRefreshing] = useState(false);
   const onRefreshFences = useCallback(async () => {
     setFencesRefreshing(true);
+    refreshQueued();
     const outcome = await fetchMyFences();
     setFences(outcome);
     setFencesRefreshing(false);
-  }, []);
+  }, [refreshQueued]);
+
+  const [selection, setSelection] = useState<Selection | null>(null);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
@@ -216,10 +253,13 @@ export default function MyRacesScreen() {
       ) : (
         <FencesView
           fences={fences}
-          locale={locale}
-          scheme={scheme}
+          queued={queued}
           refreshing={fencesRefreshing}
           onRefresh={onRefreshFences}
+          selection={selection}
+          onSelect={setSelection}
+          locale={locale}
+          scheme={scheme}
         />
       )}
     </SafeAreaView>
@@ -228,26 +268,28 @@ export default function MyRacesScreen() {
 
 function FencesView({
   fences,
-  locale,
-  scheme,
+  queued,
   refreshing,
   onRefresh,
+  selection,
+  onSelect,
+  locale,
+  scheme,
 }: {
   fences: FencesOutcome | null;
-  locale: string;
-  scheme: 'dark' | 'light';
+  queued: QueuedRun[];
   refreshing: boolean;
   onRefresh: () => void;
+  selection: Selection | null;
+  onSelect: (s: Selection | null) => void;
+  locale: string;
+  scheme: 'dark' | 'light';
 }) {
   const c = Colors[scheme];
   const { t } = useI18n();
 
   // Loading and disabled/failed stay their own distinct states — a failure
   // must never quietly render as the empty "no territory yet" copy below.
-  // Neither one grows a RefreshControl of its own here, same as
-  // leaderboard.tsx's Empty/loading states: pull-to-refresh lives on the
-  // data list, matched to that existing pattern rather than inventing a
-  // third one.
   if (fences === null) {
     return (
       <View style={styles.emptyWrap}>
@@ -259,10 +301,8 @@ function FencesView({
   if (!fences.ok) {
     // Pull-to-refresh here too — 'disabled' has nothing a refresh would
     // change, but a transient 'failed' (one dropped request) previously
-    // left the runner stuck on this screen with no way back to the list
-    // short of switching the segment away and back. A ScrollView (not
-    // FlatList — there's no list, just this one message) gets the same
-    // RefreshControl the data view uses below.
+    // left the runner stuck on this screen with no way back short of
+    // switching the segment away and back.
     return (
       <ScrollView
         contentContainerStyle={[styles.emptyWrap, styles.emptyWrapGrow]}
@@ -280,99 +320,256 @@ function FencesView({
     );
   }
 
+  // Only what a map can actually draw — a fully-taken run (geometry null,
+  // see MyFence's own doc comment) has no shape left, so there is nothing
+  // to render or tap. Real history either way; simply not representable on
+  // THIS surface. (The old card list showed a metadata-only card for these;
+  // this redesign trades that for "a single map view" per Pedro's ask —
+  // known, deliberate scope reduction, not an oversight.)
+  const savedFeatures: TerritoryFeature[] = fences.fences
+    .filter((f) => f.geometry !== null)
+    .map((f) => ({
+      id: f.id,
+      kind: 'saved' as const,
+      geometry: f.geometry!,
+      route: f.route,
+      startedAtMs: f.startedAtMs,
+    }));
+  const pendingFeatures: TerritoryFeature[] = queued.map((q) => ({
+    id: q.id,
+    kind: 'pending' as const,
+    geometry: q.run.fence.geometry.geometry,
+    route: q.run.points,
+    startedAtMs: q.run.startedAt,
+  }));
+  const features = [...savedFeatures, ...pendingFeatures];
+
+  const selectedFence =
+    selection?.kind === 'saved' ? fences.fences.find((f) => f.id === selection.id) : undefined;
+  const selectedQueued =
+    selection?.kind === 'pending' ? queued.find((q) => q.id === selection.id) : undefined;
+
+  if (features.length === 0) {
+    return (
+      <ScrollView
+        contentContainerStyle={[styles.emptyWrap, styles.emptyWrapGrow]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
+        }>
+        <Animated.View entering={FadeIn.duration(400)}>
+          <Text style={[styles.empty, { color: c.textSecondary }]}>{t('myraces.fencesEmpty')}</Text>
+        </Animated.View>
+      </ScrollView>
+    );
+  }
+
   return (
-    <FlatList
-      data={fences.fences}
-      keyExtractor={(f) => f.id}
-      contentContainerStyle={styles.list}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
-      }
-      renderItem={({ item, index }) => (
-        <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
-          <FenceCard fence={item} locale={locale} scheme={scheme} />
-        </Animated.View>
+    <View style={styles.mapStage}>
+      <TerritoriesMap features={features} onSelect={(id, kind) => onSelect({ id, kind })} />
+      {(selectedFence || selectedQueued) && (
+        <DetailCard
+          fence={selectedFence}
+          queued={selectedQueued}
+          locale={locale}
+          scheme={scheme}
+          onClose={() => onSelect(null)}
+          onDeleted={() => onSelect(null)}
+        />
       )}
-      ListEmptyComponent={
-        <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
-          <Text style={[styles.empty, { color: c.textSecondary }]}>
-            {t('myraces.fencesEmpty')}
-          </Text>
-        </Animated.View>
-      }
-    />
+    </View>
   );
 }
 
-function FenceCard({
+function DetailCard({
   fence,
+  queued,
   locale,
   scheme,
+  onClose,
+  onDeleted,
 }: {
-  fence: MyFence;
+  fence?: MyFence;
+  queued?: QueuedRun;
   locale: string;
   scheme: 'dark' | 'light';
+  onClose: () => void;
+  onDeleted: () => void;
 }) {
   const c = Colors[scheme];
   const { t } = useI18n();
-  const color = fenceColorForRun(fence.startedAtMs).color;
-  // Null once the run has been fully taken — there is no shape left to draw,
-  // but the card stays as history.
-  const mapUrl = fence.geometry
-    ? buildFenceMapUrl(fence.geometry, scheme === 'dark', color, fence.route ?? undefined)
-    : null;
-  const fullyTaken = fence.geometry === null;
-  const date = new Date(fence.startedAtMs).toLocaleDateString(
-    locale === 'es' ? 'es-MX' : 'en-US',
-    { day: 'numeric', month: 'short', year: 'numeric' },
-  );
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFailure, setDeleteFailure] = useState<DeleteOutcome | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [retryFailure, setRetryFailure] = useState<SyncOutcome | null>(null);
+
+  const startedAtMs = fence?.startedAtMs ?? queued?.run.startedAt ?? 0;
+  const areaM2 = fence?.areaM2 ?? queued?.run.fence.areaM2 ?? 0;
+  const distanceM = fence?.distanceM ?? queued?.run.distanceM ?? 0;
+  const date = new Date(startedAtMs).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const handleDeleteSaved = useCallback(async () => {
+    if (!fence) return;
+    setDeleting(true);
+    setDeleteFailure(null);
+    const outcome = await deleteRun(fence.id);
+    if (!outcome.ok) {
+      setDeleting(false);
+      setDeleteFailure(outcome);
+      setConfirmingDelete(false);
+      return;
+    }
+    onDeleted();
+  }, [fence, onDeleted]);
+
+  const handleDeleteQueued = useCallback(() => {
+    if (!queued) return;
+    // Local-only, synchronous — no network round trip, but still the
+    // runner's ONLY copy of this run (see upload-queue.ts's own header), so
+    // it goes through the same two-step confirm as a saved delete rather
+    // than firing straight from the button.
+    removeQueued(queued.id);
+    onDeleted();
+  }, [queued, onDeleted]);
+
+  const handleRetry = useCallback(async () => {
+    if (!queued) return;
+    setRetrying(true);
+    setRetryFailure(null);
+    const outcome = await uploadRun(queued.run);
+    if (!outcome.ok) {
+      setRetrying(false);
+      setRetryFailure(outcome);
+      return;
+    }
+    // Uploaded — take it out of the local queue so a later background
+    // flush (index.tsx) doesn't upload it a second time, same reasoning as
+    // save()'s own success path there.
+    removeQueued(queued.id);
+    onDeleted();
+  }, [queued, onDeleted]);
 
   return (
-    <View style={[styles.fenceCard, { backgroundColor: c.backgroundElement }]}>
-      {mapUrl && (
-        <View style={styles.fenceImgWrap}>
-          <Image
-            source={{ uri: mapUrl }}
-            style={styles.fenceImg}
-            contentFit="cover"
-            accessibilityLabel={t('myraces.tabFences')}
-          />
+    <Animated.View
+      entering={FadeInDown.duration(280)}
+      style={[styles.detailCard, { backgroundColor: c.backgroundElement }]}>
+      <View style={styles.detailHeader}>
+        <View style={styles.detailMeta}>
+          <Text style={[styles.detailDate, { color: c.text }]}>{date}</Text>
+          <Text style={[styles.detailStats, { color: c.textSecondary }]}>
+            {formatArea(areaM2)}  ·  {formatDistance(distanceM)}
+          </Text>
         </View>
-      )}
-      <View style={styles.fenceMeta}>
-        <View style={[styles.fenceDot, { backgroundColor: color }]} />
-        <Text style={[styles.fenceDate, { color: c.text }]}>{date}</Text>
-        <Text style={[styles.fenceStats, { color: c.textSecondary }]}>
-          {formatArea(fence.areaM2)}  ·  {formatDistance(fence.distanceM)}
-        </Text>
+        <Pressable onPress={onClose} accessibilityRole="button" hitSlop={10}>
+          <Icon ios="xmark" android="close" size={18} color={c.textSecondary} />
+        </Pressable>
       </View>
 
-      {/* Speed-flagged by the server. Shown on the runner's own card too,
-          not just to others — if a run looks implausible, the person who
-          ran it should be the first to know. */}
-      {fence.flagged && (
-        <View style={[styles.fenceLost, { borderTopColor: c.backgroundSelected }]}>
+      {queued && (
+        <View style={[styles.pendingBadge, { backgroundColor: c.background }]}>
+          <ActivityIndicator size="small" color={c.textSecondary} />
+          <Text style={[styles.pendingBadgeText, { color: c.textSecondary }]}>
+            {t('myraces.pendingLabel')}
+          </Text>
+        </View>
+      )}
+
+      {fence?.flagged && (
+        <View style={styles.detailNoticeRow}>
           <Icon ios="exclamationmark.triangle.fill" android="warning" size={12} color={c.accent} />
-          <Text style={[styles.fenceLostText, { color: c.accent }]}>
+          <Text style={[styles.detailNoticeText, { color: c.accent }]}>
             {t('myraces.fenceFlagged')}
           </Text>
         </View>
       )}
-
-      {/* Phase 3: this run lost ground to someone else. Shown on the card
-          rather than only in a notification, so the history stays true even
-          if the runner never saw the alert. */}
-      {fence.lostM2 > 0 && (
-        <View style={[styles.fenceLost, { borderTopColor: c.backgroundSelected }]}>
+      {fence && fence.lostM2 > 0 && (
+        <View style={styles.detailNoticeRow}>
           <Icon ios="flag.slash" android="flag" size={12} color={c.accent} />
-          <Text style={[styles.fenceLostText, { color: c.accent }]}>
-            {fullyTaken
+          <Text style={[styles.detailNoticeText, { color: c.accent }]}>
+            {fence.geometry === null
               ? t('myraces.fenceFullyTaken')
               : t('myraces.fenceLost', { area: formatArea(fence.lostM2) })}
           </Text>
         </View>
       )}
-    </View>
+
+      {retryFailure && !retryFailure.ok && (
+        <Text style={[styles.detailNoticeText, { color: c.accent }]}>
+          {retryFailure.reason === 'disabled'
+            ? t('track.syncDisabled')
+            : retryFailure.reason === 'auth'
+              ? t('track.syncFailedAuth')
+              : t('track.syncFailedNetwork')}
+        </Text>
+      )}
+      {deleteFailure && !deleteFailure.ok && (
+        <Text style={[styles.detailNoticeText, { color: c.accent }]}>
+          {deleteFailure.reason === 'disabled'
+            ? t('track.deleteFailedDisabled')
+            : deleteFailure.reason === 'auth'
+              ? t('track.deleteFailedAuth')
+              : deleteFailure.reason === 'denied'
+                ? t('track.deleteFailedDenied')
+                : t('track.deleteFailedNetwork')}
+        </Text>
+      )}
+
+      {confirmingDelete ? (
+        <View style={styles.detailConfirm}>
+          <Text style={[styles.detailNoticeText, { color: c.textSecondary }]}>
+            {t('track.deleteConfirmBody')}
+          </Text>
+          <View style={styles.detailActions}>
+            <Pressable onPress={() => setConfirmingDelete(false)} accessibilityRole="button" hitSlop={10}>
+              <Text style={[styles.detailAction, { color: c.textSecondary }]}>
+                {t('common.cancel')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => void (queued ? handleDeleteQueued() : handleDeleteSaved())}
+              disabled={deleting}
+              accessibilityRole="button"
+              hitSlop={10}>
+              <Text style={[styles.detailAction, { color: c.accent, opacity: deleting ? 0.5 : 1 }]}>
+                {deleting ? t('track.deleting') : t('track.deleteConfirmAction')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.detailActions}>
+          {queued && (
+            <Pressable
+              onPress={() => void handleRetry()}
+              disabled={retrying}
+              accessibilityRole="button"
+              hitSlop={10}>
+              <Text style={[styles.detailAction, { color: c.accent, opacity: retrying ? 0.5 : 1 }]}>
+                {retrying ? t('track.saving') : t('common.retry')}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => setConfirmingDelete(true)}
+            disabled={deleting || retrying}
+            accessibilityRole="button"
+            hitSlop={10}>
+            <Text
+              style={[
+                styles.detailAction,
+                { color: c.textSecondary, opacity: deleting || retrying ? 0.5 : 1 },
+              ]}>
+              {t('track.deleteRun')}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -410,32 +607,44 @@ const styles = StyleSheet.create({
   // viewport, so the pull-to-refresh gesture has room to work from
   // anywhere on screen rather than just the text's own bounds.
   emptyWrapGrow: { flexGrow: 1 },
-  empty: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
+  empty: { textAlign: 'center', fontSize: 15, lineHeight: 22, paddingHorizontal: Spacing.four },
   notices: { gap: Spacing.two, marginBottom: Spacing.two },
   notice: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.one },
   noticeText: { fontSize: 13, lineHeight: 19 },
   noticeAction: { fontSize: 13, fontWeight: '700' },
 
-  fenceCard: { borderRadius: Spacing.two, overflow: 'hidden' },
-  fenceImgWrap: { aspectRatio: FENCE_MAP_ASPECT },
-  fenceImg: { width: '100%', height: '100%' },
-  fenceMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
+  mapStage: { flex: 1 },
+  detailCard: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three,
+    bottom: BottomTabInset + Spacing.three,
+    borderRadius: Spacing.three,
     padding: Spacing.three,
+    gap: Spacing.two,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  fenceDot: { width: 10, height: 10, borderRadius: 5 },
-  fenceDate: { fontSize: 15, fontWeight: '700' },
-  fenceStats: { fontSize: 13, fontWeight: '600', marginLeft: 'auto' },
-  fenceLost: {
+  detailHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  detailMeta: { gap: Spacing.half },
+  detailDate: { fontSize: 16, fontWeight: '700' },
+  detailStats: { fontSize: 13, fontWeight: '600' },
+  pendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.three,
-    paddingTop: Spacing.two,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing.half,
+    paddingHorizontal: Spacing.two,
+    borderRadius: 999,
   },
-  fenceLostText: { fontSize: 13, fontWeight: '600', flex: 1 },
+  pendingBadgeText: { fontSize: 12, fontWeight: '700' },
+  detailNoticeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  detailNoticeText: { fontSize: 13, lineHeight: 18 },
+  detailConfirm: { gap: Spacing.two },
+  detailActions: { flexDirection: 'row', gap: Spacing.four, justifyContent: 'flex-end' },
+  detailAction: { fontSize: 14, fontWeight: '700' },
 });
