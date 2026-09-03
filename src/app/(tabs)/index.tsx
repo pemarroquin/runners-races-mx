@@ -438,14 +438,20 @@ export default function TrackScreen() {
               foreground cycles are real but untracked ground, unlike a
               pause, and this is the data that confirms or rules out the
               background-gap hypothesis for a reported distance shortfall.
-              Diagnostic, not a claim: gapChordM is NEVER added to
-              distanceM above. */}
+              Split into credited/uncredited (2026-09-02, gap-distance-policy):
+              a plausible gap's chord now DOES count toward the Distance stat
+              a few lines above, under src/lib/gap-policy.ts's caps — this
+              notice must say so, or a runner reconciling against a watch
+              would double-add the credited portion right back on top. */}
           {tracker.gapCount > 0 && (
             <Text style={[styles.noticeSmall, { color: c.textSecondary }]}>
               {t('track.gapNotice', {
                 count: tracker.gapCount,
                 duration: formatDuration(tracker.gapDurationMs / 1000),
-                chord: formatDistance(tracker.gapChordM),
+                credited: formatDistance(tracker.creditedGapM),
+                uncredited: formatDistance(
+                  Math.max(0, tracker.gapChordM - tracker.creditedGapM),
+                ),
               })}
             </Text>
           )}
