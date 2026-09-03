@@ -1,0 +1,107 @@
+// Shared gap plausibility policy — the ONE pair of caps that decide whether
+// a GPS gap (missing fixes between two recorded points) is close enough to
+// "a runner briefly out of GPS view" to act on, or far enough away that we
+// must leave the hole alone.
+//
+// Before this module existed the two subsystems that each face this exact
+// question disagreed with each other. tiles.ts already had these caps and
+// used them to decide whether to draw gap-fill H3 cells across a gap.
+// tracking.ts's distanceM accumulator used NO caps at all: a
+// visibilitychange gap was ALWAYS excluded from distanceM regardless of how
+// short or slow it was, while a GPS-stall gap of the identical physical
+// shape (no visibilitychange fired, the watch stayed alive the whole time)
+// was ALWAYS included, because tracking.ts never broke the leg for it. The
+// 2026-09-02 geometry audit (see `Source Data/Outputs/Running App/Geometry
+// Audit — Saved Runs vs Recomputed (2026-09-02).md`, one level above this
+// repo) measured that disagreement directly on real saved runs: on run
+// `68e32c11`, the tile builder bridged straight through a clean 76s/105.9m
+// leg-break gap (105.9m is under MAX_BRIDGE_DISTANCE_M, 5.0 km/h is far
+// under MAX_BRIDGE_SPEED_MS) while the recorder's distance total excluded
+// that exact same chord. Same physical event, two different answers.
+//
+// Both subsystems now import the caps from here so they can never
+// independently drift again. Do not fork a second copy of either number.
+//
+// IMPORTANT — this governs DISTANCE credit and TILE gap-fill only, never
+// GEOMETRY. Crediting a gap's chord to a distance total is a scalar claim
+// ("the runner covered at least this much ground in this much time"), which
+// two real timestamped fixes and a straight-line lower bound support.
+// Nothing here inserts a point into a recorded path or changes what
+// buildFence() sees — that would fabricate territory nobody proved they
+// held. See this repo's "never connect across a gap" rule.
+import { haversineM, type LatLng } from '@/lib/territory';
+
+/**
+ * Fastest sustained human running speed the server's OWN anti-cheat
+ * flagging already treats as implausible — reused rather than inventing a
+ * second number, so every subsystem that judges "physically possible for a
+ * runner" agrees. See supabase/migrations/20260827_anti_cheat_flag.sql:
+ * `max_kmh constant numeric := 25` (marathon world record pace is ~21 km/h;
+ * 25 is already generous).
+ *
+ * A gap whose implied speed exceeds this is never bridged and never
+ * credited to distance.
+ */
+export const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
+
+/**
+ * Longest gap between two consecutive fixes treated as plausible at all,
+ * even when the implied speed is a perfectly ordinary jog. This is a
+ * SEPARATE question from MAX_BRIDGE_SPEED_MS (b8's review, 2026-09-01):
+ * speed asks "was this physically possible" (catches a car, a GPS spoof, a
+ * teleport); distance asks "do we know what path they took." A runner
+ * really can cover 2km in 11 minutes (3.03 m/s — comfortably under the
+ * speed cap) while their phone sat locked in a pocket the whole way.
+ * Bridging a gap only knows how to draw a STRAIGHT LINE between the two
+ * fixes, and the runner's real path followed streets the straight line can
+ * cut through buildings, a river, or another runner's yard. Under
+ * first-to-claim tile ownership that isn't merely generous — a wrongly
+ * claimed tile is permanently taken from whoever actually ran it. For
+ * distance credit the stakes are lower (a scalar total, not ownership) but
+ * the same cap is reused rather than inventing a second, looser one for
+ * distance alone — see this module's header.
+ *
+ * 150m: roughly three sampling intervals at the tracker's real fix spacing
+ * (empirically ~30-50m apart at the 2s/3m throttle — see tracking.ts's
+ * TIME_INTERVAL_MS/DISTANCE_INTERVAL_M and tiles.test.ts's own gap-fill test
+ * fixtures). That comfortably absorbs one or two dropped fixes (a brief GPS
+ * hiccup, a short tunnel) while staying far short of anything that could be
+ * a real route deviation.
+ */
+export const MAX_BRIDGE_DISTANCE_M = 150;
+
+export interface GapEvaluation {
+  /** Straight-line distance between the gap's two endpoints, metres. This is
+   *  the raw chord — present regardless of whether the gap is credited, so
+   *  callers can keep instrumenting every gap even when this returns
+   *  `credited: false`. */
+  chordM: number;
+  /** True when the gap passes BOTH shared caps (distance and implied speed)
+   *  and is safe to act on: credit its chord to a distance total, or bridge
+   *  it into contiguous tiles. False leaves the hole exactly as today. */
+  credited: boolean;
+}
+
+/**
+ * Evaluates a single GPS gap against the shared caps. Pure — no React, no
+ * network, testable directly (see test/gap-policy.test.ts).
+ *
+ * Returns `null` when there is no prior point to chord against at all (a
+ * gap that opened before any fix had ever been recorded) — there is nothing
+ * to measure, let alone credit.
+ */
+export function evaluateGap(params: { from: LatLng | null; to: LatLng; dtMs: number }): GapEvaluation | null {
+  const { from, to, dtMs } = params;
+  if (!from) return null;
+
+  const chordM = haversineM(from, to);
+  // dtMs <= 0 (out-of-order or identical timestamps) can't imply a real
+  // speed — treated as implausible rather than divided by zero/negative, so
+  // a bad pair of timestamps fails safe (not credited) instead of silently
+  // passing the check. Same reasoning as tiles.ts's own impliedSpeedMs
+  // guard.
+  const credited =
+    dtMs > 0 && chordM <= MAX_BRIDGE_DISTANCE_M && chordM / (dtMs / 1000) <= MAX_BRIDGE_SPEED_MS;
+
+  return { chordM, credited };
+}

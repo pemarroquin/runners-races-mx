@@ -82,11 +82,15 @@ const translations = {
         'No pudimos mantener la pantalla encendida — evita bloquear el teléfono para no perder el registro.',
       backgroundGap: 'El registro se pausó mientras la app estaba en segundo plano.',
       // Distance-gap instrumentation on the finished-run summary — see
-      // tracking.ts's gapCount/gapDurationMs/gapChordM. %{duration} and
-      // %{chord} are pre-formatted strings from formatDuration/formatDistance.
+      // tracking.ts's gapCount/gapDurationMs/gapChordM/creditedGapM.
+      // %{duration}/%{credited}/%{uncredited} are pre-formatted strings from
+      // formatDuration/formatDistance. Split (not one bare %{chord}) since
+      // gap-distance-policy: the credited part IS already inside the
+      // Distance stat shown a few lines above this notice, so saying so
+      // avoids a runner double-adding it back on top.
       gapNotice: {
-        one: '1 interrupción por segundo plano (%{duration}) — ~%{chord} sin registrar en línea recta.',
-        other: '%{count} interrupciones por segundo plano (%{duration}) — ~%{chord} sin registrar en línea recta.',
+        one: '1 interrupción por segundo plano (%{duration}) — ~%{credited} contados en línea recta, ~%{uncredited} sin registrar.',
+        other: '%{count} interrupciones por segundo plano (%{duration}) — ~%{credited} contados en línea recta, ~%{uncredited} sin registrar.',
       } as PluralForm,
       searching: 'Buscando señal GPS…',
       accuracy: 'Precisión: %{m} m',
@@ -425,9 +429,10 @@ const translations = {
       keepAwakeFailed:
         "We couldn't keep the screen on — avoid locking your phone or recording may stop.",
       backgroundGap: 'Recording paused while the app was in the background.',
+      // Split credited/uncredited — see the ES entry's comment.
       gapNotice: {
-        one: '1 background interruption (%{duration}) — ~%{chord} unrecorded in a straight line.',
-        other: '%{count} background interruptions (%{duration}) — ~%{chord} unrecorded in a straight line.',
+        one: '1 background interruption (%{duration}) — ~%{credited} counted as a straight line, ~%{uncredited} left unrecorded.',
+        other: '%{count} background interruptions (%{duration}) — ~%{credited} counted as a straight line, ~%{uncredited} left unrecorded.',
       } as PluralForm,
       searching: 'Searching for GPS signal…',
       accuracy: 'Accuracy: %{m} m',

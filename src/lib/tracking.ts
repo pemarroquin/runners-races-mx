@@ -12,6 +12,7 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { evaluateGap } from '@/lib/gap-policy';
 import {
   getCurrent,
   getLastKnown,
@@ -157,14 +158,22 @@ export interface RunTracker {
    *  session, ms. */
   gapDurationMs: number;
   /** Sum of the straight-line distance between the last point recorded
-   *  before each gap and the first point recorded after it, metres.
-   *  Instrumentation ONLY — this is never added to distanceM. Whether it
-   *  should be is exactly the open question this measurement answers: if a
-   *  real run's gapChordM is close to its distance shortfall against a
-   *  reference (a watch, say), that confirms the gap is where the missing
-   *  ground went and bridging it becomes a one-line, evidence-backed change
-   *  instead of a guess. */
+   *  before each gap and the first point recorded after it, metres, for
+   *  EVERY gap regardless of plausibility. Instrumentation: the raw
+   *  measurement, not a claim about what's been credited to distanceM — see
+   *  creditedGapM for the credited subset. The 2026-09-02 geometry audit
+   *  (Source Data/Outputs/Running App/Geometry Audit — Saved Runs vs
+   *  Recomputed (2026-09-02).md) confirmed this is where a real run's
+   *  distance shortfall against `raw_path` came from. */
   gapChordM: number;
+  /** Subset of gapChordM already added to distanceM, under the shared gap
+   *  policy in src/lib/gap-policy.ts — the SAME distance/speed caps the
+   *  tile builder (tiles.ts) uses to decide whether to bridge a gap into
+   *  contiguous tiles, so the two subsystems can never independently decide
+   *  a gap "happened" for one purpose but not the other. A gap that fails
+   *  either cap still counts in gapChordM above but not here and not in
+   *  distanceM — the hole stays a hole, exactly as before this existed. */
+  creditedGapM: number;
   start: () => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
@@ -195,6 +204,7 @@ export function useRunTracker(): RunTracker {
   const [gapCount, setGapCount] = useState(0);
   const [gapDurationMs, setGapDurationMs] = useState(0);
   const [gapChordM, setGapChordM] = useState(0);
+  const [creditedGapM, setCreditedGapM] = useState(0);
   // The point + wall-clock time when the document was last hidden while
   // running, and a flag telling onFix its NEXT fix is the far end of an
   // open gap's chord. Refs: onFix reads/sets them synchronously in the
@@ -338,18 +348,34 @@ export function useRunTracker(): RunTracker {
     // interface comment on lastFix.
     setLastFix({ lat: fix.lat, lng: fix.lng });
 
-    // Gap-chord instrumentation (Task B). This fix is the far end of an open
-    // gap — the visibilitychange handler set the flag and captured the near
-    // end (gapStartRef.lastPoint) before clearing lastRef for the leg break.
-    // Uses the RAW fix, same as lastFix above: recording quality and "how
-    // far did the gap actually span" are different questions.
+    // Gap-chord instrumentation and credit (Task B → the 2026-09-02 gap
+    // policy). This fix is the far end of an open gap — the visibilitychange
+    // handler set the flag and captured the near end (gapStartRef.lastPoint)
+    // before clearing lastRef for the leg break. Uses the RAW fix, same as
+    // lastFix above: recording quality and "how far did the gap actually
+    // span" are different questions.
     if (awaitingGapChordRef.current) {
       awaitingGapChordRef.current = false;
       const gapStart = gapStartRef.current;
       gapStartRef.current = null;
-      if (gapStart?.lastPoint) {
-        const chord = haversineM(gapStart.lastPoint, { lat: fix.lat, lng: fix.lng });
-        setGapChordM((cur) => cur + chord);
+      const gap = evaluateGap({
+        from: gapStart?.lastPoint ?? null,
+        to: { lat: fix.lat, lng: fix.lng },
+        // Duration from the two RECORDED fixes' own timestamps, not
+        // wall-clock hidden-time — this is what tiles.ts's own gap check
+        // uses when it recomputes from raw_path later, so a gap's
+        // plausibility reads the same way from both directions.
+        dtMs: gapStart?.lastPoint ? fix.ts - gapStart.lastPoint.ts : 0,
+      });
+      if (gap) {
+        setGapChordM((cur) => cur + gap.chordM);
+        if (gap.credited) {
+          // Only the credited subset reaches distanceM. A gap that fails
+          // either shared cap is left out exactly as before this existed —
+          // see creditedGapM's own interface doc.
+          setCreditedGapM((cur) => cur + gap.chordM);
+          setDistanceM((cur) => cur + gap.chordM);
+        }
       }
     }
 
@@ -469,11 +495,26 @@ export function useRunTracker(): RunTracker {
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        // Gap starts. Capture the last known point NOW — the 'visible'
-        // branch below clears lastRef.current (leg break) before this could
-        // be read again, and it's the near end of the chord instrumented
-        // in onFix.
-        gapStartRef.current = { atMs: Date.now(), lastPoint: lastRef.current };
+        // Only the gap's START TIME is captured here — never the chord's
+        // near end. The old code read lastRef.current at this point and
+        // used it as the chord's near end once we came back, which is
+        // wrong whenever the watch survives backgrounding: this file's own
+        // comment above admits "there is no guarantee the old watch
+        // subscription is still alive... OR dead" — desktop Chrome in
+        // particular keeps a background tab's geolocation watch running.
+        // When that happens, onFix has no visibility guard, so it keeps
+        // accepting fixes and adding them to distanceM/points for the
+        // WHOLE hidden period, same as if the tab were foregrounded. A
+        // chord computed from the point captured HERE (before any of that
+        // hidden-period accumulation) back to wherever the runner is once
+        // visible again would double-count every fix that arrived while
+        // hidden — inflating distanceM rather than correcting it. Reading
+        // lastRef.current fresh at 'visible' below, right before the
+        // leg-break null, always reflects the true last recorded point
+        // whether the watch died (unchanged since this event) or survived
+        // (a point from seconds into the hidden period) — so the credited
+        // chord can never overlap ground distanceM already has.
+        gapStartRef.current = { atMs: Date.now(), lastPoint: null };
         return;
       }
       if (document.visibilityState !== 'visible') return;
@@ -483,6 +524,9 @@ export function useRunTracker(): RunTracker {
       // reasoning as resume() — never assume a subscription survived
       // something that can tear it down.
       clearSub();
+      // The chord's true near end — see the 'hidden' branch's comment.
+      // Read BEFORE the leg-break null below, whatever it currently holds.
+      const chordNearEnd = lastRef.current;
       // Leg break, exactly like resume(): the gap while hidden was never
       // recorded, so the first fix after reconnecting must not draw a
       // straight-line distance back to wherever the runner is now.
@@ -501,9 +545,10 @@ export function useRunTracker(): RunTracker {
         // during an active run) rather than a new one.
         incrementPilotCounter('backgroundEvents');
         setGapDurationMs((ms) => ms + (Date.now() - gapStart.atMs));
-        if (gapStart.lastPoint) {
+        if (chordNearEnd) {
           // There's something to chord against — onFix computes it and
           // clears both refs when the next fix lands.
+          gapStartRef.current = { atMs: gapStart.atMs, lastPoint: chordNearEnd };
           awaitingGapChordRef.current = true;
         } else {
           // Gap started before any point had ever been recorded (e.g. right
@@ -545,6 +590,7 @@ export function useRunTracker(): RunTracker {
       setGapCount(0);
       setGapDurationMs(0);
       setGapChordM(0);
+      setCreditedGapM(0);
       gapStartRef.current = null;
       awaitingGapChordRef.current = false;
 
@@ -565,6 +611,15 @@ export function useRunTracker(): RunTracker {
     const legStart = legStartRef.current;
     if (legStart !== null) accumulatedRef.current += Date.now() - legStart;
     legStartRef.current = null;
+    // Cancel any gap chord still awaiting the next fix. Without this, a
+    // runner who backgrounds (opening a gap) and then explicitly pauses
+    // BEFORE any new fix arrives keeps that pending chord alive across the
+    // pause — resume()'s first fix would then credit distance spanning the
+    // paused time too, violating the DECIDED rule that a manually paused
+    // runner is legitimately stopped, not backgrounded. A pause always ends
+    // any in-flight gap the same way start()/reset() do.
+    gapStartRef.current = null;
+    awaitingGapChordRef.current = false;
     setStatus('paused');
   }, [clearSub]);
 
@@ -574,6 +629,12 @@ export function useRunTracker(): RunTracker {
       // Cleared so the first fix after resuming doesn't draw a straight line
       // (and add distance) across wherever the runner moved while paused.
       lastRef.current = null;
+      // Same reasoning as pause() above — belt-and-suspenders in case
+      // something set these between pause() and here (there shouldn't be
+      // anything that can, but a stale await surviving into a resumed run
+      // is exactly the class of bug this file exists to avoid).
+      gapStartRef.current = null;
+      awaitingGapChordRef.current = false;
       consecutiveRejectsRef.current = 0;
       legStartRef.current = Date.now();
       await beginRecording();
@@ -617,6 +678,7 @@ export function useRunTracker(): RunTracker {
     setGapCount(0);
     setGapDurationMs(0);
     setGapChordM(0);
+    setCreditedGapM(0);
     gapStartRef.current = null;
     awaitingGapChordRef.current = false;
     consecutiveRejectsRef.current = 0;
@@ -672,6 +734,7 @@ export function useRunTracker(): RunTracker {
         setGapCount(0);
         setGapDurationMs(0);
         setGapChordM(0);
+        setCreditedGapM(0);
         gapStartRef.current = null;
         awaitingGapChordRef.current = false;
 
@@ -704,6 +767,7 @@ export function useRunTracker(): RunTracker {
     gapCount,
     gapDurationMs,
     gapChordM,
+    creditedGapM,
     start,
     pause,
     resume,
