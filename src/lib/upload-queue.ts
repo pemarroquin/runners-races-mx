@@ -190,6 +190,18 @@ export interface FlushResult {
   /** Entries abandoned after MAX_ATTEMPTS. Non-zero means runs were thrown
    *  away — the caller should say so rather than reporting a clean drain. */
   abandoned: number;
+  /** Queue ids that uploaded successfully THIS flush, paired with the
+   *  server run id each landed as. This flush runs independently of
+   *  whatever a caller has on screen (it drains the whole on-disk queue),
+   *  so a caller displaying one specific queued run needs a way to tell
+   *  "was MY run one of these" apart from "some other queued run finished"
+   *  — a bare count can't answer that. See index.tsx's flush-effect
+   *  reconciliation. */
+  resolved: { id: string; runId: string }[];
+  /** Queue ids abandoned THIS flush (a subset of `abandoned`'s count, by
+   *  id rather than just a number) — same reconciliation need as
+   *  `resolved`, for the give-up path instead of the success path. */
+  abandonedIds: string[];
 }
 
 // Module-level, deliberately: the guard has to hold across every caller and
@@ -211,17 +223,33 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
   if (flushing) {
     // Already draining. Reporting the current depth is honest; starting a
     // second pass over the same entries is not.
-    return { uploaded: 0, remaining: queuedCount(), stoppedBecause: null, abandoned: 0 };
+    return {
+      uploaded: 0,
+      remaining: queuedCount(),
+      stoppedBecause: null,
+      abandoned: 0,
+      resolved: [],
+      abandonedIds: [],
+    };
   }
   flushing = true;
   try {
     const queue = listQueued();
     if (queue.length === 0) {
-      return { uploaded: 0, remaining: 0, stoppedBecause: null, abandoned: 0 };
+      return {
+        uploaded: 0,
+        remaining: 0,
+        stoppedBecause: null,
+        abandoned: 0,
+        resolved: [],
+        abandonedIds: [],
+      };
     }
 
     let uploaded = 0;
     let abandoned = 0;
+    const resolved: { id: string; runId: string }[] = [];
+    const abandonedIds: string[] = [];
     for (const item of queue) {
       const outcome = await upload(item.run);
 
@@ -246,6 +274,7 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
             // accept, not a network blip.
             removeQueued(item.id);
             abandoned++;
+            abandonedIds.push(item.id);
             continue;
           }
           bumpAttempts(item.id, attempts);
@@ -255,6 +284,8 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
           remaining: queue.length - uploaded - abandoned,
           stoppedBecause: outcome.reason,
           abandoned,
+          resolved,
+          abandonedIds,
         };
       }
 
@@ -271,11 +302,14 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
           remaining: queue.length - uploaded - abandoned,
           stoppedBecause: 'storage',
           abandoned,
+          resolved,
+          abandonedIds,
         };
       }
       uploaded++;
+      resolved.push({ id: item.id, runId: outcome.runId });
     }
-    return { uploaded, remaining: 0, stoppedBecause: null, abandoned };
+    return { uploaded, remaining: 0, stoppedBecause: null, abandoned, resolved, abandonedIds };
   } finally {
     flushing = false;
   }

@@ -48,7 +48,10 @@ describe('deleteRun', () => {
     nextResult = { data: [], error: null };
     return deleteRun('run-1').then((outcome) => {
       expect(outcome.ok).toBe(false);
-      if (!outcome.ok) expect(outcome.reason).toBe('network');
+      // 'denied', not 'network' — no Postgres error plus zero rows is RLS
+      // matching no policy, a distinct failure the caller should never
+      // treat as "retry might help" (see deleteRun's own doc comment).
+      if (!outcome.ok) expect(outcome.reason).toBe('denied');
     });
   });
 
@@ -56,7 +59,7 @@ describe('deleteRun', () => {
     nextResult = { data: null, error: null };
     return deleteRun('run-1').then((outcome) => {
       expect(outcome.ok).toBe(false);
-      if (!outcome.ok) expect(outcome.reason).toBe('network');
+      if (!outcome.ok) expect(outcome.reason).toBe('denied');
     });
   });
 

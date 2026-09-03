@@ -100,7 +100,14 @@ export default function TrackScreen() {
   const here = inSession ? (tracker.lastFix ?? location.coords) : location.coords;
 
   const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [failure, setFailure] = useState<SyncOutcome | null>(null);
+  // 'abandoned' is never returned by uploadRun itself (SyncOutcome doesn't
+  // carry it) — it's a fourth, client-only reason this screen assigns after
+  // the background flush effect below learns upload-queue.ts gave up on a
+  // queued retry past MAX_ATTEMPTS, so that permanently-dropped run can
+  // still be shown through the same banner uploadRun's own failures use.
+  const [failure, setFailure] = useState<
+    SyncOutcome | { ok: false; reason: 'abandoned' } | null
+  >(null);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
   // What this run took from other runners. Null until the upload lands —
   // the Phase 3 trigger runs during the insert, so the answer exists by the
@@ -118,6 +125,15 @@ export default function TrackScreen() {
   // only a flag there was no handle, so a discarded run uploaded itself
   // later and a successful retry uploaded the same run twice.
   const [queuedId, setQueuedId] = useState<string | null>(null);
+  // Mirrors queuedId for the background flush effect below, which is
+  // deliberately gated on `[isFocused]` alone (it must not re-run on every
+  // local state change — see that effect's own comment) and so reads this
+  // from a .then() callback rather than a render, same reason autoSavedRef
+  // mirrors a ref instead of relying on a state closure.
+  const queuedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    queuedIdRef.current = queuedId;
+  }, [queuedId]);
   // Guards save() against a discard() that lands while its upload is still
   // in flight. discard() bumps this; save() captures the value BEFORE
   // awaiting uploadRun() and checks it's unchanged before applying the
@@ -203,7 +219,42 @@ export default function TrackScreen() {
       }
       setPending(before);
       flushQueue(uploadRun).then((result) => {
-        if (!stale) setPending(result.remaining);
+        if (stale) return;
+        setPending(result.remaining);
+        // Reconcile against whatever THIS screen is currently showing. The
+        // flush above runs independently of what's on screen — it drains
+        // the whole on-disk queue, not just "the run the summary is
+        // currently displaying" — so if the run on screen is the one that
+        // just resolved, local state (saveState/savedRunId/queuedId) would
+        // otherwise go stale: still reading 'failed'/queued even though the
+        // server row now exists (or, on abandonment, will never exist).
+        // Left unreconciled, that staleness makes "Delete run" silently
+        // skip the real delete (nothing left to confirm, per its own
+        // 'saved' && savedRunId guard) and makes a manual "Reintentar"
+        // upload the SAME run a second time — a duplicate row whose fence
+        // carves territory off other runners all over again.
+        const current = queuedIdRef.current;
+        if (!current) return;
+        const resolved = result.resolved.find((r) => r.id === current);
+        if (resolved) {
+          setSaveState('saved');
+          setSavedRunId(resolved.runId);
+          setQueuedId(null);
+          setFailure(null);
+          clearCheckpoint();
+          // Best-effort, same as save()'s own success path — a failed read
+          // here just means no "you took territory" line, never a lost save.
+          void fetchRunSpoils(resolved.runId).then((taken) => {
+            if (!stale && taken.ok && taken.spoils.runsAffected > 0) setSpoils(taken.spoils);
+          });
+        } else if (result.abandonedIds.includes(current)) {
+          // Retried MAX_ATTEMPTS times and given up — the run genuinely
+          // will not upload. Say so rather than leaving "queued" showing
+          // for a run that's actually gone.
+          setSaveState('failed');
+          setFailure({ ok: false, reason: 'abandoned' });
+          setQueuedId(null);
+        }
       });
     }, 0);
     return () => {
@@ -396,13 +447,23 @@ export default function TrackScreen() {
   }, [tracker.status, fence, masked, save]);
 
   // Shared local teardown for both "close the summary" (X, always safe —
-  // never deletes anything, the server row if any stays exactly as saved)
-  // and "delete finished/failed" (handleDeleteRun, below — only reached
-  // once the server side of a delete has either succeeded or was never
-  // needed in the first place). Renamed from the pre-auto-save `discard`:
-  // this function itself no longer decides whether anything is thrown
-  // away, it only resets the SCREEN once that decision has already been
-  // made and (if needed) already carried out against the server.
+  // never deletes anything, server OR queue: the server row if any stays
+  // exactly as saved, and a still-queued run is left on disk for a later
+  // flush to pick up rather than thrown away just because the screen
+  // closed) and "delete finished/failed" (handleDeleteRun, below — only
+  // reached once the server side of a delete has either succeeded or was
+  // never needed, AND after handleDeleteRun has already removed the queue
+  // entry itself if that's what's being deleted). Renamed from the
+  // pre-auto-save `discard`: this function itself no longer decides
+  // whether anything is thrown away, it only resets the SCREEN once that
+  // decision has already been made and (if needed) already carried out.
+  //
+  // This does NOT touch queuedId/removeQueued — it used to, and that was
+  // the bug: "always safe" was a comment, not a guarantee, because closing
+  // the summary silently deleted the runner's only copy of a run that
+  // hadn't reached the server yet. The whole point of the retry queue (see
+  // upload-queue.ts's own header) is surviving exactly that "runner closed
+  // the tab" moment; a close button that empties the queue defeats it.
   const resetLocal = useCallback(() => {
     // Invalidate any in-flight save FIRST — see saveTokenRef's own comment.
     saveTokenRef.current++;
@@ -414,20 +475,13 @@ export default function TrackScreen() {
     setSpoils(null);
     setMasked(null);
     setFence(null);
-    // A run that never made it past 'failed' only exists in the queue, not
-    // on the server — take it out so a later app-open doesn't upload a run
-    // the runner just walked away from.
-    if (queuedId) {
-      removeQueued(queuedId);
-      setPending(queuedCount());
-    }
     setQueuedId(null);
     setPastFencesFailed(false);
     setDeleteState('idle');
     setDeleteFailure(null);
     setConfirmingDelete(false);
     tracker.reset();
-  }, [tracker, queuedId]);
+  }, [tracker]);
 
   // Task 2 — replaces the old unconditional discard(). By the time this is
   // reachable the run has usually already auto-saved, so "throwing it away"
@@ -450,9 +504,17 @@ export default function TrackScreen() {
         setConfirmingDelete(false);
         return;
       }
+    } else if (queuedId) {
+      // The run never reached the server — it only exists in the retry
+      // queue. Unlike closing the summary (resetLocal, above), an explicit
+      // delete IS the runner choosing to throw it away, so take it out of
+      // the queue now — otherwise a later flush uploads a run the runner
+      // just deleted.
+      removeQueued(queuedId);
+      setPending(queuedCount());
     }
     resetLocal();
-  }, [saveState, savedRunId, resetLocal]);
+  }, [saveState, savedRunId, queuedId, resetLocal]);
 
   // The finished run gets its own scrolling layout: there's a fence image,
   // three stats and two actions to fit, which is more than can sit legibly
@@ -555,7 +617,9 @@ export default function TrackScreen() {
                 ? t('track.syncDisabled')
                 : failure.reason === 'auth'
                   ? t('track.syncFailedAuth')
-                  : t('track.syncFailedNetwork')}
+                  : failure.reason === 'abandoned'
+                    ? t('track.syncFailedAbandoned')
+                    : t('track.syncFailedNetwork')}
             </Text>
           )}
           {saveState === 'saved' && deleteState !== 'deleting' && (
@@ -576,7 +640,9 @@ export default function TrackScreen() {
                 ? t('track.deleteFailedDisabled')
                 : deleteFailure.reason === 'auth'
                   ? t('track.deleteFailedAuth')
-                  : t('track.deleteFailedNetwork')}
+                  : deleteFailure.reason === 'denied'
+                    ? t('track.deleteFailedDenied')
+                    : t('track.deleteFailedNetwork')}
             </Text>
           )}
 

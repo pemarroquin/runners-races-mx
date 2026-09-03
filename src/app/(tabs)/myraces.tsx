@@ -10,6 +10,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -256,14 +257,26 @@ function FencesView({
   }
 
   if (!fences.ok) {
+    // Pull-to-refresh here too — 'disabled' has nothing a refresh would
+    // change, but a transient 'failed' (one dropped request) previously
+    // left the runner stuck on this screen with no way back to the list
+    // short of switching the segment away and back. A ScrollView (not
+    // FlatList — there's no list, just this one message) gets the same
+    // RefreshControl the data view uses below.
     return (
-      <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
-        <Text style={[styles.empty, { color: c.textSecondary }]}>
-          {fences.reason === 'disabled'
-            ? t('myraces.fencesDisabled')
-            : t('myraces.fencesError')}
-        </Text>
-      </Animated.View>
+      <ScrollView
+        contentContainerStyle={[styles.emptyWrap, styles.emptyWrapGrow]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
+        }>
+        <Animated.View entering={FadeIn.duration(400)}>
+          <Text style={[styles.empty, { color: c.textSecondary }]}>
+            {fences.reason === 'disabled'
+              ? t('myraces.fencesDisabled')
+              : t('myraces.fencesError')}
+          </Text>
+        </Animated.View>
+      </ScrollView>
     );
   }
 
@@ -392,6 +405,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: Spacing.six },
+  // ScrollView's contentContainerStyle sizes to its content by default —
+  // flexGrow (not flex) is what makes short content still fill the
+  // viewport, so the pull-to-refresh gesture has room to work from
+  // anywhere on screen rather than just the text's own bounds.
+  emptyWrapGrow: { flexGrow: 1 },
   empty: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
   notices: { gap: Spacing.two, marginBottom: Spacing.two },
   notice: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.one },
