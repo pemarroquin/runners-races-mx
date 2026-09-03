@@ -14,8 +14,13 @@ import type { FenceResult, LatLng } from '@/lib/territory';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
- *  payload — `{ ok: true, ...payload } | { ok: false, reason: ... }`. */
-type Outcome<T> = ({ ok: true } & T) | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+ *  payload — `{ ok: true, ...payload } | { ok: false, reason: ... }`. `R` is
+ *  an extra, caller-specific failure reason on top of the three every call
+ *  site shares (`deleteRun` uses it for `'denied'`) — defaults to `never` so
+ *  every other caller's type is unaffected. */
+type Outcome<T, R extends string = never> =
+  | ({ ok: true } & T)
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' | R };
 
 /**
  * Every exported function in this file opened with the identical
@@ -28,11 +33,13 @@ type Outcome<T> = ({ ok: true } & T) | { ok: false; reason: 'disabled' | 'auth' 
  *
  * `fn` still owns its own internal errors (a `{ ok: false, reason: 'network' }`
  * for a specific failed step, same as before) — this only removes the
- * boilerplate that was IDENTICAL across every caller.
+ * boilerplate that was IDENTICAL across every caller. `R` lets a specific
+ * caller report one extra reason beyond 'network' without widening every
+ * other caller's type (see `deleteRun`'s 'denied').
  */
-async function withSession<T>(
-  fn: (session: Session) => Promise<({ ok: true } & T) | { ok: false; reason: 'network' }>,
-): Promise<Outcome<T>> {
+async function withSession<T, R extends string = never>(
+  fn: (session: Session) => Promise<({ ok: true } & T) | { ok: false; reason: 'network' | R }>,
+): Promise<Outcome<T, R>> {
   if (!TERRITORY_ENABLED) return { ok: false, reason: 'disabled' };
 
   const session = await ensureSession();
@@ -97,6 +104,63 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     if (error || !data) return { ok: false, reason: 'network' };
     return { ok: true, runId: data.id };
   });
+}
+
+export type DeleteOutcome =
+  | { ok: true }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' | 'denied' };
+
+/**
+ * Deletes one of this device's own runs. Same non-throwing, best-effort
+ * contract as every other function here.
+ *
+ * CRITICAL: as of this writing there is NO delete policy on `runs` — the
+ * Phase 1 migration (20260826222037_territory_mode.sql) only ever granted
+ * "runs: read all" and "runs: insert own". Under Postgres RLS, a DELETE
+ * that matches no policy deletes ZERO rows and Postgres reports NO error —
+ * so `.delete().eq('id', runId)` alone would report {ok:true} while
+ * touching nothing, which is exactly the silent-no-op this codebase has a
+ * standing rule against (never report unverified success). Chaining
+ * `.select('id')` on the delete makes Postgres return the rows it actually
+ * removed, and an empty result is treated as a failure, not a success —
+ * this is the ONLY way to tell "deleted" from "matched nothing" apart, since
+ * both otherwise come back as `{ error: null }`.
+ *
+ * See supabase/migrations/<timestamp>_runs_delete_own.sql for the (currently
+ * UNAPPLIED) policy that will make this actually work. Until Pedro applies
+ * it by hand, every call here correctly reports `{ ok: false, reason:
+ * 'denied' }` — a true, distinct failure, not folded into 'network'. That
+ * distinction matters to the caller: a 'network' failure implies "try
+ * again, it might work"; a zero-row delete with no Postgres error never will
+ * until the policy lands, no matter how many times it's retried.
+ */
+export async function deleteRun(runId: string): Promise<DeleteOutcome> {
+  // `unknown`, not `Record<string, never>` — withSession intersects this
+  // with `{ ok: true }` to build the success shape, and Record<string,
+  // never>'s index signature makes `ok: true` impossible to intersect with
+  // it (every key would have to be `never`). `unknown` is the intersection
+  // identity (`{ ok: true } & unknown` is just `{ ok: true }`), which is
+  // exactly "no extra success fields" — deleteRun has nothing to report
+  // beyond ok/fail, unlike uploadRun's `runId`.
+  return withSession<unknown, 'denied'>(
+    async (session): Promise<{ ok: true } | { ok: false; reason: 'network' | 'denied' }> => {
+      const { data, error } = await supabase
+        .from('runs')
+        .delete()
+        .eq('id', runId)
+        // Redundant with the eventual RLS policy (auth.uid() = user_id), but
+        // cheap and explicit: this call must never even ATTEMPT to delete a
+        // row it doesn't own, policy or no policy.
+        .eq('user_id', session.user.id)
+        .select('id');
+
+      if (error) return { ok: false, reason: 'network' };
+      // No error AND no rows: RLS matched no policy (or the row belongs to
+      // someone else). Distinct from a network blip — see the doc comment.
+      if (!data || data.length === 0) return { ok: false, reason: 'denied' };
+      return { ok: true };
+    },
+  );
 }
 
 /** One previously-captured fence, ready to draw. */

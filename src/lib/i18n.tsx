@@ -40,6 +40,7 @@ const translations = {
       back: 'Volver',
       unconfirmed: 'Sin confirmar',
       retry: 'Reintentar',
+      cancel: 'Cancelar',
     },
     tabs: {
       track: 'Correr',
@@ -98,9 +99,43 @@ const translations = {
       saving: 'Guardando…',
       saved: 'Territorio guardado',
       discard: 'Descartar',
+      // Task 2 — auto-save means there is usually already a server row by
+      // the time the summary renders, so "Descartar" (which never touched
+      // the server) stopped being honest. deleteRun() actually removes that
+      // row; these keys are for that flow specifically, distinct from
+      // `discard` above (still used by the unfinished-checkpoint recovery
+      // prompt, which never reaches the server at all).
+      deleteRun: 'Eliminar territorio',
+      deleting: 'Eliminando…',
+      // Shown once, inline, before the delete actually happens — see
+      // apply_territory_overlap() in 20260827020000_phase3_overlap.sql:
+      // ground this run took from other runners during the overlap was
+      // already carved out of their fences at save time, and nothing reads
+      // territory_events back to reverse that. Saying "elimina tu
+      // territorio" without this line would imply a clean undo that does
+      // not exist.
+      deleteConfirmBody:
+        'Esto borra tu registro y este territorio. El terreno que ya le quitaste a otros corredores durante esta sesión no se les devuelve.',
+      deleteConfirmAction: 'Eliminar de todas formas',
+      deleteFailedNetwork:
+        'No pudimos eliminar tu territorio — revisa tu conexión. Sigue guardado, puedes reintentar.',
+      deleteFailedAuth: 'No pudimos confirmar tu sesión para eliminarlo. Vuelve a intentarlo.',
+      deleteFailedDisabled:
+        'El guardado en línea no está disponible en esta versión, así que no podemos eliminarlo desde aquí.',
+      // Distinct from deleteFailedNetwork on purpose: this isn't a
+      // connection problem, and "revisa tu conexión" would send the runner
+      // chasing a WiFi bar that was never the issue. Reintentar won't help
+      // here — see deleteRun()'s 'denied' reason.
+      deleteFailedDenied:
+        'Todavía no podemos eliminar territorios desde aquí — esa función está en camino. Sigue guardado.',
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
+      // Distinct from syncFailedNetwork: this run was retried until the
+      // queue gave up on it (see upload-queue.ts's MAX_ATTEMPTS) — it is
+      // genuinely gone, not just waiting on a signal.
+      syncFailedAbandoned:
+        'No pudimos guardar tu territorio después de varios intentos y no sigue en la fila. Se perdió.',
       // NOT the same string as leaderboard.disabled below, even though it
       // used to read identically — that one genuinely has nothing to queue
       // (there's no leaderboard entry to save for later). This one now
@@ -308,7 +343,7 @@ const translations = {
       collectedTerritory:
         'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
       collectedQueue:
-        'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si lo descartas.',
+        'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si eliminas la carrera — cerrar la pantalla de resumen no la borra.',
       collectedCheckpoint:
         'Progreso en curso: mientras grabas, guardamos tu recorrido completo (sin recortar por tu zona privada) en este teléfono cada pocos segundos, para no perderlo si la app se cierra sola. Se borra en cuanto guardas o descartas la sesión — el recorte de tu zona privada solo se aplica al guardar.',
       collectedDebug:
@@ -318,7 +353,7 @@ const translations = {
       collectedZone:
         'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
-        'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Si prefieres no aparecer, no guardes tus sesiones.',
+        'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Cada carrera que terminas se guarda automáticamente — ya no puedes optar por no guardarla. Si prefieres no aparecer, elimínala después desde la pantalla de resumen o la pestaña Territorios (esto no revierte el terreno que ya le hayas quitado a otros corredores mientras estuvo activa).',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
       notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
@@ -354,6 +389,7 @@ const translations = {
       back: 'Back',
       unconfirmed: 'Unconfirmed',
       retry: 'Retry',
+      cancel: 'Cancel',
     },
     tabs: {
       track: 'Run',
@@ -404,9 +440,35 @@ const translations = {
       saving: 'Saving…',
       saved: 'Territory saved',
       discard: 'Discard',
+      // Task 2 — see the Spanish keys' comment: auto-save means there is
+      // usually already a server row by the time the summary renders, so
+      // "Discard" (which never touched the server) stopped being honest.
+      // `discard` above stays as-is — it's still used by the unfinished-
+      // checkpoint recovery prompt, which never reaches the server.
+      deleteRun: 'Delete run',
+      deleting: 'Deleting…',
+      deleteConfirmBody:
+        "This deletes your record and this territory. Ground you already took from other runners during this session won't be returned to them.",
+      deleteConfirmAction: 'Delete anyway',
+      deleteFailedNetwork:
+        "We couldn't delete your territory — check your connection. It's still saved, you can retry.",
+      deleteFailedAuth: "We couldn't confirm your session to delete it. Please try again.",
+      deleteFailedDisabled:
+        "Online saving isn't available in this build, so we can't delete it from here.",
+      // Distinct from deleteFailedNetwork on purpose — this isn't a
+      // connection problem, and "check your connection" would send the
+      // runner chasing a WiFi bar that was never the issue. Retrying won't
+      // help here — see deleteRun()'s 'denied' reason.
+      deleteFailedDenied:
+        "We can't delete territories from here yet — that's coming soon. It's still safely saved.",
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
+      // Distinct from syncFailedNetwork: this run was retried until the
+      // queue gave up on it (see upload-queue.ts's MAX_ATTEMPTS) — it is
+      // genuinely gone, not just waiting on a signal.
+      syncFailedAbandoned:
+        "We couldn't save your territory after several tries, and it's no longer in the queue. It's lost.",
       syncDisabled: "Online saving isn't available in this build yet.",
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
@@ -601,7 +663,7 @@ const translations = {
       collectedTerritory:
         'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
       collectedQueue:
-        'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you discard it.',
+        'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you delete the run — closing the summary screen does not delete it.',
       collectedCheckpoint:
         "In-progress runs: while you're recording, we save your full route (before privacy-zone trimming) on this phone every few seconds, so it isn't lost if the app closes on its own. It's cleared as soon as you save or discard the session — privacy-zone trimming only applies when you save.",
       collectedDebug:
@@ -611,7 +673,7 @@ const translations = {
       collectedZone:
         'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:
-        'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. If you would rather not appear at all, do not save your sessions.',
+        'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. Every run you finish saves automatically now — you can no longer opt out of saving. If you would rather not appear, delete it afterward from the summary screen or the Territories tab (this does not undo any ground it already took from other runners while it was live).',
       notTitle: "What we don't do",
       notAccounts: 'No email, password, or personal details are needed to use the app.',
       notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",

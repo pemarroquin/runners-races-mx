@@ -1,0 +1,31 @@
+-- Territory Mode — delete-own policy for `runs`
+--
+-- Apply with `supabase db push --linked` (CLI-managed — see the Phase 1
+-- migration's header, 20260826222037_territory_mode.sql). Like every
+-- migration in this repo, this file is applied BY HAND: nothing in CI or
+-- the app build runs `supabase db push` automatically, so this policy does
+-- not exist until Pedro runs that command himself against the linked
+-- project (ref hkqwvzhoopoxocdtzgik). Check with
+-- `supabase migration list --linked` if a change looks like it didn't take.
+--
+-- DO NOT run this migration as part of authoring it. It must be applied
+-- deliberately, by hand, against the linked project.
+--
+-- WHY THIS EXISTS. The Phase 1 migration gave `runs` exactly two policies:
+-- "runs: read all" and "runs: insert own". No delete policy exists. Under
+-- Postgres RLS, a DELETE that matches no policy deletes ZERO rows and
+-- raises NO error — so `src/lib/territory-sync.ts`'s deleteRun() will keep
+-- reporting `{ ok: false, reason: 'network' }` (verified by checking the
+-- actual number of rows the delete returned, never trusted from a bare "no
+-- error") until this migration is applied. That is the correct, honest
+-- failure mode for an unapplied migration — see deleteRun()'s own comment
+-- for the full reasoning.
+--
+-- Scoped to the owner only, mirroring "runs: insert own" exactly. Deleting a
+-- run does NOT undo apply_territory_overlap() (20260827020000_phase3_overlap.sql)
+-- — any other runner's fence this run already carved into stays carved;
+-- nothing reads territory_events back to reverse it. This policy only
+-- controls who is ALLOWED to delete their own run row, not what deleting it
+-- restores.
+create policy "runs: delete own" on runs
+  for delete using (auth.uid() = user_id);
