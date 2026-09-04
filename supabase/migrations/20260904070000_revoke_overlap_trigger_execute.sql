@@ -1,0 +1,49 @@
+-- Fixes a second advisor finding from the same 2026-09-04 `supabase db
+-- advisors --linked` run (see 20260904060000_spatial_ref_sys_rls.sql):
+--
+--   Function `public.apply_territory_overlap()` can be executed by the
+--   `anon`/`authenticated` role as a SECURITY DEFINER function via
+--   /rest/v1/rpc/apply_territory_overlap.
+--
+-- Apply with `supabase db push --linked` — same as every migration here.
+--
+-- INVESTIGATED, NOT BLINDLY FIXED, per Pedro's explicit ask. Two things
+-- checked before writing this:
+--
+-- 1. WHY is it SECURITY DEFINER? Read in full (20260827020000_
+--    phase3_overlap.sql): this trigger UPDATEs OTHER runners' `runs.fence`
+--    rows when territory overlaps — the whole feature is one runner's
+--    insert carving down a rival's existing fence. `runs`' RLS only grants
+--    `insert own`; there is no cross-user update policy, deliberately.
+--    SECURITY DEFINER is the only way this trigger can do its job at all.
+--    That part is correct and load-bearing — nothing about that changes
+--    here.
+--
+-- 2. IS IT ACTUALLY CALLABLE VIA THE FLAGGED ROUTE, FOR REAL? Tested
+--    directly against the live project rather than assumed: `POST
+--    /rest/v1/rpc/apply_territory_overlap` with the anon key returns
+--    PostgREST error PGRST202, 404 — "could not find the function". It
+--    isn't in PostgREST's exposed-function schema cache at all, because it
+--    is declared `returns trigger`: Postgres itself refuses to invoke a
+--    trigger function outside an actual trigger firing (no NEW/OLD record
+--    exists to bind), and PostgREST excludes that return type from its
+--    RPC route table. So the advisor is technically correct that a grant
+--    exists (Postgres grants EXECUTE to PUBLIC on new functions by
+--    default, unless revoked) — but there is no practical path to actually
+--    calling it today, through PostgREST or otherwise.
+--
+-- THE FIX. Revoke the unused grant anyway — closes the gap the advisor
+-- correctly flags even though it isn't reachable today, and costs nothing:
+-- a table trigger's firing is NOT gated by EXECUTE privilege on its
+-- function (it runs as the table owner via the trigger mechanism, not a
+-- permission-checked call), so this cannot affect Phase 3's overlap
+-- resolution. Explicit `revoke ... from public` rather than relying on
+-- "nobody happens to call it" — matches the advisor's own remediation
+-- guidance (revoke EXECUTE, switch to SECURITY INVOKER, or de-expose —
+-- SECURITY INVOKER isn't an option here per point 1 above, and it's
+-- already de-facto de-exposed; this makes that explicit and permanent
+-- rather than accidental).
+
+revoke execute on function public.apply_territory_overlap() from public;
+revoke execute on function public.apply_territory_overlap() from anon;
+revoke execute on function public.apply_territory_overlap() from authenticated;
