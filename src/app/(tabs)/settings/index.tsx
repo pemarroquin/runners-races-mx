@@ -16,7 +16,7 @@
 // rather than each being a rounded card. No dividers between rows inside a
 // group — the band and the group labels carry the structure, so the list
 // reads as one column instead of a stack of floating panels.
-import { Link } from 'expo-router';
+import { Link, type Href } from 'expo-router';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
@@ -142,7 +142,16 @@ function NavRow({
   // `Link` rather than `router.push`: it renders a real anchor on web, so the
   // rows are keyboard-focusable and open-in-new-tab works, and it keeps the
   // href visible at the call site for the typed-routes check.
-  href: string;
+  //
+  // `Href`, not `string` — `string` was silently OPTING OUT of that very
+  // check. app.json sets `experiments.typedRoutes`, which makes expo-router
+  // resolve `Href` to the literal union of this app's real routes, and a
+  // prop typed `string` widens right past it. `Href` falls back to a broad
+  // type when the generated routes file is absent (it is gitignored, and
+  // only `expo start` writes it — not `expo export`), so this costs nothing
+  // in CI and enforces properly on any machine that has run the dev server.
+  // test/route-hrefs.test.ts is what enforces it where CI can actually see.
+  href: Href;
   ios: SFSymbol;
   android: AndroidSymbol;
   label: string;
