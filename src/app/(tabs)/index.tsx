@@ -25,16 +25,24 @@ import { FenceMap } from '@/components/fence-map';
 import { NamePrompt } from '@/components/name-prompt';
 import { TrackMap } from '@/components/track-map';
 import { Icon } from '@/components/ui/icon';
-import { fenceColorForRun } from '@/constants/map';
+import { fenceColorForRun, LIVE_FILL_RECOMPUTE_MS, LIVE_FILL_RECOMPUTE_POINTS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
+import { getRegion, nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { buildFence, type FenceResult } from '@/lib/territory';
-import { fetchRunSpoils, uploadRun, type RunSpoils } from '@/lib/territory-sync';
+import {
+  fetchMyTileTotal,
+  fetchRunSpoils,
+  uploadRun,
+  type RunSpoils,
+  type TileClaimResult,
+} from '@/lib/territory-sync';
+import { pathToTiles } from '@/lib/tiles';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
@@ -91,10 +99,31 @@ export default function TrackScreen() {
 
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
-  // What this run took from other runners. Null until the upload lands —
-  // the Phase 3 trigger runs during the insert, so the answer exists by the
-  // time uploadRun returns, but only a read can tell us what it was.
-  const [spoils, setSpoils] = useState<RunSpoils | null>(null);
+  // What this run took from other runners. UNCHANGED (brief §4: don't
+  // delete) but no longer RENDERED — the tile-claim summary below replaced
+  // it (see crossedTiles/crossedFrom). Still fetched and stored below (both
+  // call sites keep calling setSpoils) so Phase 3's overlap trigger has
+  // somewhere to land its answer for as long as it's still computing one;
+  // the getter itself is never read, hence the blank binding — an unused
+  // `spoils` name would otherwise be a lint error, not just dead weight.
+  const [, setSpoils] = useState<RunSpoils | null>(null);
+  // Tile Coverage brief §6 step 5. `tileClaim` is null until claimTiles()
+  // resolves (uploadRun does both in one call — see territory-sync.ts).
+  // `tilesConfirmFailed` disambiguates "still waiting" (both null/false)
+  // from "resolved, but the server specifically could not confirm tiles"
+  // (the run itself still saved — see uploadRun's own doc comment) — never
+  // silently shown as "0 tiles claimed", which would be an unverified
+  // success.
+  const [tileClaim, setTileClaim] = useState<TileClaimResult | null>(null);
+  const [tilesConfirmFailed, setTilesConfirmFailed] = useState(false);
+  // Running Layer-1 total for this run's region (brief §1.5) — the honest
+  // stand-in for "% of San Pedro stomped" until the brief §1's real
+  // municipio/runnable-tile denominator exists (explicitly out of scope
+  // this pass). A raw count, not a percentage — see fetchMyTileTotal's own
+  // doc comment for why a percentage against any denominator available
+  // today would be exactly the fabricated-denominator mistake brief §1
+  // warns against.
+  const [tileTotal, setTileTotal] = useState<number | null>(null);
   // Runs that failed to upload and are waiting on the device. Read on mount
   // and kept in sync locally so the screen can say a run is safe rather than
   // leaving the runner to guess.
@@ -216,6 +245,18 @@ export default function TrackScreen() {
           void fetchRunSpoils(resolved.runId).then((taken) => {
             if (!stale && taken.ok && taken.spoils.runsAffected > 0) setSpoils(taken.spoils);
           });
+          // NOT refreshing tileClaim/tilesConfirmFailed/tileTotal here — a
+          // real, narrow gap, not an oversight. Unlike save()'s direct call,
+          // uploadRun ran inside flushQueue (upload-queue.ts), whose
+          // Uploader type only surfaces {ok,runId}; the richer `tiles`
+          // result claimTiles produced isn't threaded back through that
+          // queue, and runRegionId here could be stale by the time this
+          // background path fires (this effect deliberately re-runs on
+          // [isFocused] alone — see its own header comment — so it can be
+          // holding a closure over an EARLIER run's region). Rather than
+          // show a tile total that might be labelled with the wrong
+          // region's name, a background-resolved run simply shows no tile
+          // stats at all — see the executor's report.
         } else if (result.abandonedIds.includes(current)) {
           // Retried MAX_ATTEMPTS times and given up — the run genuinely
           // will not upload. Not surfaced with copy on this screen (see the
@@ -246,6 +287,15 @@ export default function TrackScreen() {
   // upload. The runner must see exactly what gets uploaded.
   const [masked, setMasked] = useState<MaskResult | null>(null);
   const [fence, setFence] = useState<FenceResult | null>(null);
+  // Tile Coverage brief §4/§6: this run's covered cells, for FenceMap's
+  // tile fill — computed LOCALLY from the same masked path claimTiles()
+  // will submit (territory-sync.ts's uploadRun runs the identical
+  // pathToTiles call server-round-trip-free), so the session-end map can
+  // show them the instant the run finishes rather than waiting on the
+  // network. This is NOT the same number as tileClaim.claimedCount below:
+  // this is every cell the run's path covered; claimedCount (server,
+  // async) is the subset that was still unowned at claim time.
+  const [sessionTiles, setSessionTiles] = useState<string[]>([]);
 
   useEffect(() => {
     if (tracker.status !== 'finished') return;
@@ -254,9 +304,13 @@ export default function TrackScreen() {
       setMasked(result);
       // The fence is rebuilt from the MASKED path, never clipped from the
       // full one — see privacy-zone.ts for why cutting the finished polygon
-      // would draw a circle around the runner's home.
+      // would draw a circle around the runner's home. UNCHANGED (brief §4:
+      // don't delete) — still computed and uploaded for audit/comparison
+      // (see legacyArea in i18n.tsx), just no longer what the map or the
+      // stat bar render as this run's territory.
       const builtFence = result.points.length > 0 ? buildFence(result.points) : null;
       setFence(builtFence);
+      setSessionTiles(pathToTiles(result.points).cells);
       // Diagnostic escape hatch (last-run-debug.ts) — the RAW, pre-mask
       // points, so a suspicious area report can be re-run through
       // buildFence() against exactly what was recorded, not what got
@@ -273,6 +327,55 @@ export default function TrackScreen() {
     }, 0);
     return () => clearTimeout(id);
   }, [tracker.status, tracker.points, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+
+  // Tile Coverage brief §6 step 4 — the LIVE map's own tiles, computed here
+  // ONCE and passed down to TrackMap (both platforms) rather than
+  // duplicated inside each map component. Same throttle cadence as the
+  // (unchanged) live enclosure fill those components already recompute on
+  // their own (LIVE_FILL_RECOMPUTE_MS/POINTS, constants/map.ts) — tiles.ts's
+  // pathToTiles is pure and fast, but still O(path length), and recomputing
+  // it on every single 2s fix for a 30+ minute run would redo that work for
+  // nothing new most of the time.
+  const [liveTiles, setLiveTiles] = useState<string[]>([]);
+  const liveTilesThrottleRef = useRef({ atMs: 0, pointCount: 0 });
+  useEffect(() => {
+    // Deferred by a tick, not called straight from the effect body — same
+    // React Compiler rule (and same fix) as the checkpoint-load and
+    // queue-drain effects above: a synchronous setState inside an effect
+    // body is flagged as a cascading-render risk.
+    const id = setTimeout(() => {
+      if (!inSession) {
+        // No active session — nothing live to show. Reset unconditionally
+        // so the NEXT session doesn't open still displaying this one's
+        // tiles (same reasoning as the live fill's own points.length < 3
+        // branch in track-map.web.tsx).
+        liveTilesThrottleRef.current = { atMs: 0, pointCount: 0 };
+        setLiveTiles((prev) => (prev.length > 0 ? [] : prev));
+        return;
+      }
+      const now = Date.now();
+      const last = liveTilesThrottleRef.current;
+      if (
+        tracker.points.length - last.pointCount >= LIVE_FILL_RECOMPUTE_POINTS ||
+        now - last.atMs >= LIVE_FILL_RECOMPUTE_MS
+      ) {
+        liveTilesThrottleRef.current = { atMs: now, pointCount: tracker.points.length };
+        setLiveTiles(pathToTiles(tracker.points).cells);
+      }
+    }, 0);
+    return () => clearTimeout(id);
+  }, [inSession, tracker.points]);
+
+  // Same region derivation territory-sync.ts's uploadRun uses for
+  // `runs.region` (nearestRegion off the first masked point) — recomputed
+  // here rather than read back from the server so tileTotal/tilesHeld can
+  // be requested the instant the upload resolves, no extra round trip. Null
+  // when the run has no points left after masking (privacy-zone trimmed
+  // everything) — matches uploadRun's own null-region fallback.
+  const runRegionId = useMemo(() => {
+    const first = masked?.points[0];
+    return first ? (nearestRegion(first.lat, first.lng)?.id ?? null) : null;
+  }, [masked]);
 
   const save = useCallback(async () => {
     if (!fence || masked === null || tracker.startedAt === null || tracker.endedAt === null) {
@@ -325,9 +428,30 @@ export default function TrackScreen() {
       // behind would offer "Resume" on a run that's already saved.
       clearCheckpoint();
       // Best-effort: a failed read here just means no "you took territory"
-      // line, never a failed save. The run is already banked.
+      // line, never a failed save. The run is already banked. UNCHANGED
+      // (brief §4) but no longer rendered — see the crossedTiles banner
+      // below, which reads outcome.tiles instead.
       const taken = await fetchRunSpoils(outcome.runId);
       if (taken.ok && taken.spoils.runsAffected > 0) setSpoils(taken.spoils);
+
+      // Tile Coverage brief §6 step 5. uploadRun already ran claimTiles as
+      // part of THIS call (territory-sync.ts) — no second round trip needed
+      // for the claim itself, unlike fetchRunSpoils above (a genuinely
+      // separate read against a different table). `tiles: null` means the
+      // run saved but the claim did not complete — see uploadRun's own doc
+      // comment; surfaced as tilesConfirmFailed, never silently as zero.
+      if (outcome.tiles) {
+        setTileClaim(outcome.tiles);
+      } else {
+        setTilesConfirmFailed(true);
+      }
+      // Running total refresh — independent of whether the claim above
+      // succeeded (it reflects every EARLIER run too), so worth trying
+      // either way. Best-effort: a failed read just leaves tileTotal null,
+      // which the UI treats as "don't show this line" rather than "0".
+      void fetchMyTileTotal(runRegionId).then((t) => {
+        if (t.ok) setTileTotal(t.total);
+      });
     } else {
       // Keep the run on screen. It only exists in memory, so clearing it on
       // a failed upload would destroy the thing the runner just earned.
@@ -365,7 +489,7 @@ export default function TrackScreen() {
         if (id) clearCheckpoint();
       }
     }
-  }, [fence, masked, queuedId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, masked, queuedId, runRegionId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   // Task 1 — fire save() itself, exactly once, the moment the finished run
   // has everything save() needs (fence + masked path). Gated on the REF, not
@@ -411,6 +535,10 @@ export default function TrackScreen() {
     setSpoils(null);
     setMasked(null);
     setFence(null);
+    setSessionTiles([]);
+    setTileClaim(null);
+    setTilesConfirmFailed(false);
+    setTileTotal(null);
     setQueuedId(null);
     tracker.reset();
   }, [tracker]);
@@ -467,6 +595,16 @@ export default function TrackScreen() {
           // 'finished' (see the effect above), which is exactly when this
           // branch renders.
           path={masked?.points ?? []}
+          // Tile Coverage brief §4/§6 step 4 — this run's own covered
+          // cells, rendered as the primary fill (see fence-map.tsx/
+          // fence-map.web.tsx for why the enclosure polygon's fill is no
+          // longer drawn here even though `geometry` is still passed in and
+          // still used for the outline/fitBounds).
+          tiles={sessionTiles}
+          // Tile Coverage brief §5 — empty until claimTiles() resolves
+          // (tileClaim starts null); see TileClaimResult.rivalCells' own
+          // doc comment.
+          rivalTiles={tileClaim?.rivalCells ?? []}
           color={fenceColor}
           others={[]}
           excludeId={savedRunId}
@@ -481,7 +619,11 @@ export default function TrackScreen() {
             <View style={[styles.sessionEndStatsBar, { backgroundColor: 'rgba(20,20,20,0.65)' }]}>
               <Stat label={t('track.time')} value={formatDuration(tracker.elapsedS)} c={STATS_ON_DARK} />
               <Stat label={t('track.distance')} value={formatDistance(tracker.distanceM)} c={STATS_ON_DARK} />
-              <Stat label={t('track.area')} value={formatArea(fence.areaM2)} c={STATS_ON_DARK} />
+              {/* TILES replaces AREA (brief §6 step 5) — this run's covered
+                  cell count, computed locally (sessionTiles), so it's
+                  available the instant the run finishes rather than
+                  waiting on claimTiles()'s network round trip. */}
+              <Stat label={t('track.tiles')} value={String(sessionTiles.length)} c={STATS_ON_DARK} />
             </View>
             <RoundButton
               label={t('track.done')}
@@ -513,6 +655,17 @@ export default function TrackScreen() {
           {masked?.masked && !masked.fullyInsideZone && (
             <Text style={[styles.noticeSmall, styles.onDarkNotice]}>{t('track.zoneMasked')}</Text>
           )}
+          {/* The "joining" half of brief §6 step 5's transition (see this
+              PR's report): the enclosure area is still computed and
+              uploaded every run (fence/area_m2 — brief §4 keeps them), shown
+              here small and explicitly labelled as no longer authoritative
+              — a sanity check against the old model on the exact screen
+              that used to trust it, not a competing "real" number. */}
+          {fence && (
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
+              {t('track.legacyArea', { area: formatArea(fence.areaM2) })}
+            </Text>
+          )}
 
           {/* First-save leaderboard name prompt — fully self-contained,
               decides on its own whether there's anything to ask (see
@@ -520,20 +673,34 @@ export default function TrackScreen() {
               succeeded, never before or during. */}
           {saveState === 'saved' && <NamePrompt />}
 
-          {/* Phase 3's payoff. Taking ground off another runner is the most
-              interesting thing that can happen in a session, so it earns a
-              banner even on this stripped-down screen. */}
-          {spoils && (
+          {/* Tile Coverage brief §6 step 5 — replaces the old "You took X m²
+              from N runner(s)" spoils banner (still computed above, no
+              longer rendered — see the `spoils` state's own comment).
+              tilesConfirmFailed takes priority over a stale/absent
+              tileClaim: the run saved either way, but this says plainly
+              when the claim itself couldn't be confirmed rather than
+              silently showing nothing. */}
+          {tilesConfirmFailed && (
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>{t('track.tilesUnavailable')}</Text>
+          )}
+          {tileClaim && tileClaim.rivalTiles > 0 && (
             <Animated.View
               entering={FadeInDown.duration(400).delay(200)}
               style={[styles.spoils, { borderColor: fenceColor, backgroundColor: 'rgba(20,20,20,0.65)' }]}>
               <Text style={[styles.spoilsArea, { color: '#ffffff' }]}>
-                {t('track.tookArea', { area: formatArea(spoils.areaTakenM2) })}
+                {t('track.crossedTiles', { count: tileClaim.rivalTiles })}
               </Text>
               <Text style={[styles.spoilsFrom, { color: 'rgba(255,255,255,0.7)' }]}>
-                {t('track.tookFrom', { count: spoils.runnersAffected })}
+                {t('track.crossedFrom', { count: tileClaim.rivalRunners })}
               </Text>
             </Animated.View>
+          )}
+          {/* Running Layer-1 total (brief §1.5) — a plain count, not a
+              percentage; see tileTotal's own state comment for why. */}
+          {tileTotal !== null && runRegionId && (
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
+              {t('track.tilesHeld', { count: tileTotal, region: getRegion(runRegionId).name })}
+            </Text>
           )}
         </View>
       </View>
@@ -548,6 +715,10 @@ export default function TrackScreen() {
         here={here}
         active={inSession}
         fenceColor={fenceColor}
+        // Tile Coverage brief §6 step 4 — this session's live covered
+        // cells, throttled the same as the (unchanged) live enclosure fill;
+        // see the liveTiles state's own comment above.
+        tiles={liveTiles}
         dark={scheme === 'dark'}
         color={c.accent}
         placeholder={t('track.waiting')}

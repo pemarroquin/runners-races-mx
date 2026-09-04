@@ -166,11 +166,46 @@ const translations = {
         one: '1 sesión guardada en el teléfono, pendiente de subir.',
         other: '%{count} sesiones guardadas en el teléfono, pendientes de subir.',
       } as PluralForm,
-      tookArea: 'Le quitaste %{area}',
-      tookFrom: {
-        one: 'a 1 corredor',
-        other: 'a %{count} corredores',
+      // tookArea/tookFrom above are UNCHANGED and stay unused-but-present
+      // (Tile Coverage brief §4: don't delete anything this pass) — the
+      // enclosure model's Phase 3 could actually TAKE ground via
+      // ST_Difference; first-to-claim tiles never can (no decay yet), so
+      // "took" would be a false claim under the new model. crossedTiles/
+      // crossedFrom below say the true, weaker thing: tiles this run ran
+      // over but could not claim because someone already held them.
+      crossedTiles: {
+        one: 'Cruzaste 1 casilla ya tomada',
+        other: 'Cruzaste %{count} casillas ya tomadas',
       } as PluralForm,
+      crossedFrom: {
+        one: 'de 1 corredor',
+        other: 'de %{count} corredores',
+      } as PluralForm,
+      // Stat-bar label replacing `area` (still defined above, unused by the
+      // session-end screen now — see index.tsx) — brief §6 step 5.
+      tiles: 'Casillas',
+      // Running total, best-effort (fetchMyTileTotal) — the honest stand-in
+      // for the brief §1.5 "% of San Pedro stomped" headline, which needs
+      // §1's real municipio/runnable-tile denominator (explicitly out of
+      // scope this pass). A raw count against "everyone who's played so
+      // far", not against the true reachable area — see index.tsx and the
+      // executor's report for why a fabricated-denominator percentage would
+      // be exactly the mistake the brief §1 warns against.
+      tilesHeld: 'Ahora tienes %{count} casillas en %{region}.',
+      // Shown instead of a tile count when claimTiles() didn't complete
+      // (network hiccup, or the §2.5 forgery guard rejected the batch) —
+      // the run itself is still saved either way; see uploadRun's own doc
+      // comment. Never silently shows "0 casillas" as if that were the true
+      // result — see this repo's standing rule against unverified success.
+      tilesUnavailable: 'No pudimos confirmar tus casillas esta vez — tu recorrido sigue guardado.',
+      // The "joining" half of the brief §6 step 5 transition: the enclosure
+      // area still gets computed and stored every upload (buildFence isn't
+      // deleted — brief §4), shown here small and explicitly labelled as
+      // no-longer-authoritative, so a suspicious run can be sanity-checked
+      // against the old model on the very screen that used to trust it
+      // (this whole brief exists because a 3.3km run once auto-closed into
+      // 977,565 m² here). Never the headline number again.
+      legacyArea: 'Modelo anterior: %{area} (ya no cuenta para tu territorio)',
     },
     leaderboard: {
       title: 'Tabla de posiciones',
@@ -179,6 +214,9 @@ const translations = {
         'Aquí verás quién tiene más territorio. Por ahora corre y acumula el tuyo — se contará cuando abramos la tabla.',
       global: 'Global',
       anonymous: 'Anónimo',
+      // runs/flagged above are UNCHANGED (brief §4: don't delete) but no
+      // longer rendered — the tile-count board (tiles/flaggedTiles below)
+      // replaced them; see leaderboard.tsx.
       runs: {
         one: '1 sesión',
         other: '%{count} sesiones',
@@ -186,6 +224,14 @@ const translations = {
       flagged: {
         one: '1 sesión marcada',
         other: '%{count} sesiones marcadas',
+      } as PluralForm,
+      tiles: {
+        one: '1 casilla',
+        other: '%{count} casillas',
+      } as PluralForm,
+      flaggedTiles: {
+        one: '1 casilla de sesión marcada',
+        other: '%{count} casillas de sesiones marcadas',
       } as PluralForm,
       empty: 'Nadie ha conquistado territorio todavía.\nSé el primero.',
       emptyRegion:
@@ -537,11 +583,23 @@ const translations = {
         one: '1 session saved on your phone, waiting to upload.',
         other: '%{count} sessions saved on your phone, waiting to upload.',
       } as PluralForm,
-      tookArea: 'You took %{area}',
-      tookFrom: {
+      // See the ES entries' comment: tookArea/tookFrom are unchanged and
+      // unused — first-to-claim tiles can't actually TAKE ground (no decay
+      // yet), so crossedTiles/crossedFrom say the true, weaker thing.
+      crossedTiles: {
+        one: 'You crossed 1 tile already claimed',
+        other: 'You crossed %{count} tiles already claimed',
+      } as PluralForm,
+      crossedFrom: {
         one: 'from 1 runner',
         other: 'from %{count} runners',
       } as PluralForm,
+      tiles: 'Tiles',
+      tilesHeld: 'You now hold %{count} tiles in %{region}.',
+      tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
+      // See the ES entry's comment: legacy enclosure area, shown small and
+      // explicitly labelled as no-longer-authoritative.
+      legacyArea: 'Old model: %{area} (no longer counts toward your territory)',
     },
     leaderboard: {
       title: 'Leaderboard',
@@ -550,6 +608,7 @@ const translations = {
         "This is where you'll see who holds the most territory. For now, go run and build yours — it all counts once the board opens.",
       global: 'Global',
       anonymous: 'Anonymous',
+      // See the ES entries' comment: unchanged, no longer rendered.
       runs: {
         one: '1 session',
         other: '%{count} sessions',
@@ -557,6 +616,14 @@ const translations = {
       flagged: {
         one: '1 flagged session',
         other: '%{count} flagged sessions',
+      } as PluralForm,
+      tiles: {
+        one: '1 tile',
+        other: '%{count} tiles',
+      } as PluralForm,
+      flaggedTiles: {
+        one: '1 tile from a flagged run',
+        other: '%{count} tiles from flagged runs',
       } as PluralForm,
       empty: 'Nobody has captured territory yet.\nBe the first.',
       emptyRegion:
