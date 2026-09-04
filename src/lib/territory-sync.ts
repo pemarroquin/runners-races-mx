@@ -8,9 +8,10 @@ import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
-import type { LeaderboardRun } from '@/lib/leaderboard';
+import type { LeaderboardRun, TileOwnerRow } from '@/lib/leaderboard';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
+import { pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
@@ -64,19 +65,186 @@ export interface RunUpload {
   endedAt: number;
 }
 
+/**
+ * Outcome of claiming this run's tiles. `null` (never on the success path
+ * below — see claimTiles) means the CALL itself never completed, distinct
+ * from `{ claimedCount: 0, ... }`, which means it completed and genuinely
+ * claimed nothing (an empty path, or every cell already owned).
+ */
+export interface TileClaimResult {
+  /** Cells this run claimed for the FIRST time — brand new territory. */
+  claimedCount: number;
+  /** Cells this run's path crossed that were ALREADY someone else's by the
+   *  time this claim ran. Under first-to-claim these are never actually
+   *  taken — the primary key + ON CONFLICT DO NOTHING means an existing
+   *  owner never loses a tile (no decay in this pass — see the brief §2's
+   *  "NOT speculative" note). This counts what the run ran OVER but could
+   *  not claim, which is a different, weaker claim than the old enclosure
+   *  model's real "took N m² off M runners" transfer (Phase 3's
+   *  ST_Difference actually reassigned ground). Naming it `rival*` rather
+   *  than reusing `spoils`/`taken*` is deliberate — see index.tsx and the
+   *  executor's report on this brief. */
+  rivalTiles: number;
+  /** Distinct rival owners among rivalTiles, not run count — matches
+   *  RunSpoils.runnersAffected's existing "count people, not events" call. */
+  rivalRunners: number;
+  /** The h3 ids behind rivalTiles — brief §5's "rival-owned tiles in a
+   *  muted neutral" on the session-end map (fence-map.tsx/.web.tsx). Empty
+   *  whenever rivalTiles is 0. Not plumbed to the LIVE map (track-map.tsx/
+   *  .web.tsx): this only exists once claimTiles() resolves, after the run
+   *  ends — a live equivalent would need its own query design (how often,
+   *  against which cells) that's out of scope this pass, see the executor's
+   *  report. */
+  rivalCells: string[];
+}
+
+export type TileClaimOutcome =
+  | { ok: true; result: TileClaimResult }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' | 'rejected' };
+
+/**
+ * Distinctive prefix the §2.5 forgery-guard trigger's RAISE EXCEPTION
+ * carries (see supabase/migrations/20260903120000_tile_coverage.sql) — how
+ * claimTiles tells "the DB genuinely rejected this batch as implausible"
+ * apart from an ordinary network/Postgres error, which is worth a different
+ * reason code precisely because retrying a rejected batch can never
+ * succeed (unlike a network blip).
+ */
+const FORGERY_GUARD_MARKER = 'TILE_FORGERY_GUARD';
+
+/**
+ * Writes this run's `tile_visits` rows and claims whichever of its cells
+ * are still unowned — brief §2/§2.5/§3. Two separate statements, in order,
+ * because the forgery guard lives on `tile_visits` (the visit log, "not
+ * speculative" per the brief) and must reject BEFORE any territory_tiles
+ * row is touched: a rejected batch must claim nothing, not partially claim
+ * whatever happened to run before the guard fired.
+ *
+ * First-to-claim is the `territory_tiles.h3` PRIMARY KEY plus `upsert(...,
+ * { ignoreDuplicates: true })` — Postgres's ON CONFLICT DO NOTHING. This
+ * function never re-checks or re-implements that rule in TypeScript (brief
+ * §2: "do not reimplement this check").
+ *
+ * Called from uploadRun (below) for a fresh save, and by upload-queue.ts's
+ * retry flow for free — both share the one `uploadRun` call, so a run that
+ * failed and later succeeded on retry gets its tiles claimed exactly once,
+ * the same run this whole function guards against double-claiming already
+ * (a duplicate run row would double-claim; uploadRun's own retry-queue
+ * bookkeeping is what prevents the run row itself from being inserted
+ * twice — see uploadRun's callers in index.tsx).
+ */
+export async function claimTiles(runId: string, cells: string[], regionId: string | null): Promise<TileClaimOutcome> {
+  return withSession<{ result: TileClaimResult }, 'rejected'>(async (session) => {
+    if (cells.length === 0) {
+      return { ok: true, result: { claimedCount: 0, rivalTiles: 0, rivalRunners: 0, rivalCells: [] } };
+    }
+
+    const { error: visitError } = await supabase
+      .from('tile_visits')
+      .insert(cells.map((h3) => ({ h3, user_id: session.user.id, run_id: runId })));
+    if (visitError) {
+      // A raised exception from the plausibility trigger comes back as a
+      // Postgres error (not a thrown JS exception — withSession's own
+      // try/catch is for network-level failures, this is a normal
+      // {data,error} response), with our own RAISE EXCEPTION message text
+      // as `message`. Matched by prefix rather than a Postgres SQLSTATE:
+      // plpgsql's plain `raise exception` uses the generic P0001 code,
+      // which isn't specific enough to distinguish this from any other
+      // trigger error on the same table.
+      if (visitError.message?.includes(FORGERY_GUARD_MARKER)) {
+        return { ok: false, reason: 'rejected' };
+      }
+      return { ok: false, reason: 'network' };
+    }
+
+    // First-to-claim: the constraint IS the rule (brief §2). `.select('h3')`
+    // on an ON CONFLICT DO NOTHING upsert returns ONLY the rows Postgres
+    // actually inserted — a conflicting row is silently skipped and never
+    // appears here, which is exactly "cells this run claimed for the first
+    // time" with no application-level branching required.
+    const { data: claimed, error: claimError } = await supabase
+      .from('territory_tiles')
+      .upsert(
+        cells.map((h3) => ({ h3, owner_id: session.user.id, claim_run_id: runId, region_id: regionId })),
+        { onConflict: 'h3', ignoreDuplicates: true },
+      )
+      .select('h3');
+    if (claimError) return { ok: false, reason: 'network' };
+
+    const claimedSet = new Set((claimed ?? []).map((row) => row.h3));
+    const notNewlyClaimed = cells.filter((h3) => !claimedSet.has(h3));
+
+    // last_visited_at on EVERY visited tile, including ones this claim just
+    // lost the race for — brief §2's "NOT speculative" callout. Best-effort:
+    // a failure here doesn't unwind the claim above, same "the claim is the
+    // point, the timestamp is a garnish" reasoning as fetchMyFences' lostM2.
+    if (cells.length > 0) {
+      await supabase
+        .from('territory_tiles')
+        .update({ last_visited_at: new Date().toISOString() })
+        .in('h3', cells);
+    }
+
+    // Rival tiles: cells this run crossed but did NOT just claim, whose
+    // current owner isn't this session. Distinct from the old spoils
+    // banner's `areaTakenM2` — see TileClaimResult's own doc for why this
+    // is "crossed", never "took", under first-to-claim.
+    let rivalTiles = 0;
+    let rivalRunners = 0;
+    const rivalCells: string[] = [];
+    if (notNewlyClaimed.length > 0) {
+      const { data: existing } = await supabase
+        .from('territory_tiles')
+        .select('h3, owner_id')
+        .in('h3', notNewlyClaimed);
+      if (existing) {
+        const owners = new Set<string>();
+        for (const row of existing) {
+          if (row.owner_id !== session.user.id) {
+            rivalTiles++;
+            rivalCells.push(row.h3);
+            owners.add(row.owner_id);
+          }
+        }
+        rivalRunners = owners.size;
+      }
+      // A failed read here just under-reports rivalTiles/rivalRunners/
+      // rivalCells as 0/[] — the claim itself already happened and is not
+      // affected.
+    }
+
+    return {
+      ok: true,
+      result: { claimedCount: claimed?.length ?? 0, rivalTiles, rivalRunners, rivalCells },
+    };
+  });
+}
+
 export type SyncOutcome =
-  | { ok: true; runId: string }
+  | { ok: true; runId: string; tiles: TileClaimResult | null }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
 
 /**
- * Inserts one run. Returns a discriminated outcome rather than a bare
- * boolean so the UI can say something true about *why* it failed — a
- * silent `catch {}` here would make "sync is off" and "sync broke" look
- * identical on screen, which is exactly the failure this codebase has been
- * bitten by before.
+ * Inserts one run, then claims its tiles. Returns a discriminated outcome
+ * rather than a bare boolean so the UI can say something true about *why*
+ * it failed — a silent `catch {}` here would make "sync is off" and "sync
+ * broke" look identical on screen, which is exactly the failure this
+ * codebase has been bitten by before.
+ *
+ * `tiles: null` in a successful outcome means the run itself saved but tile
+ * claiming did not complete (network hiccup right after the run insert, or
+ * the §2.5 forgery guard rejected the batch) — deliberately NOT folded into
+ * an overall `ok: false`. The run row is real and must stay saved (same
+ * "never punish the save" posture as flag_implausible_speed); re-running
+ * uploadRun for the SAME run to retry the claim would insert a SECOND runs
+ * row (see upload-queue.ts's own duplicate-upload guard), which is worse
+ * than a run that claimed zero tiles. This IS a real, known gap: a run
+ * whose claim fails on a transient network error today gets no automatic
+ * retry of the claim alone. Untested by anything in this PR's gates — see
+ * the executor's report.
  */
 export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
-  return withSession<{ runId: string }>(async (session) => {
+  return withSession<{ runId: string; tiles: TileClaimResult | null }>(async (session) => {
     const first = run.points[0];
     const region = first ? nearestRegion(first.lat, first.lng)?.id ?? null : null;
 
@@ -99,6 +267,11 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
         duration_s: Math.round((run.endedAt - run.startedAt) / 1000),
         raw_path: run.points.map((p) => [p.lat, p.lng, p.ts]),
         // PostGIS accepts GeoJSON geometry as text for a geometry column.
+        // Still written every upload — buildFence/area_m2 are NOT deleted
+        // by the tile model (brief §4: "do not delete anything in this
+        // commit"), just no longer what map rendering or the leaderboard
+        // read from. Kept for audit/comparison until a real run has proven
+        // tiles out.
         fence: JSON.stringify(run.fence.geometry.geometry),
         area_m2: Math.round(run.fence.areaM2),
       })
@@ -106,7 +279,14 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       .single();
 
     if (error || !data) return { ok: false, reason: 'network' };
-    return { ok: true, runId: data.id };
+
+    // Tiles: computed from the SAME masked path buildFence used for the
+    // (still-written) fence column above — privacy-zone trimming applies to
+    // ground claimed exactly as it applies to ground enclosed. See tiles.ts
+    // §3 for why this isn't a naive per-fix conversion.
+    const cells = pathToTiles(run.points).cells;
+    const claim = await claimTiles(data.id, cells, region);
+    return { ok: true, runId: data.id, tiles: claim.ok ? claim.result : null };
   });
 }
 
@@ -397,6 +577,35 @@ export async function fetchRunSpoils(runId: string): Promise<SpoilsOutcome> {
   });
 }
 
+export type TileTotalOutcome =
+  | { ok: true; total: number }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * How many tiles this device's identity currently owns, optionally narrowed
+ * to one region — the running Layer-1 "permanent progression" total (brief
+ * §1.5), read back after a save so the summary screen can show it growing.
+ * Deliberately a `count`-only query (`head: true`), not a row fetch — this
+ * can run every time a run ends without downloading anything but a number.
+ *
+ * See index.tsx / the executor's report for why this is a raw count, not a
+ * percentage: a true "% of San Pedro stomped" needs the brief §1's real
+ * municipio + runnable-tile denominator, explicitly out of scope this pass.
+ */
+export async function fetchMyTileTotal(regionId: string | null): Promise<TileTotalOutcome> {
+  return withSession<{ total: number }>(async (session) => {
+    let query = supabase
+      .from('territory_tiles')
+      .select('h3', { count: 'exact', head: true })
+      .eq('owner_id', session.user.id);
+    if (regionId !== null) query = query.eq('region_id', regionId);
+
+    const { count, error } = await query;
+    if (error || count === null) return { ok: false, reason: 'network' };
+    return { ok: true, total: count };
+  });
+}
+
 export type LeaderboardOutcome =
   | { ok: true; runs: LeaderboardRun[]; meUserId: string; skipped: number }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
@@ -445,6 +654,73 @@ export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
       });
     }
     return { ok: true, runs, meUserId: session.user.id, skipped };
+  });
+}
+
+export type TileLeaderboardOutcome =
+  | { ok: true; tiles: TileOwnerRow[]; meUserId: string; skipped: number }
+  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
+
+/**
+ * Every claimed tile + its owner, for leaderboard.ts's rankByTileCount to
+ * aggregate on device — same "aggregate client-side, fine at pilot scale"
+ * posture as fetchLeaderboard above (leaderboard.ts's own header explains
+ * why: PostgREST can't express a GROUP BY, and migrations here are applied
+ * BY HAND so a Postgres aggregate function is a second thing to forget to
+ * apply). Considerably CHEAPER than fetchLeaderboard's fence geometries
+ * though — every row here is a short h3 string plus two ids, not a polygon.
+ *
+ * `territory_tiles.owner_id` references `auth.users(id)` directly (brief
+ * §2's literal schema — see the migration), NOT `profiles(id)` the way
+ * `runs.user_id` does, so PostgREST can't auto-embed `profiles(display_name)`
+ * from this table the one-hop way fetchLeaderboard does. Same two-hop
+ * pattern as fetchRunSpoils above: fetch the tiles, then fetch display names
+ * for the distinct owner ids in one second query.
+ */
+export async function fetchTileLeaderboard(): Promise<TileLeaderboardOutcome> {
+  return withSession<{ tiles: TileOwnerRow[]; meUserId: string; skipped: number }>(async (session) => {
+    // The embedded `runs` comes from territory_tiles.claim_run_id's FK to
+    // runs.id — the only FK from this table to `runs`, so PostgREST can
+    // resolve `runs(flagged)` unambiguously the same way fetchLeaderboard
+    // resolves `profiles(display_name)`.
+    const { data, error } = await supabase
+      .from('territory_tiles')
+      .select('owner_id, region_id, runs(flagged)');
+
+    if (error || !data) return { ok: false, reason: 'network' };
+
+    const ownerIds = Array.from(new Set(data.map((row) => row.owner_id).filter((id): id is string => !!id)));
+    let nameById = new Map<string, string | null>();
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', ownerIds);
+      if (profiles) nameById = new Map(profiles.map((p) => [p.id, p.display_name ?? null]));
+      // A failed second query just leaves every displayName null (falls
+      // back to "anonymous" in the UI) — the tile counts themselves, the
+      // actual ranking, are unaffected. Same "the count is the point, the
+      // name is a garnish" posture as fetchMyFences' lostM2.
+    }
+
+    const tiles: TileOwnerRow[] = [];
+    let skipped = 0;
+    for (const row of data) {
+      if (!row.owner_id) {
+        skipped++;
+        continue;
+      }
+      // Same normalise-object-or-array defensiveness as fetchLeaderboard's
+      // `profiles` embed — depends on how PostgREST infers the relationship.
+      const runRel = Array.isArray(row.runs) ? row.runs[0] : row.runs;
+      tiles.push({
+        ownerId: row.owner_id,
+        displayName: nameById.get(row.owner_id) ?? null,
+        regionId: row.region_id ?? null,
+        flagged: runRel?.flagged === true,
+      });
+    }
+    return { ok: true, tiles, meUserId: session.user.id, skipped };
   });
 }
 

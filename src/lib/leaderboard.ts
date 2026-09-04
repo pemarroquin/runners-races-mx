@@ -122,3 +122,94 @@ export function regionsWithRuns(runs: LeaderboardRun[]): string[] {
   for (const run of runs) if (run.region !== null) seen.add(run.region);
   return Array.from(seen).sort();
 }
+
+// ============================================================================
+// Tile Coverage Model — count-based ranking (Tile Coverage brief §6 step 6)
+// ============================================================================
+//
+// rankByArea/unionAreaM2 above are UNCHANGED and still exported — the brief
+// §4 is explicit ("do not delete anything in this commit"): land tiles
+// alongside the old model, prove it on a real run, then remove. This is the
+// new path leaderboard.tsx actually renders; the union pipeline above is now
+// dead code kept for audit/comparison until that removal happens.
+//
+// Why this is simpler than the union pipeline it replaces, not just newer:
+// first-to-claim means one tile has exactly one owner, ever (no decay in
+// this pass — brief §2). Ranking is therefore a plain count of
+// territory_tiles rows per owner, no turf, no polygon union, no "did these
+// two fences overlap" question at all — the DB schema itself already
+// answers "who owns this ground" per tile.
+
+/** One row of `territory_tiles`, already joined to its owner's display name
+ *  and the flagged status of the run that claimed it — see
+ *  territory-sync.ts's fetchTileLeaderboard for how this is assembled. */
+export interface TileOwnerRow {
+  ownerId: string;
+  displayName: string | null;
+  regionId: string | null;
+  /** The §2.5 forgery guard rejects wholesale fabrication before a claim
+   *  ever lands here — this is the OTHER guard, flag_implausible_speed,
+   *  carried over from the run that claimed this specific tile. A flagged
+   *  claim still counts (same "marked, not punished" posture as the old
+   *  leaderboard), the row just says so. */
+  flagged: boolean;
+}
+
+export interface TileLeaderboardEntry {
+  userId: string;
+  displayName: string | null;
+  /** Tiles this user currently owns — Layer 1's "permanent progression"
+   *  number (brief §1.5). Not a percentage: that needs §1's real
+   *  municipio/runnable-tile denominator, explicitly out of scope this
+   *  pass — see index.tsx and the executor's report. */
+  tileCount: number;
+  /** How many of tileCount came from a run the speed trigger flagged. */
+  flaggedTileCount: number;
+}
+
+/**
+ * Ranks users by tiles owned, descending. `regionId` narrows to tiles
+ * claimed by a run tagged with that region (the SAME coarse metro string as
+ * rankByArea's `regionId` param — see TileOwnerRow.regionId's own doc);
+ * pass null for the global board. Ties broken by user id for a stable order
+ * between loads, same reasoning as rankByArea.
+ *
+ * A user with zero tiles in the selected region drops off entirely, same
+ * "a regional board is a claim about that metro" reasoning as rankByArea.
+ */
+export function rankByTileCount(
+  tiles: TileOwnerRow[],
+  regionId: string | null,
+): TileLeaderboardEntry[] {
+  const byUser = new Map<
+    string,
+    { displayName: string | null; tileCount: number; flaggedTileCount: number }
+  >();
+  for (const tile of tiles) {
+    if (regionId !== null && tile.regionId !== regionId) continue;
+    const existing = byUser.get(tile.ownerId);
+    if (existing) {
+      existing.tileCount++;
+      if (tile.flagged) existing.flaggedTileCount++;
+      // Any row's name will do (they all come from the same profile row) —
+      // fill in a set one over a null in case of a partial join, same as
+      // rankByArea.
+      if (existing.displayName === null && tile.displayName !== null) {
+        existing.displayName = tile.displayName;
+      }
+    } else {
+      byUser.set(tile.ownerId, {
+        displayName: tile.displayName,
+        tileCount: 1,
+        flaggedTileCount: tile.flagged ? 1 : 0,
+      });
+    }
+  }
+
+  const entries: TileLeaderboardEntry[] = [];
+  for (const [userId, v] of byUser) {
+    entries.push({ userId, ...v });
+  }
+  entries.sort((a, b) => b.tileCount - a.tileCount || a.userId.localeCompare(b.userId));
+  return entries;
+}
