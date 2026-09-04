@@ -19,7 +19,12 @@ import { getPref, initDb, setPref } from '@/lib/db';
 
 const PREF_COUNTERS = 'pilot.counters.v1';
 
-export type PilotCounterKey = 'backgroundEvents' | 'watchRestarts' | 'runsRecovered' | 'runsLost';
+export type PilotCounterKey =
+  | 'backgroundEvents'
+  | 'watchRestarts'
+  | 'runsRecovered'
+  | 'runsLost'
+  | 'runsPaceGuarded';
 
 export interface PilotCounters {
   /** Times a live run survived a background/foreground cycle — the SAME
@@ -32,6 +37,12 @@ export interface PilotCounters {
    *  restoreFromCheckpoint() after a reload. Never a fresh run's first
    *  start(). */
   watchRestarts: number;
+  /** Sessions ended and discarded by the pace guard (pace-guard.ts) for
+   *  moving faster than anyone runs. Worth counting because it is the one
+   *  counter that should stay at or near zero for an honest user — a
+   *  climbing number on a real runner's device means the threshold is
+   *  wrong, and there is no other way to find that out. */
+  runsPaceGuarded: number;
   /** Times a checkpointed run was actually accepted and resumed via
    *  resumeCheckpoint() in the Track screen. */
   runsRecovered: number;
@@ -47,6 +58,7 @@ const ZERO_COUNTERS: PilotCounters = {
   watchRestarts: 0,
   runsRecovered: 0,
   runsLost: 0,
+  runsPaceGuarded: 0,
 };
 
 /** Enough of a shape check that a half-written or hand-edited value can't

@@ -24,6 +24,7 @@ describe('getPilotCounters', () => {
       watchRestarts: 0,
       runsRecovered: 0,
       runsLost: 0,
+      runsPaceGuarded: 0,
     });
   });
 
@@ -34,6 +35,7 @@ describe('getPilotCounters', () => {
       watchRestarts: 0,
       runsRecovered: 0,
       runsLost: 0,
+      runsPaceGuarded: 0,
     });
   });
 
@@ -44,6 +46,7 @@ describe('getPilotCounters', () => {
       watchRestarts: 0,
       runsRecovered: 0,
       runsLost: 0,
+      runsPaceGuarded: 0,
     });
   });
 
@@ -54,6 +57,7 @@ describe('getPilotCounters', () => {
       watchRestarts: 0,
       runsRecovered: 0,
       runsLost: 0,
+      runsPaceGuarded: 0,
     });
   });
 });
@@ -80,6 +84,7 @@ describe('incrementPilotCounter', () => {
       watchRestarts: 0,
       runsRecovered: 2,
       runsLost: 1,
+      runsPaceGuarded: 0,
     });
   });
 
@@ -94,11 +99,17 @@ describe('incrementPilotCounter', () => {
     incrementPilotCounter('runsLost');
     incrementPilotCounter('runsLost');
     incrementPilotCounter('runsLost');
+    incrementPilotCounter('runsPaceGuarded');
+    incrementPilotCounter('runsPaceGuarded');
+    incrementPilotCounter('runsPaceGuarded');
+    incrementPilotCounter('runsPaceGuarded');
+    incrementPilotCounter('runsPaceGuarded');
     expect(getPilotCounters()).toEqual({
       backgroundEvents: 1,
       watchRestarts: 2,
       runsRecovered: 3,
       runsLost: 4,
+      runsPaceGuarded: 5,
     });
   });
 
