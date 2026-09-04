@@ -96,16 +96,59 @@ export const emailLinkType: string | null = (() => {
  * linking an email — a plain reload was enough to lose it again.
  *
  * The fix: every caller awaits the SAME in-flight promise instead of each
- * racing its own getSession()/signInAnonymously() sequence. Cleared once
- * settled (not cached forever) so a LATER call — e.g. right after
- * verifyEmailAuth() swaps in a newly-linked session — still does a fresh,
- * cheap getSession() and picks up the change, rather than being frozen on
- * whatever session existed the first time this ever ran.
+ * racing its own getSession()/signInAnonymously() sequence.
+ *
+ * CACHED BETWEEN CALLS TOO, since 2026-09-04 — it used to clear once settled
+ * so that a later call (right after verifyEmailAuth() swaps in a
+ * newly-linked session) would do a fresh getSession() and pick up the
+ * change. That requirement has not gone away; what changed is how it is met.
+ * Re-reading on every call is a POLL, and it was not cheap:
+ * `getSession()` acquires gotrue's auth lock, reads storage, and — if the
+ * access token has expired — refreshes it. That refresh retries with
+ * exponential backoff for as long as
+ * `Date.now() + nextBackoff - startedAt < AUTO_REFRESH_TICK_DURATION_MS`
+ * (auth-js GoTrueClient `_refreshAccessToken`), i.e. up to THIRTY SECONDS on
+ * a flaky connection. Every screen with server data routes through here, so
+ * every one of them could sit on that. This is the reported "Settings shows
+ * a blank name for ~30 seconds" (Pedro, 2026-09-04, on 1-bar LTE).
+ *
+ * The cache is kept correct by the library rather than by expiry guessing:
+ * `onAuthStateChange` below hands us the current session on INITIAL_SESSION,
+ * SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED and SIGNED_OUT, so the cached
+ * value is replaced the moment any of them happens — which is strictly
+ * faster at picking up a newly-linked identity than the old clear-and-refetch
+ * was, not slower.
+ *
+ * Caching a Session is only safe because of what callers do with it: every
+ * one of them reads `session.user.id` (or, once, `session.user.email`) and
+ * nothing else — see territory-sync.ts and account.ts. They never take the
+ * access token off it. The token that authenticates a PostgREST call is
+ * attached by the supabase client itself, from its own internal state, so a
+ * cached Session going stale on `access_token` cannot produce a 401; only an
+ * IDENTITY change would matter, and that is exactly what invalidates it.
+ * If a caller ever needs the token itself, it must not take it from here.
  */
 let sessionInFlight: Promise<Session | null> | null = null;
+/** Last known session. `null` means "unknown / signed out" — both take the
+ *  full path below, which is what re-creates an anonymous session after a
+ *  sign-out. Never holds a falsy-but-present value. */
+let cachedSession: Session | null = null;
+
+// One subscription, registered at module load rather than lazily like
+// auth-events.ts's: that one is lazy so a build with no Supabase configured
+// registers nothing, and the TERRITORY_ENABLED guard here buys the same
+// thing without deferring. The callback only assigns — it never re-enters
+// the client, which supabase-js documents as deadlock-prone from inside
+// this handler.
+if (TERRITORY_ENABLED) {
+  supabase.auth.onAuthStateChange((_event, session) => {
+    cachedSession = session ?? null;
+  });
+}
 
 export async function ensureSession(): Promise<Session | null> {
   if (!TERRITORY_ENABLED) return null;
+  if (cachedSession) return cachedSession;
   if (sessionInFlight) return sessionInFlight;
   sessionInFlight = (async () => {
     try {
@@ -119,7 +162,13 @@ export async function ensureSession(): Promise<Session | null> {
     }
   })();
   try {
-    return await sessionInFlight;
+    const session = await sessionInFlight;
+    // Also set here, not only from the auth event: the event is delivered
+    // asynchronously, and the very next caller — on a cold load they arrive
+    // in the same tick — must not fall through and start a second
+    // getSession() before it lands.
+    if (session) cachedSession = session;
+    return session;
   } finally {
     sessionInFlight = null;
   }
