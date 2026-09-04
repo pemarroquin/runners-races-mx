@@ -36,6 +36,7 @@ import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
+import { onIdentityChanged } from '@/lib/auth-events';
 import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import { useSaved } from '@/lib/saved';
 import {
@@ -154,6 +155,17 @@ export default function MyRacesScreen() {
   const [saveSignal, setSaveSignal] = useState(0);
   useEffect(() => onRunSaved(() => setSaveSignal((v) => v + 1)), []);
 
+  // Bumped by auth-events.ts when the IDENTITY swaps — a different signal
+  // for a different cause, kept separate from saveSignal so neither one's
+  // meaning has to stretch. fetchMyFences filters on session.user.id, so a
+  // sign-in that lands on another account (account.ts's SIGN IN path)
+  // invalidates whatever this screen already fetched, without any run
+  // having been saved and without `view`/`isFocused` changing. Without
+  // this the runner sees the OLD identity's result — usually an empty map —
+  // until something unrelated happens to re-trigger the fetch below.
+  const [identitySignal, setIdentitySignal] = useState(0);
+  useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
+
   useEffect(() => {
     if (view !== 'fences' || !isFocused) return;
     let stale = false;
@@ -170,7 +182,7 @@ export default function MyRacesScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [view, isFocused, refreshQueued, saveSignal]);
+  }, [view, isFocused, refreshQueued, saveSignal, identitySignal]);
 
   // Pull-to-refresh — same refreshing-boolean pattern as leaderboard.tsx's
   // onRefresh, kept separate from the `fences === null` loading state above
