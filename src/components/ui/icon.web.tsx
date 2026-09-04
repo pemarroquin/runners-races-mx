@@ -233,6 +233,39 @@ const GLYPHS: Record<string, Glyph> = {
   ),
   play_arrow: (c) => <path d="M7.5 4.8v14.4a1 1 0 0 0 1.53.85l11.2-7.2a1 1 0 0 0 0-1.7L9.03 3.95A1 1 0 0 0 7.5 4.8z" fill={c} />,
   stop: (c) => <rect x="5.5" y="5.5" width="13" height="13" rx="2" fill={c} />,
+  // Added 2026-09-03 with the Settings sub-page list (src/app/(tabs)/settings/):
+  // the row chevron plus one leading glyph per category. Added in the SAME
+  // change as the call sites, per this file's own rule above.
+  chevron_right: (c) => (
+    <path d="M9.5 5.5l6.2 6.5-6.2 6.5" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  ),
+  mail: (c) => (
+    <>
+      <rect x="2.8" y="5.2" width="18.4" height="13.6" rx="2.2" stroke={c} strokeWidth={1.8} fill="none" />
+      <path d="M3.4 7l8.6 6 8.6-6" stroke={c} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  tune: (c) => (
+    <>
+      <path d="M3 7h6M13 7h8M3 17h10M17 17h4" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+      <circle cx="11" cy="7" r="2.2" stroke={c} strokeWidth={1.8} fill="none" />
+      <circle cx="15" cy="17" r="2.2" stroke={c} strokeWidth={1.8} fill="none" />
+    </>
+  ),
+  lock: (c) => (
+    <>
+      <rect x="4.6" y="10.2" width="14.8" height="10.2" rx="2.2" stroke={c} strokeWidth={1.8} fill="none" />
+      <path d="M8.2 10.2V7.6a3.8 3.8 0 0 1 7.6 0v2.6" stroke={c} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+      <circle cx="12" cy="15.3" r="1.5" fill={c} />
+    </>
+  ),
+  info: (c) => (
+    <>
+      <circle cx="12" cy="12" r="9" stroke={c} strokeWidth={1.8} fill="none" />
+      <circle cx="12" cy="7.9" r="1.15" fill={c} />
+      <path d="M12 11.2v5.4" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+    </>
+  ),
   account_circle: (c) => (
     <>
       <circle cx="12" cy="12" r="9" stroke={c} strokeWidth={1.8} fill="none" />

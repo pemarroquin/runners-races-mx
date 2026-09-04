@@ -395,6 +395,19 @@ const translations = {
       sectionPreferences: 'Preferencias',
       sectionLocation: 'Ubicación y privacidad',
       sectionAbout: 'Acerca de',
+      // Settings IA (2026-09-03): the tab is now a list of rows, each pushing
+      // its own sub-page (src/app/(tabs)/settings/). The row labels and the
+      // stack header titles REUSE the section keys above plus accountTitle
+      // and privacy.title — the only new copy is the two list-group headers
+      // and the one-line description under each row.
+      groupAccount: 'Cuenta',
+      groupApp: 'Aplicación',
+      navProfileHint: 'Tu nombre en la tabla de posiciones',
+      navAccountHint: 'Vincula tu correo para no perder tu territorio',
+      navPreferencesHint: 'Apariencia, idioma y recordatorios',
+      navLocationHint: 'Permiso de ubicación y tu zona privada',
+      navPrivacyHint: 'Qué recopilamos y qué no',
+      navAboutHint: 'Versión y soporte',
       accountTitle: 'Tu cuenta',
       accountBody:
         'Este dispositivo tiene una cuenta anónima para guardar tus territorios. Si cambias de navegador, de dispositivo o se borran los datos del sitio, esa cuenta —y el territorio que tenga guardado— deja de aparecer. Agrega tu correo para que tu progreso te siga a donde entres.',
@@ -403,6 +416,10 @@ const translations = {
       accountSending: 'Enviando…',
       accountEmailInvalid: 'Escribe un correo válido.',
       accountCodeSent: 'Enviamos un código a %{email}. Revisa tu correo.',
+      // Delivery is Supabase's email template, configured outside this repo —
+      // when it misbehaves the runner just sees nothing arrive. Say where
+      // else to look before they conclude the app is broken.
+      accountCodeSpam: 'Si no llega en un par de minutos, revisa tu carpeta de spam.',
       accountCodePlaceholder: 'Código de 6 dígitos',
       accountVerify: 'Confirmar',
       accountVerifying: 'Confirmando…',
@@ -779,6 +796,16 @@ const translations = {
       sectionPreferences: 'Preferences',
       sectionLocation: 'Location & privacy',
       sectionAbout: 'About',
+      // See the Spanish block for what these are and why the row labels
+      // themselves have no new keys.
+      groupAccount: 'Account',
+      groupApp: 'App',
+      navProfileHint: 'Your name on the leaderboard',
+      navAccountHint: 'Link your email so you keep your territory',
+      navPreferencesHint: 'Appearance, language and reminders',
+      navLocationHint: 'Location permission and your privacy zone',
+      navPrivacyHint: 'What we collect and what we don’t',
+      navAboutHint: 'Version and support',
       accountTitle: 'Your account',
       accountBody:
         "This device has an anonymous account for saving your territories. Switch browsers or devices, or clear site data, and that account — and any territory it holds — stops showing up. Add your email so your progress follows you wherever you sign in.",
@@ -787,6 +814,7 @@ const translations = {
       accountSending: 'Sending…',
       accountEmailInvalid: 'Enter a valid email address.',
       accountCodeSent: 'We sent a code to %{email}. Check your inbox.',
+      accountCodeSpam: 'If it does not arrive within a couple of minutes, check your spam folder.',
       accountCodePlaceholder: '6-digit code',
       accountVerify: 'Confirm',
       accountVerifying: 'Confirming…',
