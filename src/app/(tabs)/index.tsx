@@ -33,6 +33,7 @@ import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
+import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import { fetchRunSpoils, uploadRun, type RunSpoils } from '@/lib/territory-sync';
 import { formatArea, formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
@@ -190,6 +191,16 @@ export default function TrackScreen() {
       }
       setPending(before);
       flushQueue(uploadRun).then((result) => {
+        // Fires even if this effect has already gone stale (the runner left
+        // the Track tab while the flush was still in flight) — the upload
+        // itself already happened against the server regardless of whether
+        // this screen is still around to react to it, and a screen sitting
+        // on Territories needs to hear about exactly that. See
+        // save-events.ts; this is the fix for the confirmed "queued run
+        // promotes to saved while the runner is on the Territories screen"
+        // race. Covers every run this flush drained, not just the one this
+        // screen happens to be tracking (see `current` below).
+        if (result.resolved.length > 0) notifyRunSaved();
         if (stale) return;
         setPending(result.remaining);
         // Reconcile against whatever THIS screen is currently showing. The
@@ -302,6 +313,14 @@ export default function TrackScreen() {
     };
 
     const outcome = await uploadRun(payload);
+    // Fires even if the token below turns out to be stale — the row is
+    // genuinely saved on the server the instant uploadRun resolves ok, and
+    // any screen showing this runner's territories needs to hear about that
+    // regardless of what THIS screen does with the outcome locally. See
+    // save-events.ts; this is the fix for the confirmed "Territories tab
+    // renders empty right after a real, successful save" race — the runner
+    // can reach that screen before this await even resolves.
+    if (outcome.ok) notifyRunSaved();
     // A discard() landed while this upload was still in flight — the runner
     // has already moved on and the screen has already reset. Applying this
     // outcome now would resurrect a thrown-away run: enqueue it on failure,

@@ -36,6 +36,7 @@ import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { daysUntil, type Race } from '@/lib/races';
 import { useRaces } from '@/lib/races-provider';
+import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import { useSaved } from '@/lib/saved';
 import {
   deleteRun,
@@ -139,6 +140,20 @@ export default function MyRacesScreen() {
   const [queued, setQueued] = useState<QueuedRun[]>([]);
   const refreshQueued = useCallback(() => setQueued(listQueued()), []);
 
+  // Bumped by save-events.ts whenever a run lands on the server — a fresh
+  // autosave, a queued run promoted by index.tsx's background flush, or a
+  // manual retry (below). Focus/view alone are NOT enough: a runner can
+  // reach this screen, already focused on Territories, before index.tsx's
+  // autosave (which starts the instant a run finishes, before the summary
+  // screen's checkmark is even tapped) has finished its network round trip
+  // — confirmed live twice. Neither `view` nor `isFocused` changes again
+  // once that race is lost, so nothing re-triggers the fetch below without
+  // this. Folded into the SAME effect via this counter rather than a second
+  // fetch effect, so there is exactly one place that knows how to load
+  // fences.
+  const [saveSignal, setSaveSignal] = useState(0);
+  useEffect(() => onRunSaved(() => setSaveSignal((v) => v + 1)), []);
+
   useEffect(() => {
     if (view !== 'fences' || !isFocused) return;
     let stale = false;
@@ -155,7 +170,7 @@ export default function MyRacesScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [view, isFocused, refreshQueued]);
+  }, [view, isFocused, refreshQueued, saveSignal]);
 
   // Pull-to-refresh — same refreshing-boolean pattern as leaderboard.tsx's
   // onRefresh, kept separate from the `fences === null` loading state above
@@ -451,6 +466,12 @@ function DetailCard({
     // flush (index.tsx) doesn't upload it a second time, same reasoning as
     // save()'s own success path there.
     removeQueued(queued.id);
+    // This retry happened FROM the Territories screen itself, so without
+    // this the card would close over a map that still shows the old
+    // 'pending' feature — this screen's own fetch effect has no other
+    // reason to re-run just because the queue changed underneath it. Same
+    // signal index.tsx's two producers use; see save-events.ts.
+    notifyRunSaved();
     onDeleted();
   }, [queued, onDeleted]);
 
