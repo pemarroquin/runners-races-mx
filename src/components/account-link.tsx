@@ -170,6 +170,14 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
           <Text style={[styles.paragraph, { color: c.textSecondary }]}>
             {t('settings.accountCodeSent', { email: email.trim() })}
           </Text>
+          {/* Delivery is a Supabase email-template concern, configured
+              outside this repo — when it misbehaves the runner sees nothing
+              arrive and no error, because nothing failed on our side. Point
+              at the other place to look rather than leaving them staring at
+              an empty inbox and concluding the app is broken. */}
+          <Text style={[styles.paragraph, { color: c.textSecondary }]}>
+            {t('settings.accountCodeSpam')}
+          </Text>
           {/* Only the sign-in path replaces this device's local identity —
               spelled out before the runner commits to entering the code,
               since it can't be undone from here (see account.ts's header). */}
