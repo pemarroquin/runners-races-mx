@@ -9,6 +9,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { LeaderboardRun, TileOwnerRow } from '@/lib/leaderboard';
+import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { pathToTiles } from '@/lib/tiles';
@@ -750,7 +751,12 @@ export async function fetchMyProfile(): Promise<ProfileOutcome> {
     // run upload, so "no row yet" is the normal state for a new install and
     // must not read as an error.
     if (error) return { ok: false, reason: 'network' };
-    return { ok: true, displayName: data?.display_name ?? null };
+    const displayName = (data?.display_name ?? null) as string | null;
+    // Cached here rather than at each call site so every reader benefits —
+    // this screen, NamePrompt, and anything added later — without having to
+    // remember to. See profile-cache.ts for why the name is worth keeping.
+    setCachedDisplayName(displayName);
+    return { ok: true, displayName };
   });
 }
 
@@ -774,6 +780,9 @@ export async function updateDisplayName(name: string): Promise<ProfileOutcome> {
       .from('profiles')
       .upsert({ id: session.user.id, display_name: value }, { onConflict: 'id' });
     if (error) return { ok: false, reason: 'network' };
+    // Only after the server confirmed it — caching an unsaved name would
+    // show the runner a value that isn't on the leaderboard.
+    setCachedDisplayName(value);
     return { ok: true, displayName: value };
   });
 }

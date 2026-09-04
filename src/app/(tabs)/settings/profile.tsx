@@ -12,6 +12,7 @@ import { Text, TextInput, View } from 'react-native';
 
 import { SettingsPage, settingsStyles, useSettingsColors } from '@/components/settings-ui';
 import { useI18n } from '@/lib/i18n';
+import { getCachedDisplayName } from '@/lib/profile-cache';
 import { DISPLAY_NAME_MAX, fetchMyProfile, updateDisplayName } from '@/lib/territory-sync';
 
 export default function ProfileSettingsScreen() {
@@ -19,11 +20,25 @@ export default function ProfileSettingsScreen() {
   const { t } = useI18n();
   const isFocused = useIsFocused();
 
-  // Null until the runner picks one — the board falls back to "Anónimo"
-  // rather than exposing anything from the anonymous identity.
-  const [displayName, setDisplayName] = useState('');
+  // Seeded from the local cache so the field shows the runner's real name on
+  // the FIRST paint. Before this, both of these started empty/'loading' and
+  // only filled in once fetchMyProfile() came back — which on a phone took
+  // long enough (~30s, reported 2026-09-04) that the screen read as blank and
+  // then changed under you. The refetch below still runs and still wins; the
+  // cache only decides what is on screen while it is in flight. See
+  // profile-cache.ts.
+  //
+  // A lazy useState initializer, not a plain call: this reads storage, and
+  // it must run once on mount rather than on every render.
+  const [cachedName] = useState(() => getCachedDisplayName());
+  const [displayName, setDisplayName] = useState(cachedName ?? '');
   const [nameState, setNameState] = useState<'loading' | 'ready' | 'saving' | 'saved' | 'failed' | 'off'>(
-    'loading',
+    // 'loading' makes the input read-only. With a cached name there is
+    // something real to edit immediately, and a save started before the
+    // refetch lands is safe — updateDisplayName is an upsert of whatever the
+    // field holds, and the refetch's own guard below refuses to overwrite a
+    // field the runner has touched.
+    cachedName === null ? 'loading' : 'ready',
   );
   // The last value this screen actually confirmed with the server — via a
   // fetch or a successful save. saveName() below diffs `displayName`
@@ -33,7 +48,11 @@ export default function ProfileSettingsScreen() {
   // from "the runner is mid-edit" (must not clobber what they're typing). A
   // ref, not state: it's read inside a setState updater and inside an
   // async callback, and must never itself trigger a re-render.
-  const lastSyncedName = useRef('');
+  // Seeded from the cache too, and it has to be: the refetch adopts a
+  // fetched value only when the field still equals this. Left at '' while
+  // the field showed a cached name, every refetch would look like "the
+  // runner is mid-edit" and never reconcile.
+  const lastSyncedName = useRef(cachedName ?? '');
 
   // Re-fetch on every focus, not once on mount: NamePrompt can write
   // display_name from off-screen while this screen stays mounted (expo-router
