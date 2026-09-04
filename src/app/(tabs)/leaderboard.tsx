@@ -7,6 +7,7 @@
 // the header): a national board would rank a Monterrey runner against a
 // Tijuana one over ground neither can contest. Global is one tap away for
 // when the question is "who's biggest anywhere".
+import { useIsFocused } from 'expo-router';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -38,6 +39,7 @@ export default function LeaderboardScreen() {
   const c = Colors[scheme];
   const { t } = useI18n();
   const { region } = useRegion();
+  const isFocused = useIsFocused();
 
   const [scope, setScope] = useState<Scope>('region');
   const [data, setData] = useState<LeaderboardOutcome | null>(null);
@@ -48,10 +50,18 @@ export default function LeaderboardScreen() {
     setData(outcome);
   }, []);
 
+  // Refetches on every focus, not just first mount. expo-router tab screens
+  // stay mounted rather than remounting per visit, so the old `[]`-deps
+  // effect fetched once, early in the session, and never again short of a
+  // manual pull-to-refresh. Confirmed live: a user set a new leaderboard
+  // display name and saved two real runs — Supabase already had the fresh
+  // data server-side (right region, right profile join, right flagged
+  // state) while this screen kept showing stale data from the old identity.
+  // Deferred by a tick with a `stale` flag on cleanup — same pattern as
+  // myraces.tsx's Territories fetch effect.
   useEffect(() => {
+    if (!isFocused) return;
     let stale = false;
-    // Deferred a tick so no setState runs synchronously in the effect body
-    // (React Compiler rule — the same pattern the run tracker's clock uses).
     const id = setTimeout(() => {
       fetchLeaderboard().then((outcome) => {
         if (!stale) setData(outcome);
@@ -61,7 +71,7 @@ export default function LeaderboardScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, []);
+  }, [isFocused]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
