@@ -1,0 +1,23 @@
+{
+  "drive-sep3": {
+    "runId": "fbc7f628-cc12-47a6-8ea8-2756497a414d",
+    "points": 435,
+    "distanceM": 3299,
+    "durationS": 546,
+    "areaM2": 977565
+  },
+  "drive-sep2": {
+    "runId": "e0ee0073-f99d-408c-b049-d3fa424ff58b",
+    "points": 357,
+    "distanceM": 3404,
+    "durationS": 504,
+    "areaM2": 308403.697096379
+  },
+  "real-run": {
+    "runId": "c2f5dec9-a80a-4545-930b-4f3fdc2e51cf",
+    "points": 1259,
+    "distanceM": 5945,
+    "durationS": 3137,
+    "areaM2": 73419
+  }
+}

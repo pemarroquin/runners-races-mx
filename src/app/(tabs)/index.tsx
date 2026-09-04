@@ -30,6 +30,7 @@ import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/th
 import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
+import { isImpossiblePace } from '@/lib/pace-guard';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { getRegion, nearestRegion } from '@/lib/regions';
@@ -197,6 +198,10 @@ export default function TrackScreen() {
     incrementPilotCounter('runsRecovered');
     void tracker.restoreFromCheckpoint(cp);
   }, [checkpoint, tracker]);
+
+  // Set when the pace guard ends a session (see the effect below). Purely
+  // presentational — the run is already gone by the time this is true.
+  const [paceGuardTripped, setPaceGuardTripped] = useState(false);
 
   const discardCheckpoint = useCallback(() => {
     clearCheckpoint();
@@ -376,6 +381,7 @@ export default function TrackScreen() {
     }, 0);
     return () => clearTimeout(id);
   }, [inSession, tracker.points]);
+
 
   // Same region derivation territory-sync.ts's uploadRun uses for
   // `runs.region` (nearestRegion off the first masked point) — recomputed
@@ -561,6 +567,37 @@ export default function TrackScreen() {
     setQueuedId(null);
     tracker.reset();
   }, [tracker]);
+
+  // PACE GUARD — end and DISCARD a session that is moving faster than anyone
+  // runs. Pedro drove a car and banked 977 565 m2 of territory (2026-09-03);
+  // this is what stops that being savable. Thresholds and the reasoning
+  // behind them live in pace-guard.ts, measured against that drive and a
+  // real run — including why it is a median over a window and never an
+  // instantaneous speed.
+  //
+  // Discarded, not finished. resetLocal() takes the tracker straight from
+  // 'running' to 'idle' WITHOUT passing through 'finished', which is what
+  // the auto-save effect below keys on — so nothing is ever built, uploaded
+  // or queued for this run. Calling tracker.stop() here instead would save
+  // it, which is the opposite of the point. The checkpoint goes too, or a
+  // reload would offer to resume the drive.
+  useEffect(() => {
+    if (!running) return;
+    if (!isImpossiblePace(tracker.points)) return;
+    // Deferred a tick rather than run straight from the effect body: this
+    // tears down a whole session's worth of state, and the React Compiler's
+    // lint rule flags any setState an effect body can reach. Same pattern as
+    // the checkpoint-load effect above. If another fix lands first the effect
+    // simply re-runs and re-schedules — the guard's verdict does not change.
+    const id = setTimeout(() => {
+      incrementPilotCounter('runsPaceGuarded');
+      clearCheckpoint();
+      setCheckpoint(null);
+      resetLocal();
+      setPaceGuardTripped(true);
+    }, 0);
+    return () => clearTimeout(id);
+  }, [running, tracker.points, resetLocal]);
 
   // The finished run gets a full-screen map of just what it captured
   // (2026-09-02 redesign, replacing the old scrolling stats-card summary):
@@ -784,6 +821,37 @@ export default function TrackScreen() {
               ios="stop.fill"
               android="stop"
             />
+          </Animated.View>
+        </SafeAreaView>
+      )}
+
+      {/* The pace guard ended and discarded a session (see the guard effect
+          above). Rendered here, over the idle map, because by the time this
+          shows there IS no session — the tracker is already back to 'idle'
+          and the run is gone. It stays until dismissed rather than
+          auto-hiding: it is the only explanation the runner will ever get
+          for a session disappearing, and a toast that fades is exactly how
+          you make that feel like a crash. */}
+      {paceGuardTripped && (
+        <SafeAreaView style={styles.paceGuardWrap} edges={['top']} pointerEvents="box-none">
+          <Animated.View
+            entering={FadeInDown.duration(320)}
+            style={[styles.paceGuard, { backgroundColor: c.backgroundElement }]}>
+            <Text style={[styles.paceGuardTitle, { color: c.text }]}>
+              {t('track.paceGuardTitle')}
+            </Text>
+            <Text style={[styles.paceGuardBody, { color: c.textSecondary }]}>
+              {t('track.paceGuardBody')}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setPaceGuardTripped(false)}
+              style={({ pressed }) => [
+                styles.paceGuardButton,
+                { backgroundColor: c.accent, opacity: pressed ? 0.85 : 1 },
+              ]}>
+              <Text style={styles.paceGuardButtonLabel}>{t('track.paceGuardDismiss')}</Text>
+            </Pressable>
           </Animated.View>
         </SafeAreaView>
       )}
@@ -1076,6 +1144,37 @@ const styles = StyleSheet.create({
   stat: { flex: 1, gap: Spacing.half },
   statLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   statValue: { fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] },
+
+  paceGuardWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    zIndex: 20,
+    paddingHorizontal: Spacing.three,
+  },
+  paceGuard: {
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.two,
+    // Lifted off the map underneath it — this is the one thing on screen
+    // the runner must read.
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  paceGuardTitle: { fontSize: 17, fontWeight: '700' },
+  paceGuardBody: { fontSize: 14, lineHeight: 20 },
+  paceGuardButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    marginTop: Spacing.half,
+  },
+  paceGuardButtonLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
 
   notice: { fontSize: 14, lineHeight: 20 },
   noticeSmall: { fontSize: 12, lineHeight: 17 },

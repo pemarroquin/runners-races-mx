@@ -87,6 +87,17 @@ const translations = {
       keepAwakeFailed:
         'No pudimos mantener la pantalla encendida — evita bloquear el teléfono para no perder el registro.',
       backgroundGap: 'El registro se pausó mientras la app estaba en segundo plano.',
+      // Pace guard (pace-guard.ts). Tone matters more here than anywhere
+      // else in the app: this fires on a real person mid-session and throws
+      // their run away, and it will occasionally be wrong. So it never
+      // accuses — it says what was measured, what happened, and how to carry
+      // on. No "we know", no "cheating", no blame. Someone genuinely in a
+      // car already knows why; someone with a bad GPS fix must not be made
+      // to feel caught.
+      paceGuardTitle: 'Parece que ya no vas corriendo',
+      paceGuardBody:
+        'Llevas medio minuto moviéndote más rápido de lo que se puede correr, así que terminamos la sesión. No guardamos nada: el territorio solo cuenta si lo recorres a pie.',
+      paceGuardDismiss: 'Entendido',
       // Distance-gap instrumentation on the finished-run summary — see
       // tracking.ts's gapCount/gapDurationMs/gapChordM/creditedGapM.
       // %{duration}/%{credited}/%{uncredited} are pre-formatted strings from
@@ -570,6 +581,11 @@ const translations = {
       keepAwakeFailed:
         "We couldn't keep the screen on — avoid locking your phone or recording may stop.",
       backgroundGap: 'Recording paused while the app was in the background.',
+      // See the ES entries for why this copy is worded the way it is.
+      paceGuardTitle: "Looks like you're not running",
+      paceGuardBody:
+        'You’ve been moving faster than a run for the last 30 seconds, so we ended the session. Nothing was saved — territory only counts when you cover it on foot.',
+      paceGuardDismiss: 'Got it',
       // Split credited/uncredited — see the ES entry's comment.
       gapNotice: {
         one: '1 background interruption (%{duration}) — ~%{credited} counted as a straight line, ~%{uncredited} left unrecorded.',
