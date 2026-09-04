@@ -12,7 +12,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
-import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
+import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 
 /** The colour set for the current scheme, resolved the same way every screen
  *  in this app resolves it. Saves each sub-page repeating the two lines. */
@@ -27,9 +27,10 @@ export function useSettingsColors(): { c: Record<ThemeColor, string>; scheme: 'l
  *
  * No SafeAreaView top edge, unlike the tab screens: these sit under the
  * stack's native header (see settings/_layout.tsx), which already clears the
- * status bar. The bottom padding is `BottomTabInset` because the floating
- * pill tab bar stays visible over a pushed settings page — same as every
- * other scrollable screen in the app.
+ * status bar. Bottom padding is the app's normal content padding, not
+ * BottomTabInset — the floating pill tab bar is now hidden on every pushed
+ * settings page (see (tabs)/_layout.tsx's FloatingTabBar), so there is
+ * nothing left to clear.
  */
 export function SettingsPage({ children }: { children: ReactNode }) {
   const { c } = useSettingsColors();
@@ -78,5 +79,5 @@ export const settingsStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  container: { padding: Spacing.three, paddingBottom: BottomTabInset },
+  container: { padding: Spacing.three, paddingBottom: Spacing.five },
 });
