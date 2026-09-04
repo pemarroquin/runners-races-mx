@@ -125,6 +125,21 @@ function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBar
   const barWidth = state.routes.length * ITEM_WIDTH + BAR_PADDING_H * 2;
   const sideMargin = Math.max((windowWidth - barWidth) / 2, MIN_SIDE_MARGIN);
 
+  // Settings is the one tab whose own content is a nested Stack (see
+  // (tabs)/settings/_layout.tsx) — pushing a sub-page there never changes
+  // which TOP-LEVEL tab is focused, so without this check the pill kept
+  // floating over a sub-page's back button and content, reading as chrome
+  // that belongs to a screen it isn't part of. React Navigation already
+  // reports the focused tab's own nested navigator state on `route.state`
+  // once it has mounted; a Stack's `index` is 0 on its initial route
+  // (settings/index.tsx) and >0 once anything is pushed on top of it —
+  // exactly "a sub-page is open". No new navigation machinery: this reads
+  // state the tab bar is already handed every render.
+  const focusedRoute = state.routes[state.index];
+  const onSettingsSubpage =
+    focusedRoute.name === 'settings' && (focusedRoute.state?.index ?? 0) > 0;
+  if (onSettingsSubpage) return null;
+
   return (
     <View
       pointerEvents="box-none"
