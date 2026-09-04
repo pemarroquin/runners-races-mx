@@ -415,6 +415,10 @@ const translations = {
       accountSwitchWarning:
         'Ese correo ya tiene una cuenta. Al confirmar, este dispositivo pasará a usarla — cualquier territorio guardado solo aquí dejará de verse.',
       accountLinked: 'Cuenta vinculada: %{email}',
+      // Ver la nota en inglés (arriba, en la traducción `en`) — mismo caso,
+      // solo el flujo de enlace por correo (no el de código en la app).
+      accountLinkedSwapped:
+        'Este dispositivo ahora usa la cuenta %{email}. Si tenía territorio guardado solo aquí con otra cuenta, puede que ya no lo veas.',
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: '¿Cómo quieres aparecer en la tabla?',
@@ -799,6 +803,14 @@ const translations = {
       accountSwitchWarning:
         "That email already has an account. Confirming will switch this device to it — any territory saved only here will stop showing.",
       accountLinked: 'Account linked: %{email}',
+      // Shown by email-link-banner.tsx after a clicked email link finishes
+      // signing in (not the in-app code path — see supabase.ts's
+      // emailLinkType). This is the SIGN-IN case specifically: the swap
+      // already happened by the time this renders, so unlike
+      // accountSwitchWarning above (which warns BEFORE confirming, in the
+      // code-entry flow) this can only disclose it after the fact.
+      accountLinkedSwapped:
+        "This device is now signed in as %{email}. If it had territory saved only here under a different account, you may not see it anymore.",
       // First-save name prompt (name-prompt.tsx) — asked once, at the
       // moment a run is first saved, never on first app open.
       namePromptTitle: 'How do you want to show up on the leaderboard?',

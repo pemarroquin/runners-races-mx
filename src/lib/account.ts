@@ -74,8 +74,18 @@ export async function startEmailAuth(email: string): Promise<StartEmailAuthOutco
     return { ok: false, reason: 'invalid' };
   }
 
+  // Where a clicked link in the email actually lands — see supabase.ts's
+  // emailLinkType for why this now matters: the email itself is a link,
+  // not a code (Supabase's hosted templates can't be edited to show a code
+  // without paid custom SMTP), so completing this any longer depends on
+  // that link resolving back into THIS app rather than GoTrue's Site URL
+  // default. `undefined` on native — there's no `window` and no browser
+  // redirect to send anywhere; the code-entry path (verifyEmailAuth below)
+  // is what native still relies on.
+  const emailRedirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+
   return withSession<{ mode: 'link' | 'signin' }>(async () => {
-    const { error: linkError } = await supabase.auth.updateUser({ email });
+    const { error: linkError } = await supabase.auth.updateUser({ email }, { emailRedirectTo });
     if (!linkError) return { ok: true, mode: 'link' };
 
     // GoTrue's wording for "this email belongs to another account" has
@@ -88,7 +98,7 @@ export async function startEmailAuth(email: string): Promise<StartEmailAuthOutco
     const inUse = /already|registered|exists|taken/i.test(linkError.message);
     if (!inUse) return { ok: false, reason: 'network' };
 
-    const { error: signInError } = await supabase.auth.signInWithOtp({ email });
+    const { error: signInError } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } });
     if (signInError) return { ok: false, reason: 'network' };
     return { ok: true, mode: 'signin' };
   });

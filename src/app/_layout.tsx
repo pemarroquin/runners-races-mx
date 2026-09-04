@@ -14,6 +14,7 @@ import { useColorScheme } from 'react-native';
 // paths aren't a stable public API the way the barrel export is.
 import GestureHandlerRootView from 'react-native-gesture-handler/lib/module/components/GestureHandlerRootView';
 
+import { EmailLinkBanner } from '@/components/email-link-banner';
 import { CinematicSplash } from '@/components/splash';
 import { LocaleProvider } from '@/lib/i18n';
 import { RacesProvider } from '@/lib/races-provider';
@@ -45,6 +46,10 @@ export default function RootLayout() {
             </Stack>
             {/* Rendered after the Stack so it overlays the app during launch */}
             <CinematicSplash />
+            {/* Also an overlay, for the same reason: a redirect from a
+                clicked email link can land on any route, and the
+                confirmation has to show regardless of which one. */}
+            <EmailLinkBanner />
           </ThemeProvider>
         </RemindersProvider>
         </SavedProvider>

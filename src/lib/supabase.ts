@@ -20,14 +20,54 @@ export const TERRITORY_ENABLED = !!URL && !!ANON_KEY;
 // still start (and every other feature must still work) if these env vars
 // are missing, so fall back to obvious placeholders rather than throwing at
 // import time. Callers must check TERRITORY_ENABLED before using this.
+// Web only in practice — detectSessionInUrl is a no-op without a `window`
+// (checked internally by supabase-js), so this has zero effect on native.
+// Was `false` because nothing consumed a redirect: account.ts's email
+// link/sign-in flow only ever confirmed via a typed 6-digit code, never a
+// clicked link. That's no longer true — Supabase's own hosted email
+// templates cannot be edited to show a code without paid custom SMTP (a
+// dashboard-enforced limit, not something this app controls), so the
+// email a runner actually receives is a link. `true` lets the client
+// itself finish what that link starts: parse the session out of the
+// redirect's URL fragment on load. See emailLinkType below for how the UI
+// knows this just happened.
 export const supabase = createClient(URL || 'https://placeholder.invalid', ANON_KEY || 'placeholder', {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false, // no OAuth redirect flow — irrelevant on native, and web has no callback route for it
+    detectSessionInUrl: true,
   },
 });
+
+/**
+ * Which Supabase auth flow (if any) this page load's URL fragment carries —
+ * `#access_token=...&type=magiclink` etc. Read ONCE, synchronously, at
+ * module load — before the client's own async detectSessionInUrl work has
+ * a chance to parse and strip the fragment (supabase-js does that inside
+ * an awaited _initialize(), not synchronously at construction), so there
+ * is no race between "did the client already consume this" and "did we
+ * still see it." `null` on native (no `window`) and on any normal load
+ * that isn't a redirect landing.
+ *
+ * `type` distinguishes two real UX cases the caller (email-link-banner.tsx)
+ * needs to tell apart:
+ *   'signup' | 'email_change' — the LINK path (account.ts's startEmailAuth
+ *     tried updateUser first): this device's own identity just got an
+ *     email attached in place. Nothing lost.
+ *   'magiclink' — the SIGN-IN path (the email already belonged to another
+ *     account): completing it REPLACES this device's local session
+ *     outright. Unlike the in-app code-entry flow, which can warn BEFORE
+ *     committing (account-link.tsx's accountSwitchWarning), a link click
+ *     already finished the swap by the time this code runs — there is no
+ *     "before" to warn at. The banner can only disclose it after the fact.
+ */
+export const emailLinkType: string | null = (() => {
+  if (typeof window === 'undefined' || !window.location.hash) return null;
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  if (!params.get('access_token')) return null;
+  return params.get('type');
+})();
 
 /**
  * Ensures a session exists and returns it — anonymous on first use (Supabase
