@@ -11,6 +11,11 @@
 -- Case 4 is the false-positive guard: an honest run carrying one wild GPS
 -- fix. A real run in this table contains a 171 km/h segment, and a
 -- max-based rule would end it. A p90 must not move.
+--
+-- Case 5 is the fail-open guard, added after a bug in this very trigger took
+-- down every run upload on 2026-09-04. Its raw_path is deliberately
+-- malformed so the check throws; the row appearing in the results at all is
+-- the proof that a broken check no longer costs anyone their run.
 begin;
 
 insert into auth.users (id, instance_id, aud, role, email, created_at, updated_at)
@@ -88,7 +93,16 @@ values
   --    That single segment reads about 1 080 km/h. A p90 over 299 segments
   --    cannot be moved by two of them. Must NOT flag.
   ('22222222-0000-4000-8000-000000000004', 'dddddddd-0000-4000-8000-000000000004',
-   'mty', now(), now(), 831, 299, _mkpath2_spike(300, 2.78, 1, 150, 300), null, 0);
+   'mty', now(), now(), 831, 299, _mkpath2_spike(300, 2.78, 1, 150, 300), null, 0),
+
+  -- 5. FAIL-OPEN. raw_path is an object, not an array, so
+  --    jsonb_array_elements raises inside the trigger. The run must still
+  --    INSERT (this row existing at all is the proof), unflagged, carrying
+  --    flag_reason 'error:speed_check' so a silently-broken check is
+  --    visible in the data instead of looking like "nothing suspicious".
+  --    A bug in anti-cheat must never cost someone the run they did.
+  ('22222222-0000-4000-8000-000000000005', 'dddddddd-0000-4000-8000-000000000004',
+   'mty', now(), now(), 831, 299, '{"not":"an array"}'::jsonb, null, 0);
 
 select
   right(id::text, 1) as case_no,
@@ -99,6 +113,7 @@ select
     when '2' then 'expect: TRUE   speed:p90'
     when '3' then 'expect: false  -'
     when '4' then 'expect: false  -'
+    when '5' then 'expect: false  error:speed_check'
   end as expected
 from runs
 where user_id = 'dddddddd-0000-4000-8000-000000000004'

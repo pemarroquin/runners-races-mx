@@ -179,11 +179,30 @@ if (process.argv.includes('--json')) {
     if (a.flaggedInDb) console.log('   (already flagged in the database)');
     console.log();
   }
+  // The server trigger FAILS OPEN (migration 20260905000000): if its own
+  // query throws, the run is let through unflagged carrying this reason.
+  // That is the right call — a bug in anti-cheat must not cost someone their
+  // run — but it has to be loud here, or a permanently broken check looks
+  // exactly like a clean table.
+  const unchecked = runs.filter((r) => r.flag_reason === 'error:speed_check');
+  if (unchecked.length > 0) {
+    console.log(
+      `WARNING: ${unchecked.length} run(s) were saved WITHOUT the server speed check — ` +
+        'it threw and failed open. Check the Postgres logs for ' +
+        "'flag_implausible_speed failed'. Most recent: " +
+        `${unchecked[0].started_at?.slice(0, 16).replace('T', ' ')}\n`,
+    );
+  }
+
   // An empty `flagged` column reads exactly like "no cheating happened".
   // Say what was actually checked so a clean report cannot be misread.
   console.log(
     `Checked: sustained speed over ${RULES.SUSTAINED_WINDOW_S}s > ${RULES.SUSTAINED_KMH} km/h, ` +
       `impossible area, closure gap > ${RULES.MAX_CLOSURE_GAP_M} m, ` +
       `> ${RULES.AREA_PER_METRE_REVIEW} m2 per metre.`,
+  );
+  console.log(
+    `Server-side: ${runs.filter((r) => r.flagged).length} run(s) flagged by the trigger, ` +
+      `${unchecked.length} saved unchecked (failed open).`,
   );
 }
