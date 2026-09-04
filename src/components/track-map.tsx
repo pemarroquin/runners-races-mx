@@ -26,6 +26,7 @@
 // camera was hardcoded `heading: 0` (never rotated to face the direction of
 // travel). Both are fixed below, reusing this repo's existing camera-control
 // button language 1:1 with web.
+import { cellToBoundary } from 'h3-js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
@@ -48,6 +49,7 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
+  TILE_FILL_OPACITY,
   withAlpha,
   ZOOM_STEP,
 } from '@/constants/map';
@@ -66,6 +68,15 @@ interface TrackMapProps {
   active: boolean;
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
+  /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
+   *  computed and throttled in index.tsx (same cadence as the enclosure
+   *  ribbon below, LIVE_FILL_RECOMPUTE_MS/POINTS) and passed down ready to
+   *  render, rather than recomputed inside this already-dense component.
+   *  ADDITIVE: the existing ribbon/wall (buildWallPolygon/splitTrailing)
+   *  is unchanged — see this file's own report note on why the live 3D/
+   *  camera machinery here was treated as something to add alongside, not
+   *  touch. */
+  tiles: string[];
   /** Accepted for interface parity with track-map.web.tsx; the map is always
    *  dark here (MAP_ALWAYS_DARK) regardless. */
   dark: boolean;
@@ -119,6 +130,7 @@ export function TrackMap({
   here,
   active,
   fenceColor,
+  tiles,
   placeholder,
   placeholderColor,
   zoomInLabel,
@@ -324,6 +336,15 @@ export function TrackMap({
     [liveEdge],
   );
   const edgeColors = useMemo(() => gradientStrokeColors(liveEdge.length), [liveEdge.length]);
+  // Tile Coverage brief §6 step 4 — additive alongside the ribbon/edge
+  // above, not a replacement: the ribbon is model-agnostic scene-dressing
+  // (a visual "trail so far"), tiles are the actual claimed-ground fill.
+  // cellToBoundary's default [lat,lng] pairs are already react-native-maps'
+  // {latitude,longitude} order once mapped.
+  const tilePolys = useMemo(
+    () => tiles.map((h3) => ({ h3, coords: cellToBoundary(h3).map(([lat, lng]) => ({ latitude: lat, longitude: lng })) })),
+    [tiles],
+  );
 
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
@@ -342,6 +363,18 @@ export function TrackMap({
         userInterfaceStyle="dark"
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
+        {/* Tile Coverage brief §6 step 4 — rendered BELOW the ribbon so the
+            ribbon's own stroke/fill still reads as the "trail so far" edge
+            on top of the real claimed-ground fill. */}
+        {tilePolys.map((p) => (
+          <Polygon
+            key={`tile-${p.h3}`}
+            coordinates={p.coords}
+            fillColor={withAlpha(fenceColor, TILE_FILL_OPACITY)}
+            strokeColor={withAlpha(fenceColor, 0.0)}
+            strokeWidth={0}
+          />
+        ))}
         {ribbonCoords && (
           <Polygon
             coordinates={ribbonCoords}

@@ -17,6 +17,22 @@
 // style from a *classic* template in Studio (not Standard) and point both
 // constants at it.
 
+/**
+ * Tile Coverage Model rendering (brief §5/§6 step 4). Own claimed tiles
+ * render at this opacity in the run's own colour, on both platforms —
+ * chosen to sit close to LIVE_FILL_OPACITY_HIGH/FENCE_FILL_OPACITY's own
+ * "vibrant but not opaque" range rather than a fresh guess. Rival-owned
+ * tiles get their own, more muted constant so contested ground reads at a
+ * glance without needing a legend (brief §5).
+ */
+export const TILE_FILL_OPACITY = 0.35;
+export const TILE_RIVAL_FILL_OPACITY = 0.14;
+/** Rival tiles' flat neutral colour — deliberately NOT any FENCE_COLOR_SETS
+ *  entry (those are all reserved for identifying a specific run/owner);
+ *  "someone else's, unspecified" needs a colour that never collides with
+ *  an actual owner's. */
+export const TILE_RIVAL_COLOR = '#9AA5B1';
+
 /** Custom Studio style — Mapbox Standard, GL JS only (web). */
 export const MAP_STYLE_GL = 'mapbox://styles/pmarroquin/cmtapbd8m00zi01qjhx0jbmuh';
 

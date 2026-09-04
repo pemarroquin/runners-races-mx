@@ -31,11 +31,13 @@
 // the fill's own rim, FILL_OUTLINE_SRC) cycles through ROUTE_GRADIENT's
 // colours via rotateRouteGradient. Both are plain setInterval timers, not
 // requestAnimationFrame loops — see the pulse-dot comment below.
+import { cellToBoundary } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import type { Feature, FeatureCollection } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
@@ -74,6 +76,7 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
+  TILE_FILL_OPACITY,
   ZOOM_STEP,
 } from '@/constants/map';
 import { bearingFromPath, boundsOfPath, smoothBearing } from '@/lib/camera';
@@ -87,7 +90,25 @@ const ROUTE_SRC = 'run-route';
 const WALL_SRC = 'run-wall';
 const FILL_SRC = 'run-fill';
 const FILL_OUTLINE_SRC = 'run-fill-outline';
+const TILES_SRC = 'run-tiles';
 const PULSE_STYLE_ID = 'track-pulse-style';
+
+// See fence-map.web.tsx's own copy of this helper for why the ring needs
+// closing — h3-js's boundary doesn't repeat its first point, GeoJSON
+// polygons require it to.
+function tileFeatureCollection(cells: string[]): FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: cells.map((h3): Feature => {
+      const boundary = cellToBoundary(h3, true) as [number, number][];
+      return {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [[...boundary, boundary[0]]] },
+      };
+    }),
+  };
+}
 
 interface TrackMapProps {
   points: LatLng[];
@@ -98,6 +119,14 @@ interface TrackMapProps {
   active: boolean;
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
+  /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
+   *  computed and throttled in index.tsx (same cadence as the existing live
+   *  enclosure fill below, LIVE_FILL_RECOMPUTE_MS/POINTS) and passed down
+   *  ready to render. Rendered via its OWN effect, deliberately separate
+   *  from the points-driven effect that owns WALL_SRC/FILL_SRC/the camera —
+   *  see this component's own report note on why that effect was left
+   *  untouched rather than folding this in. */
+  tiles: string[];
   dark: boolean;
   color: ColorValue;
   placeholder: string;
@@ -161,6 +190,7 @@ export function TrackMap({
   here,
   active,
   fenceColor,
+  tiles,
   placeholder,
   placeholderColor,
   unavailable,
@@ -358,6 +388,14 @@ export function TrackMap({
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
         });
+        // Tile Coverage brief §6 step 4 — this session's live tile fill, fed
+        // by the `tiles` prop's own effect below (NOT the points-driven
+        // effect that owns FILL_SRC/WALL_SRC — index.tsx already throttles
+        // the prop, so this source just renders whatever it's handed).
+        map.addSource(TILES_SRC, {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
         // The live territory fill — was entirely missing (P3 §7b: two line
         // layers and one fill-extrusion existed, no fill, so the enclosed
         // area never shaded in while running). Fed by a throttled
@@ -415,6 +453,26 @@ export function TrackMap({
               ...ROUTE_GRADIENT.flat(),
             ] as unknown as string,
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
+        });
+
+        // Tile Coverage brief §6 step 4/§5 — below everything else in
+        // MAP_SLOT_FILL (added first, so it's the bottom-most fill layer)
+        // so the wall/enclosure-fill scene-dressing above still reads as
+        // distinct edges/rise on top of the real claimed-ground fill.
+        map.addLayer({
+          id: TILES_SRC,
+          type: 'fill',
+          source: TILES_SRC,
+          slot: MAP_SLOT_FILL,
+          paint: {
+            // Default colour at mount, same as WALL_SRC/FILL_SRC below —
+            // this component persists across sessions (it's not remounted
+            // per-run), so the real per-run colour is applied by the
+            // fenceColor-sync effect, not baked in here.
+            'fill-color': FENCE_WALL_COLOR,
+            'fill-opacity': TILE_FILL_OPACITY,
+            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
 
@@ -729,7 +787,19 @@ export function TrackMap({
     if (!map || !readyRef.current) return;
     map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
     map.setPaintProperty(FILL_SRC, 'fill-color', fenceColor);
+    map.setPaintProperty(TILES_SRC, 'fill-color', fenceColor);
   }, [fenceColor, active]);
+
+  // Tile Coverage brief §6 step 4 — deliberately its OWN effect, not folded
+  // into the points-driven effect below that owns WALL_SRC/FILL_SRC/the
+  // camera. index.tsx already throttles `tiles` (LIVE_FILL_RECOMPUTE_MS/
+  // POINTS), so this just renders whatever it's handed, same "own effect,
+  // untouched existing one" posture as fence-map.web.tsx's rivalTiles.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    (map.getSource(TILES_SRC) as GeoJSONSource | undefined)?.setData(tileFeatureCollection(tiles));
+  }, [tiles]);
 
   // Feed coordinates in. setData on an existing source is the cheap path —
   // no layer or style churn, so the line simply extends.

@@ -26,12 +26,13 @@
 // after an empty addSource(), same as the live route — it was rendering pure
 // black (Mapbox's default line-color) despite line-gradient being set and
 // lineMetrics being true (P3 §7c).
+import { cellToBoundary } from 'h3-js';
 import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { Feature, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
 import {
@@ -46,6 +47,9 @@ import {
   ROUTE_GRADIENT,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  TILE_FILL_OPACITY,
+  TILE_RIVAL_COLOR,
+  TILE_RIVAL_FILL_OPACITY,
   ZOOM_STEP,
 } from '@/constants/map';
 import { outerRings, type LatLng } from '@/lib/territory';
@@ -53,10 +57,29 @@ import type { MyFence } from '@/lib/territory-sync';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
-const NEW_SRC = 'fence-new';
 const NEW_OUTLINE_SRC = 'fence-new-outline';
 const NEW_ROUTE_SRC = 'fence-new-route';
 const PAST_SRC = 'fence-past';
+const TILES_SRC = 'fence-tiles';
+const RIVAL_TILES_SRC = 'fence-rival-tiles';
+
+/** h3-js's cellToBoundary(h3, true) returns [lng,lat] pairs that do NOT
+ *  repeat the first point at the end — valid for the app's own react-
+ *  native-maps Polygon (fence-map.tsx), but GeoJSON polygon rings must be
+ *  explicitly closed, so this closes each ring before handing it to Mapbox. */
+function tileFeatureCollection(cells: string[]): FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: cells.map((h3): Feature => {
+      const boundary = cellToBoundary(h3, true) as [number, number][];
+      return {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [[...boundary, boundary[0]]] },
+      };
+    }),
+  };
+}
 const FIT_MS = 1600;
 // The fence boundary's subordinate weight, now that the route carries the
 // gradient — thin and translucent so it reads as "this is the claimed
@@ -65,11 +88,21 @@ const OUTLINE_WIDTH = 1.5;
 const OUTLINE_OPACITY = 0.55;
 
 interface FenceMapProps {
+  /** No longer filled directly (see `tiles` below) — still used for the
+   *  outline and to frame the camera. buildFence isn't deleted this pass
+   *  (brief §4), so this stays required. */
   geometry: GeoPolygon | MultiPolygon;
   /** The recorded route, MASKED (privacy-zone.ts) — never the raw path. This
    *  is a shareable surface; the whole reason privacy-zone trimming exists
    *  is so start/end aren't exposed here. */
   path: LatLng[];
+  /** Tile Coverage brief §6 step 4 — this run's covered H3 cells, rendered
+   *  as the fill that used to be the enclosure polygon's. See fence-map.tsx
+   *  (native)'s matching prop doc for the full reasoning. */
+  tiles: string[];
+  /** Tile Coverage brief §5 — cells this run crossed that were already
+   *  someone else's by claim time. Empty until the upload resolves. */
+  rivalTiles: string[];
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -109,17 +142,26 @@ function boundsOf(geometry: GeoPolygon | MultiPolygon): [[number, number], [numb
   ];
 }
 
-export function FenceMap({ geometry, path, color, others, excludeId, controls }: FenceMapProps) {
+export function FenceMap({
+  geometry,
+  path,
+  tiles,
+  rivalTiles,
+  color,
+  others,
+  excludeId,
+  controls,
+}: FenceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
-  const dataRef = useRef({ geometry, path, color, others, excludeId });
+  const dataRef = useRef({ geometry, path, tiles, rivalTiles, color, others, excludeId });
   useEffect(() => {
-    dataRef.current = { geometry, path, color, others, excludeId };
-  }, [geometry, path, color, others, excludeId]);
+    dataRef.current = { geometry, path, tiles, rivalTiles, color, others, excludeId };
+  }, [geometry, path, tiles, rivalTiles, color, others, excludeId]);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
@@ -180,14 +222,18 @@ export function FenceMap({ geometry, path, color, others, excludeId, controls }:
           },
         });
 
-        map.addSource(NEW_SRC, {
-          type: 'geojson',
-          data: { type: 'Feature', properties: {}, geometry: g },
-        });
+        // Tile Coverage brief §6 step 4 — this run's real fill. Replaces
+        // the enclosure polygon's fill (NEW_SRC used to be a fill layer
+        // straight off `geometry` — see this file's git history) precisely
+        // so a giant enclosure shape never again reads as "your territory"
+        // next to a small, real tile cluster. `g` (geometry) stays used
+        // below for the outline and fitBounds only.
+        const { tiles: t, rivalTiles: rt } = dataRef.current;
+        map.addSource(TILES_SRC, { type: 'geojson', data: tileFeatureCollection(t) });
         map.addLayer({
-          id: NEW_SRC,
+          id: TILES_SRC,
           type: 'fill',
-          source: NEW_SRC,
+          source: TILES_SRC,
           slot: MAP_SLOT_FILL,
           paint: {
             'fill-color': c,
@@ -200,7 +246,24 @@ export function FenceMap({ geometry, path, color, others, excludeId, controls }:
         // the final value in the same frame the layer is added paints it
         // instantly instead.
         requestAnimationFrame(() => {
-          if (!cancelled) map.setPaintProperty(NEW_SRC, 'fill-opacity', 0.3);
+          if (!cancelled) map.setPaintProperty(TILES_SRC, 'fill-opacity', TILE_FILL_OPACITY);
+        });
+
+        // Rival tiles (brief §5) — cells this run crossed but couldn't
+        // claim. Muted neutral (never a FENCE_COLOR_SETS colour), and
+        // usually empty at load time (claimTiles resolves after this map
+        // has already mounted) — the update effect below fills it in.
+        map.addSource(RIVAL_TILES_SRC, { type: 'geojson', data: tileFeatureCollection(rt) });
+        map.addLayer({
+          id: RIVAL_TILES_SRC,
+          type: 'fill',
+          source: RIVAL_TILES_SRC,
+          slot: MAP_SLOT_FILL,
+          paint: {
+            'fill-color': TILE_RIVAL_COLOR,
+            'fill-opacity': TILE_RIVAL_FILL_OPACITY,
+            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
+          },
         });
 
         // The fence BOUNDARY — subordinate now that the route (below) carries
@@ -338,6 +401,22 @@ export function FenceMap({ geometry, path, color, others, excludeId, controls }:
         ),
     });
   }, [others, excludeId]);
+
+  // rivalTiles resolves AFTER the map (and usually after this component's
+  // first paint) — claimTiles() is a network round trip that only finishes
+  // once the run has already saved (see index.tsx's `tileClaim` state).
+  // `tiles` (own) is included for symmetry/robustness even though in
+  // practice it's already stable by mount (index.tsx computes sessionTiles
+  // synchronously alongside `fence`, before this component's tile-showing
+  // branch ever renders).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    (map.getSource(TILES_SRC) as GeoJSONSource | undefined)?.setData(tileFeatureCollection(tiles));
+    (map.getSource(RIVAL_TILES_SRC) as GeoJSONSource | undefined)?.setData(
+      tileFeatureCollection(rivalTiles),
+    );
+  }, [tiles, rivalTiles]);
 
   // The "recenter" control's target — re-fit to the highlighted fence,
   // shorter/snappier than the mount effect's entrance sweep (that one is a

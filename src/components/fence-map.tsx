@@ -19,6 +19,7 @@
 // Past fences render muted, each in ITS run's colour (fenceColorForRun of
 // its stored started_at — the same derivation every other screen uses), so
 // territories stay tellable apart without a legend.
+import { cellToBoundary } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -31,6 +32,9 @@ import {
   GOOGLE_DARK_MAP_STYLE,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  TILE_FILL_OPACITY,
+  TILE_RIVAL_COLOR,
+  TILE_RIVAL_FILL_OPACITY,
   withAlpha,
   ZOOM_STEP,
 } from '@/constants/map';
@@ -39,12 +43,31 @@ import type { LatLng } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
 
 interface FenceMapProps {
-  /** The fence just captured — highlighted and framed. */
+  /** The fence just captured — no longer filled (see the `tiles` prop
+   *  below, brief §6 step 4), but still used for its outline and to frame
+   *  the camera. Still required, not optional: buildFence isn't deleted
+   *  this pass (brief §4) and this is what the outline/fitBounds read. */
   geometry: GeoPolygon | MultiPolygon;
   /** The recorded route, MASKED (privacy-zone.ts) — never the raw path. This
    *  is a shareable surface; the whole reason privacy-zone trimming exists
    *  is so start/end aren't exposed here. */
   path: LatLng[];
+  /** Tile Coverage brief §6 step 4 — this run's covered H3 cells (res 11,
+   *  tiles.ts's pathToTiles), rendered as the fill that used to be the
+   *  enclosure polygon's. This is what actually reads as "your territory"
+   *  now; the polygon above is demoted to a thin outline (see the render
+   *  below) precisely because a giant enclosure fill next to a small tile
+   *  cluster is the exact visual this whole brief exists to stop showing
+   *  (see index.tsx's legacyArea line for where the old number still lives
+   *  on this screen). */
+  tiles: string[];
+  /** Tile Coverage brief §5 — cells this run crossed that were already
+   *  someone else's by claim time (territory-sync.ts's claimTiles;
+   *  TileClaimResult.rivalCells). Rendered in TILE_RIVAL_COLOR, muted, so
+   *  contested ground reads at a glance. Empty until the upload resolves —
+   *  see index.tsx's `tileClaim` state, which is null (so this is `[]`)
+   *  while a save is still in flight. */
+  rivalTiles: string[];
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -65,7 +88,16 @@ const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 const OUTLINE_WIDTH = 1.5;
 const OUTLINE_ALPHA = 0.55;
 
-export function FenceMap({ geometry, path, color, others, excludeId, controls }: FenceMapProps) {
+export function FenceMap({
+  geometry,
+  path,
+  tiles,
+  rivalTiles,
+  color,
+  others,
+  excludeId,
+  controls,
+}: FenceMapProps) {
   const mapRef = useRef<MapView | null>(null);
 
   const highlightRings = useMemo(() => polygonRings(geometry), [geometry]);
@@ -76,6 +108,26 @@ export function FenceMap({ geometry, path, color, others, excludeId, controls }:
         holes: rings.slice(1).map(ringToCoords),
       })),
     [highlightRings],
+  );
+  // Tile Coverage brief §6 step 4/§5 — cellToBoundary returns [lat,lng]
+  // pairs by default (h3-js v4), which is already react-native-maps'
+  // {latitude,longitude} order once mapped — no GeoJSON [lng,lat] flip
+  // needed here, unlike the web/GL version.
+  const tilePolys = useMemo(
+    () =>
+      tiles.map((h3) => ({
+        h3,
+        coords: cellToBoundary(h3).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
+      })),
+    [tiles],
+  );
+  const rivalTilePolys = useMemo(
+    () =>
+      rivalTiles.map((h3) => ({
+        h3,
+        coords: cellToBoundary(h3).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
+      })),
+    [rivalTiles],
   );
   // The ROUTE — the actual recorded path, not the fence boundary. Same
   // per-vertex gradient sampling as the live map's edge (track-map.tsx),
@@ -165,13 +217,34 @@ export function FenceMap({ geometry, path, color, others, excludeId, controls }:
             strokeWidth={1}
           />
         ))}
-        {highlightPolys.map((p, i) => (
+        {/* Tile Coverage brief §6 step 4 — this run's real, honest fill.
+            Replaces the enclosure polygon's fill (used to render here as a
+            plain, uniform Polygon over `highlightPolys` — see the removed
+            code this replaces in git history) precisely so a giant
+            enclosure shape never again reads as "your territory" next to
+            a small, real tile cluster. One Polygon per cell rather than
+            one merged shape: react-native-maps has no fill-union
+            primitive, and at this scale (a single run, typically well
+            under a few hundred cells — see the §2.5 forgery guard's own
+            bound) that's cheap. */}
+        {tilePolys.map((p) => (
           <Polygon
-            key={`new-${i}`}
-            coordinates={p.outer}
-            holes={p.holes.length > 0 ? p.holes : undefined}
-            fillColor={withAlpha(color, 0.3)}
+            key={`tile-${p.h3}`}
+            coordinates={p.coords}
+            fillColor={withAlpha(color, TILE_FILL_OPACITY)}
             strokeColor={withAlpha(color, 0.0)}
+            strokeWidth={0}
+          />
+        ))}
+        {/* Rival tiles (brief §5) — cells this run crossed but couldn't
+            claim. Muted neutral, never a FENCE_COLOR_SETS colour, so
+            contested ground reads at a glance without a legend. */}
+        {rivalTilePolys.map((p) => (
+          <Polygon
+            key={`rival-${p.h3}`}
+            coordinates={p.coords}
+            fillColor={withAlpha(TILE_RIVAL_COLOR, TILE_RIVAL_FILL_OPACITY)}
+            strokeColor={withAlpha(TILE_RIVAL_COLOR, 0.0)}
             strokeWidth={0}
           />
         ))}
