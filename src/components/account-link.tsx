@@ -7,7 +7,7 @@
 // Self-contained like NamePrompt: fetches its own status on mount/focus and
 // decides everything about what to show. The host only decides WHERE to
 // mount it.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 
+import { onIdentityChanged } from '@/lib/auth-events';
 import {
   fetchAccountStatus,
   startEmailAuth,
@@ -46,6 +47,24 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
   const [mode, setMode] = useState<'link' | 'signin' | null>(null);
   const [errorKey, setErrorKey] = useState<'invalid' | 'network' | null>(null);
 
+  // Re-read the status whenever the identity itself changes, not only on
+  // mount: an email-LINK confirmed from another surface (the redirect
+  // banner, or a second copy of this form) attaches an address to this
+  // same session, and this component would otherwise keep offering to
+  // link an account that is already linked. See auth-events.ts.
+  const [identitySignal, setIdentitySignal] = useState(0);
+  useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
+
+  // Read inside the async fetch below, which resolves long after the render
+  // that started it — a plain `step` closure there would be whatever it was
+  // when the effect fired, which is exactly the value that must NOT decide
+  // this. Written in an effect rather than during render: assigning a ref
+  // in the render body is impure (React Compiler).
+  const stepRef = useRef<Step>(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
   useEffect(() => {
     let stale = false;
     const id = setTimeout(() => {
@@ -60,6 +79,18 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
           return;
         }
         setStatus(outcome.status);
+        // Never yank a half-finished form out from under the runner. On
+        // mount `step` is 'loading' and this always applies; on an
+        // identity-change refetch the runner may be staring at a code
+        // field, and resetting them to the email step would throw away a
+        // code they are mid-way through typing. The status itself is still
+        // recorded above — only the step is left alone.
+        const midFlow =
+          stepRef.current === 'sending' ||
+          stepRef.current === 'code' ||
+          stepRef.current === 'verifying' ||
+          stepRef.current === 'failed';
+        if (midFlow) return;
         setStep(outcome.status.linked ? 'linked' : 'email');
       });
     }, 0);
@@ -67,7 +98,7 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
       stale = true;
       clearTimeout(id);
     };
-  }, []);
+  }, [identitySignal]);
 
   const sendCode = useCallback(async () => {
     setStep('sending');

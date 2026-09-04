@@ -28,6 +28,7 @@ import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountLink } from '@/components/account-link';
+import { IdentityDiagnostic } from '@/components/identity-diagnostic';
 import { Icon } from '@/components/ui/icon';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { GlassRadii } from '@/constants/glass';
@@ -387,6 +388,14 @@ export default function SettingsScreen() {
                 needs a paid dev account, the same EAS ceiling that blocks
                 locked-screen GPS) — this is the lighter fix that doesn't. */}
             <AccountLink c={c} />
+
+            {/* Last in the section, under the account it describes: "which
+                account am I, and what does the server have for it" is the
+                question a runner reaches for only after the account copy
+                above has failed to explain what they're seeing. See
+                identity-diagnostic.tsx for why it's visible rather than
+                hidden behind a gesture like the version row's debug copy. */}
+            <IdentityDiagnostic c={c} />
           </Section>
         )}
 

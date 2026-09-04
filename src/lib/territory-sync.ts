@@ -395,8 +395,17 @@ export type FencesOutcome =
  * trusted: anything that isn't a usable (Multi)Polygon object is skipped AND
  * counted, so a serialisation surprise shows up as `skipped > 0` instead of
  * as a silently empty map.
+ *
+ * Exported for tests only — this is the single gate every saved territory
+ * has to pass before it can be drawn, and production rows carry a shape
+ * that's easy to get wrong from memory: PostGIS/PostgREST serialise the
+ * column as `{ type, crs, coordinates }`, with a `crs` member GeoJSON
+ * itself dropped back in RFC 7946. A parser tightened to accept only
+ * `{type, coordinates}` would reject every real row and empty the
+ * Territories map with no error anywhere. test/territory-sync.test.ts
+ * pins both real payload shapes against that.
  */
-function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | null {
+export function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | null {
   // Older PostgREST/PostGIS combinations return geometry as a string (WKB
   // hex, or GeoJSON text); the JSON-text case is recoverable.
   if (typeof value === 'string' && value.startsWith('{')) {

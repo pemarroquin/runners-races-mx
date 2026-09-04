@@ -31,7 +31,7 @@
 // in favour of a single flat colour per run).
 import type { Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
@@ -120,6 +120,51 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
   // one id's kind, which this treats as remove-then-add since the layer
   // IDs are kind-scoped).
   const mountedIdsRef = useRef<Set<string>>(new Set());
+  // The freshest feature list, read by sync() below rather than closed over.
+  // The map's own 'load' handler is registered once, inside a mount effect
+  // that can never see a later render's props — but it is also the FIRST
+  // moment this component is able to draw anything, so it has to be able to
+  // reach whatever `features` is by then, not what it was at mount.
+  const featuresRef = useRef(features);
+  // Declared BEFORE the effects that call sync(), so React runs it first in
+  // the same commit and sync() never reads a stale list.
+  useEffect(() => {
+    featuresRef.current = features;
+  }, [features]);
+
+  /**
+   * Brings the map's sources/layers in line with `featuresRef.current`, then
+   * refits. Stable (`[]`) so both the load handler and the data effect can
+   * call the same routine; everything it needs is in a ref for exactly that
+   * reason.
+   */
+  const sync = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const features = featuresRef.current;
+    const nextIds = new Set(features.map((f) => `${f.kind}:${f.id}`));
+
+    // Remove layers/sources for anything no longer present.
+    for (const key of mountedIdsRef.current) {
+      if (nextIds.has(key)) continue;
+      removeFeatureLayers(map, key);
+      mountedIdsRef.current.delete(key);
+    }
+
+    // Add layers/sources for anything new. Existing ones are left alone —
+    // this component doesn't support editing a feature in place, only
+    // add/remove, which matches every real change (a fetch/refetch always
+    // hands back a fresh list; nothing mutates a fence's own geometry).
+    for (const f of features) {
+      const key = `${f.kind}:${f.id}`;
+      if (mountedIdsRef.current.has(key)) continue;
+      addFeatureLayers(map, f, key, (id, kind) => onSelectRef.current(id, kind));
+      mountedIdsRef.current.add(key);
+    }
+
+    const bounds = boundsOfAll(features);
+    if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
+  }, []);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
@@ -134,7 +179,7 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: MAP_STYLE_GL,
-        center: [-100.3, 25.67], // Monterrey-ish fallback; refit() below corrects it the instant data loads.
+        center: [-100.3, 25.67], // Monterrey-ish fallback; sync() below corrects it the instant data loads.
         zoom: 10,
         pitch: 0,
         bearing: 0,
@@ -142,7 +187,25 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       });
       mapRef.current = map;
       map.on('load', () => {
-        if (!cancelled) readyRef.current = true;
+        if (cancelled) return;
+        readyRef.current = true;
+        // The load handler draws the first frame itself. This is NOT
+        // belt-and-braces for the data effect below — for the very first
+        // (and, in practice, only) feature list this component ever
+        // receives, it is the only sync() call that ever runs. FencesView doesn't mount this component until
+        // the fetch has resolved with at least one feature, so `features`
+        // already has data on the first render; the data effect fires
+        // immediately after this mount effect, while this effect is still
+        // suspended on `await import('mapbox-gl')` — so mapRef.current is
+        // null, it bails, and nothing re-renders FencesView afterwards to
+        // give it a second chance (the map branch has no RefreshControl,
+        // no timer, no subscription). The Territories tab rendered a bare
+        // basemap with zero territories, permanently, for anyone on web —
+        // identical on screen to having no saved territory at all. The
+        // native map has never had this bug: it renders its features
+        // declaratively as MapView children (territories-map.tsx), with no
+        // imperative sync to miss.
+        sync();
       });
     })();
 
@@ -153,45 +216,17 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       mapRef.current = null;
       mountedIdsRef.current = new Set();
     };
-    // Built once. All data flows through the sync effect below.
-  }, []);
+    // Built once; `sync` is stable, and all data flows through the ref it
+    // reads.
+  }, [sync]);
 
-  // Adds/removes/updates per-feature sources+layers to match `features`,
-  // then refits. Runs once the map is ready AND whenever the feature list
-  // changes (a fetch completing, a delete, a retry succeeding).
+  // Later changes to the feature list — a delete, a queued run promoted to
+  // saved, a refetch after a new run. A no-op while the map is still
+  // loading: the load handler above will run the same sync with the same
+  // ref, which by then holds this list.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    const sync = () => {
-      if (!readyRef.current) return;
-      const nextIds = new Set(features.map((f) => `${f.kind}:${f.id}`));
-
-      // Remove layers/sources for anything no longer present.
-      for (const key of mountedIdsRef.current) {
-        if (nextIds.has(key)) continue;
-        removeFeatureLayers(map, key);
-        mountedIdsRef.current.delete(key);
-      }
-
-      // Add layers/sources for anything new. Existing ones are left alone —
-      // this component doesn't support editing a feature in place, only
-      // add/remove, which matches every real change (a fetch/refetch always
-      // hands back a fresh list; nothing mutates a fence's own geometry).
-      for (const f of features) {
-        const key = `${f.kind}:${f.id}`;
-        if (mountedIdsRef.current.has(key)) continue;
-        addFeatureLayers(map, f, key, (id, kind) => onSelectRef.current(id, kind));
-        mountedIdsRef.current.add(key);
-      }
-
-      const bounds = boundsOfAll(features);
-      if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
-    };
-
-    if (readyRef.current) sync();
-    else map.once('load', sync);
-  }, [features]);
+    sync();
+  }, [features, sync]);
 
   if (!TOKEN) return null;
 

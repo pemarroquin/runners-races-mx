@@ -34,6 +34,7 @@ import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { rankByTileCount, type TileLeaderboardEntry } from '@/lib/leaderboard';
 import { useRegion } from '@/lib/region-context';
+import { onIdentityChanged } from '@/lib/auth-events';
 import { fetchTileLeaderboard, type TileLeaderboardOutcome } from '@/lib/territory-sync';
 
 type Scope = 'region' | 'global';
@@ -63,6 +64,13 @@ export default function LeaderboardScreen() {
   // state) while this screen kept showing stale data from the old identity.
   // Deferred by a tick with a `stale` flag on cleanup — same pattern as
   // myraces.tsx's Territories fetch effect.
+  // Same reasoning one layer down: the ranking marks "you" by comparing
+  // each row against the current session's id, so a sign-in that swaps
+  // this device onto another account changes what this screen should
+  // render without `isFocused` ever changing. See auth-events.ts.
+  const [identitySignal, setIdentitySignal] = useState(0);
+  useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
+
   useEffect(() => {
     if (!isFocused) return;
     let stale = false;
@@ -75,7 +83,7 @@ export default function LeaderboardScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [isFocused]);
+  }, [isFocused, identitySignal]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

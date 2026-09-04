@@ -348,6 +348,30 @@ const translations = {
       // watch restarts, runs recovered/lost) still copied — see
       // pilot-instrumentation.ts.
       debugCopiedCountersOnly: 'Copiamos los contadores del piloto al portapapeles.',
+      // Identity diagnostic (identity-diagnostic.tsx) — deliberately plain
+      // and unglamorous copy: this row exists to be read out loud in a
+      // support message, not to reassure. "Territorios en el servidor" says
+      // exactly what the number is, so it can't be confused with what the
+      // map happens to be drawing.
+      diagnosticTitle: 'Diagnóstico',
+      diagnosticBody:
+        'Qué cuenta está usando este dispositivo y qué devuelve el servidor para ella. Útil si tu territorio no aparece.',
+      diagnosticSession: 'Sesión',
+      diagnosticEmail: 'Correo',
+      diagnosticTerritories: 'Territorios en el servidor',
+      diagnosticQueued: 'En cola por subir',
+      diagnosticNoSession: 'sin sesión',
+      diagnosticAnonymous: '— (cuenta anónima)',
+      // Never rendered in place of a count: a failed query and a genuine
+      // zero must read differently. `reason` is the raw code from
+      // territory-sync.ts (disabled/auth/network) — untranslated on purpose,
+      // it's the exact token to quote back in a bug report.
+      diagnosticFailed: 'la consulta falló (%{reason})',
+      diagnosticSkipped: '(%{count} sin poder leerse)',
+      diagnosticRecheck: 'Volver a revisar',
+      diagnosticChecking: 'Revisando…',
+      diagnosticCopy: 'Copiar',
+      diagnosticCopied: 'Copiado',
       support: 'Soporte',
       theme: 'Apariencia',
       themeSystem: 'Sistema',
@@ -736,6 +760,21 @@ const translations = {
       version: 'Version',
       debugCopied: 'Copied %{count} points to clipboard.',
       debugCopiedCountersOnly: 'Copied pilot counters to clipboard.',
+      diagnosticTitle: 'Diagnostics',
+      diagnosticBody:
+        "Which account this device is using, and what the server returns for it. Useful when your territory doesn't show up.",
+      diagnosticSession: 'Session',
+      diagnosticEmail: 'Email',
+      diagnosticTerritories: 'Territories on the server',
+      diagnosticQueued: 'Queued to upload',
+      diagnosticNoSession: 'no session',
+      diagnosticAnonymous: '— (anonymous account)',
+      diagnosticFailed: 'query failed (%{reason})',
+      diagnosticSkipped: "(%{count} couldn't be read)",
+      diagnosticRecheck: 'Check again',
+      diagnosticChecking: 'Checking…',
+      diagnosticCopy: 'Copy',
+      diagnosticCopied: 'Copied',
       support: 'Support',
       theme: 'Appearance',
       themeSystem: 'System',
