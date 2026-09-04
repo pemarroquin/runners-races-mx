@@ -228,8 +228,9 @@
         "approx": true
       },
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Macroplaza, per Runera and Trotime listings. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Macroplaza, per Runera and Trotime listings. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of trotime.com.mx blocked by network policy; web search found no cancellation/postponement/aviso signals. One 2025-dated Idemsport calendar snippet lists a Sep 7 date for this race — that is the prior year's edition, not a 2026 conflict; the 2026 date (Sep 6) is corroborated by Runera and Trotime and left unchanged.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "carrera-terra-regia-2026",
@@ -778,8 +779,9 @@
         "10K"
       ],
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Torre KOI, Valle Oriente, per Trotime and Compite.mx listings. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, Torre KOI, Valle Oriente, per Trotime and Compite.mx listings. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of trotime.com.mx blocked by network policy; web search (Líder Empresarial, Compite.mx, Runera, Players of Life, Mexico Desconocido) still lists this race for 6 Sep 2026 at Torre KOI, San Pedro. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "fundacion-monterrey-2026",
@@ -1764,8 +1766,9 @@
         "10K"
       ],
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026, 06:30, per Asdeporte and Runera listings; registration reported sold out. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026, 06:30, per Asdeporte and Runera listings; registration reported sold out. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of asdeporte.com blocked by network policy; web search found no cancellation/postponement/aviso signals for the 2026 edition.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "feria-pulque-nopaltepec-2026",
@@ -1978,9 +1981,9 @@
         "30K"
       ],
       "status": "ok",
-      "statusNote": "Still listed for 6 Sep 2026, San Rafael Tlalmanalco, 12K/30K, on the Tri Tour calendar. No cancellation/postponement/aviso signals found via web search (2026-08-31), though no independent source beyond the Tri Tour/Carreras México listing could be found to corroborate.",
-      "lastVerified": "2026-08-31",
-      "sourceNotes": "Direct fetch of tritour.org and carrerasmexico.com blocked by network policy this run — based on search-engine snippets only. No second independent source (news, organizer social media) found confirming this specific event beyond the original listing."
+      "statusNote": "Still listed for 6 Sep 2026, San Rafael Tlalmanalco, 12K/30K, on the Tri Tour calendar. No cancellation/postponement/aviso signals found via web search (2026-08-31, re-checked 2026-09-04), though no independent source beyond the Tri Tour/Carreras México listing could be found to corroborate.",
+      "lastVerified": "2026-09-04",
+      "sourceNotes": "Direct fetch of tritour.org and carrerasmexico.com blocked by network policy this run — based on search-engine snippets only. No second independent source (news, organizer social media) found confirming this specific event beyond the original listing. Re-checked 2026-09-04: search for this event plus cancellation terms surfaced only an unrelated same-area race ('Izta 4000', San Rafael Tlalmanalco, scheduled Jun 28 2026) — no result specifically naming 'Itza Trail Challenge' for Sep 6, positive or negative. Evidence remains single-source; recommend a direct check of tritour.org next cycle once network access allows it."
     },
     {
       "id": "terrex-hubtrail-marquesa-2026",
@@ -2540,8 +2543,9 @@
       "notes": "Reg open, from $660 MXN. 21.0975 km certified.",
       "notesEs": "Registro abierto, desde $660 MXN. Certificado en 21.0975 km.",
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026, 06:30, Av. Patria frente a Parque El Polvorín, Zapopan, per Asdeporte, Marcate and Compite.mx listings; awards ceremony same day at Club Atlas Colomos. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026, 06:30, Av. Patria frente a Parque El Polvorín, Zapopan, per Asdeporte, Marcate and Compite.mx listings; awards ceremony same day at Club Atlas Colomos. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of asdeporte.com blocked by network policy; web search found a race-week Facebook post ('3 días para correr el 37° Medio Maratón Atlas') confirming the race is proceeding Sunday Sep 6. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "carrera-de-las-antorchas-edici-n-72",
@@ -2814,8 +2818,9 @@
       "notes": "Date/distances confirmed on tritour/carrerasmexico + AQ Sports page. Time/venue per press, not a rendered event page. $500 MXN; charity race.",
       "notesEs": "Fecha/distancias confirmadas en tritour/carrerasmexico + la página de AQ Sports. Hora/sede según prensa, no de una página de evento renderizada. $500 MXN; carrera benéfica.",
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026 by DIF Estatal Querétaro's own event presentation, corroborated by Quadratín Querétaro, ContraRéplica and an AlertaQro social post. Benefits ~800 children from 15 shelter homes. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026 by DIF Estatal Querétaro's own event presentation, corroborated by Quadratín Querétaro, ContraRéplica and an AlertaQro social post. Benefits ~800 children from 15 shelter homes. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of aqsports.com.mx blocked by network policy; web search confirms registration is now sold out ('Boletos Agotados') but the race itself remains scheduled for Sep 6 at Av. Constituyentes y Av. Luis Pasteur. No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "snoopy-run-quer-taro-2026",
@@ -2843,8 +2848,9 @@
       "notesEs": "Carrera temática de Snoopy, pet friendly. Distancias 3K/5K, desde $600 MXN.",
       "sourceNotes": "Date conflict: tritour/press say Sep 6; Asdeporte page showed Sep 12 — used Sep 6 (two sources vs one). Venue TBC. Re-checked 2026-08-31: Asdeporte's own event page, Tri Tour, Runera, Solo Atletas and the organizer's own Instagram post now all agree on Sunday 6 Sep 2026, 07:00 — the earlier Sep 12 reading looks like a stale snapshot. Date conflict considered resolved.",
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026, 07:00, per Asdeporte, Tri Tour, Runera, Solo Atletas and an organizer Instagram post. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026, 07:00, per Asdeporte, Tri Tour, Runera, Solo Atletas and an organizer Instagram post. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of asdeporte.com blocked by network policy; web search this run surfaced only the 2025 edition (Oct 19, 2025) and no 2026-specific new results, positive or negative — no cancellation/postponement/aviso signal found either. Prior sweep's date-conflict resolution (Sep 6, not Sep 12) stands.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "quer-taro-marat-n-2026-16-edici-n",
@@ -3726,10 +3732,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo",
       "confidence": "medium",
       "notes": null,
-      "sourceNotes": "Distances/time not published. signupUrl (gotime.mx/canacintramva) is the link listed by tritour, not independently fetched. Single-calendar source. Distinct from the Torreón CANACINTRA race. Re-checked 2026-08-31: local coverage (El Tiempo Monclova, El Siglo de Torreón, Periódico Zócalo, and a CANACINTRA Delegación Monclova Facebook post) confirms this is the 7th annual 5K, Sep 6, registration via gotime.mx or the CANACINTRA Monclova office, $380 MXN.",
+      "sourceNotes": "Distances/time not published. signupUrl (gotime.mx/canacintramva) is the link listed by tritour, not independently fetched. Single-calendar source. Distinct from the Torreón CANACINTRA race. Re-checked 2026-08-31: local coverage (El Tiempo Monclova, El Siglo de Torreón, Periódico Zócalo, and a CANACINTRA Delegación Monclova Facebook post) confirms this is the 7th annual 5K, Sep 6, registration via gotime.mx or the CANACINTRA Monclova office, $380 MXN. Re-checked 2026-09-04: web search (El Tiempo Monclova prize coverage) still lists the race for Sep 6; no cancellation/postponement/aviso signals found.",
       "status": "ok",
-      "statusNote": "Confirmed for 6 Sep 2026 (7th edition, 5K) per El Tiempo Monclova, Periódico Zócalo and CANACINTRA Monclova's own Facebook announcement. No cancellation/postponement/aviso signals found via web search (2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 6 Sep 2026 (7th edition, 5K) per El Tiempo Monclova, Periódico Zócalo and CANACINTRA Monclova's own Facebook announcement. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "dino-run-5k-saltillo-2026",
@@ -4209,10 +4215,10 @@
       "confidence": "medium",
       "notes": "Backyard Ultra format — repeated timed loops, last runner standing wins, rather than a fixed advertised distance.",
       "notesEs": "Formato Backyard Ultra — vueltas cronometradas y repetidas, gana el último corredor en pie, en vez de una distancia fija anunciada.",
-      "sourceNotes": "Loop length/rules not shown on the fetched page. Single-source only.",
+      "sourceNotes": "Loop length/rules not shown on the fetched page. Single-source only. Re-checked 2026-09-04: direct fetch of khronometraje.com blocked by network policy; web search found no cancellation/postponement/aviso signals, still single-source (no independent second source found this run either).",
       "status": "ok",
-      "statusNote": "Confirmed for 5 Sep 2026, 17:00, at the beach area in front of Restaurant Bacalahu, Cozumel, per search-engine coverage of the Khronometraje registration page. No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31).",
-      "lastVerified": "2026-08-31"
+      "statusNote": "Confirmed for 5 Sep 2026, 17:00, at the beach area in front of Restaurant Bacalahu, Cozumel, per search-engine coverage of the Khronometraje registration page. No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31, 2026-09-04).",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "21k-chetumal-2026-5ta-edicion",
@@ -4444,10 +4450,10 @@
       "confidence": "high",
       "notes": "Last-runner-standing timed-loop ultra format (categories: Ultra/Desafío/Xperience/Duo) — not a fixed-km race. Limited to 122 participants.",
       "notesEs": "Formato de ultra de vueltas cronometradas, último corredor en pie (categorías: Ultra/Desafío/Xperience/Duo) — no es una carrera de kilometraje fijo. Limitado a 122 participantes.",
-      "sourceNotes": "Exact beach municipality (Progreso vs. neighboring Chelem) not fully confirmed; set to Progreso as nearest listed metro city. Confirmed independently on khronometraje.com and tritour.org's Mérida calendar.",
+      "sourceNotes": "Exact beach municipality (Progreso vs. neighboring Chelem) not fully confirmed; set to Progreso as nearest listed metro city. Confirmed independently on khronometraje.com and tritour.org's Mérida calendar. Re-checked 2026-09-04: direct fetch of khronometraje.com blocked by network policy; web search found no cancellation/postponement/aviso signals.",
       "status": "ok",
-      "statusNote": "No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31). Still listed on khronometraje.com and tritour.org's Mérida calendar for 5 Sep 2026, 17:00.",
-      "lastVerified": "2026-08-31"
+      "statusNote": "No cancellation/postponement/aviso signals found (2026-08-28, reconfirmed 2026-08-31, 2026-09-04). Still listed on khronometraje.com and tritour.org's Mérida calendar for 5 Sep 2026, 17:00.",
+      "lastVerified": "2026-09-04"
     },
     {
       "id": "cenote-san-ignacio-2026",
