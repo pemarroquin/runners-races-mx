@@ -28,8 +28,8 @@
 // Two things animate continuously while a session is live, so the map
 // doesn't read as flat/static even when the runner is standing still: the
 // fill breathes between LIVE_FILL_OPACITY_LOW/HIGH, and the route line (plus
-// the fill's own rim, FILL_OUTLINE_SRC) cycles through ROUTE_GRADIENT's
-// colours via rotateRouteGradient. Both are plain setInterval timers, not
+// the fill's own rim, FILL_OUTLINE_SRC) flows ROUTE_GRADIENT along itself
+// via gradient-flow.ts. Both are plain setInterval timers, not
 // requestAnimationFrame loops — see the pulse-dot comment below.
 import { cellToBoundary } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
@@ -69,10 +69,8 @@ import {
   ROUTE_GLOW_OPACITY,
   ROUTE_GLOW_WIDTH,
   ROUTE_GRADIENT,
-  ROUTE_GRADIENT_CYCLE_MS,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
-  rotateRouteGradient,
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
@@ -81,6 +79,8 @@ import {
 } from '@/constants/map';
 import { bearingFromPath, boundsOfPath, smoothBearing } from '@/lib/camera';
 import { buildWallPolygon, splitTrailing } from '@/lib/fence-3d';
+import { lineGradientExpression } from '@/lib/fence-draw';
+import { startGradientFlow } from '@/lib/gradient-flow';
 import { useRegion } from '@/lib/region-context';
 import { buildFence, outerRings, type LatLng } from '@/lib/territory';
 
@@ -208,11 +208,13 @@ export function TrackMap({
   const lastFillRef = useRef({ atMs: 0, pointCount: 0 });
   // The two "feels alive even standing still" animation timers — JS
   // intervals, not requestAnimationFrame loops (see the pulse-dot comment
-  // below for why that distinction matters for the length of a run).
-  // Started inside the map's 'load' handler, where the layers they animate
-  // are guaranteed to already exist; cleared in the mount effect's cleanup.
+  // below for why that distinction matters for the length of a run). Both
+  // are armed and cleared by the `active` effect further down, so they only
+  // ever run mid-session and never on the idle pre-run map.
   const fillPulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const routeCycleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // The gradient flow owns its own timer (gradient-flow.ts); this holds its
+  // stopper rather than an interval id.
+  const routeFlowStopRef = useRef<(() => void) | null>(null);
 
   // Camera control during a session (Task D / P4). preferredZoom is a REF,
   // not state: the zoom buttons (and now pinch-zoom, see the gesture effect
@@ -444,14 +446,10 @@ export function TrackMap({
             // costs nothing and matches the fix applied to the summary
             // outline below, which WAS silently falling back to black.
             'line-color': ROUTE_GRADIENT[0][1],
-            // Flattened [offset, color, ...] — the expression form
-            // line-gradient requires.
-            'line-gradient': [
-              'interpolate',
-              ['linear'],
-              ['line-progress'],
-              ...ROUTE_GRADIENT.flat(),
-            ] as unknown as string,
+            // The static ramp is only what the line looks like BEFORE a
+            // session arms the flow below — mid-run this property is
+            // repainted every ROUTE_GRADIENT_FRAME_MS.
+            'line-gradient': lineGradientExpression(),
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
@@ -524,12 +522,7 @@ export function TrackMap({
           paint: {
             'line-width': LIVE_FILL_OUTLINE_WIDTH,
             'line-color': ROUTE_GRADIENT[0][1], // fallback — see the route line's own comment above
-            'line-gradient': [
-              'interpolate',
-              ['linear'],
-              ['line-progress'],
-              ...ROUTE_GRADIENT.flat(),
-            ] as unknown as string,
+            'line-gradient': lineGradientExpression(),
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
@@ -600,30 +593,22 @@ export function TrackMap({
       );
     }, LIVE_FILL_PULSE_MS);
 
-    // The route (and its rim twin) cycle colour instead: unlike fill-opacity,
-    // line-gradient is a ColorRampProperty with no `-transition` support at
-    // all (confirmed against the installed mapbox-gl typings) — every update
-    // SNAPS, there's no GPU tween to lean on. rotateRouteGradient keeps the
-    // offsets fixed and only rotates which colour sits at which one, so this
-    // reads as a stepped shift, not a silky flow — an honest limit of the API.
-    let step = 0;
-    routeCycleIntervalRef.current = setInterval(() => {
-      step += 1;
-      const gradient = [
-        'interpolate',
-        ['linear'],
-        ['line-progress'],
-        ...rotateRouteGradient(step).flat(),
-      ] as unknown as string;
+    // The route (and its rim twin) flow their colours along themselves
+    // instead. line-gradient has no `-transition` support at all, so there
+    // is no GPU tween between updates the way fill-opacity has above — every
+    // repaint lands exactly as drawn. That is why the flow moves in many
+    // tiny steps rather than a few large ones; see ROUTE_GRADIENT_FRAME_MS.
+    // The previous version rotated whole colour stops and read as stepped.
+    routeFlowStopRef.current = startGradientFlow((gradient) => {
       map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
       map.setPaintProperty(FILL_OUTLINE_SRC, 'line-gradient', gradient);
-    }, ROUTE_GRADIENT_CYCLE_MS);
+    });
 
     return () => {
       if (fillPulseIntervalRef.current) clearInterval(fillPulseIntervalRef.current);
-      if (routeCycleIntervalRef.current) clearInterval(routeCycleIntervalRef.current);
+      routeFlowStopRef.current?.();
       fillPulseIntervalRef.current = null;
-      routeCycleIntervalRef.current = null;
+      routeFlowStopRef.current = null;
     };
   }, [active]);
 

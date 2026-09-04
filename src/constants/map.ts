@@ -174,53 +174,111 @@ export const LIVE_FILL_PULSE_MS = 2600;
 export const LIVE_FILL_OUTLINE_WIDTH = 2.5;
 
 /**
- * The live route's vibrant gradient, as `line-gradient` stops (offset 0-1
- * along the drawn line). Reads as the iridescent Apple-AI ramp Pedro asked
- * for: cool at the tail, warm at the head, so the newest stretch is the
- * brightest part of the line and the eye lands on where you are now.
+ * The route/territory gradient — a full 12-colour HUE WHEEL, in order, each
+ * roughly 30 degrees from its neighbours. It is a WHEEL and not a ramp:
+ * entry 11 sits next to entry 0 in hue, so the list closes on itself and
+ * anything that loops (a territory's boundary, a gradient flowing along a
+ * line forever) can traverse it endlessly with no seam. That property is
+ * load-bearing — see cyclicGradientColorAt in fence-draw.ts for what the
+ * alternatives cost.
+ *
+ * Grown from 6 to 12 on Pedro's ask (2026-09-04) for "more vibrant and
+ * colorful". Six colours only reached from indigo to gold, a bit over half
+ * the wheel; closing it needed a return leg through greens and teals, which
+ * is what took it to twelve. Those additions are not new to the app — lime,
+ * cyan, blue and amber are lifted straight from FENCE_COLOR_SETS, which has
+ * always been a full-spectrum palette. The originals are all still here, in
+ * their original order.
+ *
+ * Kept vivid on purpose: every entry's max-minus-min channel spread stays
+ * high, and so does every blend BETWEEN two of them (asserted in
+ * map.test.ts). A dull colour anywhere in the wheel would circulate through
+ * every animated line on the map forever — which is why the original ramp's
+ * gold (#FEDA75) is the one of the six not carried over verbatim. Rendered
+ * beside eleven fully saturated neighbours it read as a pale, washed-out
+ * band; FENCE_COLOR_SETS' own amber is the same hue with the saturation the
+ * rest of the wheel has.
+ */
+export const ROUTE_GRADIENT_COLORS: string[] = [
+  '#4F5BD5', // indigo
+  '#8A2BE2', // violet
+  '#C13BE8', // orchid
+  '#ED2FA0', // magenta
+  '#F4508B', // pink
+  '#FF4B3E', // vermilion
+  '#FA7E1E', // orange
+  '#FBBF24', // amber
+  '#A3E635', // lime
+  '#2FD98A', // emerald
+  '#22D3EE', // cyan
+  '#3B82F6', // blue
+];
+
+/**
+ * The same wheel laid out ONCE across a line, as `line-gradient` stops
+ * (offset 0-1). This is the static form: the fallback a layer is created
+ * with before any flow starts, and what native samples per-vertex
+ * (gradientStrokeColors) since react-native-maps cannot animate a Polyline's
+ * colours without re-rendering it.
+ *
+ * The closing stop repeats entry 0, so laying the whole wheel out end to end
+ * leaves both ends of the line on the same colour. That gives up the old
+ * 6-colour ramp's cool-tail/warm-head cue — but that cue only ever survived
+ * on a line that WASN'T animating, and every web surface that draws this now
+ * flows it (gradient-flow.ts), which moves every colour past every point on
+ * the line anyway.
  *
  * `line-gradient` requires `lineMetrics: true` on the GeoJSON source — the
  * property is silently ignored without it, which looks like a flat line
  * rather than an error.
  */
 export const ROUTE_GRADIENT: [number, string][] = [
-  [0.0, '#4F5BD5'],
-  [0.25, '#8A2BE2'],
-  [0.45, '#D62976'],
-  [0.65, '#F4508B'],
-  [0.85, '#FA7E1E'],
-  [1.0, '#FEDA75'],
+  ...ROUTE_GRADIENT_COLORS.map((color, i): [number, string] => [
+    i / ROUTE_GRADIENT_COLORS.length,
+    color,
+  ]),
+  [1, ROUTE_GRADIENT_COLORS[0]],
 ];
 
 /**
- * Rotates ROUTE_GRADIENT's colours through its own FIXED offsets, one step
- * per call — the route line's "feels alive even standing still" animation.
- * The offsets never move: `interpolate` requires strictly increasing stops,
- * so shifting the numbers themselves risks an invalid (unsorted) expression
- * on wraparound. Only which colour sits at which offset cycles.
- *
- * `line-gradient` has NO `-transition` support (confirmed against the
- * installed mapbox-gl typings — it's a ColorRampProperty, not a
- * DataDrivenProperty/DataConstantProperty, neither of which line-gradient
- * is either) — every update SNAPS instantly, there is no GPU interpolation
- * to lean on the way LIVE_FILL_OPACITY's pulse does. So this reads as a
- * stepped colour shift, not a silky continuous flow — an honest limit of
- * the API, not a corner cut. `step` can be any integer; the double-mod
- * wraps negative values correctly too.
+ * One full trip of the wheel around the line — the loop's period. Slower
+ * than the 2.7s the old stepped rotation ran at, for two reasons: an ambient
+ * "still alive" motion reads better calm than urgent, and a slower loop is
+ * what lets the tick cadence below stay modest while each frame still moves
+ * the pattern only a few pixels. Deliberately NOT a neat multiple of
+ * LIVE_FILL_PULSE_MS — the fill's breathe and this flow drift in and out of
+ * phase instead of pulsing in lockstep, which reads as two independent
+ * living things rather than one metronome.
  */
-export function rotateRouteGradient(step: number): [number, string][] {
-  const n = ROUTE_GRADIENT.length;
-  const colors = ROUTE_GRADIENT.map(([, c]) => c);
-  return ROUTE_GRADIENT.map(([offset], i) => [offset, colors[(((i + step) % n) + n) % n]]);
-}
+export const ROUTE_GRADIENT_LOOP_MS = 4400;
 
-/** Cadence for rotateRouteGradient — a JS interval, deliberately NOT a
- *  requestAnimationFrame loop (see the "you are here" pulse dot's own
- *  comment in track-map.web.tsx for why a per-frame GL repaint for the
- *  whole length of a run is the trap this avoids). One step every 450ms
- *  means a full 6-colour cycle every 2.7s — close to LIVE_FILL_PULSE_MS's
- *  own rhythm, so the two animations don't visibly fight for attention. */
-export const ROUTE_GRADIENT_CYCLE_MS = 450;
+/**
+ * Tick cadence for that loop. `line-gradient` is a ColorRampProperty with NO
+ * `-transition` support at all (confirmed against the installed mapbox-gl
+ * typings — it is neither a DataDrivenProperty nor a DataConstantProperty),
+ * so unlike LIVE_FILL_OPACITY's breathe there is no GPU tween between calls:
+ * every update lands exactly as drawn.
+ *
+ * Smoothness therefore has to come from making each update SMALL, not from
+ * interpolation. At 60ms against a 4.4s loop the pattern advances 1/73rd of
+ * the line per tick — a few pixels, and a colour shift of at most 8% of a
+ * channel (measured across a full loop). The previous implementation moved
+ * every colour a whole stop along the ramp every 450ms — a jump of up to
+ * 40% of a channel, six times per cycle. That is what read as stepped.
+ *
+ * These two numbers also define the loop's frame TABLE: it repeats exactly
+ * every round(LOOP / FRAME) ticks, so gradient-flow.ts precomputes that many
+ * expressions once and then only indexes into them. Changing either constant
+ * changes the table's size, nothing else.
+ *
+ * The cost is ~17 setPaintProperty calls/sec per animated layer against the
+ * old ~2.2. Still a JS interval, NOT a requestAnimationFrame loop (see
+ * track-map.web.tsx's pulse-dot comment) — each tick only queues a single
+ * rAF callback to land the paint on the next frame, and each
+ * setPaintProperty only marks the layer dirty: GL still repaints once per
+ * frame, not once per call.
+ */
+export const ROUTE_GRADIENT_FRAME_MS = 60;
 
 /** Trailing distance that stays a flat line before the route sets into wall. */
 export const FENCE_LAG_M = 100;

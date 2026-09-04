@@ -20,6 +20,11 @@
 // The new fence's fill fades in via a paint transition — GL interpolates
 // fill-opacity on the GPU, same trick as the wall rise on the live map.
 //
+// The route's gradient FLOWS along the line (gradient-flow.ts), the same
+// continuous loop the live Track map runs mid-session and the Territories
+// map runs on every saved territory — so the surface a run lands on doesn't
+// read as a frozen still of the map it just left.
+//
 // Every custom layer sets a `slot` and `*-emissive-strength` — see
 // track-map.web.tsx's header and constants/map.ts. The gradient layers also
 // get a fallback `line-color` and stage their real data through setData()
@@ -52,6 +57,8 @@ import {
   TILE_RIVAL_FILL_OPACITY,
   ZOOM_STEP,
 } from '@/constants/map';
+import { lineGradientExpression } from '@/lib/fence-draw';
+import { startGradientFlow } from '@/lib/gradient-flow';
 import { outerRings, type LatLng } from '@/lib/territory';
 import type { MyFence } from '@/lib/territory-sync';
 
@@ -155,6 +162,8 @@ export function FenceMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
+  // Stopper for the route's gradient flow (gradient-flow.ts owns the timer).
+  const routeFlowStopRef = useRef<(() => void) | null>(null);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
@@ -339,12 +348,9 @@ export function FenceMap({
             // fallback means a rejected gradient is a visibly WRONG colour
             // rather than one that looks like a deliberate black outline.
             'line-color': ROUTE_GRADIENT[0][1],
-            'line-gradient': [
-              'interpolate',
-              ['linear'],
-              ['line-progress'],
-              ...ROUTE_GRADIENT.flat(),
-            ] as unknown as string,
+            // The static ramp is only the first frame — the flow below
+            // repaints this every ROUTE_GRADIENT_FRAME_MS.
+            'line-gradient': lineGradientExpression(),
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
@@ -370,6 +376,15 @@ export function FenceMap({
         // out and back in. Cheaper to read than it sounds — one fitBounds
         // from a slightly wider camera.
         map.fitBounds(boundsOf(g), { padding: 80, duration: FIT_MS });
+        // Armed here, inside 'load', where the layer it paints is guaranteed
+        // to exist. Unlike the live map's flow there is no `active` gate to
+        // hang it on: this screen only ever exists just after a run, and it
+        // is dismissed rather than sat on for 40 minutes.
+        routeFlowStopRef.current = startGradientFlow((gradient) => {
+          if (map.getLayer(NEW_ROUTE_SRC)) {
+            map.setPaintProperty(NEW_ROUTE_SRC, 'line-gradient', gradient);
+          }
+        });
         readyRef.current = true;
       });
     })();
@@ -377,6 +392,8 @@ export function FenceMap({
     return () => {
       cancelled = true;
       readyRef.current = false;
+      routeFlowStopRef.current?.();
+      routeFlowStopRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };

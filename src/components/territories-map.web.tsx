@@ -7,8 +7,12 @@
 //   SAVED — full treatment, same as the just-finished-run map (fence-map.
 //   web.tsx): this run's own colour (fenceColorForRun), a vertical
 //   fill-extrusion wall with opacity (matching the live Track map's fence
-//   wall — see constants/map.ts's FENCE_WALL_HEIGHT_M/OPACITY), and the
-//   vibrant per-vertex route gradient.
+//   wall — see constants/map.ts's FENCE_WALL_HEIGHT_M/OPACITY), the vibrant
+//   route gradient, and a chromatic rim traced around the territory's own
+//   boundary. Both gradients FLOW — the same continuous loop the live Track
+//   map runs on its route and its fill rim (gradient-flow.ts), so a saved
+//   territory reads as the same living surface as a session in progress,
+//   with the ramp travelling once around each territory's edge.
 //   PENDING (queued, not yet uploaded — see upload-queue.ts) — flat, no
 //   extrusion, a single desaturated grey, dashed outline, no gradient. Reads
 //   at a glance as "not confirmed yet" without inventing new iconography.
@@ -29,23 +33,26 @@
 // runner accumulates early on; would need revisiting if that count grows
 // into the hundreds (batch into a shared source, drop the per-run gradient
 // in favour of a single flat colour per run).
-import type { Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
+import type { GeoJSONSource, Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import {
   EMISSIVE_STRENGTH_FULL,
   FENCE_WALL_HEIGHT_M,
   FENCE_WALL_OPACITY,
   fenceColorForRun,
+  LIVE_FILL_OUTLINE_WIDTH,
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
   ROUTE_GRADIENT,
   ROUTE_LINE_WIDTH,
 } from '@/constants/map';
+import { lineGradientExpression } from '@/lib/fence-draw';
+import { startGradientFlow } from '@/lib/gradient-flow';
 import { outerRings, type LatLng } from '@/lib/territory';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -120,6 +127,18 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
   // one id's kind, which this treats as remove-then-add since the layer
   // IDs are kind-scoped).
   const mountedIdsRef = useRef<Set<string>>(new Set());
+  // Every layer currently carrying a flowing line-gradient (each saved
+  // territory contributes its rim and, when it has one, its route). Kept in
+  // two shapes on purpose: keyed by the same `kind:id` as mountedIdsRef so
+  // sync() can drop a removed feature's entries, and flattened so a tick
+  // walks ONE array instead of a Map of arrays — that inner loop runs ~17
+  // times a second for as long as the tab is open.
+  //
+  // The flow timer READS these refs rather than closing over a list, so
+  // adding or deleting a territory never has to restart it: the next tick
+  // simply paints a different set of layers.
+  const flowIdsRef = useRef<Map<string, string[]>>(new Map());
+  const flowLayersRef = useRef<string[]>([]);
   // The freshest feature list, read by sync() below rather than closed over.
   // The map's own 'load' handler is registered once, inside a mount effect
   // that can never see a later render's props — but it is also the FIRST
@@ -149,6 +168,7 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       if (nextIds.has(key)) continue;
       removeFeatureLayers(map, key);
       mountedIdsRef.current.delete(key);
+      flowIdsRef.current.delete(key);
     }
 
     // Add layers/sources for anything new. Existing ones are left alone —
@@ -158,9 +178,12 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
     for (const f of features) {
       const key = `${f.kind}:${f.id}`;
       if (mountedIdsRef.current.has(key)) continue;
-      addFeatureLayers(map, f, key, (id, kind) => onSelectRef.current(id, kind));
+      const flowIds = addFeatureLayers(map, f, key, (id, kind) => onSelectRef.current(id, kind));
       mountedIdsRef.current.add(key);
+      if (flowIds.length > 0) flowIdsRef.current.set(key, flowIds);
     }
+
+    flowLayersRef.current = [...flowIdsRef.current.values()].flat();
 
     const bounds = boundsOfAll(features);
     if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
@@ -215,6 +238,8 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       mapRef.current?.remove();
       mapRef.current = null;
       mountedIdsRef.current = new Set();
+      flowIdsRef.current = new Map();
+      flowLayersRef.current = [];
     };
     // Built once; `sync` is stable, and all data flows through the ref it
     // reads.
@@ -228,6 +253,34 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
     sync();
   }, [features, sync]);
 
+  // The gradient flow. ONE timer for the whole screen, however many
+  // territories are on it — the expression is built once per tick and handed
+  // to every animated layer, so the per-territory cost is a setPaintProperty
+  // call (which only marks the layer dirty; GL still repaints once per
+  // frame), not a timer each.
+  //
+  // Gated on there being at least one saved territory: a screen showing only
+  // pending runs has nothing with a gradient on it, and an empty timer is
+  // exactly the idle battery drain the live map's own `active` gate exists
+  // to avoid. `hasSaved` (a boolean), not `features`, is the dependency —
+  // re-running this on every refetch would restart the loop mid-cycle and
+  // make the colours visibly jump back.
+  const hasSaved = features.some((f) => f.kind === 'saved');
+  useEffect(() => {
+    if (!hasSaved) return;
+    return startGradientFlow((gradient) => {
+      const map = mapRef.current;
+      if (!map || !readyRef.current) return;
+      for (const id of flowLayersRef.current) {
+        // The list is rebuilt in the same pass that adds and removes layers,
+        // so this guard is never expected to fire — but a missing layer id
+        // makes Mapbox fire an error event rather than throw, which at this
+        // cadence would be a silent flood rather than a visible failure.
+        if (map.getLayer(id)) map.setPaintProperty(id, 'line-gradient', gradient);
+      }
+    });
+  }, [hasSaved]);
+
   if (!TOKEN) return null;
 
   return (
@@ -237,15 +290,22 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
   );
 }
 
+/**
+ * Adds one feature's sources/layers and returns the ids of every layer that
+ * carries a flowing `line-gradient` — the caller collects those so one timer
+ * can paint all of them (see flowIdsRef).
+ */
 function addFeatureLayers(
   map: MapboxMap,
   f: TerritoryFeature,
   key: string,
   onSelect: (id: string, kind: 'saved' | 'pending') => void,
-) {
+): string[] {
   const fillSrc = `terr-fill-${key}`;
   const routeSrc = `terr-route-${key}`;
+  const rimSrc = `terr-rim-${key}`;
   const color = f.kind === 'saved' ? fenceColorForRun(f.startedAtMs).color : PENDING_COLOR;
+  const flowIds: string[] = [];
 
   map.addSource(fillSrc, {
     type: 'geojson',
@@ -302,6 +362,50 @@ function addFeatureLayers(
     if (id && kind) onSelect(id, kind);
   });
 
+  // The RIM — the territory's own boundary, carrying the flowing gradient
+  // once around itself. This is the saved-map twin of the live Track map's
+  // FILL_OUTLINE_SRC (constants/map.ts's LIVE_FILL_OUTLINE_WIDTH), and it is
+  // what makes "loops around each saved territory" literal: the fill keeps
+  // the run's own identity colour (needed to tell territories apart when
+  // several are on screen at once), so only the edge carries the shared
+  // iridescent ramp.
+  //
+  // One Feature per outer ring in one source, rather than a MultiLineString:
+  // `line-progress` is computed per feature, so each lobe of a MultiPolygon
+  // territory gets its own complete loop instead of sharing one ramp
+  // stretched across all of them.
+  if (f.kind === 'saved') {
+    map.addSource(rimSrc, {
+      type: 'geojson',
+      lineMetrics: true,
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: rimSrc,
+      type: 'line',
+      source: rimSrc,
+      slot: MAP_SLOT_ROUTE,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-width': LIVE_FILL_OUTLINE_WIDTH,
+        'line-color': ROUTE_GRADIENT[0][1], // fallback — see the route layer below
+        'line-gradient': lineGradientExpression(),
+        'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+      },
+    });
+    flowIds.push(rimSrc);
+    stageLineData(map, rimSrc, {
+      type: 'FeatureCollection',
+      features: outerRings(f.geometry).map(
+        (ring): Feature => ({
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'LineString', coordinates: ring },
+        }),
+      ),
+    });
+  }
+
   // The route — saved gets the full vibrant gradient (fence-map.web.tsx's
   // technique, one feature per source so line-progress is well-defined);
   // pending gets nothing extra beyond the dashed outline above, since a
@@ -311,11 +415,7 @@ function addFeatureLayers(
     map.addSource(routeSrc, {
       type: 'geojson',
       lineMetrics: true,
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: { type: 'LineString', coordinates: f.route.map(({ lng, lat }) => [lng, lat]) },
-      },
+      data: { type: 'FeatureCollection', features: [] },
     });
     map.addLayer({
       id: routeSrc,
@@ -325,26 +425,51 @@ function addFeatureLayers(
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-width': ROUTE_LINE_WIDTH,
+        // Fallback for if line-gradient is ever rejected — Mapbox's default
+        // line-color is #000000, so without this a rejected gradient renders
+        // as a deliberate-looking black line instead of failing loudly.
         'line-color': ROUTE_GRADIENT[0][1],
-        'line-gradient': [
-          'interpolate',
-          ['linear'],
-          ['line-progress'],
-          ...ROUTE_GRADIENT.flat(),
-        ] as unknown as string,
+        'line-gradient': lineGradientExpression(),
         'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
       },
     });
+    flowIds.push(routeSrc);
+    stageLineData(map, routeSrc, {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: f.route.map(({ lng, lat }) => [lng, lat]) },
+    });
   }
+
+  return flowIds;
+}
+
+/**
+ * Fills a gradient line source on the NEXT frame instead of baking the data
+ * straight into addSource(). Not ceremony: fence-map.web.tsx hit a layer
+ * that rendered pure black — line-gradient's silent fallback — with
+ * lineMetrics:true and a valid expression already set, and going through
+ * setData() after an empty source is the one thing proven to make GL JS
+ * compute line-progress for it (P3 §7c). Both gradient layers here were
+ * baking their data in directly, the shape that failed there.
+ *
+ * The layer can be removed before the frame lands (a delete, or a pending
+ * run promoted to saved mid-flight), so this re-checks the source exists.
+ */
+function stageLineData(map: MapboxMap, srcId: string, data: Feature | FeatureCollection) {
+  requestAnimationFrame(() => {
+    (map.getSource(srcId) as GeoJSONSource | undefined)?.setData(data);
+  });
 }
 
 function removeFeatureLayers(map: MapboxMap, key: string) {
   const fillSrc = `terr-fill-${key}`;
   const routeSrc = `terr-route-${key}`;
-  for (const id of [`${fillSrc}-extrusion`, `${fillSrc}-fill`, `${fillSrc}-dash`, routeSrc]) {
+  const rimSrc = `terr-rim-${key}`;
+  for (const id of [`${fillSrc}-extrusion`, `${fillSrc}-fill`, `${fillSrc}-dash`, routeSrc, rimSrc]) {
     if (map.getLayer(id)) map.removeLayer(id);
   }
-  for (const src of [fillSrc, routeSrc]) {
+  for (const src of [fillSrc, routeSrc, rimSrc]) {
     if (map.getSource(src)) map.removeSource(src);
   }
 }
