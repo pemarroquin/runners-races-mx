@@ -1,8 +1,13 @@
-// Settings' account-linking form — lives inside settings.tsx's Profile
-// section, replacing the static "no sign-in yet" paragraphs it shipped
-// with. See src/lib/account.ts's header for why this exists and what LINK
-// vs SIGN IN mean; this component only owns the two-step (email -> code)
-// form and the states around it.
+// Settings' account-linking form — the whole content of the
+// Settings › Your account sub-page (src/app/(tabs)/settings/account.tsx).
+// See src/lib/account.ts's header for why this exists and what LINK vs
+// SIGN IN mean; this component only owns the two-step (email -> code) form
+// and the states around it.
+//
+// It renders no heading of its own: the page it now owns carries the
+// `settings.accountTitle` string in its stack header. When it lived inside
+// the old one-scroll settings screen it had to title itself, since nothing
+// else did.
 //
 // Self-contained like NamePrompt: fetches its own status on mount/focus and
 // decides everything about what to show. The host only decides WHERE to
@@ -108,7 +113,6 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
   if (step === 'linked' && status?.linked) {
     return (
       <View style={styles.block}>
-        <Text style={[styles.accountTitle, { color: c.text }]}>{t('settings.accountTitle')}</Text>
         <Text style={[styles.paragraph, { color: c.textSecondary }]}>
           {t('settings.accountLinked', { email: status.email })}
         </Text>
@@ -121,7 +125,6 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
 
   return (
     <View style={styles.block}>
-      <Text style={[styles.accountTitle, { color: c.text }]}>{t('settings.accountTitle')}</Text>
       <Text style={[styles.paragraph, { color: c.textSecondary }]}>{t('settings.accountBody')}</Text>
 
       {!showCodeStep ? (
@@ -221,8 +224,9 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
 }
 
 const styles = StyleSheet.create({
-  block: { gap: Spacing.two, marginTop: Spacing.three },
-  accountTitle: { fontSize: 15, fontWeight: '700' },
+  // No marginTop any more: this is the first element of its own page, not a
+  // block appended under the display-name field.
+  block: { gap: Spacing.two },
   paragraph: { fontSize: 13, lineHeight: 18 },
   warning: { fontSize: 12, lineHeight: 17, fontWeight: '600' },
   input: {
