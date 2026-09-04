@@ -1,6 +1,11 @@
-// Phase 2 — the territory leaderboard. Ranks runners by area actually held
-// (overlapping runs by one person counted once — see leaderboard.ts), with a
-// per-metro board and a global one behind a segment.
+// Tile Coverage brief §6 step 6 — ranks runners by tiles OWNED (a plain
+// `count` over territory_tiles, first-to-claim means one tile has exactly
+// one owner ever — see leaderboard.ts's own header), with a per-metro board
+// and a global one behind a segment. Was area actually held (rankByArea,
+// the union-of-fences pipeline) — that function and its ~30 tests are
+// UNCHANGED and still exported (brief §4: don't delete), just no longer
+// what this screen renders. See leaderboard.ts's own "Tile Coverage Model"
+// section header for why the new path is simpler, not just newer.
 //
 // Regional is the DEFAULT because everything else in this app is
 // region-scoped already (the Feed filters by metro, there's a city picker in
@@ -26,10 +31,9 @@ import { Icon } from '@/components/ui/icon';
 import { fenceColorForRun } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
-import { rankByArea, type LeaderboardEntry } from '@/lib/leaderboard';
+import { rankByTileCount, type TileLeaderboardEntry } from '@/lib/leaderboard';
 import { useRegion } from '@/lib/region-context';
-import { fetchLeaderboard, type LeaderboardOutcome } from '@/lib/territory-sync';
-import { formatArea } from '@/lib/tracking';
+import { fetchTileLeaderboard, type TileLeaderboardOutcome } from '@/lib/territory-sync';
 
 type Scope = 'region' | 'global';
 
@@ -40,11 +44,11 @@ export default function LeaderboardScreen() {
   const { region } = useRegion();
 
   const [scope, setScope] = useState<Scope>('region');
-  const [data, setData] = useState<LeaderboardOutcome | null>(null);
+  const [data, setData] = useState<TileLeaderboardOutcome | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const outcome = await fetchLeaderboard();
+    const outcome = await fetchTileLeaderboard();
     setData(outcome);
   }, []);
 
@@ -53,7 +57,7 @@ export default function LeaderboardScreen() {
     // Deferred a tick so no setState runs synchronously in the effect body
     // (React Compiler rule — the same pattern the run tracker's clock uses).
     const id = setTimeout(() => {
-      fetchLeaderboard().then((outcome) => {
+      fetchTileLeaderboard().then((outcome) => {
         if (!stale) setData(outcome);
       });
     }, 0);
@@ -70,10 +74,12 @@ export default function LeaderboardScreen() {
   }, [load]);
 
   // Ranking is recomputed rather than refetched when the scope changes: the
-  // union runs over data already in memory, so the toggle is instant.
-  const entries = useMemo<LeaderboardEntry[]>(() => {
+  // count runs over data already in memory, so the toggle is instant — same
+  // reasoning as the old rankByArea, cheaper in practice (a count, not a
+  // turf union).
+  const entries = useMemo<TileLeaderboardEntry[]>(() => {
     if (!data?.ok) return [];
-    return rankByArea(data.runs, scope === 'region' ? region.id : null);
+    return rankByTileCount(data.tiles, scope === 'region' ? region.id : null);
   }, [data, scope, region.id]);
 
   const meUserId = data?.ok ? data.meUserId : null;
@@ -140,8 +146,8 @@ export default function LeaderboardScreen() {
                 isMe={item.userId === meUserId}
                 c={c}
                 anonymous={t('leaderboard.anonymous')}
-                runsLabel={t('leaderboard.runs', { count: item.runCount })}
-                flaggedLabel={t('leaderboard.flagged', { count: item.flaggedCount })}
+                tilesLabel={t('leaderboard.tiles', { count: item.tileCount })}
+                flaggedLabel={t('leaderboard.flaggedTiles', { count: item.flaggedTileCount })}
               />
             </Animated.View>
           )}
@@ -169,15 +175,15 @@ function Row({
   isMe,
   c,
   anonymous,
-  runsLabel,
+  tilesLabel,
   flaggedLabel,
 }: {
-  entry: LeaderboardEntry;
+  entry: TileLeaderboardEntry;
   rank: number;
   isMe: boolean;
   c: Record<string, string>;
   anonymous: string;
-  runsLabel: string;
+  tilesLabel: string;
   flaggedLabel: string;
 }) {
   // Colour-coded by the same palette the fences use, keyed on the user id so
@@ -198,10 +204,11 @@ function Row({
           {entry.displayName ?? anonymous}
         </Text>
         <View style={styles.runsRow}>
-          <Text style={[styles.runs, { color: c.textSecondary }]}>{runsLabel}</Text>
-          {/* Flagged runs still count toward this score — the board says so
-              rather than quietly excluding them. */}
-          {entry.flaggedCount > 0 && (
+          <Text style={[styles.runs, { color: c.textSecondary }]}>{tilesLabel}</Text>
+          {/* Tiles claimed by a flagged run still count toward this score —
+              the board says so rather than quietly excluding them, same
+              posture as the old area board. */}
+          {entry.flaggedTileCount > 0 && (
             <>
               <Icon ios="exclamationmark.triangle.fill" android="warning" size={10} color={c.accent} />
               <Text style={[styles.runs, { color: c.accent }]}>{flaggedLabel}</Text>
@@ -209,7 +216,7 @@ function Row({
           )}
         </View>
       </View>
-      <Text style={[styles.area, { color: c.text }]}>{formatArea(entry.areaM2)}</Text>
+      <Text style={[styles.area, { color: c.text }]}>{entry.tileCount}</Text>
     </View>
   );
 }
