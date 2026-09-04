@@ -57,7 +57,11 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['test/**/*.test.ts'],
+    // .tsx is deliberately narrow: exactly one file (link-aschild-style),
+    // which renders through react-native-web to pin down a Slot/style
+    // contract that shipped broken. It is not an invitation to a component
+    // suite — see the note at the top of this file.
+    include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
     // mapbox.ts reads EXPO_PUBLIC_MAPBOX_TOKEN at module load and returns
     // null from every URL builder when it's unset — a real token isn't
     // needed to test the URL shape, just a truthy one.
