@@ -36,8 +36,21 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files — NEVER commit one. THIS REPO IS PUBLIC, so a committed
+# env file is published the moment it is pushed, and rewriting history does
+# not un-publish it (forks, clones and GitHub's own cached views keep it).
+#
+# `.env*.local` alone was NOT enough: it matches .env.local but not a bare
+# `.env`, nor .env.production, .env.staging and friends. Today that gap is
+# harmless — the only vars here are EXPO_PUBLIC_* ones that ship inside the
+# web bundle anyway — but a service-role key dropped into `.env` would be a
+# full database compromise, and nothing would have stopped it.
+#
+# The negation keeps a documented .env.example trackable, which is the right
+# place for variable NAMES with empty values.
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
