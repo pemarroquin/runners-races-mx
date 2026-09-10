@@ -10,6 +10,10 @@
 // them, and the result is the same. Cells are emitted as unnest(array[...])
 // rather than one tuple per row, which is ~2.3x denser than the migration's
 // own form. The source migration stays the record of truth.
+// Imported rather than taken as a global: CI lints with `npx eslint .`,
+// whose config has no Node globals for this directory, so a bare `Buffer`
+// is a hard `no-undef` error there while passing `npm run lint` locally.
+import { Buffer } from 'node:buffer';
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
