@@ -132,6 +132,20 @@ indistinguishable from one reading 0% because nobody ran.
 
 ## Gotchas this repo has actually shipped
 
+- **An impure function called during render gets its result CACHED by the
+  React Compiler.** The i18n provider handed out
+  `t: (key, options) => i18n.t(key, options)` — a closure over nothing
+  reactive whose result depended on the mutable `i18n.locale` singleton. The
+  compiler cached `t('settings.appearance')` across renders, so tapping
+  ES/EN flipped `locale` state (the pills' `aria-checked` updated within
+  500 ms) while every translated string on screen stayed in the old language
+  until a full reload. The toggle was dead in production and no gate could
+  see it. Fixed in PR #44 by threading the locale through the call
+  (`i18n.t(key, { locale, ...options })`), which makes the translation pure
+  in its arguments so the caching becomes correct. Rule: anything called
+  during render must be a function of its arguments — if it reads mutable
+  module state, pass that state in. Sibling of the updater-purity trap.
+
 - **Safari has no `geolocation` in the Permissions API, so every permission
   check is a real GPS probe.** `requestPermission()` (geolocation.web.ts)
   rejects out of `navigator.permissions.query` on Safari and falls through to
