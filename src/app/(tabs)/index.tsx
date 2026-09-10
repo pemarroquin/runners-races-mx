@@ -211,11 +211,22 @@ export default function TrackScreen() {
   const resumeCheckpoint = useCallback(() => {
     if (!checkpoint) return;
     const cp = checkpoint;
+    // Hidden immediately so the tap feels like it did something — but put
+    // BACK if the restore fails. This used to be a one-way drop: a refused
+    // or unavailable location left the runner on an idle "New session"
+    // screen with no Resume button, while their run sat untouched in
+    // storage, reachable only by reloading the tab. Losing the offer is
+    // indistinguishable from losing the run.
     setCheckpoint(null);
-    // A recoverable checkpoint was actually accepted and used — see
-    // pilot-instrumentation.ts.
-    incrementPilotCounter('runsRecovered');
-    void tracker.restoreFromCheckpoint(cp);
+    void tracker.restoreFromCheckpoint(cp).then((restored) => {
+      if (restored) {
+        // Counted only when a checkpoint was actually recovered, not merely
+        // offered and attempted — see pilot-instrumentation.ts.
+        incrementPilotCounter('runsRecovered');
+      } else {
+        setCheckpoint(cp);
+      }
+    });
   }, [checkpoint, tracker]);
 
   // Set when the pace guard ends a session (see the effect below). Purely
