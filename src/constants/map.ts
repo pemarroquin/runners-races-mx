@@ -84,18 +84,6 @@ export const ROUTE_GLOW_WIDTH = 7;
 export const ROUTE_GLOW_BLUR = 3;
 export const ROUTE_GLOW_OPACITY = 0.35;
 
-/**
- * Fill opacity for buildFenceMapUrl's static-image overlay (mapbox.ts) —
- * the Saved > Territories list thumbnails (myraces.tsx). Was 0.25, which
- * read as muddy/near-invisible against the classic dark-v11 style's near-
- * black ground (reported by Pedro, 2026-08-31, from a real device
- * screenshot). No emissive-strength or slot tuning applies here the way it
- * does to MAP_STYLE_GL's Standard layers — the Static Images API is a flat
- * pre-rendered image, plain alpha compositing, no scene lighting to
- * correct for. Opacity is the only lever, so it has to carry the whole
- * "vibrant" ask alone; bumped to actually read as one on a dark ground.
- */
-export const FENCE_FILL_OPACITY = 0.45;
 
 /**
  * Full intensity for EVERY custom line/fill/fill-extrusion layer added to
