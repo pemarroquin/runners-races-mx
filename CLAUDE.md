@@ -132,6 +132,26 @@ indistinguishable from one reading 0% because nobody ran.
 
 ## Gotchas this repo has actually shipped
 
+- **Safari has no `geolocation` in the Permissions API, so every permission
+  check is a real GPS probe.** `requestPermission()` (geolocation.web.ts)
+  rejects out of `navigator.permissions.query` on Safari and falls through to
+  `getCurrentPosition` — a native prompt plus up to a 10 s timeout. Anything
+  awaiting it is frozen for that whole window, so NEVER put state the user
+  is waiting to see behind it. Checkpoint recovery did exactly that and
+  rendered a recovered 40-minute run as `0:00 | 0 m | Searching for GPS
+  signal…` until the probe returned, which reads as "Resume did nothing"
+  (reported on a real phone, fixed in PR #43 — restored values now go on
+  screen before the await; only `legStartRef` waits, so the clock doesn't
+  count time spent at a permission prompt).
+- **Never drop the only offer of a recoverable run before the recovery
+  succeeds.** `resumeCheckpoint` hid the Resume/Discard prompt on tap; when
+  the permission probe then refused, the runner landed on "New session" with
+  no way back, while the run sat untouched in localStorage. Losing the offer
+  is indistinguishable to the runner from losing the run.
+  `restoreFromCheckpoint` returns a boolean now and the offer is restored on
+  false. The checkpoint on disk is only ever cleared by a successful save, a
+  reset, or an explicit Discard — verify that stays true.
+
 - **A cleanup that touches the map runs AFTER the map is destroyed.** On
   unmount React runs effect cleanups in declaration order, so the mount
   effect's `map.remove()` goes first and mapbox-gl leaves `style` undefined
