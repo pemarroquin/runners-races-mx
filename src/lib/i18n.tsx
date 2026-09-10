@@ -1177,7 +1177,30 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<I18nValue>(
-    () => ({ t: (key, options) => i18n.t(key, options), locale, setLocale }),
+    () => ({
+      // `locale` is passed EXPLICITLY, not left to the i18n singleton's own
+      // mutable `i18n.locale`. That difference is the whole language toggle.
+      //
+      // `(key, options) => i18n.t(key, options)` closes over nothing
+      // reactive, so its result is not a function of its arguments — it
+      // depends on a module-level value that setLocale mutates. The React
+      // Compiler (enabled in this project) is entitled to treat a call like
+      // `t('settings.appearance')` as cacheable when neither `t` nor the key
+      // changes, and it does: tapping ES flipped `locale` state (the pills'
+      // aria-checked updated) while every translated string on screen stayed
+      // in the old language until a full reload. Measured on the live site
+      // 2026-09-10, then locally.
+      //
+      // Threading the locale through makes the call genuinely pure, so the
+      // compiler's caching becomes correct rather than wrong: same key, same
+      // locale, same string — and a different locale is a different call.
+      // i18n-js honours `options.locale` (see helpers/lookup.js), and
+      // spreading `options` after it keeps an explicit per-call override
+      // working.
+      t: (key, options) => i18n.t(key, { locale, ...options }),
+      locale,
+      setLocale,
+    }),
     [locale, setLocale],
   );
 
