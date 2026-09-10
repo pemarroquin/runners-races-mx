@@ -280,7 +280,16 @@ export function useRunTracker(): RunTracker {
     return () => {
       // Wrapped rather than returned directly: deactivateKeepAwake returns a
       // promise, and an effect cleanup must return void.
-      deactivateKeepAwake(KEEP_AWAKE_TAG);
+      //
+      // .catch is not defensive padding. On web, releasing a tag that was
+      // never acquired REJECTS (ERR_KEEP_AWAKE_TAG_INVALID — see
+      // expo-keep-awake/src/ExpoKeepAwake.web.ts), and tryKeepAwake above
+      // fails routinely: navigator.wakeLock.request() rejects whenever the
+      // document isn't visible, and Safari only shipped the API in 16.4. So
+      // every run that starts backgrounded, or on an older phone, ended
+      // with an unhandled rejection in the console. Expo's own useKeepAwake
+      // catches this on web for exactly the same reason.
+      deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
     };
   }, [status, tryKeepAwake]);
 

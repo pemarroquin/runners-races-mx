@@ -23,6 +23,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FenceMap } from '@/components/fence-map';
+import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { NamePrompt } from '@/components/name-prompt';
 import { TrackMap } from '@/components/track-map';
 import { Icon } from '@/components/ui/icon';
@@ -720,35 +721,40 @@ export default function TrackScreen() {
         {/* Top-down (bearing 0, pitch 0), fit to just this fence — only the
             territory THIS session captured, no other saved territories (see
             the Territories map, myraces.tsx, for "all of them at once"). */}
-        <FenceMap
-          geometry={fence.geometry.geometry}
-          // The MASKED path, never tracker.points — privacy-zone trimming
-          // exists precisely so start/end aren't exposed, and this map is a
-          // shareable surface. `masked` is only set once tracker.status is
-          // 'finished' (see the effect above), which is exactly when this
-          // branch renders.
-          path={masked?.points ?? []}
-          // Tile Coverage brief §4/§6 step 4 — this run's own covered
-          // cells, rendered as the primary fill (see fence-map.tsx/
-          // fence-map.web.tsx for why the enclosure polygon's fill is no
-          // longer drawn here even though `geometry` is still passed in and
-          // still used for the outline/fitBounds).
-          // Crossed AND surrounded — the map conveys ownership, and the
-          // runner owns both.
-          tiles={[...sessionTiles, ...sessionEnclosed]}
-          // Tile Coverage brief §5 — empty until claimTiles() resolves
-          // (tileClaim starts null); see TileClaimResult.rivalCells' own
-          // doc comment.
-          rivalTiles={tileClaim?.rivalCells ?? []}
-          color={fenceColor}
-          others={[]}
-          excludeId={savedRunId}
-          controls={{
-            zoomInLabel: t('track.zoomIn'),
-            zoomOutLabel: t('track.zoomOut'),
-            recenterLabel: t('track.recenterFence'),
-          }}
-        />
+        <MapErrorBoundary
+          message={t('track.mapUnavailable')}
+          color={c.textSecondary}
+          background={c.background}>
+          <FenceMap
+            geometry={fence.geometry.geometry}
+            // The MASKED path, never tracker.points — privacy-zone trimming
+            // exists precisely so start/end aren't exposed, and this map is a
+            // shareable surface. `masked` is only set once tracker.status is
+            // 'finished' (see the effect above), which is exactly when this
+            // branch renders.
+            path={masked?.points ?? []}
+            // Tile Coverage brief §4/§6 step 4 — this run's own covered
+            // cells, rendered as the primary fill (see fence-map.tsx/
+            // fence-map.web.tsx for why the enclosure polygon's fill is no
+            // longer drawn here even though `geometry` is still passed in and
+            // still used for the outline/fitBounds).
+            // Crossed AND surrounded — the map conveys ownership, and the
+            // runner owns both.
+            tiles={[...sessionTiles, ...sessionEnclosed]}
+            // Tile Coverage brief §5 — empty until claimTiles() resolves
+            // (tileClaim starts null); see TileClaimResult.rivalCells' own
+            // doc comment.
+            rivalTiles={tileClaim?.rivalCells ?? []}
+            color={fenceColor}
+            others={[]}
+            excludeId={savedRunId}
+            controls={{
+              zoomInLabel: t('track.zoomIn'),
+              zoomOutLabel: t('track.zoomOut'),
+              recenterLabel: t('track.recenterFence'),
+            }}
+          />
+        </MapErrorBoundary>
         <SafeAreaView style={styles.overlay} edges={['top']} pointerEvents="box-none">
           <View style={styles.sessionEndTopBar} pointerEvents="box-none">
             <View style={[styles.sessionEndStatsBar, { backgroundColor: 'rgba(20,20,20,0.65)' }]}>
@@ -822,8 +828,9 @@ export default function TrackScreen() {
               the runner drew, not just its perimeter. */}
 
           {/* Tile Coverage brief §6 step 5 — replaces the old "You took X m²
-              from N runner(s)" spoils banner (still computed above, no
-              longer rendered — see the `spoils` state's own comment).
+              from N runner(s)" spoils banner, which is gone entirely: the
+              state, its fetch and its copy were all removed with the move
+              to tiles.
               A claim failure takes priority over a stale/absent tileClaim:
               the run saved either way, but this says plainly what happened
               rather than silently showing nothing. The two reasons read very
@@ -869,30 +876,35 @@ export default function TrackScreen() {
 
   return (
     <View style={[styles.stage, { backgroundColor: c.backgroundElement }]}>
-      <TrackMap
-        points={tracker.points}
-        running={running}
-        here={here}
-        active={inSession}
-        fenceColor={fenceColor}
-        // Tile Coverage brief §6 step 4 — this session's live covered
-        // cells; see the liveTiles state's own comment above for the
-        // throttle, and liveEnclosed's for why the two arrive separately.
-        tiles={liveTiles}
-        enclosedTiles={liveEnclosed}
-        dark={scheme === 'dark'}
-        color={c.accent}
-        placeholder={t('track.waiting')}
-        placeholderColor={c.textSecondary}
-        unavailable={t('track.mapUnavailable')}
-        zoomInLabel={t('track.zoomIn')}
-        zoomOutLabel={t('track.zoomOut')}
-        recenterLabel={t('track.recenter')}
-        overviewLabel={t('track.overview')}
-        // What covers the map: the measured stats block above, the floating
-        // pill tab bar below. The camera frames the run inside what is left.
-        chromeInsets={{ top: statsChromeH, bottom: BottomTabInset }}
-      />
+      <MapErrorBoundary
+        message={t('track.mapUnavailable')}
+        color={c.textSecondary}
+        background={c.backgroundElement}>
+        <TrackMap
+          points={tracker.points}
+          running={running}
+          here={here}
+          active={inSession}
+          fenceColor={fenceColor}
+          // Tile Coverage brief §6 step 4 — this session's live covered
+          // cells; see the liveTiles state's own comment above for the
+          // throttle, and liveEnclosed's for why the two arrive separately.
+          tiles={liveTiles}
+          enclosedTiles={liveEnclosed}
+          dark={scheme === 'dark'}
+          color={c.accent}
+          placeholder={t('track.waiting')}
+          placeholderColor={c.textSecondary}
+          unavailable={t('track.mapUnavailable')}
+          zoomInLabel={t('track.zoomIn')}
+          zoomOutLabel={t('track.zoomOut')}
+          recenterLabel={t('track.recenter')}
+          overviewLabel={t('track.overview')}
+          // What covers the map: the measured stats block above, the floating
+          // pill tab bar below. The camera frames the run inside what is left.
+          chromeInsets={{ top: statsChromeH, bottom: BottomTabInset }}
+        />
+      </MapErrorBoundary>
 
       {/* The map is always dark (MAP_ALWAYS_DARK), so a plain white scrim
           reliably lifts the title/button above it regardless of the app's
@@ -1303,7 +1315,6 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   spoilsArea: { fontSize: 20, fontWeight: '700' },
-  spoilsFrom: { fontSize: 14, fontWeight: '600' },
   primary: {
     flexDirection: 'row',
     alignItems: 'center',

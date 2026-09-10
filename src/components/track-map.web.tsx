@@ -710,7 +710,22 @@ export function TrackMap({
       // Back to a colour, not left mid-sweep: this component outlives a
       // session, so the next one would otherwise open on whatever hue the
       // last tick happened to land on.
-      if (map.getLayer(ENCLOSED_SRC)) {
+      //
+      // Only while this map is still THE live map. `map` was captured when
+      // the effect ran, and this cleanup ALSO runs on unmount — where the
+      // mount effect's own cleanup (declared above, so it runs first) has
+      // already called map.remove(). A removed Mapbox map has no `style`,
+      // and getLayer reaches straight into it: the guard below was itself
+      // what threw, taking the whole React tree down with it because
+      // nothing above this component catches. That is the blank screen on
+      // tapping Finish — the ONE moment this component always unmounts.
+      //
+      // Checked against the ref rather than a "did we unmount" flag so the
+      // condition states the real precondition and does not depend on
+      // cleanup ORDER: mapRef is nulled the instant the map is destroyed,
+      // so `mapRef.current === map` is false exactly when touching it is
+      // unsafe, whichever cleanup React happens to run first.
+      if (mapRef.current === map && readyRef.current && map.getLayer(ENCLOSED_SRC)) {
         map.setPaintProperty(ENCLOSED_SRC, 'fill-color', ROUTE_GRADIENT_COLORS[0]);
       }
     };

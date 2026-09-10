@@ -74,7 +74,6 @@ export const settingsStyles = StyleSheet.create({
     paddingVertical: Spacing.two,
     fontSize: 16,
   },
-  action: { fontSize: 15, fontWeight: '700' },
 });
 
 const styles = StyleSheet.create({
