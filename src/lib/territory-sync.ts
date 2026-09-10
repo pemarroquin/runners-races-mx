@@ -8,7 +8,7 @@ import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
-import type { LeaderboardRun, TileOwnerRow } from '@/lib/leaderboard';
+import type { TileOwnerRow } from '@/lib/leaderboard';
 import { isReservedNickname } from '@/lib/nickname';
 import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
@@ -112,8 +112,8 @@ export interface TileClaimResult {
    *  than reusing `spoils`/`taken*` is deliberate — see index.tsx and the
    *  executor's report on this brief. */
   rivalTiles: number;
-  /** Distinct rival owners among rivalTiles, not run count — matches
-   *  RunSpoils.runnersAffected's existing "count people, not events" call. */
+  /** Distinct rival owners among rivalTiles, not run count: losing ground
+   *  to one person three times reads as one rivalry, not three. */
   rivalRunners: number;
   /** The h3 ids behind rivalTiles — brief §5's "rival-owned tiles in a
    *  muted neutral" on the session-end map (fence-map.tsx/.web.tsx). Empty
@@ -635,62 +635,6 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
   });
 }
 
-/** What one run took from other runners — Phase 3's payoff, read back after
- *  the upload so the summary can report it. */
-export interface RunSpoils {
-  areaTakenM2: number;
-  /** Distinct runners who lost ground, not runs — losing 3 fences to one
-   *  person reads as one rivalry, not three. */
-  runnersAffected: number;
-  runsAffected: number;
-}
-
-export type SpoilsOutcome =
-  | { ok: true; spoils: RunSpoils }
-  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
-
-/**
- * Territory this run carved out of other runners' fences.
- *
- * Reads `territory_events`, which ONLY the Phase 3 trigger writes — so an
- * empty result is the honest "you overlapped nobody", not a missing feature.
- * Safe to call before the trigger migration is applied: the table exists
- * from Phase 1 and simply stays empty.
- */
-export async function fetchRunSpoils(runId: string): Promise<SpoilsOutcome> {
-  return withSession<{ spoils: RunSpoils }>(async () => {
-    const { data: events, error } = await supabase
-      .from('territory_events')
-      .select('loser_run_id, area_taken_m2')
-      .eq('winner_run_id', runId);
-
-    if (error || !events) return { ok: false, reason: 'network' };
-    if (events.length === 0) {
-      return { ok: true, spoils: { areaTakenM2: 0, runnersAffected: 0, runsAffected: 0 } };
-    }
-
-    const areaTakenM2 = events.reduce((sum, e) => sum + (Number(e.area_taken_m2) || 0), 0);
-    const loserRunIds = events.map((e) => e.loser_run_id);
-
-    // Second hop to turn runs into people. If it fails, fall back to the
-    // run count rather than reporting 0 runners against a real area — a
-    // number that contradicts itself is worse than a coarse one.
-    const { data: losers } = await supabase
-      .from('runs')
-      .select('user_id')
-      .in('id', loserRunIds);
-
-    const runnersAffected = losers
-      ? new Set(losers.map((r) => r.user_id)).size
-      : loserRunIds.length;
-
-    return {
-      ok: true,
-      spoils: { areaTakenM2, runnersAffected, runsAffected: events.length },
-    };
-  });
-}
-
 export type TileTotalOutcome =
   | { ok: true; total: number }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
@@ -725,76 +669,23 @@ export async function fetchMyTileTotal(regionId: string | null): Promise<TileTot
   });
 }
 
-export type LeaderboardOutcome =
-  | { ok: true; runs: LeaderboardRun[]; meUserId: string; skipped: number }
-  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
-
-/**
- * Every run's fence + owner, for the leaderboard to aggregate on device (see
- * leaderboard.ts for why the union happens here rather than in SQL).
- *
- * `runs: read all` and `profiles: read all` are both open policies, so this
- * legitimately returns other people's fences — that is the feature. The
- * caller's own id comes back too, so a row can be marked as yours without a
- * second round-trip.
- */
-export async function fetchLeaderboard(): Promise<LeaderboardOutcome> {
-  return withSession<{ runs: LeaderboardRun[]; meUserId: string; skipped: number }>(async (session) => {
-    // The embedded profile comes from runs.user_id's FK to profiles.id.
-    // PostgREST returns it as an object (or null if the row is missing).
-    const { data, error } = await supabase
-      .from('runs')
-      .select('user_id, region, fence, flagged, profiles(display_name)');
-
-    if (error || !data) return { ok: false, reason: 'network' };
-
-    const runs: LeaderboardRun[] = [];
-    let skipped = 0;
-    for (const row of data) {
-      // A NULL fence means Phase 3 fully took this run's ground. It holds
-      // nothing, so it correctly contributes nothing to the ranking — but
-      // it is not corrupt, so it must not inflate `skipped`, which exists
-      // to surface real parse failures.
-      if (row.fence === null) continue;
-      const geometry = parseFenceGeometry(row.fence);
-      if (!geometry) {
-        skipped++;
-        continue;
-      }
-      // Depending on how PostgREST infers the relationship this arrives as
-      // an object or a one-element array; normalise rather than trusting one.
-      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-      runs.push({
-        userId: row.user_id,
-        displayName: profile?.display_name ?? null,
-        region: row.region ?? null,
-        geometry,
-        flagged: row.flagged === true,
-      });
-    }
-    return { ok: true, runs, meUserId: session.user.id, skipped };
-  });
-}
-
 export type TileLeaderboardOutcome =
   | { ok: true; tiles: TileOwnerRow[]; meUserId: string; skipped: number }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
 
 /**
  * Every claimed tile + its owner, for leaderboard.ts's districtConquest to
- * aggregate on device — same "aggregate client-side, fine at pilot scale"
- * posture as fetchLeaderboard above (leaderboard.ts's own header explains
- * why: PostgREST can't express a GROUP BY, and migrations here are applied
- * BY HAND so a Postgres aggregate function is a second thing to forget to
- * apply). Considerably CHEAPER than fetchLeaderboard's fence geometries
- * though — every row here is a short h3 string plus two ids, not a polygon.
+ * aggregate on device. Aggregating client-side is fine at pilot scale and
+ * avoids a Postgres aggregate function: PostgREST can't express a GROUP BY,
+ * and migrations here are applied BY HAND, so that would be one more thing
+ * to forget to apply. Cheap, too — every row is a short h3 string plus two
+ * ids, never a polygon.
  *
- * `territory_tiles.owner_id` references `auth.users(id)` directly (brief
- * §2's literal schema — see the migration), NOT `profiles(id)` the way
- * `runs.user_id` does, so PostgREST can't auto-embed `profiles(display_name)`
- * from this table the one-hop way fetchLeaderboard does. Same two-hop
- * pattern as fetchRunSpoils above: fetch the tiles, then fetch display names
- * for the distinct owner ids in one second query.
+ * `territory_tiles.owner_id` references `auth.users(id)` directly (the
+ * migration's literal schema), NOT `profiles(id)` the way `runs.user_id`
+ * does, so PostgREST cannot auto-embed `profiles(display_name)` from this
+ * table in one hop. Hence the two-hop pattern: fetch the tiles, then fetch
+ * display names for the distinct owner ids in one second query.
  */
 export async function fetchTileLeaderboard(
   /**
@@ -817,8 +708,7 @@ export async function fetchTileLeaderboard(
   return withSession<{ tiles: TileOwnerRow[]; meUserId: string; skipped: number }>(async (session) => {
     // The embedded `runs` comes from territory_tiles.claim_run_id's FK to
     // runs.id — the only FK from this table to `runs`, so PostgREST can
-    // resolve `runs(flagged)` unambiguously the same way fetchLeaderboard
-    // resolves `profiles(display_name)`.
+    // resolve `runs(flagged)` unambiguously.
     // PAGED, and this is not defensive — it was WRONG. PostgREST caps a
     // response at 1000 rows, and this query asked for every tile in the
     // table with no range, so the board silently ranked a truncated sample.
@@ -878,8 +768,8 @@ export async function fetchTileLeaderboard(
       // belongs to the previous resolution. Lumping it in would make the
       // pre-migration window look like data corruption.
       if (!isCurrentTileRes(row.h3)) continue;
-      // Same normalise-object-or-array defensiveness as fetchLeaderboard's
-      // `profiles` embed — depends on how PostgREST infers the relationship.
+      // Normalised because PostgREST returns an embed as an object or a
+      // one-element array depending on how it infers the relationship.
       const runRel = Array.isArray(row.runs) ? row.runs[0] : row.runs;
       tiles.push({
         h3: row.h3,
