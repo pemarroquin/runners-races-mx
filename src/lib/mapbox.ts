@@ -17,8 +17,6 @@ const ROUTE_COLOR = ROUTE_LINE_COLOR_URL; // shared with GL JS — see constants
 const IMG = { w: 800, h: 300, retina: '@2x' };
 const MARKER_ZOOM = 14;
 
-export const MAPBOX_ENABLED = !!TOKEN;
-export const MAP_ASPECT = IMG.w / IMG.h; // 2.66:1
 
 // Google/Mapbox polyline encoding (precision 5).
 function encodePolyline(coords: [number, number][]): string {
@@ -136,10 +134,9 @@ export function decimate<T>(items: T[], max: number): T[] {
 }
 
 // Territory Mode's finished fence, drawn over real streets — one image
-// request when a run ends, which is affordable in a way that repainting a
-// live map would not be (see route-trace.tsx's header).
+// request when a run ends. Superseded on both platforms by the GL maps
+// (fence-map.tsx / fence-map.web.tsx); nothing in the app calls this now.
 const FENCE_IMG = { w: 800, h: 500, retina: '@2x' };
-export const FENCE_MAP_ASPECT = FENCE_IMG.w / FENCE_IMG.h;
 
 /**
  * Static-map URL for a fence polygon, or null when no token is configured.

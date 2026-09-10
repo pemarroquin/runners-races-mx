@@ -69,4 +69,3 @@ export const Spacing = {
 // and by each screen's SafeAreaView, so this stays a flat number rather than
 // per-platform.
 export const BottomTabInset = 96;
-export const MaxContentWidth = 800;
