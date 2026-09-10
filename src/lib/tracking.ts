@@ -185,7 +185,11 @@ export interface RunTracker {
    *  (see resume()): the gap between the checkpoint's last point and wherever
    *  the runner is now was never recorded, so drawing a straight line across
    *  it would be a phantom distance, not a real one. */
-  restoreFromCheckpoint: (checkpoint: RunCheckpoint) => Promise<void>;
+  /** Resolves TRUE only if the run is actually live again. False means the
+   *  recovery failed (permission refused, no location provider) and the
+   *  checkpoint is UNTOUCHED on disk — the caller must keep offering it
+   *  rather than leaving the runner on an idle screen with no way back. */
+  restoreFromCheckpoint: (checkpoint: RunCheckpoint) => Promise<boolean>;
 }
 
 export function useRunTracker(): RunTracker {
@@ -707,15 +711,49 @@ export function useRunTracker(): RunTracker {
    * checkpoint and now never becomes a phantom straight-line distance.
    */
   const restoreFromCheckpoint = useCallback(
-    async (checkpoint: RunCheckpoint) => {
+    async (checkpoint: RunCheckpoint): Promise<boolean> => {
       setError(null);
       setStatus('starting');
+
+      // The recovered run goes on screen NOW, before anything is awaited.
+      //
+      // This used to sit after the permission check, and that check is not
+      // fast: Safari's Permissions API has no 'geolocation' entry at all, so
+      // requestPermission() falls through to a getCurrentPosition probe —
+      // a native prompt plus up to a 10 s timeout. For that whole window a
+      // 40-minute recovered run rendered as 0:00 and 0 m, which reads as
+      // "Resume did nothing and my run is gone". Reported by Pedro on a real
+      // phone, 2026-09-10; he reloaded (reasonably) before the probe
+      // returned. Nothing here needs permission — the numbers are already in
+      // hand, on disk, and unchanged by whatever the probe decides.
+      lastRef.current = null;
+      consecutiveRejectsRef.current = 0;
+      accumulatedRef.current = checkpoint.accumulatedMs;
+      lastCheckpointAtRef.current = Date.now();
+      lastCheckpointPointCountRef.current = checkpoint.points.length;
+      setPoints(checkpoint.points);
+      setDistanceM(checkpoint.distanceM);
+      setElapsedS(Math.floor(checkpoint.accumulatedMs / 1000));
+      setEndedAt(null);
+      setRejectedFixes(0);
+      setStartedAt(checkpoint.startedAt);
+
       try {
         const permission = await requestPermission();
         if (permission !== 'granted') {
+          // Put the tracker back exactly as it was. The checkpoint on disk
+          // is deliberately NOT cleared, so the screen can offer it again —
+          // a refused permission must never consume the runner's only copy.
+          accumulatedRef.current = 0;
+          lastCheckpointAtRef.current = 0;
+          lastCheckpointPointCountRef.current = 0;
+          setPoints([]);
+          setDistanceM(0);
+          setElapsedS(0);
+          setStartedAt(null);
           setError(permission === 'denied' ? 'permission' : 'unavailable');
           setStatus('idle');
-          return;
+          return false;
         }
 
         clearSub();
@@ -723,17 +761,9 @@ export function useRunTracker(): RunTracker {
         // next live fix starts a fresh leg instead of drawing a straight
         // line across the untracked gap.
         lastRef.current = null;
-        consecutiveRejectsRef.current = 0;
-        accumulatedRef.current = checkpoint.accumulatedMs;
+        // Started HERE, not before the await: the clock must not count the
+        // seconds the runner spent looking at a permission prompt.
         legStartRef.current = Date.now();
-        lastCheckpointAtRef.current = Date.now();
-        lastCheckpointPointCountRef.current = checkpoint.points.length;
-        setPoints(checkpoint.points);
-        setDistanceM(checkpoint.distanceM);
-        setElapsedS(Math.floor(checkpoint.accumulatedMs / 1000));
-        setEndedAt(null);
-        setRejectedFixes(0);
-        setStartedAt(checkpoint.startedAt);
         // Zeroed, not carried over or counted as a gap itself: a checkpoint
         // recovery is a full tab reload, a different (and less precisely
         // measurable — there's no visibilitychange timestamp for it) event
@@ -752,9 +782,17 @@ export function useRunTracker(): RunTracker {
         // pilot-instrumentation.ts.
         incrementPilotCounter('watchRestarts');
         setStatus('running');
+        return true;
       } catch {
+        accumulatedRef.current = 0;
+        legStartRef.current = null;
+        setPoints([]);
+        setDistanceM(0);
+        setElapsedS(0);
+        setStartedAt(null);
         setError('unavailable');
         setStatus('idle');
+        return false;
       }
     },
     [clearSub, beginRecording],
