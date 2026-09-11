@@ -2566,7 +2566,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "notes": "tritour listing; metadeportiva page didn't render enough detail.",
-      "notesEs": "Listado de tritour; la página de metadeportiva no renderizó suficiente detalle."
+      "notesEs": "Listado de tritour; la página de metadeportiva no renderizó suficiente detalle.",
+      "status": "ok",
+      "statusNote": "Confirmed for 19 Sep 2026, 20:00, Tlaquepaque (start Calle República y Cabañas, Guadalajara; finish Blvd. Marcelino García Barragán, San Pedro Tlaquepaque), per Tlaquepaque.gob.mx, Compite.mx and running.life listings. No cancellation/postponement/aviso signals found via web search (2026-09-11).",
+      "lastVerified": "2026-09-11"
     },
     {
       "id": "bimbo-global-race-guadalajara-2026",
@@ -4276,8 +4279,8 @@
       "notes": null,
       "sourceNotes": "Single aggregator source; registration link resolves to the organizer's own Protudec platform, which supports authenticity. Race-watch 2026-09-07: date (Sun 2026-09-13, 6:30am) and venue (Parque Central \"Gral. Ángel Remigio Rosado\", in front of the Municipal Palace of Bacalar) reconfirmed via Tri Tour México listing and web search; no cancellation/postponement notices found on Protudec's official channels. Direct fetch of tritour.org and protudec.mx blocked by network egress policy this run, so confirmation relied on cached/indexed copies rather than a live page load.",
       "status": "ok",
-      "statusNote": null,
-      "lastVerified": "2026-09-07"
+      "statusNote": "Reconfirmed for 13 Sep 2026, 06:30, Parque Central \"Gral. Ángel Remigio Rosado\", Bacalar, per Tri Tour México and Protudec listings. No cancellation/postponement/aviso signals found via web search (2026-09-11).",
+      "lastVerified": "2026-09-11"
     },
     {
       "id": "3kids-cozumel-2026",
