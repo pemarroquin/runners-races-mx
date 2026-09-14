@@ -420,7 +420,9 @@
       "confidence": "low",
       "notes": "Three-day event, Oct 30 – Nov 1, 2026.",
       "notesEs": "Evento de tres días, del 30 de octubre al 1 de noviembre de 2026.",
-      "sourceNotes": "Listed on AANL calendar (single date not fixed in the app's date field). Distances beyond 42K unconfirmed on the official site."
+      "sourceNotes": "Listed on AANL calendar (single date not fixed in the app's date field). Distances beyond 42K unconfirmed on the official site. Rechecked via web search 2026-09-14: one indexed listing (Boletópolis, 5ª edición) named Oct 30 for the 42K specifically, matching this record's window, but a follow-up search could not independently reconfirm that specific date, and tmim.com.mx itself was not directly fetchable (network egress policy). Not confident enough to set a firm single `date` for the recorded 42K distance — left null rather than guess.",
+      "status": "ok",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "adidas-splits-15k-30k-2026",
@@ -2341,7 +2343,7 @@
     {
       "id": "marat-n-de-puebla-2026",
       "name": "Maratón de Puebla 2026",
-      "date": null,
+      "date": "2026-11-29",
       "time": null,
       "distances": [],
       "distanceTags": [
@@ -2354,9 +2356,12 @@
       "signupUrl": null,
       "sourceUrl": "https://www.milenio.com/deportes/puebla-40-carreras-atleticas-2026-calendario",
       "confidence": "low",
-      "notes": "Flagship marathon, confirmed to return in 2026 (~last Sunday of November).",
-      "notesEs": "Maratón insignia, confirmado su regreso en 2026 (~último domingo de noviembre).",
-      "sourceNotes": "No rendered registration page / firm date yet. Sources conflict on exact date (Nov 15 / Nov 29 / Dec 6) — date/distances left null to avoid asserting unverified data."
+      "notes": "Flagship marathon, confirmed to return in 2026 (last Sunday of November).",
+      "notesEs": "Maratón insignia, confirmado su regreso en 2026 (último domingo de noviembre).",
+      "sourceNotes": "Previously conflicting sources gave Nov 15 / Nov 29 / Dec 6, so date/distances were left null. Resolved via web search 2026-09-14: multiple sources (42Cal race profile, general Puebla fall-marathon coverage) describe it as run on the last Sunday of November at the Zócalo, and Nov 29, 2026 is in fact the last Sunday of that month — the one candidate date consistent with the race's own stated pattern. Distances (42.195K/21K/10K/5K per 42Cal) still not confirmed on an official IMDP/organizer page (only a third-party profile), so distances/distanceTags are left as-is (TBD) rather than asserted from that single source.",
+      "status": "ok",
+      "statusNote": "Date resolved: last Sunday of November — Sunday, November 29, 2026.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "c-de-las-estaciones-verano-guadalajara-2026",
@@ -3176,8 +3181,8 @@
     {
       "id": "medio-maraton-internacional-de-tecate",
       "name": "Medio Maratón Internacional de Tecate",
-      "date": null,
-      "time": null,
+      "date": "2026-10-11",
+      "time": "06:30",
       "distances": [
         "21K"
       ],
@@ -3190,10 +3195,13 @@
       "organizer": "IMDETE / Gobierno de Tecate",
       "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/medio-maraton-internacional-de-tecate/",
-      "confidence": "low",
-      "notes": "Annual flagship half marathon, World Athletics course.",
-      "notesEs": "Medio maratón insignia anual, ruta homologada por World Athletics.",
-      "sourceNotes": "Last confirmed edition was Oct 12, 2025 at 6:30. A 2026/2027 edition date is not yet published on TJRUN or tecate.gob.mx (gob page returned 403), so date left null. Likely ~mid-October 2026 by pattern but unconfirmed."
+      "confidence": "medium",
+      "notes": "Annual flagship half marathon, World Athletics course. Registration open as of Aug 2026, $352 MXN, capped at 3,000 runners.",
+      "notesEs": "Medio maratón insignia anual, ruta homologada por World Athletics. Inscripciones abiertas desde agosto 2026, $352 MXN, cupo limitado a 3,000 corredores.",
+      "sourceNotes": "Date/time previously unconfirmed (null). Resolved via web search 2026-09-14: multiple independent outlets (pulsociudadano.mx, elportavoznoticias.com.mx, californiamedios.com) agree on Sunday Oct 11, 2026, 06:30, at UDES, matching the recorded venue. Direct WebFetch of tjrun.com.mx and the news sources was blocked by network egress policy this run, so this rests on search-result corroboration, not a live page load. Registration platform/URL not identified in search results — signupUrl left null rather than guessed; confidence raised low→medium given source agreement.",
+      "status": "ok",
+      "statusNote": "Date confirmed: Sunday, October 11, 2026, 06:30, at UDES, Tecate.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "medio-maraton-ciudad-de-mexicali",
@@ -3561,7 +3569,9 @@
       "confidence": "low",
       "notes": "Recurring municipal half marathon held in spring. 1Kids kids' race also offered.",
       "notesEs": "Medio maratón municipal recurrente que se realiza en primavera. También se ofrece la carrera infantil 1Kids.",
-      "sourceNotes": "2026 edition Apr 26 is out of window; a separate municipal 'Medio Maratón Irapuato' also listed Mar 22, 2026 — date conflict between sources, unresolved. Next in-window (spring 2027) edition not yet published — date left null."
+      "sourceNotes": "2026 edition Apr 26 is out of window; a separate municipal 'Medio Maratón Irapuato' also listed Mar 22, 2026 — date conflict between sources, unresolved. Next in-window (spring 2027) edition not yet published — date left null. Rechecked via web search 2026-09-14: confirms both 2026 dates as separate events (municipal 'Feria de las Fresas' half marathon ran Mar 22, 2026; 'Maratón Bajío' ran Apr 26, 2026) — both now in the past relative to today, so the conflict was between two real, distinct races rather than a data error, and neither gives a 2027 date. Still unresolved for the next in-window edition.",
+      "status": "ok",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "ultra-coahuila-2026",
@@ -3857,7 +3867,7 @@
     {
       "id": "medio-maraton-21k-coahuila-edicion-2027",
       "name": "Medio Maratón 21K Coahuila — edición 2027",
-      "date": null,
+      "date": "2027-06-13",
       "time": null,
       "distances": [
         "21K"
@@ -3871,10 +3881,13 @@
       "organizer": "Gobierno de Coahuila / 21K Coahuila",
       "signupUrl": null,
       "sourceUrl": "https://www.21kcoahuila.org/",
-      "confidence": "low",
+      "confidence": "medium",
       "notes": "Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
       "notesEs": "Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
-      "sourceNotes": "Official site shows a 'PRE 2027' teaser but no date/distances/registration published yet. 2026 edition ran May 31, 2026 — before this research window. 2027 expected ~late May but unconfirmed."
+      "sourceNotes": "Official site previously showed only a 'PRE 2027' teaser with no date published. Resolved via web search 2026-09-14: search results (Finishers.com event page) name Sunday June 13, 2027, with preventa registration reportedly open at the official site (same domain as sourceUrl). Direct WebFetch of 21kcoahuila.org was blocked by network egress policy this run, so this rests on search-result corroboration rather than a live page load; signupUrl left null since a distinct registration URL wasn't confirmed. Confidence raised low→medium. 2026 edition ran May 31, 2026 — before this research window.",
+      "status": "ok",
+      "statusNote": "Date resolved: Sunday, June 13, 2027.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-aquismon",
@@ -4607,9 +4620,9 @@
     },
     {
       "id": "53-carrera-atletica-del-mayab-uxmal-muna",
-      "name": "53ª Carrera Atlética del Mayab Uxmal-Muna",
-      "date": null,
-      "time": null,
+      "name": "54ª Carrera Atlética del Mayab Uxmal-Muna",
+      "date": "2026-10-04",
+      "time": "06:30",
       "distances": [
         "16K"
       ],
@@ -4625,7 +4638,10 @@
       "confidence": "medium",
       "notes": "Yucatán's oldest continuously-run race, since 1973. No entry fee found; ~$60,000 MXN prize pool across age categories.",
       "notesEs": "La carrera más antigua de Yucatán que se sigue corriendo sin interrupción, desde 1973. No se encontró cuota de inscripción; bolsa de premios de ~$60,000 MXN repartida entre categorías de edad.",
-      "sourceNotes": "53rd edition held 2025-10-05, before this research window — next edition (~Oct 2026) unconfirmed, date set to null. Uxmal/Muna are ~80km outside the core Mérida-metro area but included as a genuine statewide flagship."
+      "sourceNotes": "53rd edition held 2025-10-05, before this research window — next (54th) edition date was unconfirmed, date set to null. Resolved via web search 2026-09-14: multiple independent outlets (yucatanahora.com.mx, furiadeportivayucatan.com, lajornadamaya.mx, desdeelbalcon.com) agree the 54th edition runs Sunday Oct 4, 2026, 06:30, confirming this is now the 54th not 53rd edition — name field updated accordingly. Registration reportedly via dashport.run (a URL of the form dashport.run/evento_1287 surfaced in two searches) but could not be confirmed by direct WebFetch (blocked by network egress policy this run), so signupUrl is left null rather than recorded unverified. Uxmal/Muna are ~80km outside the core Mérida-metro area but included as a genuine statewide flagship.",
+      "status": "ok",
+      "statusNote": "Date confirmed: Sunday, October 4, 2026, 06:30. Also now the 54th edition, not the 53rd as previously recorded.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "run-coffee-merida-2026-3-edicion",
@@ -4675,7 +4691,9 @@
       "confidence": "low",
       "notes": "Mental-health-themed charity race, capped at 404 participants, $350 MXN entry.",
       "notesEs": "Carrera benéfica con temática de salud mental, cupo de 404 participantes, inscripción $350 MXN.",
-      "sourceNotes": "First edition held 2026-06-21, before this research window — date set to null. Confirmed as a first edition, so annual recurrence isn't established yet; next edition unconfirmed."
+      "sourceNotes": "First edition held 2026-06-21, before this research window — date set to null. Confirmed as a first edition, so annual recurrence isn't established yet; next edition unconfirmed. Rechecked via web search 2026-09-14: no coverage of a second edition or a next date found — still unresolved.",
+      "status": "ok",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "barbie-run-chihuahua-2026",
@@ -4936,12 +4954,12 @@
     },
     {
       "id": "carrera-uacj-aniversario-projected-next-edition",
-      "name": "Carrera UACJ (aniversario, projected next edition)",
-      "date": null,
-      "time": null,
+      "name": "Carrera UACJ 53º Aniversario",
+      "date": "2026-10-02",
+      "time": "08:30",
       "distances": [
         "3K",
-        "7K"
+        "5K"
       ],
       "distanceTags": [
         "3K",
@@ -4953,10 +4971,13 @@
       "organizer": "Universidad Autónoma de Ciudad Juárez (UACJ)",
       "signupUrl": null,
       "sourceUrl": "https://www.uacj.mx/deportes/carrera.html",
-      "confidence": "low",
-      "notes": "Campus community race — students, faculty, and staff only, not open to the general public.",
-      "notesEs": "Carrera comunitaria del campus — solo para estudiantes, personal académico y administrativo, no abierta al público en general.",
-      "sourceNotes": "Most recent known edition (52° aniversario) held Oct 2, 2025. Next edition date/distances not yet published — some older sources describe it as 3K only, most recent as 3K+7K; flagged as a conflict, kept the more recent value."
+      "confidence": "medium",
+      "notes": "Campus community race — students, faculty, and staff only, not open to the general public. 3K starts 08:30, 5K starts 09:30.",
+      "notesEs": "Carrera comunitaria del campus — solo para estudiantes, personal académico y administrativo, no abierta al público en general. El 3K sale a las 08:30, el 5K a las 09:30.",
+      "sourceNotes": "Most recent known edition (52° aniversario) held Oct 2, 2025. Next edition date/distances were unconfirmed and flagged as a conflict (3K-only vs. 3K+7K across sources). Resolved via web search 2026-09-14: nortedigital.mx and other 2026-dated sources agree the 53° aniversario runs Friday Oct 2, 2026, with a 3K (08:30) and a 5K (09:30) at Estadio Olímpico Universitario Benito Juárez — this supersedes the earlier 3K+7K reading, which appears to have been stale/incorrect. Direct WebFetch of uacj.mx and the news sources was blocked by network egress policy this run; confirmation rests on search-result corroboration, not a live page load.",
+      "status": "ok",
+      "statusNote": "Date confirmed: Friday, October 2, 2026 — 3K at 08:30, 5K at 09:30, at Estadio Olímpico Universitario Benito Juárez.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "menonita-trail-run-ciudad-cuauhtemoc-projected-n",
