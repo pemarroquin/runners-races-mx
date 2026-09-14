@@ -256,7 +256,10 @@
       "confidence": "high",
       "notes": "Benefit race. 2025 edition started 08:00, entry was ~$460 MXN.",
       "notesEs": "Carrera benéfica. La edición 2025 arrancó a las 08:00, con costo de inscripción de ~$460 MXN.",
-      "sourceNotes": "Registration not yet published as of 2026-07-04. Idemsport calendar still links the stale 2025 slug."
+      "sourceNotes": "Registration not yet published as of 2026-07-04. Idemsport calendar still links the stale 2025 slug.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, Dominio Cumbres, Monterrey (2026-09-14). Direct fetch of idemsport.com blocked by network egress policy this run; one unverified Facebook snippet referenced a \"sexta edición\" framing, but no date/venue change was found — flagged for a direct-fetch check next sweep.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "bimbo-global-race-monterrey-2026",
@@ -805,7 +808,10 @@
         "5K",
         "10K"
       ],
-      "sourceNotes": "On both calendars. Registration not yet published as of 2026-07-04."
+      "sourceNotes": "On both calendars. Registration not yet published as of 2026-07-04.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, Monterrey (2026-09-14). Direct fetch of idemsport.com blocked by network egress policy this run; confirmation relied on search results, not a live page load.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "otono-monterrey-2026",
@@ -828,7 +834,10 @@
       "distanceTags": [
         "5K",
         "10K"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "Reconfirmed for 20 Sep 2026, Plaza de la Presidencia Municipal de Apodaca, per current asdeporte.com listing (2026-09-14). No cancellation/postponement/aviso signals found via web search. Direct WebFetch of asdeporte.com was blocked by network egress policy this run; confirmation relied on a search-indexed copy of the listing.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "21k-regio-2026",
@@ -2006,7 +2015,10 @@
       "distanceTags": [
         "15K",
         "Half"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, Valle del Silencio, La Marquesa (2026-09-14). Direct fetch of hubsports.mx/hubsports.events blocked by network egress policy this run; one search snippet showed a 7:30am start vs. our recorded 08:00 — unconfirmed against a live page, flagged for a direct-fetch check next sweep rather than changed here.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "trail-nocturno-ehecatl-2026",
@@ -2203,7 +2215,10 @@
       "confidence": "high",
       "notes": "Universidad Anáhuac Puebla race, entry $360-400 MXN.",
       "notesEs": "Carrera de la Universidad Anáhuac Puebla, inscripción $360-400 MXN.",
-      "sourceNotes": "tritour listed Jul 19 — conflict; the registration page itself shows Sep 20, used here."
+      "sourceNotes": "tritour listed Jul 19 — conflict; the registration page itself shows Sep 20, used here.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, San Andrés Cholula (2026-09-14). Direct fetch of chronostart.com.mx blocked by network egress policy this run; search result only surfaced 2025-edition detail for the anahuac.mx page, not a positive 2026 confirmation beyond the existing record — flagged for a direct-fetch check next sweep.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "bimbo-global-race-puebla-2026",
@@ -2568,8 +2583,8 @@
       "notes": "tritour listing; metadeportiva page didn't render enough detail.",
       "notesEs": "Listado de tritour; la página de metadeportiva no renderizó suficiente detalle.",
       "status": "ok",
-      "statusNote": "Confirmed for 19 Sep 2026, 20:00, Tlaquepaque (start Calle República y Cabañas, Guadalajara; finish Blvd. Marcelino García Barragán, San Pedro Tlaquepaque), per Tlaquepaque.gob.mx, Compite.mx and running.life listings. No cancellation/postponement/aviso signals found via web search (2026-09-11).",
-      "lastVerified": "2026-09-11"
+      "statusNote": "Reconfirmed for 19 Sep 2026, 20:00, Tlaquepaque, per Tlaquepaque.gob.mx, Compite.mx and running.life listings (unchanged since the 2026-09-11 verification). No cancellation/postponement/aviso signals found via web search (2026-09-14).",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "bimbo-global-race-guadalajara-2026",
@@ -3100,7 +3115,10 @@
       "sourceUrl": "https://running.life/es/carrera/carrera-agua-caliente",
       "confidence": "medium",
       "notes": "Urban course; also a 10K relay category. Single calendar detail page + organizer registration page.",
-      "notesEs": "Ruta urbana; también hay categoría de relevos 10K. Una sola página de detalle de calendario + la página de registro del organizador."
+      "notesEs": "Ruta urbana; también hay categoría de relevos 10K. Una sola página de detalle de calendario + la página de registro del organizador.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, Estadio Caliente, Tijuana (2026-09-14). Direct fetch of running.life and miamigofit.com blocked by network egress policy this run; confirmation relied on search results, not a live page load.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "trail-wine-valle-de-guadalupe-2026",
@@ -3356,7 +3374,10 @@
       "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1769448144/",
       "confidence": "high",
       "notes": "Flagship. PWD start 05:50; conventional 06:00. Cap 6,100. Preventa $650 (to Mar 31), $700 (Apr 1-Jul 31), $750 (Aug 1-Sep 19); 60+ $450; PWD $300. Certified 42.195/21.097/10K. Confirmed by official site maratonleon.mx and tritour.",
-      "notesEs": "Insignia. Salida de personas con discapacidad 05:50; convencional 06:00. Cupo de 6,100. Preventa $650 (hasta el 31 de marzo), $700 (1 abr-31 jul), $750 (1 ago-19 sep); 60+ $450; personas con discapacidad $300. Certificado en 42.195/21.097/10K. Confirmado por el sitio oficial maratonleon.mx y tritour."
+      "notesEs": "Insignia. Salida de personas con discapacidad 05:50; convencional 06:00. Cupo de 6,100. Preventa $650 (hasta el 31 de marzo), $700 (1 abr-31 jul), $750 (1 ago-19 sep); 60+ $450; personas con discapacidad $300. Certificado en 42.195/21.097/10K. Confirmado por el sitio oficial maratonleon.mx y tritour.",
+      "status": "ok",
+      "statusNote": "Reconfirmed for 20 Sep 2026, 06:00, Explanada Bicentenario, León, per periodicocorreo.com.mx, enterate.leon.gob.mx, claseturista.com.mx and El Sol de León coverage (2026-09-14). No cancellation/postponement/aviso signals found.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "maraton-internacional-dolores-hidalgo-2027-2-edi",
@@ -3760,7 +3781,10 @@
       "confidence": "medium",
       "notes": "Jurassic-themed downtown race.",
       "notesEs": "Carrera en el centro con temática jurásica.",
-      "sourceNotes": "The gotime.mx/dinorun5k link listed by tritour returned 404 (not published as signup). Venue from news coverage of prior editions. Time/price not confirmed for 2026."
+      "sourceNotes": "The gotime.mx/dinorun5k link listed by tritour returned 404 (not published as signup). Venue from news coverage of prior editions. Time/price not confirmed for 2026.",
+      "status": "ok",
+      "statusNote": "No cancellation/postponement/aviso signals found via web search for 20 Sep 2026, centro histórico de Saltillo (2026-09-14). Direct fetch of tritour.org and gotime.mx blocked by network egress policy this run; registration-link status (gotime.mx/dinorun5k) remains unconfirmed, consistent with prior sourceNotes.",
+      "lastVerified": "2026-09-14"
     },
     {
       "id": "maraton-saltillo-la-moderna-2026-gran-reto",
