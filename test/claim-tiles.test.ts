@@ -43,8 +43,8 @@ const { claimTiles } = await import('@/lib/territory-sync');
 
 /** The function returns `returns table(...)`, which PostgREST delivers as an
  *  array of one row. */
-const rpcOk = (claimed: number, taken: number, skipped_older: number) => ({
-  data: [{ claimed, taken, skipped_older }],
+const rpcOk = (claimed: number, taken: number, skipped_older: number, taken_cells: string[] = []) => ({
+  data: [{ claimed, taken, skipped_older, taken_cells }],
   error: null,
 });
 
@@ -54,7 +54,15 @@ describe('claimTiles', () => {
     const outcome = await claimTiles('run-1', [], 'mty');
     expect(outcome).toEqual({
       ok: true,
-      result: { claimedCount: 0, takenCount: 0, skippedOlder: 0, rivalTiles: 0, rivalRunners: 0, rivalCells: [] },
+      result: {
+        claimedCount: 0,
+        takenCount: 0,
+        takenCells: [],
+        skippedOlder: 0,
+        rivalTiles: 0,
+        rivalRunners: 0,
+        rivalCells: [],
+      },
     });
     expect(rpcCalls).toBe(0);
   });
@@ -65,19 +73,31 @@ describe('claimTiles', () => {
     const outcome = await claimTiles('run-1', ['a', 'b'], 'mty');
     expect(outcome).toEqual({
       ok: true,
-      result: { claimedCount: 2, takenCount: 0, skippedOlder: 0, rivalTiles: 0, rivalRunners: 0, rivalCells: [] },
+      result: {
+        claimedCount: 2,
+        takenCount: 0,
+        takenCells: [],
+        skippedOlder: 0,
+        rivalTiles: 0,
+        rivalRunners: 0,
+        rivalCells: [],
+      },
     });
   });
 
   it('separates ground TAKEN off a rival from brand-new ground', async () => {
     // Conquest's whole point: winning a tile off someone is a different
     // achievement from claiming empty ground, and the summary says so.
-    nextRpc = rpcOk(1, 3, 0);
+    nextRpc = rpcOk(1, 3, 0, ['b', 'c', 'd']);
     const outcome = await claimTiles('run-1', ['a', 'b', 'c', 'd'], 'mty');
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
     expect(outcome.result.claimedCount).toBe(1);
     expect(outcome.result.takenCount).toBe(3);
+    // The h3 ids behind takenCount — for the per-area conquest bubbles
+    // (clusterCells in tiles.ts), fed straight through from the RPC's own
+    // taken_cells column with no client-side re-derivation.
+    expect(outcome.result.takenCells).toEqual(['b', 'c', 'd']);
   });
 
   it('reads rival cell IDs only when the run actually lost some ground', async () => {

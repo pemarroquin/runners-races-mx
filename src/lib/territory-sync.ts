@@ -96,6 +96,14 @@ export interface TileClaimResult {
    *  Separate from claimedCount because "new ground" and "ground won off
    *  someone" are different achievements and the summary says so. */
   takenCount: number;
+  /** The h3 ids behind takenCount — for the per-area "+N" conquest bubbles
+   *  on the session-end map (see clusterCells in tiles.ts). Only available
+   *  from claim_run_tiles' own transaction (20260915120000): ownership has
+   *  already flipped to this runner by the time anything client-side could
+   *  read it back, so there is nothing left to distinguish a taken cell
+   *  from a newly-claimed one after the fact. Empty whenever takenCount is
+   *  0, same convention as rivalCells below. */
+  takenCells: string[];
   /** Cells this run covered and did NOT get, because the tile is held by a
    *  run that finished LATER than this one. The honest count behind "you ran
    *  here and it still isn't yours" — most often a stale upload landing after
@@ -199,7 +207,15 @@ export async function claimTiles(
     if (cells.length === 0) {
       return {
         ok: true,
-        result: { claimedCount: 0, takenCount: 0, skippedOlder: 0, rivalTiles: 0, rivalRunners: 0, rivalCells: [] },
+        result: {
+          claimedCount: 0,
+          takenCount: 0,
+          takenCells: [],
+          skippedOlder: 0,
+          rivalTiles: 0,
+          rivalRunners: 0,
+          rivalCells: [],
+        },
       };
     }
 
@@ -242,10 +258,11 @@ export async function claimTiles(
 
     // returns table(...) comes back as an array of one row.
     const row = (Array.isArray(claimRows) ? claimRows[0] : claimRows) as
-      | { claimed: number; taken: number; skipped_older: number }
+      | { claimed: number; taken: number; skipped_older: number; taken_cells: string[] | null }
       | undefined;
     const claimedCount = row?.claimed ?? 0;
     const takenCount = row?.taken ?? 0;
+    const takenCells = row?.taken_cells ?? [];
     const skippedOlder = row?.skipped_older ?? 0;
 
     // Rival tiles: ground this run crossed that is STILL someone else's now
@@ -291,7 +308,7 @@ export async function claimTiles(
 
     return {
       ok: true,
-      result: { claimedCount, takenCount, skippedOlder, rivalTiles, rivalRunners, rivalCells },
+      result: { claimedCount, takenCount, takenCells, skippedOlder, rivalTiles, rivalRunners, rivalCells },
     };
   });
 }
