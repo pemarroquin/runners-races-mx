@@ -359,7 +359,6 @@ const translations = {
       shareMessage: '%{name} — %{date}',
     },
     myraces: {
-      title: 'Mis carreras',
       empty: 'Aún no has guardado carreras.\nExplora y guarda las que te interesen.',
       pastSection: 'Anteriores',
       upcomingSection: 'Próximas',
@@ -373,8 +372,12 @@ const translations = {
       clearMissing: 'Quitarlas de mi lista',
       remove: 'Quitar de mis carreras',
       tabRaces: 'Carreras',
-      tabFences: 'Territorios',
-      tabProgress: 'Progreso',
+      // "Áreas conquistadas", no "Territorios" — Pedro, 2026-09-16, junto con
+      // el rediseño a mapa completo con las pestañas flotando.
+      tabFences: 'Áreas conquistadas',
+      // Estas cuatro claves de progreso siguen viviendo aquí (namespace
+      // heredado) aunque la pantalla se movió a Ajustes › Progreso en
+      // parques — ver settings/progress.tsx.
       // La unidad es lo que costó decidir: medido sobre datos reales, una
       // corrida de 5.7 km en San Pedro es 0.262% del ÁREA del municipio,
       // 0.63% de toda su red de calles y 5.5% de sus senderos de parques.
@@ -501,6 +504,11 @@ const translations = {
       } as PluralForm,
       historyEmpty: 'Todavía no has guardado ninguna sesión.',
       historyFailed: 'No pudimos cargar tu historial. Revisa tu conexión.',
+      // Settings › Progreso. Movido del tercer segmento de Guardado
+      // (2026-09-16) — el contenido de MunicipioProgressList no cambió,
+      // solo dónde vive. Ver settings/progress.tsx.
+      sectionProgress: 'Progreso en parques',
+      navProgressHint: 'Cuánto de los senderos de cada municipio has recorrido.',
       displayName: 'Nombre en la tabla',
       displayNamePlaceholder: 'Anónimo',
       displayNameHint:
@@ -880,7 +888,6 @@ const translations = {
       shareMessage: '%{name} — %{date}',
     },
     myraces: {
-      title: 'My races',
       empty: "You haven't saved any races yet.\nBrowse and save the ones you like.",
       pastSection: 'Past',
       upcomingSection: 'Upcoming',
@@ -893,8 +900,12 @@ const translations = {
       clearMissing: 'Remove them from my list',
       remove: 'Remove from my races',
       tabRaces: 'Races',
-      tabFences: 'Territories',
-      tabProgress: 'Progress',
+      // "Conquested Areas", not "Territories" — Pedro, 2026-09-16, alongside
+      // the redesign to a full-bleed map with floating tabs.
+      tabFences: 'Conquested Areas',
+      // These four progress keys still live here (inherited namespace) even
+      // though the screen moved to Settings › Park progress — see
+      // settings/progress.tsx.
       progressExplainer:
         "Park paths you've covered in each municipio. Counts ground you ran over, not ground you surrounded.",
       progressDetail: '%{covered} of %{total} tiles · %{km} km of path across %{parks} parks',
@@ -998,6 +1009,8 @@ const translations = {
       } as PluralForm,
       historyEmpty: "You haven't saved a session yet.",
       historyFailed: "We couldn't load your history. Check your connection.",
+      sectionProgress: 'Park progress',
+      navProgressHint: "How much of each municipio's park paths you've covered.",
       displayName: 'Leaderboard name',
       displayNamePlaceholder: 'Anonymous',
       displayNameHint:
