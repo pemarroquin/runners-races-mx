@@ -7,12 +7,15 @@
 // accepted limitation fence-map.tsx and track-map.tsx already carry: a flat
 // filled Polygon stands in for the wall). Tap targets are native Polygon
 // onPress, one per feature — far simpler than web's layer-click plumbing.
-import { useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
-import { fenceColorForRun, GOOGLE_DARK_MAP_STYLE, withAlpha } from '@/constants/map';
+import { Icon } from '@/components/ui/icon';
+import { Spacing } from '@/constants/theme';
+import { fenceColorForRun, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import { outerRings, type LatLng } from '@/lib/territory';
 
@@ -35,6 +38,12 @@ export interface TerritoryFeature {
 interface TerritoriesMapProps {
   features: TerritoryFeature[];
   onSelect: (id: string, kind: 'saved' | 'pending') => void;
+  /** See territories-map.web.tsx's matching prop doc — same reasoning,
+   *  reported missing 2026-09-17. */
+  controls?: { zoomInLabel: string; zoomOutLabel: string; refitLabel: string };
+  /** See territories-map.web.tsx's matching prop doc for why this has to be
+   *  the caller's call rather than a hard-coded constant. */
+  controlsBottomOffset?: number;
 }
 
 function boundsCoordsOf(features: TerritoryFeature[]): MapCoord[] {
@@ -47,7 +56,12 @@ function boundsCoordsOf(features: TerritoryFeature[]): MapCoord[] {
   return coords;
 }
 
-export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
+export function TerritoriesMap({
+  features,
+  onSelect,
+  controls,
+  controlsBottomOffset,
+}: TerritoriesMapProps) {
   const mapRef = useRef<MapView | null>(null);
 
   const fitCoords = useMemo(() => boundsCoordsOf(features), [features]);
@@ -60,6 +74,20 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
     }, 350);
     return () => clearTimeout(id);
   }, [fitCoords]);
+
+  // The "fit all" control's target — same fitToCoordinates call as the
+  // mount effect above, callable again after a manual pan/zoom.
+  const refit = useCallback(() => {
+    mapRef.current?.fitToCoordinates(fitCoords, { edgePadding: FIT_PADDING, animated: true });
+  }, [fitCoords]);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    void map.getCamera().then((camera) => {
+      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+    });
+  }, []);
 
   const initialRegion = useMemo(() => regionAround(fitCoords), [fitCoords]);
 
@@ -80,7 +108,51 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
           <Feature key={`${f.kind}:${f.id}`} feature={f} onSelect={onSelect} />
         ))}
       </MapView>
+      {controls && (
+        <View
+          style={[styles.mapControls, { bottom: controlsBottomOffset ?? Spacing.three }]}
+          pointerEvents="box-none">
+          <MapButton label={controls.refitLabel} onPress={refit} ios="map" android="map" />
+          <MapButton
+            label={controls.zoomInLabel}
+            onPress={() => zoomBy(ZOOM_STEP)}
+            ios="plus"
+            android="add"
+          />
+          <MapButton
+            label={controls.zoomOutLabel}
+            onPress={() => zoomBy(-ZOOM_STEP)}
+            ios="minus"
+            android="remove"
+          />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Byte-identical to fence-map.tsx's own MapButton — deliberately duplicated,
+// matching this codebase's existing per-file convention.
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
@@ -161,4 +233,23 @@ function regionAround(coords: MapCoord[]) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
 });

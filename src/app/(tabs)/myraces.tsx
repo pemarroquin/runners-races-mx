@@ -579,7 +579,19 @@ function FencesView({
 
   return (
     <View style={styles.mapStage}>
-      <TerritoriesMap features={features} onSelect={(id, kind) => onSelect({ id, kind })} />
+      <TerritoriesMap
+        features={features}
+        onSelect={(id, kind) => onSelect({ id, kind })}
+        controls={{
+          zoomInLabel: t('track.zoomIn'),
+          zoomOutLabel: t('track.zoomOut'),
+          refitLabel: t('myraces.fencesRefit'),
+        }}
+        // This view is full-bleed behind the app's own floating tab bar
+        // (2026-09-16 redesign) — see TerritoriesMap's own prop doc for why
+        // that means clearing BottomTabInset here specifically.
+        controlsBottomOffset={BottomTabInset + Spacing.three}
+      />
       {(selectedFence || selectedQueued) && (
         <DetailCard
           fence={selectedFence}

@@ -35,10 +35,13 @@
 // in favour of a single flat colour per run).
 import type { GeoJSONSource, Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
+import { Icon } from '@/components/ui/icon';
+import { Spacing } from '@/constants/theme';
 import {
   EMISSIVE_STRENGTH_FULL,
   FENCE_SHIMMER_STEP_MS,
@@ -52,6 +55,7 @@ import {
   ROUTE_GRADIENT,
   ROUTE_GRADIENT_COLORS,
   ROUTE_LINE_WIDTH,
+  ZOOM_STEP,
 } from '@/constants/map';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
@@ -76,6 +80,26 @@ export interface TerritoryFeature {
 interface TerritoriesMapProps {
   features: TerritoryFeature[];
   onSelect: (id: string, kind: 'saved' | 'pending') => void;
+  /** Zoom +/- and fit-all controls, bottom-right — same MapButton visual
+   *  language as fence-map.web.tsx's, deliberately duplicated below rather
+   *  than shared (this codebase's existing per-file convention — see that
+   *  file's own comment). Reported missing entirely 2026-09-17: this map had
+   *  no on-screen affordance at all, only mouse/touch gestures, unlike every
+   *  other map in the app. Optional so a future caller that truly wants a
+   *  bare map still can. */
+  controls?: { zoomInLabel: string; zoomOutLabel: string; refitLabel: string };
+  /** How far the controls column sits from the container's bottom edge.
+   *  Defaults to a small inset (Spacing.three) for a caller that embeds this
+   *  in a fixed-height box with nothing else floating below it (Settings'
+   *  History screen). A caller that fills the WHOLE screen behind this app's
+   *  own floating tab bar (myraces.tsx's Conquested Areas) must pass
+   *  `BottomTabInset + Spacing.three` instead, or the bottom button lands
+   *  inside the tab bar's own band and reads as simply missing — exactly the
+   *  bug fence-map.web.tsx's mapControls comment already documents for its
+   *  one, always-full-screen caller. This component has two callers with
+   *  different layouts, so the offset has to be the caller's call, not a
+   *  hard-coded constant here. */
+  controlsBottomOffset?: number;
 }
 
 function ensureMapboxCss() {
@@ -111,7 +135,12 @@ function boundsOfAll(features: TerritoryFeature[]): [[number, number], [number, 
   ];
 }
 
-export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
+export function TerritoriesMap({
+  features,
+  onSelect,
+  controls,
+  controlsBottomOffset,
+}: TerritoriesMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
@@ -206,6 +235,22 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
 
     const bounds = boundsOfAll(features);
     if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
+  }, []);
+
+  // The "fit all" control's target — same fitBounds call sync() ends on,
+  // callable again after a manual pan/zoom without re-running the whole
+  // layer diff.
+  const refit = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const bounds = boundsOfAll(featuresRef.current);
+    if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.easeTo({ zoom: map.getZoom() + delta, duration: 300 });
   }, []);
 
   useEffect(() => {
@@ -336,7 +381,52 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {controls && (
+        <View
+          style={[styles.mapControls, { bottom: controlsBottomOffset ?? Spacing.three }]}
+          pointerEvents="box-none">
+          <MapButton label={controls.refitLabel} onPress={refit} ios="map" android="map" />
+          <MapButton
+            label={controls.zoomInLabel}
+            onPress={() => zoomBy(ZOOM_STEP)}
+            ios="plus"
+            android="add"
+          />
+          <MapButton
+            label={controls.zoomOutLabel}
+            onPress={() => zoomBy(-ZOOM_STEP)}
+            ios="minus"
+            android="remove"
+          />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Byte-identical to fence-map.web.tsx's own MapButton — deliberately
+// duplicated, matching this codebase's existing per-file convention (see
+// that file's own comment on why).
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
@@ -563,4 +653,19 @@ function removeFeatureLayers(map: MapboxMap, key: string) {
 
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  mapButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    boxShadow: '0px 3px 8px rgba(0,0,0,0.3)',
+  },
 });

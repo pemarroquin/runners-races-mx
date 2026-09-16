@@ -395,6 +395,11 @@ const translations = {
         'Marcamos esta sesión: la velocidad no parece de carrera a pie. Sigue contando para tu territorio.',
       fenceLost: 'Perdiste %{area} de este territorio',
       fenceFullyTaken: 'Te quitaron todo este territorio',
+      // TerritoriesMap's "fit all" control — reported missing entirely
+      // 2026-09-17, this map had NO on-screen controls at all (zoom or fit),
+      // unlike every other map in the app. Shared by both callers
+      // (Conquested Areas here and Settings' History screen).
+      fencesRefit: 'Ver todo',
       // Territories map detail card (2026-09-02) — a run still in the
       // offline retry queue, drawn in its own dashed/muted state on the
       // map, gets this badge instead of the usual stats-only card.
@@ -919,6 +924,7 @@ const translations = {
         "We flagged this session \u2014 the speed doesn't look like running. It still counts toward your territory.",
       fenceLost: 'You lost %{area} of this territory',
       fenceFullyTaken: 'This territory was taken from you entirely',
+      fencesRefit: 'Fit all',
       // Territories map detail card — see the ES entry's comment.
       pendingLabel: "Not uploaded yet — will retry on its own",
     },
