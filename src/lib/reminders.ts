@@ -117,6 +117,20 @@ export async function requestPermission(): Promise<boolean> {
   }
 }
 
+/**
+ * `YYYY-MM-DD`, `days` earlier. Done in UTC on purpose — this is calendar
+ * arithmetic, not an instant, and `new Date(y, m, d)` would apply the PHONE's
+ * zone and can land on the wrong calendar day. The instant itself is resolved
+ * afterwards, in the RACE's zone, by instantInZone (see time.ts).
+ */
+function daysBefore(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const shifted = new Date(Date.UTC(y, m - 1, d - days));
+  const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(shifted.getUTCDate()).padStart(2, '0');
+  return `${shifted.getUTCFullYear()}-${month}-${day}`;
+}
+
 interface PlannedReminder {
   /** When it fires, as a real instant. */
   at: Date;
@@ -155,11 +169,8 @@ export function planRemindersFor(
 
   // Far enough out to still act on it — pick up a packet, book a bus, back
   // out. Fires in the morning rather than at the moment of scheduling.
-  const [ey, em, ed] = race.date.split('-').map(Number);
-  const early = new Date(Date.UTC(ey, em - 1, ed - EARLY_DAYS_BEFORE));
-  const earlyDate = `${early.getUTCFullYear()}-${String(early.getUTCMonth() + 1).padStart(2, '0')}-${String(early.getUTCDate()).padStart(2, '0')}`;
   planned.push({
-    at: instantInZone(earlyDate, EARLY_HOUR, zone),
+    at: instantInZone(daysBefore(race.date, EARLY_DAYS_BEFORE), EARLY_HOUR, zone),
     title: es
       ? `Faltan ${EARLY_DAYS_BEFORE} días: ${race.name}`
       : `${EARLY_DAYS_BEFORE} days to go: ${race.name}`,
@@ -168,18 +179,15 @@ export function planRemindersFor(
   });
 
   // The evening before — the one that actually gets someone to the start line.
-  const [vy, vm, vd] = race.date.split('-').map(Number);
-  const eve = new Date(Date.UTC(vy, vm - 1, vd - 1));
-  const eveDate = `${eve.getUTCFullYear()}-${String(eve.getUTCMonth() + 1).padStart(2, '0')}-${String(eve.getUTCDate()).padStart(2, '0')}`;
+  //
+  // The start time is the thing you need the night before — but only 88 of
+  // 195 races have one, so it's included when known and skipped when not
+  // rather than invented (same rule as the calendar's all-day events).
+  const startLabel = race.time ? `${es ? 'Salida' : 'Start'} ${race.time}` : null;
   planned.push({
-    at: instantInZone(eveDate, EVE_HOUR, zone),
+    at: instantInZone(daysBefore(race.date, 1), EVE_HOUR, zone),
     title: es ? `Mañana: ${race.name}` : `Tomorrow: ${race.name}`,
-    // The start time is the thing you need the night before — but only 88 of
-    // 195 races have one, so it's included when known and skipped when not
-    // rather than invented (same rule as the calendar's all-day events).
-    body: [race.time ? (es ? `Salida ${race.time}` : `Start ${race.time}`) : null, where]
-      .filter(Boolean)
-      .join(' · '),
+    body: [startLabel, where].filter(Boolean).join(' · '),
     raceId: race.id,
   });
 

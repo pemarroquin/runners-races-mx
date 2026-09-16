@@ -84,13 +84,14 @@ interface TrackMapProps {
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
   /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
-   *  computed and throttled in index.tsx (same cadence as the enclosure
-   *  ribbon below, LIVE_FILL_RECOMPUTE_MS/POINTS) and passed down ready to
-   *  render, rather than recomputed inside this already-dense component.
-   *  ADDITIVE: the live edge (splitTrailing)
-   *  is unchanged — see this file's own report note on why the live 3D/
-   *  camera machinery here was treated as something to add alongside, not
-   *  touch. */
+   *  computed and throttled in index.tsx (LIVE_FILL_RECOMPUTE_MS/POINTS) and
+   *  passed down ready to render, rather than recomputed inside this
+   *  already-dense component.
+   *
+   *  ADDITIVE to the drawn route, never a replacement for it — the route is
+   *  scene-dressing, these are the claimed ground. This used to say the live
+   *  edge (splitTrailing) was "unchanged"; splitTrailing is deleted and the
+   *  route now draws every leg in full — see routeLegs below. */
   tiles: string[];
   /** The cells claimed by closing a loop around them rather than by being
    *  run over (enclosure.ts's enclosedCells), disjoint from `tiles`.
@@ -387,9 +388,10 @@ export function TrackMap({
         })),
     [legs],
   );
-  // Tile Coverage brief §6 step 4 — additive alongside the ribbon/edge
-  // above, not a replacement: the ribbon is model-agnostic scene-dressing
-  // (a visual "trail so far"), tiles are the actual claimed-ground fill.
+  // Tile Coverage brief §6 step 4 — additive alongside the route above, not
+  // a replacement: the route is model-agnostic scene-dressing (a visual
+  // "trail so far"), tiles are the actual claimed-ground fill. (The ribbon
+  // this comment used to describe is gone — see routeLegs above.)
   // cellToBoundary's default [lat,lng] pairs are already react-native-maps'
   // {latitude,longitude} order once mapped.
   // ONE dissolved shape per region, not one polygon per hexagon.

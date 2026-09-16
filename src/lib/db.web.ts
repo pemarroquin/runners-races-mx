@@ -91,9 +91,16 @@ function writeSaved(rows: SavedRow[]): boolean {
 
 export function initDb(): void {
   // Nothing to open, but probe once so a broken environment is reported the
-  // same way the native path reports a failed SQLite open.
+  // same way the native path reports a failed SQLite open. The else clears
+  // any error a previous readSaved/writeSaved call left behind — mirrors
+  // native's own db.ts, which clears lastError on a successful open. Without
+  // it, a transient early failure with no later write (writeSaved DOES
+  // clear it, on success) left getStorageError() returning a stale message
+  // forever, even once storage was confirmed healthy again.
   if (!store()) {
     lastError = 'no localStorage in this environment — saves cannot persist';
+  } else {
+    lastError = null;
   }
 }
 

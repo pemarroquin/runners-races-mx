@@ -25,10 +25,11 @@ function sameColor(a: string, b: string): boolean {
   return a.toLowerCase() === b.toLowerCase();
 }
 
-const channels = (hex: string) => {
+/** The r/g/b bytes of a '#rrggbb' colour. */
+function channels(hex: string): number[] {
   const v = parseInt(hex.slice(1), 16);
   return [16, 8, 0].map((shift) => (v >> shift) & 0xff);
-};
+}
 
 /** Max per-channel distance between two '#rrggbb' colours. */
 function channelDistance(a: string, b: string): number {

@@ -35,7 +35,7 @@ import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
@@ -81,11 +81,12 @@ const RIVAL_TILES_SRC = 'fence-rival-tiles';
  * while the summary is where the individual tiles are worth seeing. Same
  * name because both answer "this cell set, as map features"; different
  * bodies because the two screens want different answers.
+ *
+ * h3-js's cellToBoundary(h3, true) returns [lng,lat] pairs that do NOT repeat
+ * the first point at the end — valid for the app's own react-native-maps
+ * Polygon (fence-map.tsx), but GeoJSON polygon rings must be explicitly
+ * closed, so this closes each ring before handing it to Mapbox.
  */
-/** h3-js's cellToBoundary(h3, true) returns [lng,lat] pairs that do NOT
- *  repeat the first point at the end — valid for the app's own react-
- *  native-maps Polygon (fence-map.tsx), but GeoJSON polygon rings must be
- *  explicitly closed, so this closes each ring before handing it to Mapbox. */
 function tileFeatureCollection(cells: string[]): FeatureCollection {
   // Past the threshold, fall back to the dissolved form the live map always
   // uses — see TILE_DISSOLVE_THRESHOLD for why individual hexagons are the
@@ -205,6 +206,19 @@ export function FenceMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
+  // The same fact as readyRef, as STATE — because a ref cannot wake an
+  // effect (the trap track-map.web.tsx's own mapReady comment records). Every
+  // update effect below bails until the map has loaded, and all three of them
+  // are driven by data that arrives from ONE claimTiles() round trip after
+  // the run saved (rivalTiles, takenClusters) or not at all (others is
+  // always [] from index.tsx). So none of them re-runs on its own afterwards:
+  // whichever of the map load and the claim finished second, the other side's
+  // effect had already bailed on a false ref and would never run again — no
+  // rival tiles and no "+N" conquest bubbles for the whole screen. Reachable
+  // on any cold start (a 1.8 MB mapbox-gl import plus a style fetch against
+  // three Supabase round trips) and invisible on native, where fence-map.tsx
+  // renders the same markers declaratively.
+  const [mapReady, setMapReady] = useState(false);
   // Stopper for the route's gradient flow (gradient-flow.ts owns the timer).
   const routeFlowStopRef = useRef<(() => void) | null>(null);
   // Start/finish endpoint pins — plain DOM markers, same technique as the
@@ -476,6 +490,10 @@ export function FenceMap({
           }
         });
         readyRef.current = true;
+        // Ref first, then state: the ref is what the imperative call sites
+        // read (refit), and it must be true before any effect this wakes can
+        // run. Same ordering as track-map.web.tsx's own load handler.
+        setMapReady(true);
       });
     })();
 
@@ -513,7 +531,7 @@ export function FenceMap({
           }),
         ),
     });
-  }, [others, excludeId]);
+  }, [others, excludeId, mapReady]);
 
   // rivalTiles resolves AFTER the map (and usually after this component's
   // first paint) — claimTiles() is a network round trip that only finishes
@@ -529,7 +547,7 @@ export function FenceMap({
     (map.getSource(RIVAL_TILES_SRC) as GeoJSONSource | undefined)?.setData(
       tileFeatureCollection(rivalTiles),
     );
-  }, [tiles, rivalTiles]);
+  }, [tiles, rivalTiles, mapReady]);
 
   // takenClusters resolves on the same claimTiles() round trip as
   // rivalTiles above, so the same "arrives after mount" reasoning applies.
@@ -568,7 +586,7 @@ export function FenceMap({
     return () => {
       cancelled = true;
     };
-  }, [takenClusters]);
+  }, [takenClusters, mapReady]);
 
   // The "recenter" control's target — re-fit to the highlighted fence,
   // shorter/snappier than the mount effect's entrance sweep (that one is a

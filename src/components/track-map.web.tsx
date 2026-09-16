@@ -1078,7 +1078,14 @@ export function TrackMap({
     if (head && running && flownRef.current && !manualPendingRef.current) {
       applyCameraForMode(900);
     }
-  }, [points, running, here, applyCameraForMode]);
+    // `mapReady` alongside the data, like every other readiness-gated effect
+    // here: this one does re-run on its own (points/here tick every fix), but
+    // the fixes recorded WHILE the map was still loading only reach ROUTE_SRC
+    // on the next one — a gap between the stats saying 0:12 and the line
+    // existing at all. Listing it closes that, and keeps the "every
+    // readiness-gated effect lists mapReady" rule true with no exception to
+    // remember.
+  }, [points, running, here, applyCameraForMode, mapReady]);
 
   if (!TOKEN) {
     return (

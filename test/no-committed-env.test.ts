@@ -54,9 +54,13 @@ describe('env files are never committed', () => {
     let ignored: string[] = [];
     try {
       ignored = git('check-ignore', ...names).split('\n').filter(Boolean);
-    } catch {
-      // Non-zero exit means at least one was not ignored; `ignored` stays as
-      // whatever matched, and the assertion below reports precisely which.
+    } catch (err) {
+      // Non-zero exit means at least one name was NOT ignored — but
+      // check-ignore still printed the ones that were, on stdout, before
+      // exiting 1. Read them off the error so the assertion below names
+      // precisely which shape slipped through rather than listing all five.
+      const stdout = (err as { stdout?: string }).stdout ?? '';
+      ignored = stdout.split('\n').filter(Boolean);
     }
     expect(names.filter((n) => !ignored.includes(n))).toEqual([]);
   });

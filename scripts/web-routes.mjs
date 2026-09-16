@@ -74,13 +74,16 @@ export function routeFilesIn(dir) {
 export function staticRoutesFrom(files) {
   const routes = new Set();
   for (const file of files) {
-    const name = path.basename(file);
-    if (name === '_layout.tsx') continue;
     if (file.includes('[')) continue;
 
-    const segments = file
-      .replace(/\.web\.tsx$/, '')
-      .replace(/\.tsx$/, '')
+    // Strip the extension FIRST, then decide. Checking the raw basename
+    // against '_layout.tsx' misses `_layout.web.tsx`, which would then fall
+    // through and emit a literal `/_layout` directory — a URL nothing
+    // requests, from a file that is not a route at all.
+    const stem = file.replace(/\.web\.tsx$/, '').replace(/\.tsx$/, '');
+    if (path.basename(stem) === '_layout') continue;
+
+    const segments = stem
       .split('/')
       .filter((segment) => !(segment.startsWith('(') && segment.endsWith(')')));
 

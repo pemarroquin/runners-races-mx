@@ -1,17 +1,23 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx vite-node --config vitest.config.ts
 // Turns a recorded run's raw path into a GeoJSON preview showing BOTH the
 // route and the H3 tiles it would claim under the coverage model — a
 // field-verifiable milestone before any DB or rendering work exists to show
 // it any other way. Drop the output straight into geojson.io.
 //
-// Mirrors src/lib/tiles.ts's pathToTiles() rather than importing it: this is
-// a plain Node script and there's no ts-node/tsx in this project's
-// toolchain (same reasoning as scripts/verify-sweep.mjs mirroring
-// races.ts's validator — see that file's own header). Keep the two in sync
-// by hand if the gap-fill algorithm changes.
+// Imports the app's OWN pathToTiles/pathDistanceM rather than mirroring
+// them by hand. This used to hand-mirror both, and the mirror drifted
+// silently: RES stayed 11 after DEFAULT_TILE_RES moved to 12
+// (2026-09-07), and a flat per-gap distance cap disagreed with
+// gap-policy.ts's whole-run budget (2026-09-02 geometry audit). Both are
+// exactly the "two places apply the same rule and disagree" failure this
+// codebase keeps a single shared implementation to prevent — see
+// gap-policy.ts's own header. Run via `npm run tiles-preview`, which
+// invokes this through vite-node so the `@/` alias resolves (same setup as
+// convert-tile-res.ts / verify-claims.ts / measure-holes.ts /
+// extract-park-paths.ts).
 //
 // Usage:
-//   node scripts/tiles-preview.mjs [input.json] [output.geojson]
+//   npm run tiles-preview -- [input.json] [output.geojson]
 //
 // input.json tolerates the checkpoint/last-run-debug shape as-is:
 // { points: [{lat,lng,ts}], ... } — or a bare array of points. With no
@@ -19,96 +25,17 @@
 // demo path near Monterrey and labels every output as synthetic — this
 // script never presents generated data as a real run.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { cellToBoundary, gridPathCells, latLngToCell } from 'h3-js';
+import { cellToBoundary } from 'h3-js';
 
-const RES = 11; // matches src/lib/tiles.ts's DEFAULT_TILE_RES
-// Fastest sustained human running speed the server's OWN anti-cheat
-// flagging already treats as implausible — see
-// supabase/migrations/20260827_anti_cheat_flag.sql's `max_kmh := 25`.
-// Reused rather than a second, possibly-disagreeing number.
-const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
-// Longest gap bridged even at an ordinary jogging speed — a straight line
-// between two fixes 150m+ apart is a guess about which streets were run,
-// not an observation. See src/lib/tiles.ts's MAX_BRIDGE_DISTANCE_M for the
-// full reasoning (b8's review, 2026-09-01): speed and distance answer two
-// different questions ("was this possible" vs "do we know the path").
-const MAX_BRIDGE_DISTANCE_M = 150;
-
-function haversineM(a, b) {
-  const R = 6371008.8;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat));
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
-function pathToTiles(points, res = RES) {
-  const direct = new Set();
-  const gapFilled = new Set();
-  let bridgeFailures = 0;
-  let bridgesSkippedSpeed = 0;
-  let bridgesSkippedDistance = 0;
-  let prevCell = null;
-  let prevPoint = null;
-  for (const p of points) {
-    const cell = latLngToCell(p.lat, p.lng, res);
-    direct.add(cell);
-    if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
-      const dtS = (p.ts - prevPoint.ts) / 1000;
-      const distM = haversineM(prevPoint, p);
-      const impliedSpeedMs = dtS > 0 ? distM / dtS : Infinity;
-      if (impliedSpeedMs > MAX_BRIDGE_SPEED_MS) {
-        // Leave the hole — bridging would claim ground never run over at
-        // all. b8's review, 2026-09-01: a 2km background-gap jump used to
-        // be bridged exactly like a normal throttle gap, silently claiming
-        // ~95,000 m2 never covered.
-        bridgesSkippedSpeed += 1;
-      } else if (distM > MAX_BRIDGE_DISTANCE_M) {
-        // Physically possible (e.g. a phone locked mid-run at a normal
-        // walking/jogging pace), but a straight line between the fixes is a
-        // guess about which streets were actually run — b8's follow-up
-        // review, same date: speed alone doesn't catch this case.
-        bridgesSkippedDistance += 1;
-      } else {
-        try {
-          for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
-        } catch {
-          // Fail open to the two endpoints — see tiles.ts's own comment.
-          // Counted, not silently swallowed: without this, "the bridge
-          // threw and left a hole" is indistinguishable from "already
-          // adjacent, nothing to bridge" — exactly the failure shape this
-          // session kept getting burned by.
-          bridgeFailures += 1;
-        }
-      }
-    }
-    prevCell = cell;
-    prevPoint = p;
-  }
-  for (const c of direct) gapFilled.delete(c);
-  return {
-    cells: [...direct, ...gapFilled],
-    directCount: direct.size,
-    gapFilledCount: gapFilled.size,
-    bridgeFailures,
-    bridgesSkippedSpeed,
-    bridgesSkippedDistance,
-  };
-}
-
-function pathDistanceM(points) {
-  let total = 0;
-  for (let i = 1; i < points.length; i++) total += haversineM(points[i - 1], points[i]);
-  return total;
-}
+import { pathDistanceM } from '@/lib/territory';
+import { DEFAULT_TILE_RES, pathToTiles, type TilePoint } from '@/lib/tiles';
+import { MAX_BRIDGE_SPEED_MS } from '@/lib/gap-policy';
 
 // A short, deliberately artificial ~1.2km rectangular loop near Monterrey.
 // ONLY used when no real capture is available — every output derived from
 // it is labelled `synthetic: true` and the console output says so loudly.
 // ~55m point spacing, not the tracker's real 2s/3m throttle: empirically,
-// res-11 cell CENTRES are only ~25-45m apart, so anything under ~50m here
+// res-12 cell centres are only ~10-19m apart, so anything under ~20m here
 // lands in plain neighbouring cells with nothing to gap-fill and the demo
 // would report a misleadingly reassuring 0%. 55m reliably exercises the
 // fill, which is the whole point of running this on synthetic data at all.
@@ -119,19 +46,19 @@ function pathDistanceM(points) {
 // actual plausible speed keeps the demo showing what it's meant to (gap-
 // filling in action) instead of accidentally exercising the skip path.
 const JOG_MS = 3; // ~10.8 km/h, comfortably under MAX_BRIDGE_SPEED_MS
-function syntheticPath() {
+function syntheticPath(): TilePoint[] {
   const LAT = 25.6866;
   const LNG = -100.3161;
   const M_PER_DEG_LAT = 111_320;
   const M_PER_DEG_LNG = M_PER_DEG_LAT * Math.cos((LAT * Math.PI) / 180);
-  const corners = [
+  const corners: [number, number][] = [
     [0, 0],
     [300, 0],
     [300, 200],
     [0, 200],
     [0, 0],
   ];
-  const points = [];
+  const points: TilePoint[] = [];
   let ts = Date.now() - 25 * 60 * 1000;
   for (let i = 0; i < corners.length - 1; i++) {
     const [x0, y0] = corners[i];
@@ -150,30 +77,37 @@ function syntheticPath() {
   return points;
 }
 
-function loadPoints(filePath) {
+function loadPoints(filePath: string | undefined): TilePoint[] | null {
   if (!filePath) return null;
-  let raw;
+  let raw: string;
   try {
     raw = readFileSync(filePath, 'utf8');
   } catch (e) {
-    console.warn(`[tiles-preview] Could not read ${filePath}: ${e.message}`);
+    console.warn(`[tiles-preview] Could not read ${filePath}: ${(e as Error).message}`);
     return null;
   }
-  let parsed;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    console.warn(`[tiles-preview] ${filePath} is not valid JSON: ${e.message}`);
+    console.warn(`[tiles-preview] ${filePath} is not valid JSON: ${(e as Error).message}`);
     return null;
   }
-  const points = Array.isArray(parsed) ? parsed : parsed.points;
+  const points = Array.isArray(parsed) ? parsed : (parsed as { points?: unknown }).points;
   if (!Array.isArray(points) || points.length === 0) {
     console.warn(`[tiles-preview] ${filePath} has no usable "points" array.`);
     return null;
   }
-  const clean = points.filter((p) => p && typeof p.lat === 'number' && typeof p.lng === 'number');
+  const clean = (points as unknown[]).filter(
+    (p): p is TilePoint =>
+      typeof p === 'object' &&
+      p !== null &&
+      typeof (p as TilePoint).lat === 'number' &&
+      typeof (p as TilePoint).lng === 'number' &&
+      typeof (p as TilePoint).ts === 'number',
+  );
   if (clean.length === 0) {
-    console.warn(`[tiles-preview] ${filePath}'s points have no valid lat/lng.`);
+    console.warn(`[tiles-preview] ${filePath}'s points have no valid lat/lng/ts.`);
     return null;
   }
   return clean;
@@ -226,7 +160,10 @@ const geojson = {
 writeFileSync(outputPath, JSON.stringify(geojson, null, 2));
 
 const gapPct = cells.length > 0 ? ((gapFilledCount / cells.length) * 100).toFixed(0) : '0';
-console.log(`[tiles-preview] ${synthetic ? 'SYNTHETIC demo path (not a real run)' : inputPath}`);
+console.log(
+  `[tiles-preview] ${synthetic ? 'SYNTHETIC demo path (not a real run)' : inputPath} — res ${DEFAULT_TILE_RES}, ` +
+    `MAX_BRIDGE_SPEED_MS ${MAX_BRIDGE_SPEED_MS.toFixed(2)}, real gap-policy.ts budget (not a flat cap)`,
+);
 console.log(`  points:                  ${points.length}`);
 console.log(`  distance:                ${(distanceM / 1000).toFixed(2)} km`);
 console.log(`  tiles claimed:           ${cells.length}`);
@@ -243,5 +180,5 @@ console.log(
 );
 console.log(`  wrote:                   ${outputPath}`);
 if (synthetic) {
-  console.log('  NOTE: synthetic data — not Pedro\'s or anyone\'s real run.');
+  console.log("  NOTE: synthetic data — not Pedro's or anyone's real run.");
 }

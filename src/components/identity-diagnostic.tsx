@@ -111,11 +111,15 @@ export function IdentityDiagnostic({ c }: { c: Record<ThemeColor, string> }) {
   // never will — the row would only ever say "disabled", which is noise.
   if (!TERRITORY_ENABLED) return null;
 
-  const territories = !report
-    ? '…'
-    : report.reason !== null
-      ? t('settings.diagnosticFailed', { reason: report.reason })
-      : String(report.fenceCount ?? 0);
+  // Three outcomes, never collapsed: not checked yet, the query failed, or a
+  // real count. "Failed" and "0" reading as the same thing is the conflation
+  // this whole file exists to end (see Report.fenceCount).
+  let territories = '…';
+  if (report && report.reason !== null) {
+    territories = t('settings.diagnosticFailed', { reason: report.reason });
+  } else if (report) {
+    territories = String(report.fenceCount ?? 0);
+  }
 
   return (
     <View style={styles.block}>

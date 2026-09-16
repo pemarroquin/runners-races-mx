@@ -1,9 +1,10 @@
-// Board 1 — conquest as a share of the district's park paths.
-//
-// The case that matters most here is `hasDenominator`. A district with no
-// park data must NOT render as 0%: that would tell a runner who just covered
-// their whole neighbourhood that they hold none of it. Everywhere outside
-// the seven extracted Nuevo León municipios is that case.
+// Board 1 — conquest as a share of the CLAIMED ground in a district, not of
+// the district's own fixed cell count (16,807, always, everywhere — see
+// DistrictConquest.districtTotal). A park-path/municipio denominator was
+// tried and rejected: it measured 0.02-2.39% for every real runner and never
+// moved, however much they ran (see leaderboard.ts's own header and
+// running-app/CLAUDE.md's "Board 1, CONQUEST"). Against claimed ground the
+// same runs read 8.6%-91.4%, which is what makes it worth defending.
 import { cellToChildrenSize, latLngToCell } from 'h3-js';
 import { describe, expect, it } from 'vitest';
 

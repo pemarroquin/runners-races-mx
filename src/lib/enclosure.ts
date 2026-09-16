@@ -30,7 +30,7 @@ import { cellToLatLng, cellsToMultiPolygon, polygonToCells } from 'h3-js';
 import { haversineM, type LatLng } from '@/lib/territory';
 
 /**
- * The cells enclosed by `cells` but not among them.
+ * Every region this cell set surrounds, ONE ARRAY PER HOLE.
  *
  * Works off H3's own dissolve: cellsToMultiPolygon merges a cell set into
  * outlines, and an enclosed empty region comes back as a HOLE in one of
@@ -44,12 +44,6 @@ import { haversineM, type LatLng } from '@/lib/territory';
  * rectangle around the run — tens of thousands for a long loop, most of
  * them outside it — while this only ever touches the enclosed region
  * itself.
- *
- * Returns [] when nothing is enclosed, which is the common case: an
- * out-and-back, a point-to-point run, or a loop that never closed.
- */
-/**
- * Every region this cell set surrounds, ONE ARRAY PER HOLE.
  *
  * The single place the dissolve → hole-ring → fill pipeline is written.
  * `enclosedCells` and `noiseHoles` are both thin wrappers over it, and
@@ -88,6 +82,12 @@ export function holesOf(cells: string[], res: number): string[][] {
   return holes;
 }
 
+/**
+ * The cells enclosed by `cells` but not among them — holesOf flattened.
+ *
+ * Returns [] when nothing is enclosed, which is the common case: an
+ * out-and-back, a point-to-point run, or a loop that never closed.
+ */
 export function enclosedCells(cells: string[], res: number): string[] {
   // Deduplicated across holes: two rings of one dissolved shape cannot
   // normally share a cell, but a Set costs nothing and a double-counted cell

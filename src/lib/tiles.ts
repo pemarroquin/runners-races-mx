@@ -167,7 +167,7 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
   let bridgesSkippedSpeed = 0;
   let bridgesSkippedDistance = 0;
   let prevCell: string | null = null;
-  let prevPoint: TilePoint | null = null;
+  let prevIdx: number | null = null;
 
   // ONE decision about which gaps close, shared with the map components'
   // splitLegs — see planGapClosures. Before this each side applied the caps
@@ -194,23 +194,31 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
     }
     direct.add(cell);
 
-    if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
-      if (plan.bridged[i]) {
-        try {
-          const line = gridPathCells(prevCell, cell);
-          for (const c of line) gapFilled.add(c);
-        } catch {
-          // gridPathCells can fail for cells very far apart (h3-js's own
-          // documented limit — empirically confirmed at ~5000km+, not
-          // anything a real gap produces). Fail OPEN to just the two
-          // endpoints (already in `direct`) rather than losing the rest of
-          // the path.
-          bridgeFailures += 1;
-        }
+    // plan.bridged[i] describes ONE specific segment, path[i-1] -> path[i]
+    // (see planGapClosures). It only applies here when path[i-1] is the
+    // point we actually bridge FROM — i.e. nothing between prevIdx and i was
+    // skipped above. A skip (NaN/out-of-range lat/lng) means prevCell is
+    // some earlier point, and reusing plan.bridged[i] for that longer,
+    // unvalidated span both misreads the plan and can invent ground: a
+    // finite-but-out-of-range coordinate (unlike NaN) still produces a real
+    // haversineM, so the plan can mark the short i-1->i hop bridgeable while
+    // this would silently apply that verdict to a much longer prevIdx->i
+    // span it never evaluated. Skipping it here is the same "never connect
+    // across a gap" default as an explicit skippedSpeed/skippedBudget call.
+    if (prevCell !== null && prevCell !== cell && prevIdx === i - 1 && plan.bridged[i]) {
+      try {
+        for (const c of gridPathCells(prevCell, cell)) gapFilled.add(c);
+      } catch {
+        // gridPathCells can fail for cells very far apart (h3-js's own
+        // documented limit — empirically confirmed at ~5000km+, not
+        // anything a real gap produces). Fail OPEN to just the two
+        // endpoints (already in `direct`) rather than losing the rest of
+        // the path.
+        bridgeFailures += 1;
       }
     }
     prevCell = cell;
-    prevPoint = p;
+    prevIdx = i;
   }
 
   // A cell hit both directly and by gap-fill counts as direct only.

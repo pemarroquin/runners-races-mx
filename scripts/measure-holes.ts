@@ -66,7 +66,6 @@ async function restAll<T>(query: string): Promise<T[]> {
   return out;
 }
 
-
 /**
  * How wide a hole is, in metres — the number that can be compared against
  * GPS accuracy.
@@ -105,6 +104,17 @@ function haversine([lat1, lng1]: number[], [lat2, lng2]: number[]): number {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) ** 2;
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+}
+
+/** Size buckets for the distribution table, spanning the range
+ *  MAX_NOISE_HOLE_CELLS has to be chosen within — the point of the table is
+ *  to show where the empty band between "noise" and "real ground" falls. */
+function bucketOf(cells: number): string {
+  if (cells === 1) return '1 cell';
+  if (cells <= 2) return '2';
+  if (cells <= 6) return '3-6';
+  if (cells <= 19) return '7-19';
+  return '20+';
 }
 
 async function main() {
@@ -166,8 +176,7 @@ async function main() {
     // is noise and below the smallest one that is real ground.
     const buckets = new Map<string, number>();
     for (const d of r.details) {
-      const key =
-        d.cells === 1 ? '1 cell' : d.cells <= 2 ? '2' : d.cells <= 6 ? '3-6' : d.cells <= 19 ? '7-19' : '20+';
+      const key = bucketOf(d.cells);
       buckets.set(key, (buckets.get(key) ?? 0) + 1);
     }
     for (const [key, n] of buckets) console.log(`    ${key.padEnd(8)} ${n}`);

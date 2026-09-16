@@ -35,6 +35,40 @@ import { getCachedDisplayName } from '@/lib/profile-cache';
 import { TERRITORY_ENABLED } from '@/lib/supabase';
 import { DISPLAY_NAME_MAX, fetchMyProfile, updateDisplayName } from '@/lib/territory-sync';
 
+/**
+ * Where the name field is in its own lifecycle. 'off' is a build with no
+ * server configured, not a failure; 'taken' and 'reserved' are deliberately
+ * NOT folded into 'failed' — see saveName below for why.
+ */
+type NameState =
+  | 'loading'
+  | 'ready'
+  | 'saving'
+  | 'saved'
+  | 'failed'
+  | 'taken'
+  | 'reserved'
+  | 'off';
+
+/**
+ * The line under the field, as a key.
+ *
+ * A ladder of six outcomes, read top-down in priority order: whatever the
+ * server last said about this name wins over the local dirty hint, because a
+ * runner who has just been told their nickname is taken needs to keep seeing
+ * that while they edit it. Lifted out of the JSX so that priority is legible
+ * as a list rather than as five levels of nested ternary, and kept pure in
+ * its arguments (a key, never a translated string) per the React Compiler
+ * rule in this repo's CLAUDE.md.
+ */
+function nameHintKey(state: NameState, dirty: boolean): string {
+  if (state === 'failed') return 'settings.displayNameFailed';
+  if (state === 'taken') return 'settings.displayNameTaken';
+  if (state === 'reserved') return 'settings.displayNameReserved';
+  if (state === 'saved') return 'settings.displayNameSaved';
+  return dirty ? 'settings.displayNameDirtyHint' : 'settings.displayNameHint';
+}
+
 /** The leaderboard name field — the third section, and the only one with
  *  state of its own. */
 function LeaderboardName() {
@@ -54,9 +88,7 @@ function LeaderboardName() {
   // it must run once on mount rather than on every render.
   const [cachedName] = useState(() => getCachedDisplayName());
   const [displayName, setDisplayName] = useState(cachedName ?? '');
-  const [nameState, setNameState] = useState<
-    'loading' | 'ready' | 'saving' | 'saved' | 'failed' | 'taken' | 'reserved' | 'off'
-  >(
+  const [nameState, setNameState] = useState<NameState>(
     // 'loading' makes the input read-only. With a cached name there is
     // something real to edit immediately, and a save started before the
     // refetch lands is safe — updateDisplayName is an upsert of whatever the
@@ -226,17 +258,7 @@ function LeaderboardName() {
                   : c.textSecondary,
             },
           ]}>
-          {nameState === 'failed'
-            ? t('settings.displayNameFailed')
-            : nameState === 'taken'
-              ? t('settings.displayNameTaken')
-              : nameState === 'reserved'
-                ? t('settings.displayNameReserved')
-                : nameState === 'saved'
-                  ? t('settings.displayNameSaved')
-                  : showActions
-                    ? t('settings.displayNameDirtyHint')
-                    : t('settings.displayNameHint')}
+          {t(nameHintKey(nameState, showActions))}
         </Text>
         {showActions && (
           <View style={styles.actions}>

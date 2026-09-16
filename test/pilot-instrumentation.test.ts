@@ -13,52 +13,39 @@ import { getPilotCounters, incrementPilotCounter } from '../src/lib/pilot-instru
 
 const PREF_KEY = 'pilot.counters.v1';
 
+/** Every counter at zero — the shape a fresh install reads, and the one a
+ *  store that cannot be parsed must degrade to. Spelled out in full (rather
+ *  than derived) so adding a counter without defaulting it fails here. */
+const ZEROED = {
+  backgroundEvents: 0,
+  watchRestarts: 0,
+  runsRecovered: 0,
+  runsLost: 0,
+  runsPaceGuarded: 0,
+};
+
 beforeEach(() => {
   setPref(PREF_KEY, '');
 });
 
 describe('getPilotCounters', () => {
   it('defaults to all zeros when nothing has been saved', () => {
-    expect(getPilotCounters()).toEqual({
-      backgroundEvents: 0,
-      watchRestarts: 0,
-      runsRecovered: 0,
-      runsLost: 0,
-      runsPaceGuarded: 0,
-    });
+    expect(getPilotCounters()).toEqual(ZEROED);
   });
 
   it('defaults to all zeros instead of throwing on corrupted JSON', () => {
     setPref(PREF_KEY, 'not json at all');
-    expect(getPilotCounters()).toEqual({
-      backgroundEvents: 0,
-      watchRestarts: 0,
-      runsRecovered: 0,
-      runsLost: 0,
-      runsPaceGuarded: 0,
-    });
+    expect(getPilotCounters()).toEqual(ZEROED);
   });
 
   it('defaults to all zeros instead of throwing on a malformed shape', () => {
     setPref(PREF_KEY, JSON.stringify({ backgroundEvents: 'nonsense' }));
-    expect(getPilotCounters()).toEqual({
-      backgroundEvents: 0,
-      watchRestarts: 0,
-      runsRecovered: 0,
-      runsLost: 0,
-      runsPaceGuarded: 0,
-    });
+    expect(getPilotCounters()).toEqual(ZEROED);
   });
 
   it('defaults to all zeros when the stored value is not an object', () => {
     setPref(PREF_KEY, JSON.stringify(42));
-    expect(getPilotCounters()).toEqual({
-      backgroundEvents: 0,
-      watchRestarts: 0,
-      runsRecovered: 0,
-      runsLost: 0,
-      runsPaceGuarded: 0,
-    });
+    expect(getPilotCounters()).toEqual(ZEROED);
   });
 });
 
@@ -79,13 +66,9 @@ describe('incrementPilotCounter', () => {
     incrementPilotCounter('runsRecovered');
     incrementPilotCounter('runsRecovered');
     incrementPilotCounter('runsLost');
-    expect(getPilotCounters()).toEqual({
-      backgroundEvents: 0,
-      watchRestarts: 0,
-      runsRecovered: 2,
-      runsLost: 1,
-      runsPaceGuarded: 0,
-    });
+    // Spread from ZEROED so the two counters that moved are the only thing
+    // this test states.
+    expect(getPilotCounters()).toEqual({ ...ZEROED, runsRecovered: 2, runsLost: 1 });
   });
 
   it('increments every key independently across the full set', () => {

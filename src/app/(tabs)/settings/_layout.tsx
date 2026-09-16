@@ -4,11 +4,23 @@
 // own pushed sub-page, reached from the list in ./index.tsx. Nested inside
 // `(tabs)` rather than sitting at the root next to `race/[id]`: a root-level
 // `settings/` directory would collide with this tab's own `/settings` route.
-// The consequence to know about is that the floating pill tab bar stays
-// visible over a pushed sub-page (it is rendered by (tabs)/_layout.tsx and
-// does not read nested navigation state) — unlike `race/[id]`, which is a
-// root push and covers it. Every sub-page therefore pads its scroll content
-// with `BottomTabInset`, via SettingsPage.
+//
+// The consequence to know about is that a pushed sub-page does NOT change
+// which TOP-LEVEL tab is focused, so the floating pill tab bar would go on
+// floating over a sub-page's own content and back button as chrome that
+// doesn't belong to it. FloatingTabBar therefore reads this stack's nested
+// navigation state and hides itself once anything is pushed on top of
+// ./index.tsx (see (tabs)/_layout.tsx), and SettingsPage pads with ordinary
+// content padding rather than `BottomTabInset` because by then there is no
+// pill left to clear.
+//
+// `race/[id]` needs none of that: it is a root push, so it simply covers the
+// pill.
+//
+// This paragraph said the exact OPPOSITE until 2026-09-15 — that the pill
+// stays visible and that every sub-page therefore pads with `BottomTabInset`.
+// Both halves had been reversed by later changes to (tabs)/_layout.tsx and
+// settings-ui.tsx, and nothing in this file contradicted the stale text.
 //
 // Header titles reuse the section keys the old screen already shipped
 // (`settings.sectionProfile`, `settings.accountTitle`, `privacy.title`, …),

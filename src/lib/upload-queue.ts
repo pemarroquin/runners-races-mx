@@ -272,12 +272,41 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
             // Give up on this one so it stops blocking everything behind it.
             // Repeated failure at this point is a run the server will never
             // accept, not a network blip.
-            removeQueued(item.id);
+            //
+            // The RESULT IS CHECKED, same reasoning as the success path's
+            // removeQueued below: if the store refuses this write, the entry
+            // is still on disk while abandoned/abandonedIds tell the caller
+            // it's gone — the caller would report a run as discarded that a
+            // later flush retries, or worse, that stays stuck forever if the
+            // storage fault is why it kept failing in the first place.
+            if (!removeQueued(item.id)) {
+              return {
+                uploaded,
+                remaining: queue.length - uploaded - abandoned,
+                stoppedBecause: 'storage',
+                abandoned,
+                resolved,
+                abandonedIds,
+              };
+            }
             abandoned++;
             abandonedIds.push(item.id);
             continue;
           }
-          bumpAttempts(item.id, attempts);
+          // Same check: a write the store refuses must stop the flush, not
+          // be reported as "attempt recorded" — otherwise MAX_ATTEMPTS is
+          // never reached and one un-uploadable, un-abandonable entry blocks
+          // every run behind it forever.
+          if (!bumpAttempts(item.id, attempts)) {
+            return {
+              uploaded,
+              remaining: queue.length - uploaded - abandoned,
+              stoppedBecause: 'storage',
+              abandoned,
+              resolved,
+              abandonedIds,
+            };
+          }
         }
         return {
           uploaded,
@@ -315,6 +344,6 @@ export async function flushQueue(upload: Uploader): Promise<FlushResult> {
   }
 }
 
-function bumpAttempts(id: string, attempts: number): void {
-  writeQueue(listQueued().map((q) => (q.id === id ? { ...q, attempts } : q)));
+function bumpAttempts(id: string, attempts: number): boolean {
+  return writeQueue(listQueued().map((q) => (q.id === id ? { ...q, attempts } : q)));
 }

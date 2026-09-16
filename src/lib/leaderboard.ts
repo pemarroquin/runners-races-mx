@@ -117,6 +117,17 @@ export interface ConquestEntry {
   flaggedCellsHeld: number;
 }
 
+/** Plain codepoint order on the user id — the last tie-break on BOTH boards
+ *  (mayorship.ts imports this one rather than writing its own), so a ranking
+ *  is a total order and cannot reshuffle between loads. Not localeCompare:
+ *  this orders opaque uuids, where a locale's collation rules buy nothing and
+ *  vary by device. */
+export function compareUserId(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
 export interface DistrictConquest {
   entries: ConquestEntry[];
   /** Cells owned by anyone in this district — the shares' denominator. */
@@ -170,10 +181,7 @@ export function districtConquest(tiles: TileOwnerRow[], district: string): Distr
       cellsHeld: agg.cellsHeld,
       flaggedCellsHeld: agg.flaggedCellsHeld,
     }))
-    .sort(
-      (a, b) =>
-        b.cellsHeld - a.cellsHeld || (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0),
-    );
+    .sort((a, b) => b.cellsHeld - a.cellsHeld || compareUserId(a.userId, b.userId));
 
   return { entries, claimedTotal, districtTotal: cellToChildrenSize(district, DEFAULT_TILE_RES) };
 }

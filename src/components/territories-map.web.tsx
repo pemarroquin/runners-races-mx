@@ -178,6 +178,10 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
       shimmerIdsRef.current.delete(key);
     }
 
+    // Whether THIS map is still the live one. Handed down to anything that
+    // touches the map on a later frame — see stageLineData.
+    const isLive = () => mapRef.current === map && readyRef.current;
+
     // Add layers/sources for anything new. Existing ones are left alone —
     // this component doesn't support editing a feature in place, only
     // add/remove, which matches every real change (a fetch/refetch always
@@ -185,8 +189,12 @@ export function TerritoriesMap({ features, onSelect }: TerritoriesMapProps) {
     for (const f of features) {
       const key = `${f.kind}:${f.id}`;
       if (mountedIdsRef.current.has(key)) continue;
-      const { flowIds, shimmerIds } = addFeatureLayers(map, f, key, (id, kind) =>
-        onSelectRef.current(id, kind),
+      const { flowIds, shimmerIds } = addFeatureLayers(
+        map,
+        f,
+        key,
+        (id, kind) => onSelectRef.current(id, kind),
+        isLive,
       );
       mountedIdsRef.current.add(key);
       if (flowIds.length > 0) flowIdsRef.current.set(key, flowIds);
@@ -342,6 +350,9 @@ function addFeatureLayers(
   f: TerritoryFeature,
   key: string,
   onSelect: (id: string, kind: 'saved' | 'pending') => void,
+  /** Still the live map? Only stageLineData needs it — everything else here
+   *  runs synchronously, while the map is by definition alive. */
+  isLive: () => boolean,
 ): { flowIds: string[]; shimmerIds: string[] } {
   const fillSrc = `terr-fill-${key}`;
   const routeSrc = `terr-route-${key}`;
@@ -446,16 +457,21 @@ function addFeatureLayers(
       },
     });
     flowIds.push(rimSrc);
-    stageLineData(map, rimSrc, {
-      type: 'FeatureCollection',
-      features: outerRings(f.geometry).map(
-        (ring): Feature => ({
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: ring },
-        }),
-      ),
-    });
+    stageLineData(
+      map,
+      rimSrc,
+      {
+        type: 'FeatureCollection',
+        features: outerRings(f.geometry).map(
+          (ring): Feature => ({
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: ring },
+          }),
+        ),
+      },
+      isLive,
+    );
   }
 
   // The route — saved gets the full vibrant gradient (fence-map.web.tsx's
@@ -486,11 +502,16 @@ function addFeatureLayers(
       },
     });
     flowIds.push(routeSrc);
-    stageLineData(map, routeSrc, {
-      type: 'Feature',
-      properties: {},
-      geometry: { type: 'LineString', coordinates: f.route.map(({ lng, lat }) => [lng, lat]) },
-    });
+    stageLineData(
+      map,
+      routeSrc,
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: f.route.map(({ lng, lat }) => [lng, lat]) },
+      },
+      isLive,
+    );
   }
 
   return { flowIds, shimmerIds };
@@ -507,9 +528,23 @@ function addFeatureLayers(
  *
  * The layer can be removed before the frame lands (a delete, or a pending
  * run promoted to saved mid-flight), so this re-checks the source exists.
+ *
+ * And the MAP can be gone by then too — leaving the Territories tab in the
+ * same frame runs the mount effect's cleanup, which calls map.remove() and
+ * leaves mapbox-gl's `style` undefined behind it. `getSource` is then itself
+ * what throws, so the "does the source exist" check below is not a guard
+ * against that, it IS the crash (exactly the shape that blanked the app on
+ * every Finish tap from track-map.web.tsx's shimmer cleanup — see CLAUDE.md).
+ * Ask isLive() FIRST; never question a destroyed map.
  */
-function stageLineData(map: MapboxMap, srcId: string, data: Feature | FeatureCollection) {
+function stageLineData(
+  map: MapboxMap,
+  srcId: string,
+  data: Feature | FeatureCollection,
+  isLive: () => boolean,
+) {
   requestAnimationFrame(() => {
+    if (!isLive()) return;
     (map.getSource(srcId) as GeoJSONSource | undefined)?.setData(data);
   });
 }

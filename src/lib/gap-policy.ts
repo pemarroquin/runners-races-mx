@@ -117,35 +117,6 @@ export interface TimedPoint extends LatLng {
 }
 
 /**
- * Splits a recorded path wherever a gap fails the caps — i.e. wherever
- * `evaluateGap` says the hole must be left alone.
- *
- * This is the RENDERING half of the same policy, and it exists because the
- * recorded `points` array is a single flat list with no record of its own
- * seams. tracking.ts breaks a leg on `visibilitychange` by nulling
- * `lastRef`, but that only stops DISTANCE accumulating — the point is still
- * appended to `points` like any other, so every consumer that draws from
- * that array joins the two sides of the gap with a straight line. On a real
- * iOS Safari run (reported with screenshots 2026-09-07) that produced a
- * chord running hundreds of metres from the start straight to the runner's
- * current position, plus the same chord doubled as the wall ribbon's two
- * edges.
- *
- * Note the direction this cuts. The module header above forbids using these
- * caps to ADD geometry — bridging a gap would fabricate ground nobody
- * proved they held. This does the opposite: it REMOVES a line that was
- * already being drawn across ground nobody recorded. Same rule, same
- * caps, and it makes the drawn route agree with the tiles that get claimed
- * (pathToTiles already refuses to bridge exactly these gaps), instead of
- * the route quietly claiming more than the tiles do.
- *
- * Returns one leg per contiguous run of points. A path with no failing gap
- * comes back as a single leg, so callers can treat the common case as
- * `legs[0]`. Empty input returns an empty array — no leg at all, rather
- * than one empty leg nobody can draw.
- */
-
-/**
  * Share of a run's RECORDED distance that may be closed by guessing across
  * gaps, in total across every gap in the run.
  *
@@ -269,6 +240,34 @@ export function planGapClosures(points: TimedPoint[]): GapPlan {
   return { bridged, recordedM, budgetM, usedM, skippedSpeed, skippedBudget };
 }
 
+/**
+ * Splits a recorded path wherever a gap is left open — i.e. wherever
+ * `planGapClosures` says the hole must stay a hole.
+ *
+ * This is the RENDERING half of the same policy, and it exists because the
+ * recorded `points` array is a single flat list with no record of its own
+ * seams. tracking.ts breaks a leg on `visibilitychange` by nulling
+ * `lastRef`, but that only stops DISTANCE accumulating — the point is still
+ * appended to `points` like any other, so every consumer that draws from
+ * that array joins the two sides of the gap with a straight line. On a real
+ * iOS Safari run (reported with screenshots 2026-09-07) that produced a
+ * chord running hundreds of metres from the start straight to the runner's
+ * current position, plus the same chord doubled as the wall ribbon's two
+ * edges.
+ *
+ * Note the direction this cuts. The module header above forbids using these
+ * caps to ADD geometry — bridging a gap would fabricate ground nobody
+ * proved they held. This does the opposite: it REMOVES a line that was
+ * already being drawn across ground nobody recorded. Same rule, same
+ * caps, and it makes the drawn route agree with the tiles that get claimed
+ * (pathToTiles already refuses to bridge exactly these gaps), instead of
+ * the route quietly claiming more than the tiles do.
+ *
+ * Returns one leg per contiguous run of points. A path with no open gap
+ * comes back as a single leg, so callers can treat the common case as
+ * `legs[0]`. Empty input returns an empty array — no leg at all, rather
+ * than one empty leg nobody can draw.
+ */
 export function splitLegs<T extends TimedPoint>(points: T[]): T[][] {
   if (points.length === 0) return [];
 

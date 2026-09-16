@@ -21,6 +21,13 @@ const SRC = 'supabase/migrations/20260908211500_park_paths_data.sql';
 const OUT = 'supabase/generated/park-paths-chunks';
 const argIdx = process.argv.indexOf('--bytes');
 const MAX_BYTES = argIdx > -1 ? Number(process.argv[argIdx + 1]) : 400_000;
+// A non-numeric --bytes used to produce NaN, which silently skips every loop
+// below and every size comparison — the script would wipe the output
+// directory and report "0 chunk(s)" as if that were an answer. Same failure
+// shape as the unapplied migration this whole file exists for.
+if (!Number.isFinite(MAX_BYTES) || MAX_BYTES <= 0) {
+  throw new Error(`--bytes must be a positive number, got ${JSON.stringify(process.argv[argIdx + 1])}`);
+}
 
 const sql = readFileSync(SRC, 'utf8');
 
@@ -44,10 +51,14 @@ const chunks = [];
 let body = '';
 const flush = () => { if (body) { chunks.push(body); body = ''; } };
 
+// Slice each municipio so no single statement can blow the budget on its own.
+// 20 bytes per cell is the emitted width: a 15-char h3 id, two quotes and a
+// comma is 18, and the divisor keeps a little headroom for the statement's
+// own insert/select/on-conflict wrapper.
+const perStatement = Math.max(1, Math.floor(MAX_BYTES / 20));
+
 for (const [municipio, list] of byMunicipio) {
   const name = municipio.replace(/'/g, "''");
-  // Slice each municipio so no single statement can blow the budget on its own.
-  const perStatement = Math.max(1, Math.floor(MAX_BYTES / 20));
   for (let i = 0; i < list.length; i += perStatement) {
     const slice = list.slice(i, i + perStatement);
     const stmt =

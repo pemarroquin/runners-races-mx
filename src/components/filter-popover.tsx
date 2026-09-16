@@ -32,8 +32,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
-import { GlassRadii } from '@/constants/glass';
-import { Colors, Spacing } from '@/constants/theme';
+import { GlassRadii, type GlassScheme } from '@/constants/glass';
+import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import {
   DISTANCE_TAGS,
@@ -69,6 +69,56 @@ interface FilterPopoverProps {
 
 function sameKeys(a: Set<string>, b: string[]): boolean {
   return a.size === b.length && b.every((k) => a.has(k));
+}
+
+/**
+ * One toggleable filter chip, used by both facets (distance tags and months).
+ *
+ * Active and inactive are two different trees rather than one styled two
+ * ways: an active chip is a solid fill of `c.text`, an inactive one is the
+ * glass material, and GlassSurface has no "render no material" mode. The
+ * Pressable owns the hit slop and the a11y state either way, so only the
+ * inner surface differs.
+ */
+function FilterChip({
+  label,
+  active,
+  scheme,
+  c,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  scheme: GlassScheme;
+  c: Record<ThemeColor, string>;
+  onPress: () => void;
+}) {
+  const text = (
+    <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>{label}</Text>
+  );
+  if (active) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityState={{ selected: true }}
+        hitSlop={CHIP_HIT_SLOP}
+        style={[styles.chip, { backgroundColor: c.text }]}>
+        {text}
+      </Pressable>
+    );
+  }
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: false }}
+      hitSlop={CHIP_HIT_SLOP}>
+      <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
+        {text}
+      </GlassSurface>
+    </Pressable>
+  );
 }
 
 export function FilterPopover({
@@ -160,36 +210,16 @@ export function FilterPopover({
             <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
               {isDistance ? (
                 <View style={styles.chipGrid}>
-                  {DISTANCE_TAGS.map((tag) => {
-                    const active = distances.has(tag);
-                    const label = (
-                      <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>
-                        {t(distanceTagLabelKey(tag))}
-                      </Text>
-                    );
-                    return active ? (
-                      <Pressable
-                        key={tag}
-                        onPress={() => onToggleDistance(tag)}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: true }}
-                        hitSlop={CHIP_HIT_SLOP}
-                        style={[styles.chip, { backgroundColor: c.text }]}>
-                        {label}
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        key={tag}
-                        onPress={() => onToggleDistance(tag)}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: false }}
-                        hitSlop={CHIP_HIT_SLOP}>
-                        <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
-                          {label}
-                        </GlassSurface>
-                      </Pressable>
-                    );
-                  })}
+                  {DISTANCE_TAGS.map((tag) => (
+                    <FilterChip
+                      key={tag}
+                      label={t(distanceTagLabelKey(tag))}
+                      active={distances.has(tag)}
+                      scheme={scheme}
+                      c={c}
+                      onPress={() => onToggleDistance(tag)}
+                    />
+                  ))}
                 </View>
               ) : (
                 <>
@@ -227,36 +257,16 @@ export function FilterPopover({
                   </View>
 
                   <View style={styles.chipGrid}>
-                    {availableMonths.map((m) => {
-                      const active = months.has(m.key);
-                      const label = (
-                        <Text style={[styles.chipText, { color: active ? c.background : c.text }]}>
-                          {m.key === 'tbd' ? t('common.tbd') : m.label}
-                        </Text>
-                      );
-                      return active ? (
-                        <Pressable
-                          key={m.key}
-                          onPress={() => onToggleMonth(m.key)}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: true }}
-                          hitSlop={CHIP_HIT_SLOP}
-                          style={[styles.chip, { backgroundColor: c.text }]}>
-                          {label}
-                        </Pressable>
-                      ) : (
-                        <Pressable
-                          key={m.key}
-                          onPress={() => onToggleMonth(m.key)}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: false }}
-                          hitSlop={CHIP_HIT_SLOP}>
-                          <GlassSurface scheme={scheme} radius={GlassRadii.chip} noShadow contentStyle={styles.chip}>
-                            {label}
-                          </GlassSurface>
-                        </Pressable>
-                      );
-                    })}
+                    {availableMonths.map((m) => (
+                      <FilterChip
+                        key={m.key}
+                        label={m.key === 'tbd' ? t('common.tbd') : m.label}
+                        active={months.has(m.key)}
+                        scheme={scheme}
+                        c={c}
+                        onPress={() => onToggleMonth(m.key)}
+                      />
+                    ))}
                   </View>
                 </>
               )}

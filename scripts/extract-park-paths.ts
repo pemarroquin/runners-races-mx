@@ -334,13 +334,13 @@ out tags;`,
   }
 
   // --resume: carry forward whatever the last run managed to get.
-  const outDirEarly = path.join(ROOT, 'supabase/generated');
+  const outDir = path.join(ROOT, 'supabase/generated');
   const results: MunicipioResult[] = [];
   if (process.argv.includes('--resume')) {
-    mkdirSync(outDirEarly, { recursive: true });
-    const previous = readdirSync(outDirEarly).filter((f) => f.endsWith('_park_paths.json')).sort().pop();
+    mkdirSync(outDir, { recursive: true });
+    const previous = readdirSync(outDir).filter((f) => f.endsWith('_park_paths.json')).sort().pop();
     if (previous) {
-      const prev = JSON.parse(readFileSync(path.join(outDirEarly, previous), 'utf8')) as {
+      const prev = JSON.parse(readFileSync(path.join(outDir, previous), 'utf8')) as {
         municipios: Record<string, { parks: number; namedParks: number; pathKm: number; cells: string[] }>;
       };
       for (const [name, m] of Object.entries(prev.municipios)) {
@@ -374,7 +374,6 @@ out tags;`,
     if (i < targets.length - 1) await new Promise((r) => setTimeout(r, 10_000));
   }
 
-  const outDir = outDirEarly;
   mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 
@@ -394,8 +393,17 @@ out tags;`,
 
   // A real migration, not a gitignored blob. Unlike the tile conversion this
   // is PUBLIC OSM reference data, not one person's location history, so it
-  // belongs in the repo where `supabase db push` can apply it — no 1.4 MB
-  // paste into a SQL editor.
+  // belongs in the repo.
+  //
+  // It is NOT, however, pasteable. This was written expecting `supabase db
+  // push` to apply it; in practice the first one came out at 1.4 MB and the
+  // Supabase SQL editor refuses anything near ~1 MB ("Query is too large to
+  // be run via the SQL Editor"), so `park_path_cells` sat empty for a day
+  // while the RPC returned `[]` rather than an error. Whatever this writes,
+  // split it before applying by hand:
+  //   node scripts/split-park-paths-sql.mjs [--bytes N]
+  // and confirm the load with a live count — an unapplied migration reads as
+  // an honest `0`.
   const sqlPath = path.join(ROOT, 'supabase/migrations', `${stamp}_park_paths_data.sql`);
   const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
 

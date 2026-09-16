@@ -57,6 +57,24 @@ type PromptState =
   | 'reserved'
   | 'done'; // name saved — dismissing
 
+/**
+ * The message under the input, per failing state — null for every other
+ * state, which renders no error line at all. 'taken'/'reserved' deliberately
+ * do NOT share 'failed''s copy: see the PromptState comments above.
+ */
+function errorKeyFor(state: PromptState): string | null {
+  switch (state) {
+    case 'taken':
+      return 'settings.displayNameTaken';
+    case 'reserved':
+      return 'settings.displayNameReserved';
+    case 'failed':
+      return 'settings.namePromptFailed';
+    default:
+      return null;
+  }
+}
+
 export function NamePrompt() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
@@ -142,6 +160,7 @@ export function NamePrompt() {
 
   const trimmedLen = name.trim().length;
   const canSave = trimmedLen > 0 && state !== 'saving';
+  const errorKey = errorKeyFor(state);
 
   return (
     <Animated.View entering={FadeInDown.duration(320)} exiting={FadeOutUp.duration(200)}>
@@ -178,16 +197,8 @@ export function NamePrompt() {
           {trimmedLen}/{DISPLAY_NAME_MAX}
         </Text>
 
-        {(state === 'failed' || state === 'taken' || state === 'reserved') && (
-          <Text style={[styles.error, { color: c.accent }]}>
-            {t(
-              state === 'taken'
-                ? 'settings.displayNameTaken'
-                : state === 'reserved'
-                  ? 'settings.displayNameReserved'
-                  : 'settings.namePromptFailed',
-            )}
-          </Text>
+        {errorKey !== null && (
+          <Text style={[styles.error, { color: c.accent }]}>{t(errorKey)}</Text>
         )}
 
         <View style={styles.actions}>

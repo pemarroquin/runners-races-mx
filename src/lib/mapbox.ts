@@ -75,7 +75,7 @@ export function buildStaticMapUrl(race: Race, dark: boolean): string | null {
 export function buildPinMapUrl(
   lat: number,
   lng: number,
-  _dark: boolean,
+  dark: boolean,
   /** Only draw the pin when the coordinate is a real fix. Framing the map on
    *  the selected city is fine; dropping a "you are here" pin on that city's
    *  centre is a false claim, and was the actual cause of the pin appearing
@@ -83,10 +83,17 @@ export function buildPinMapUrl(
   hasRealFix = true,
 ): string | null {
   if (!TOKEN) return null;
-  // Territory Mode's map is always dark — see MAP_ALWAYS_DARK.
-  const styleId = MAP_ALWAYS_DARK ? MAP_STYLE_STATIC : _dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
+  const styleId = pinMapStyleId(dark);
   const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
-  const overlay = hasRealFix ? `pin-s+${ROUTE_COLOR}(${lng},${lat})` : '';
-  const path = overlay ? `${overlay}/` : '';
+  const path = hasRealFix ? `pin-s+${ROUTE_COLOR}(${lng},${lat})/` : '';
   return `https://api.mapbox.com/styles/v1/${styleId}/static/${path}${lng},${lat},${MAP_DEFAULT_ZOOM}/${size}?access_token=${TOKEN}`;
+}
+
+/** Territory Mode's map is always dark — see MAP_ALWAYS_DARK — so the
+ *  caller's light/dark preference only decides the style when that flag is
+ *  off. Race maps (buildStaticMapUrl above) follow the preference either
+ *  way, which is why this lives here and not there. */
+function pinMapStyleId(dark: boolean): string {
+  if (MAP_ALWAYS_DARK) return MAP_STYLE_STATIC;
+  return dark ? 'mapbox/dark-v11' : 'mapbox/streets-v12';
 }
