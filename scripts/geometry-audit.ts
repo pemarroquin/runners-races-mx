@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx vite-node --config vitest.config.ts
 // Geometry measurement harness — re-runs this repo's OWN pure geometry
 // (src/lib/territory.ts's buildFence/pathDistanceM, src/lib/tiles.ts's
 // pathToTiles) against the runs actually saved in Supabase, and reports
@@ -13,19 +13,25 @@
 // upsert, call any writing RPC, or touch migrations. It is safe to run
 // against production as many times as useful.
 //
-// Mirrors src/lib/territory.ts and src/lib/tiles.ts rather than importing
-// them: same reasoning as scripts/tiles-preview.mjs's own header — this is
-// a plain Node script, CI runs Node 20 (.github/workflows/*.yml), and Node
-// 20 has no TypeScript type-stripping (that landed unflagged only in Node
-// 23.6+). Importing the .ts files directly would work locally on a newer
-// Node but silently break in CI. The underlying math packages (@turf/*,
-// h3-js) ARE imported for real — only the TS wrapper functions are
-// reproduced by hand. Keep the mirrored constants/logic in sync with the
-// source files if either changes; both are pasted in below with a pointer
-// back to their origin.
+// Imports src/lib/tiles.ts's pathToTiles/DEFAULT_TILE_RES/tilesAreaM2 and
+// src/lib/gap-policy.ts's bridge constants FOR REAL, via vite-node (same
+// setup as convert-tile-res.ts / verify-claims.ts / measure-holes.ts /
+// extract-park-paths.ts / tiles-preview.ts) — this used to hand-mirror all
+// of that and the mirror drifted silently: RES stayed 11 after
+// DEFAULT_TILE_RES moved to 12 (2026-09-07), and a flat per-gap distance
+// cap disagreed with gap-policy.ts's whole-run budget (2026-09-02 geometry
+// audit that first found the drift). Exactly the "two places apply the
+// same rule and disagree" failure gap-policy.ts's own header exists to end.
+//
+// territory.ts's buildFence() is still hand-mirrored below, DELIBERATELY —
+// see that block's own comment for why: this audit wants diagnostics
+// (self-intersection, lobe count, simplify point counts) the production
+// function doesn't expose and shouldn't be made to, just to serve this
+// script. haversineM/pathDistanceM need no such extra output, so those ARE
+// imported for real.
 //
 // Usage (run from the repo root):
-//   node scripts/geometry-audit.mjs [output.json]
+//   npm run geometry-audit -- [output.json]
 //
 // Reads EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY from
 // .env.local in the repo root (same file the app itself uses — see
@@ -47,38 +53,27 @@ import kinks from '@turf/kinks';
 import simplify from '@turf/simplify';
 import union from '@turf/union';
 import unkinkPolygon from '@turf/unkink-polygon';
-import { gridPathCells, latLngToCell } from 'h3-js';
+
+import { haversineM, pathDistanceM, type LatLng } from '@/lib/territory';
+import { DEFAULT_TILE_RES, pathToTiles, tilesAreaM2, type TilePoint } from '@/lib/tiles';
+import { MAX_BRIDGE_DISTANCE_M, MAX_BRIDGE_SPEED_MS } from '@/lib/gap-policy';
 
 // ============================================================================
-// Mirrored from src/lib/territory.ts — DO NOT diverge without a reason.
+// Mirrored from src/lib/territory.ts's buildFence(), deliberately — see this
+// file's header for why. DO NOT diverge on the geometry pipeline itself
+// (turf calls, tolerance, min points) without a reason; the diagnostics
+// (selfIntersected/lobes/point counts) are this audit's own addition.
 // ============================================================================
 
-const EARTH_RADIUS_M = 6371008.8; // mean radius, matches @turf/area
 const DEFAULT_TOLERANCE_DEG = 0.00003; // territory.ts's DEFAULT_TOLERANCE_DEG
 const MIN_FENCE_POINTS = 3; // territory.ts's MIN_FENCE_POINTS
 
-function haversineM(a, b) {
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
-function pathDistanceM(points) {
-  let total = 0;
-  for (let i = 1; i < points.length; i++) total += haversineM(points[i - 1], points[i]);
-  return total;
-}
-
-function toLngLat(points) {
+function toLngLat(points: LatLng[]): [number, number][] {
   return points.map((p) => [p.lng, p.lat]);
 }
 
-function dedupeConsecutive(coords) {
-  const out = [];
+function dedupeConsecutive(coords: [number, number][]): [number, number][] {
+  const out: [number, number][] = [];
   for (const c of coords) {
     const prev = out[out.length - 1];
     if (!prev || prev[0] !== c[0] || prev[1] !== c[1]) out.push(c);
@@ -86,7 +81,7 @@ function dedupeConsecutive(coords) {
   return out;
 }
 
-function closeRing(coords) {
+function closeRing(coords: [number, number][]): [number, number][] {
   if (coords.length === 0) return coords;
   const first = coords[0];
   const last = coords[coords.length - 1];
@@ -94,23 +89,28 @@ function closeRing(coords) {
   return [...coords, first];
 }
 
-function cleanPolygon(raw) {
+function cleanPolygon(raw: ReturnType<typeof polygon>) {
   const intersections = kinks(raw);
   if (intersections.features.length === 0) return { geometry: raw, selfIntersected: false };
 
   const pieces = unkinkPolygon(raw);
   if (pieces.features.length === 0) return { geometry: raw, selfIntersected: true };
-  if (pieces.features.length === 1) return { geometry: pieces.features[0], selfIntersected: true, lobes: 1 };
+  if (pieces.features.length === 1)
+    return { geometry: pieces.features[0], selfIntersected: true, lobes: 1 };
 
   const merged = union(pieces);
-  return { geometry: merged ?? pieces.features[0], selfIntersected: true, lobes: pieces.features.length };
+  return {
+    geometry: merged ?? pieces.features[0],
+    selfIntersected: true,
+    lobes: pieces.features.length,
+  };
 }
 
 /** Mirrors territory.ts's buildFence(). Returns null (with a reason) exactly
  *  where the real implementation would, plus a few extra diagnostics
  *  (self-intersection, lobe count, point counts before/after simplify) the
  *  real function doesn't expose but this audit wants. */
-function buildFence(path, toleranceDeg = DEFAULT_TOLERANCE_DEG) {
+function buildFence(path: LatLng[], toleranceDeg = DEFAULT_TOLERANCE_DEG) {
   const rawRing = closeRing(toLngLat(path));
   const ring = dedupeConsecutive(rawRing);
   if (ring.length < MIN_FENCE_POINTS + 1) {
@@ -119,7 +119,7 @@ function buildFence(path, toleranceDeg = DEFAULT_TOLERANCE_DEG) {
   try {
     const raw = polygon([ring]);
     const simplified = simplify(raw, { tolerance: toleranceDeg, highQuality: true });
-    const simplifiedRing = simplified.geometry.coordinates[0];
+    const simplifiedRing = simplified.geometry.coordinates[0] as [number, number][] | undefined;
     if (!simplifiedRing || dedupeConsecutive(simplifiedRing).length < MIN_FENCE_POINTS + 1) {
       return {
         fence: null,
@@ -142,82 +142,22 @@ function buildFence(path, toleranceDeg = DEFAULT_TOLERANCE_DEG) {
       pointsAfterSimplify: dedupeConsecutive(simplifiedRing).length,
     };
   } catch (e) {
-    return { fence: null, reason: 'threw', error: e?.message ?? String(e), pointsBeforeSimplify: ring.length };
+    return {
+      fence: null,
+      reason: 'threw',
+      error: e instanceof Error ? e.message : String(e),
+      pointsBeforeSimplify: ring.length,
+    };
   }
-}
-
-// ============================================================================
-// Mirrored from src/lib/tiles.ts — DO NOT diverge without a reason.
-// ============================================================================
-
-const DEFAULT_TILE_RES = 11; // tiles.ts's DEFAULT_TILE_RES
-// tiles.ts's MAX_BRIDGE_SPEED_MS — reused from the server's own anti-cheat
-// flag (25 km/h), see that file's comment for the full reasoning.
-const MAX_BRIDGE_SPEED_MS = (25 * 1000) / 3600; // ≈ 6.94 m/s
-// tiles.ts's MAX_BRIDGE_DISTANCE_M.
-const MAX_BRIDGE_DISTANCE_M = 150;
-
-/** Mirrors tiles.ts's pathToTiles(). */
-function pathToTiles(path, res = DEFAULT_TILE_RES) {
-  const direct = new Set();
-  const gapFilled = new Set();
-  let bridgeFailures = 0;
-  let bridgesSkippedSpeed = 0;
-  let bridgesSkippedDistance = 0;
-  let prevCell = null;
-  let prevPoint = null;
-  const skippedSpeedGaps = [];
-  const skippedDistanceGaps = [];
-
-  for (const p of path) {
-    const cell = latLngToCell(p.lat, p.lng, res);
-    direct.add(cell);
-
-    if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
-      const dtS = (p.ts - prevPoint.ts) / 1000;
-      const distM = haversineM(prevPoint, p);
-      const impliedSpeedMs = dtS > 0 ? distM / dtS : Infinity;
-
-      if (impliedSpeedMs > MAX_BRIDGE_SPEED_MS) {
-        bridgesSkippedSpeed += 1;
-        skippedSpeedGaps.push({ dtS, distM, impliedSpeedMs, atTs: prevPoint.ts });
-      } else if (distM > MAX_BRIDGE_DISTANCE_M) {
-        bridgesSkippedDistance += 1;
-        skippedDistanceGaps.push({ dtS, distM, impliedSpeedMs, atTs: prevPoint.ts });
-      } else {
-        try {
-          const line = gridPathCells(prevCell, cell);
-          for (const c of line) gapFilled.add(c);
-        } catch {
-          bridgeFailures += 1;
-        }
-      }
-    }
-    prevCell = cell;
-    prevPoint = p;
-  }
-
-  for (const c of direct) gapFilled.delete(c);
-
-  return {
-    cells: [...direct, ...gapFilled],
-    directCount: direct.size,
-    gapFilledCount: gapFilled.size,
-    bridgeFailures,
-    bridgesSkippedSpeed,
-    bridgesSkippedDistance,
-    skippedSpeedGaps,
-    skippedDistanceGaps,
-  };
 }
 
 // ============================================================================
 // Env loading — .env.local only, values never logged.
 // ============================================================================
 
-function loadEnvLocal(path) {
-  const out = {};
-  let raw;
+function loadEnvLocal(path: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let raw: string;
   try {
     raw = readFileSync(path, 'utf8');
   } catch {
@@ -237,7 +177,8 @@ function loadEnvLocal(path) {
 
 const fileEnv = loadEnvLocal('.env.local');
 const SUPABASE_URL = fileEnv.EXPO_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = fileEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY =
+  fileEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error(
@@ -302,28 +243,32 @@ if (runs.length === 0) {
 // flag segments worth a human look.
 const GAP_FLAG_THRESHOLD_S = 10;
 
-function quantile(sorted, q) {
+function quantile(sorted: number[], q: number): number | null {
   if (sorted.length === 0) return null;
   const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))));
   return sorted[idx];
 }
 
-function analyzeRun(row) {
+function analyzeRun(row: Record<string, unknown>) {
   const rawPath = row.raw_path;
   const malformed = !Array.isArray(rawPath) || rawPath.length === 0;
   if (malformed) {
-    return { id: row.id, malformed: true, raw_path_type: typeof rawPath };
+    return { id: row.id, malformed: true as const, raw_path_type: typeof rawPath };
   }
 
   // Schema comment on `runs.raw_path`: "[[lat,lng,ts], ...] as recorded" —
   // confirmed against 3 live rows during this audit (2026-09-02), all
   // arrays of [lat, lng, ts_ms].
-  const points = rawPath.map((p) => ({ lat: p[0], lng: p[1], ts: p[2] }));
+  const points: TilePoint[] = (rawPath as [number, number, number][]).map((p) => ({
+    lat: p[0],
+    lng: p[1],
+    ts: p[2],
+  }));
 
   const n = points.length;
-  const dts = [];
-  const stepDists = [];
-  const segments = [];
+  const dts: number[] = [];
+  const stepDists: number[] = [];
+  const segments: { i: number; dtS: number; distM: number; impliedSpeedMs: number }[] = [];
   for (let i = 1; i < n; i++) {
     const dtS = (points[i].ts - points[i - 1].ts) / 1000;
     const d = haversineM(points[i - 1], points[i]);
@@ -361,25 +306,27 @@ function analyzeRun(row) {
   // continuous leg rather than a backgrounding event), which is just as
   // informative as a ratio near 1 (the gap WAS excluded). Clipping this to
   // 100% would silently erase that distinction.
-  const gapChordVsDeltaRatio = gapTotalM === 0 ? null : distanceDeltaM !== 0 ? gapTotalM / distanceDeltaM : Infinity;
+  const gapChordVsDeltaRatio =
+    gapTotalM === 0 ? null : distanceDeltaM !== 0 ? gapTotalM / distanceDeltaM : Infinity;
 
   // --- fence: recompute vs stored ---
   const fenceResult = buildFence(points);
   const storedAreaM2 = row.area_m2 === null ? null : Number(row.area_m2);
   const storedHasFence = row.fence !== null;
-  let fenceAreaDeltaM2 = null;
-  let fenceAreaDeltaPct = null;
+  let fenceAreaDeltaM2: number | null = null;
+  let fenceAreaDeltaPct: number | null = null;
   if (fenceResult.fence && storedAreaM2 !== null) {
-    fenceAreaDeltaM2 = fenceResult.areaM2 - storedAreaM2;
+    fenceAreaDeltaM2 = fenceResult.areaM2! - storedAreaM2;
     fenceAreaDeltaPct = storedAreaM2 !== 0 ? (fenceAreaDeltaM2 / storedAreaM2) * 100 : null;
   }
 
-  // --- tiles: recompute from raw_path ---
+  // --- tiles: recompute from raw_path, at the app's REAL resolution/policy ---
   const tiles = pathToTiles(points);
-  const tileAreaM2Estimate = tiles.cells.length * 2150; // ~res-11 cell area, tiles.ts's own doc comment
+  const tileAreaM2 = tilesAreaM2(tiles.cells);
 
   return {
     id: row.id,
+    malformed: false as const,
     region: row.region,
     started_at: row.started_at,
     ended_at: row.ended_at,
@@ -431,9 +378,7 @@ function analyzeRun(row) {
       bridgeFailures: tiles.bridgeFailures,
       bridgesSkippedSpeed: tiles.bridgesSkippedSpeed,
       bridgesSkippedDistance: tiles.bridgesSkippedDistance,
-      skippedSpeedGaps: tiles.skippedSpeedGaps,
-      skippedDistanceGaps: tiles.skippedDistanceGaps,
-      tileAreaM2Estimate,
+      tileAreaM2,
     },
   };
 }
@@ -447,6 +392,10 @@ const analyses = runs.map(analyzeRun);
 console.log('');
 console.log('='.repeat(78));
 console.log(`GEOMETRY AUDIT — ${analyses.length} saved run(s), generated ${new Date().toISOString()}`);
+console.log(
+  `(tiles at res ${DEFAULT_TILE_RES}, MAX_BRIDGE_SPEED_MS ${MAX_BRIDGE_SPEED_MS.toFixed(2)}, ` +
+    `MAX_BRIDGE_DISTANCE_M ${MAX_BRIDGE_DISTANCE_M} — real src/lib/tiles.ts, not a mirror)`,
+);
 console.log('='.repeat(78));
 
 for (const a of analyses) {
@@ -491,7 +440,7 @@ for (const a of analyses) {
   }
   if (a.fence.recomputed.fence) {
     console.log(
-      `  fence: stored area ${a.fence.storedAreaM2}m², recomputed ${a.fence.recomputed.areaM2.toFixed(1)}m², ` +
+      `  fence: stored area ${a.fence.storedAreaM2}m², recomputed ${a.fence.recomputed.areaM2!.toFixed(1)}m², ` +
         `delta ${a.fence.deltaM2?.toFixed(1)}m² (${a.fence.deltaPct?.toFixed(2)}%)` +
         `${a.fence.recomputed.selfIntersected ? ` [self-intersecting, ${a.fence.recomputed.lobes} lobe(s)]` : ''}`,
     );
@@ -503,7 +452,7 @@ for (const a of analyses) {
   }
   console.log(
     `  tiles: ${a.tiles.cellsClaimed} cells claimed (${a.tiles.directCount} direct, ${a.tiles.gapFilledCount} gap-filled), ` +
-      `~${a.tiles.tileAreaM2Estimate.toLocaleString()}m² by tile count`,
+      `${Math.round(a.tiles.tileAreaM2).toLocaleString()}m² (summed per cell, not an average estimate)`,
   );
   console.log(
     `    bridge failures: ${a.tiles.bridgeFailures}, skipped(speed): ${a.tiles.bridgesSkippedSpeed}, skipped(distance): ${a.tiles.bridgesSkippedDistance}`,
@@ -519,7 +468,12 @@ const outPath = process.argv[2] ?? 'geometry-audit-report.json';
 writeFileSync(
   outPath,
   JSON.stringify(
-    { generatedAt: new Date().toISOString(), sampleSize: analyses.length, gapFlagThresholdS: GAP_FLAG_THRESHOLD_S, runs: analyses },
+    {
+      generatedAt: new Date().toISOString(),
+      sampleSize: analyses.length,
+      gapFlagThresholdS: GAP_FLAG_THRESHOLD_S,
+      runs: analyses,
+    },
     null,
     2,
   ),

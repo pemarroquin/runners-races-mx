@@ -411,7 +411,13 @@ export function getAvailableMonths(
   const months = MONTHS[locale] ?? MONTHS.en;
   const keys = new Set(races.map((r) => monthKey(r.date)));
   return Array.from(keys)
-    .sort((a, b) => (a === 'tbd' ? 1 : b === 'tbd' ? -1 : a < b ? -1 : 1))
+    .sort((a, b) => {
+      // 'tbd' always sinks to the bottom; everything else is 'YYYY-MM', which
+      // sorts correctly as a plain string. Same shape as sortRaces above.
+      if (a === 'tbd') return 1;
+      if (b === 'tbd') return -1;
+      return a < b ? -1 : 1;
+    })
     .map((key) => {
       if (key === 'tbd') return { key, label: 'tbd' };
       const [y, m] = key.split('-').map(Number);

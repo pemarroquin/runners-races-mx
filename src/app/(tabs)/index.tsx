@@ -853,14 +853,6 @@ export default function TrackScreen() {
               succeeded, never before or during. */}
           {saveState === 'saved' && <NamePrompt />}
 
-          {/* Offered only when this run ENCLOSED ground. An area is a piece
-              of ground worth coming back to and defending; a point-to-point
-              run produces a line, which is not that. Gated on the save
-              having succeeded for the same reason NamePrompt is — there is
-              no run to attach an area to until then.
-              Cells are crossed AND surrounded: the area is the whole shape
-              the runner drew, not just its perimeter. */}
-
           {/* Tile Coverage brief §6 step 5 — replaces the old "You took X m²
               from N runner(s)" spoils banner, which is gone entirely: the
               state, its fetch and its copy were all removed with the move
@@ -1175,11 +1167,14 @@ function Stat({
   return (
     <View style={styles.stat}>
       <Text style={[styles.statLabel, { color: c.textSecondary }]}>{label.toUpperCase()}</Text>
-      {/* numberOfLines=1 stops a long unbroken value (e.g. "1:23:33" once a
-          run crosses an hour) from wrapping mid-digit inside this flex:1
-          column — DISTANCE's "10.66 km" wraps at the space, which reads
-          fine, but TIME has no space to wrap at. The size step keeps it
-          legible instead of letting it clip/ellipsize. */}
+      {/* numberOfLines=1 stops a long unbroken value from wrapping mid-digit
+          inside this flex:1 column. TIME is what forced it: "1:23:33" once a
+          run crosses an hour has no space to wrap at, so it broke between
+          digits. The size step is what keeps a one-line value legible rather
+          than clipped — applied by LENGTH, so "10.66 km" takes it too. That
+          is deliberate: distance would otherwise wrap at its space and the
+          two stats beside each other would sit on different numbers of
+          lines. */}
       <Text
         style={[styles.statValue, { color: c.text }, value.length > 6 && styles.statValueCompact]}
         numberOfLines={1}>

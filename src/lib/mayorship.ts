@@ -31,6 +31,7 @@
 // territory.ts, and the reason this suite (`environment: 'node'`, no
 // renderer, no Postgres) can cover the mechanic completely.
 import { districtOfCell } from '@/lib/district';
+import { compareUserId } from '@/lib/leaderboard';
 
 /**
  * Trailing window for the title, in days. Foursquare's mayorship uses 30 and
@@ -189,12 +190,10 @@ export function rankMayors(
   for (const visit of scoped) {
     // First non-null wins — a partial profile join leaves some rows null,
     // same "the count is the point, the name is a garnish" posture as
-    // districtConquest.
-    if (nameById.get(visit.userId) == null && visit.displayName !== null) {
-      nameById.set(visit.userId, visit.displayName);
-    } else if (!nameById.has(visit.userId)) {
-      nameById.set(visit.userId, null);
-    }
+    // districtConquest. A user seen only with null rows is still RECORDED as
+    // null, so `get` below cannot confuse "no name" with "not in this
+    // district".
+    if (nameById.get(visit.userId) == null) nameById.set(visit.userId, visit.displayName);
   }
 
   const byUser = new Map<string, { cellsHeld: number; bestDays: number }>();
@@ -221,7 +220,7 @@ export function rankMayors(
       (a, b) =>
         b.cellsHeld - a.cellsHeld ||
         b.bestDays - a.bestDays ||
-        (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0),
+        compareUserId(a.userId, b.userId),
     );
 }
 

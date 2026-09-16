@@ -232,6 +232,23 @@ commit;
 
   writeFileSync(outPath, sql);
   console.log(`\nWrote ${path.relative(ROOT, outPath)} (${(sql.length / 1024).toFixed(0)} KB)`);
+
+  // The Supabase SQL editor refuses anything near ~1 MB ("Query is too large
+  // to be run via the SQL Editor"). park_path_cells sat empty for a day
+  // because nobody knew that until a 1.4 MB migration silently did nothing —
+  // and the symptom was an honest `0`, not an error. Say it here instead.
+  // Unlike the park-path data this file CANNOT simply be split: the deletes,
+  // the inserts and the leftover assertion are one transaction on purpose, so
+  // a partial apply would leave the table holding both resolutions at once.
+  if (sql.length > 900_000) {
+    console.warn(
+      `\n!! ${(sql.length / 1024 / 1024).toFixed(2)} MB is too large to paste into the Supabase SQL editor\n` +
+        '!! (~1 MB ceiling). Apply it with psql or the Supabase CLI against the pooler\n' +
+        '!! instead, and confirm with a live count — do NOT split it by hand: it has to\n' +
+        '!! stay one transaction or a partial apply mixes both resolutions in the table.',
+    );
+  }
+
   console.log('Apply IN THIS ORDER, by hand in the Supabase SQL editor, BEFORE deploying:');
   console.log('  1. supabase/migrations/20260907130000_tile_res12_guard.sql');
   console.log(`  2. ${path.relative(ROOT, outPath)}`);

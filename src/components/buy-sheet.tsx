@@ -106,8 +106,12 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   // Both used to leave the user staring at a blank sheet whose progress bar
   // had just completed. Now: a real message and a way out.
   const [failed, setFailed] = useState(false);
-  // Web-only backstop for the silent frame block above — if nothing has
-  // painted by the time this fires, offer the browser instead of a void.
+  // Web-only backstop for the silent frame block above. This is a BLIND
+  // grace period, not a "nothing painted" check — there is no such check:
+  // onLoaded fires whether the frame is blocked or genuinely loaded (see the
+  // comment on `failed` above), so this can't tell a slow-but-healthy
+  // checkout from a blocked one and offers the browser either way once the
+  // deadline passes.
   const [frameTimedOut, setFrameTimedOut] = useState(false);
   const translateY = useSharedValue(sheetH);
   const backdrop = useSharedValue(0);

@@ -1,8 +1,14 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * The app's colors, fonts and spacing scale, in light and dark.
+ *
+ * `light` and `dark` carry the same keys deliberately — `ThemeColor` is their
+ * intersection, so adding a color to one and not the other makes it
+ * unaddressable rather than undefined at runtime.
  */
 
+// Side-effect import: global.css defines the CSS custom properties the web
+// font stack below (`var(--font-display)` etc.) resolves against, so it has
+// to be loaded wherever Fonts is.
 import '@/global.css';
 
 import { Platform } from 'react-native';

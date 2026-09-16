@@ -20,6 +20,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -63,6 +64,15 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   // means the newest inputs always get a final pass.
   const runningRef = useRef(false);
   const pendingRef = useRef(false);
+  // Always points at the CURRENT render's runSync, which is what the trailing
+  // pass below must call. `runSync` closes over the values of the render that
+  // created it, so recursing into that same closure re-synced the very inputs
+  // that were already stale when the coalesced call arrived: a race saved
+  // while a sync was in flight got no reminder at all until the next launch or
+  // midnight rollover — the deps that would have re-run the effect had already
+  // changed, so nothing triggered another pass. Exactly the silent miss this
+  // provider exists to prevent.
+  const latestSyncRef = useRef<(() => Promise<void>) | null>(null);
 
   const runSync = useCallback(async () => {
     if (runningRef.current) {
@@ -76,10 +86,16 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
       runningRef.current = false;
       if (pendingRef.current) {
         pendingRef.current = false;
-        void runSync();
+        void latestSyncRef.current?.();
       }
     }
   }, [races, savedIds, today, locale]);
+
+  // Declared before the effect that runs a sync, so the ref is populated
+  // before anything can read it.
+  useEffect(() => {
+    latestSyncRef.current = runSync;
+  }, [runSync]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -103,11 +119,12 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  return (
-    <RemindersContext.Provider value={{ enabled, setEnabled }}>
-      {children}
-    </RemindersContext.Provider>
-  );
+  // Memoized like every other provider in this app (SavedProvider,
+  // ThemeModeProvider, RegionProvider): a fresh object here re-renders every
+  // consumer on any parent render, even though nothing about reminders moved.
+  const value = useMemo<RemindersValue>(() => ({ enabled, setEnabled }), [enabled, setEnabled]);
+
+  return <RemindersContext.Provider value={value}>{children}</RemindersContext.Provider>;
 }
 
 export function useReminders(): RemindersValue {

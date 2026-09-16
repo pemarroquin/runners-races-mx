@@ -45,14 +45,10 @@ consumer.destroy();
 // Roll up by top-level node_modules package (or app source dir).
 const bytesByPackage = new Map();
 for (const [src, bytes] of bytesBySource) {
-  let key = src;
   const nmMatch = src.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
-  if (nmMatch) {
-    key = `node_modules/${nmMatch[1]}`;
-  } else if (src.startsWith('src/') || src.includes('/src/')) {
-    // keep app source files individually, they're the interesting ones
-    key = src;
-  }
+  // Dependencies roll up to their package; everything else — app source above
+  // all — stays keyed by its own file, which is the interesting granularity.
+  const key = nmMatch ? `node_modules/${nmMatch[1]}` : src;
   bytesByPackage.set(key, (bytesByPackage.get(key) || 0) + bytes);
 }
 

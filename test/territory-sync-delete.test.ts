@@ -41,40 +41,37 @@ vi.mock('@/lib/supabase', () => ({
 const { deleteRun } = await import('@/lib/territory-sync');
 
 describe('deleteRun', () => {
-  it('reports failure when the delete matches zero rows, even with no error', () => {
+  it('reports failure when the delete matches zero rows, even with no error', async () => {
     // The exact shape RLS returns for a DELETE that matches no policy: no
     // error, an empty array. A naive `.delete().eq(...)` (no `.select()`)
     // can't even observe this — this is precisely why deleteRun chains one.
     nextResult = { data: [], error: null };
-    return deleteRun('run-1').then((outcome) => {
-      expect(outcome.ok).toBe(false);
-      // 'denied', not 'network' — no Postgres error plus zero rows is RLS
-      // matching no policy, a distinct failure the caller should never
-      // treat as "retry might help" (see deleteRun's own doc comment).
-      if (!outcome.ok) expect(outcome.reason).toBe('denied');
-    });
+    const outcome = await deleteRun('run-1');
+    expect(outcome.ok).toBe(false);
+    // 'denied', not 'network' — no Postgres error plus zero rows is RLS
+    // matching no policy, a distinct failure the caller should never treat
+    // as "retry might help" (see deleteRun's own doc comment). The `if` is
+    // TypeScript narrowing the discriminated union, not a conditional
+    // assertion: the expect above has already failed if it is skipped.
+    if (!outcome.ok) expect(outcome.reason).toBe('denied');
   });
 
-  it('reports failure when data comes back null, even with no error', () => {
+  it('reports failure when data comes back null, even with no error', async () => {
     nextResult = { data: null, error: null };
-    return deleteRun('run-1').then((outcome) => {
-      expect(outcome.ok).toBe(false);
-      if (!outcome.ok) expect(outcome.reason).toBe('denied');
-    });
+    const outcome = await deleteRun('run-1');
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.reason).toBe('denied');
   });
 
-  it('reports failure when Postgres returns an error', () => {
+  it('reports failure when Postgres returns an error', async () => {
     nextResult = { data: null, error: { message: 'boom' } };
-    return deleteRun('run-1').then((outcome) => {
-      expect(outcome.ok).toBe(false);
-      if (!outcome.ok) expect(outcome.reason).toBe('network');
-    });
+    const outcome = await deleteRun('run-1');
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.reason).toBe('network');
   });
 
-  it('reports success only when a row actually came back', () => {
+  it('reports success only when a row actually came back', async () => {
     nextResult = { data: [{ id: 'run-1' }], error: null };
-    return deleteRun('run-1').then((outcome) => {
-      expect(outcome).toEqual({ ok: true });
-    });
+    expect(await deleteRun('run-1')).toEqual({ ok: true });
   });
 });

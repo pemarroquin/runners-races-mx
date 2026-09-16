@@ -68,6 +68,35 @@ interface RaceSection {
 
 type SavedView = 'races' | 'fences' | 'progress';
 
+/** The segment labels, as keys rather than as a ternary ladder inside the
+ *  JSX — the branch you are looking for is on its own line, and a fourth view
+ *  becomes one entry instead of another level of nesting. The ORDER of the
+ *  segments is the array at the call site, not this record. */
+const SAVED_VIEW_LABEL_KEYS: Record<SavedView, string> = {
+  races: 'myraces.tabRaces',
+  fences: 'myraces.tabFences',
+  progress: 'myraces.tabProgress',
+};
+
+/** Why a queued run's retry failed. The `track.*` key namespace is inherited
+ *  from where this copy was written, not from where it is read — as of
+ *  2026-09-15 these three strings are used from THIS screen only. */
+const SYNC_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network', string> = {
+  disabled: 'track.syncDisabled',
+  auth: 'track.syncFailedAuth',
+  network: 'track.syncFailedNetwork',
+};
+
+/** Why a delete failed. 'denied' is its own case on purpose — it means RLS
+ *  matched no policy, which is a different thing from a dropped request and
+ *  must not be reported as one (see deleteRun's own doc comment). */
+const DELETE_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network' | 'denied', string> = {
+  disabled: 'track.deleteFailedDisabled',
+  auth: 'track.deleteFailedAuth',
+  denied: 'track.deleteFailedDenied',
+  network: 'track.deleteFailedNetwork',
+};
+
 /** What the detail card is currently showing — the id plus enough to route
  *  the right actions (kind) without re-deriving it from the two lists on
  *  every render. */
@@ -181,6 +210,14 @@ export default function MyRacesScreen() {
   const [identitySignal, setIdentitySignal] = useState(0);
   useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
 
+  // Bumped by DetailCard's own delete handlers (below), local to this screen
+  // — deleting a saved or queued run doesn't fetch anything, so neither
+  // `view`/`isFocused` nor the two signals above change, and the deleted
+  // territory kept drawing on the map until something UNRELATED re-ran this
+  // effect. Not `notifyRunSaved()`: that event means "a run was saved
+  // somewhere," and a delete is the opposite of that.
+  const [deleteSignal, setDeleteSignal] = useState(0);
+
   useEffect(() => {
     if (view !== 'fences' || !isFocused) return;
     let stale = false;
@@ -200,7 +237,7 @@ export default function MyRacesScreen() {
       stale = true;
       clearTimeout(id);
     };
-  }, [view, isFocused, refreshQueued, saveSignal, identitySignal]);
+  }, [view, isFocused, refreshQueued, saveSignal, identitySignal, deleteSignal]);
 
   // Pull-to-refresh — same refreshing-boolean pattern as leaderboard.tsx's
   // onRefresh, kept separate from the `fences === null` loading state above
@@ -237,13 +274,7 @@ export default function MyRacesScreen() {
               ]}>
               <Text
                 style={[styles.segmentLabel, { color: selected ? '#ffffff' : c.textSecondary }]}>
-                {t(
-                  key === 'races'
-                    ? 'myraces.tabRaces'
-                    : key === 'fences'
-                      ? 'myraces.tabFences'
-                      : 'myraces.tabProgress',
-                )}
+                {t(SAVED_VIEW_LABEL_KEYS[key])}
               </Text>
             </Pressable>
           );
@@ -319,6 +350,7 @@ export default function MyRacesScreen() {
           onRefresh={onRefreshFences}
           selection={selection}
           onSelect={setSelection}
+          onDeleted={() => setDeleteSignal((v) => v + 1)}
           locale={locale}
           scheme={scheme}
         />
@@ -335,6 +367,7 @@ function FencesView({
   onRefresh,
   selection,
   onSelect,
+  onDeleted,
   locale,
   scheme,
 }: {
@@ -345,6 +378,9 @@ function FencesView({
   onRefresh: () => void;
   selection: Selection | null;
   onSelect: (s: Selection | null) => void;
+  /** A saved or queued run was just deleted — bump the parent's refetch
+   *  signal so the map stops drawing it. */
+  onDeleted: () => void;
   locale: string;
   scheme: 'dark' | 'light';
 }) {
@@ -473,7 +509,10 @@ function FencesView({
           locale={locale}
           scheme={scheme}
           onClose={() => onSelect(null)}
-          onDeleted={() => onSelect(null)}
+          onDeleted={() => {
+            onDeleted();
+            onSelect(null);
+          }}
         />
       )}
     </View>
@@ -623,22 +662,12 @@ function DetailCard({
 
       {retryFailure && !retryFailure.ok && (
         <Text style={[styles.detailNoticeText, { color: c.accent }]}>
-          {retryFailure.reason === 'disabled'
-            ? t('track.syncDisabled')
-            : retryFailure.reason === 'auth'
-              ? t('track.syncFailedAuth')
-              : t('track.syncFailedNetwork')}
+          {t(SYNC_FAILURE_KEYS[retryFailure.reason])}
         </Text>
       )}
       {deleteFailure && !deleteFailure.ok && (
         <Text style={[styles.detailNoticeText, { color: c.accent }]}>
-          {deleteFailure.reason === 'disabled'
-            ? t('track.deleteFailedDisabled')
-            : deleteFailure.reason === 'auth'
-              ? t('track.deleteFailedAuth')
-              : deleteFailure.reason === 'denied'
-                ? t('track.deleteFailedDenied')
-                : t('track.deleteFailedNetwork')}
+          {t(DELETE_FAILURE_KEYS[deleteFailure.reason])}
         </Text>
       )}
 

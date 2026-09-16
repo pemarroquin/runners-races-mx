@@ -64,7 +64,15 @@ const ZERO_COUNTERS: PilotCounters = {
 /** Enough of a shape check that a half-written or hand-edited value can't
  *  produce NaN/undefined counters. Same reasoning as run-checkpoint.ts's
  *  isRunCheckpoint: malformed data is dropped (defaults to zero) rather than
- *  failing the read. */
+ *  failing the read.
+ *
+ *  Checks the four ORIGINAL keys only, deliberately. A counter added later
+ *  (runsPaceGuarded was) is absent from every record already on a device, so
+ *  requiring it here would throw away four healthy counters on first read.
+ *  getPilotCounters fills the gap instead, by merging over ZERO_COUNTERS —
+ *  which is the half that must never be skipped: a missing key read back as
+ *  `undefined` makes incrementPilotCounter compute `undefined + 1`, and NaN
+ *  serializes to `null`, so the counter is then stuck forever. */
 function isPilotCounters(value: unknown): value is PilotCounters {
   if (typeof value !== 'object' || value === null) return false;
   const c = value as Partial<PilotCounters>;
@@ -77,14 +85,16 @@ function isPilotCounters(value: unknown): value is PilotCounters {
 }
 
 /** Reads the persisted counters, defaulting missing/corrupted storage to all
- *  zeros rather than throwing — never reported as more durable than it is. */
+ *  zeros rather than throwing — never reported as more durable than it is.
+ *  Every key is present in the result even when the stored record predates
+ *  it (see isPilotCounters). */
 export function getPilotCounters(): PilotCounters {
   initDb();
   const raw = getPref(PREF_COUNTERS);
   if (!raw) return { ...ZERO_COUNTERS };
   try {
     const parsed: unknown = JSON.parse(raw);
-    return isPilotCounters(parsed) ? parsed : { ...ZERO_COUNTERS };
+    return isPilotCounters(parsed) ? { ...ZERO_COUNTERS, ...parsed } : { ...ZERO_COUNTERS };
   } catch {
     return { ...ZERO_COUNTERS };
   }

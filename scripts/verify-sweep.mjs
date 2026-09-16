@@ -78,10 +78,10 @@ if (doc._meta?.count !== races.length) {
   err('_meta', `count is ${doc._meta?.count} but there are ${races.length} races`);
 }
 
-const seen = new Map();
+const seen = new Set();
 for (const r of races) {
   if (seen.has(r.id)) err(r.id, 'duplicate id');
-  else seen.set(r.id, r);
+  else seen.add(r.id);
 }
 
 // ── 2. per-record schema ────────────────────────────────────────────────────

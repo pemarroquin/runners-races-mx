@@ -102,6 +102,14 @@ const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 const OUTLINE_WIDTH = 1.5;
 const OUTLINE_ALPHA = 0.55;
 
+/** An h3 ring as react-native-maps coordinates. Both h3-js calls this file
+ *  makes — cellToBoundary and cellsToMultiPolygon — return [lat, lng] pairs
+ *  in their DEFAULT (non-GeoJSON) form, which is already this order once
+ *  mapped: no [lng, lat] flip here, unlike the web/GL version. */
+function toMapCoords(ring: [number, number][]): MapCoord[] {
+  return ring.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+}
+
 export function FenceMap({
   geometry,
   path,
@@ -124,10 +132,7 @@ export function FenceMap({
       })),
     [highlightRings],
   );
-  // Tile Coverage brief §6 step 4/§5 — cellToBoundary returns [lat,lng]
-  // pairs by default (h3-js v4), which is already react-native-maps'
-  // {latitude,longitude} order once mapped — no GeoJSON [lng,lat] flip
-  // needed here, unlike the web/GL version.
+  // Tile Coverage brief §6 step 4/§5.
   // Individual hexagons up to TILE_DISSOLVE_THRESHOLD, then the dissolved
   // form — the summary is where the tiles ARE the score and worth seeing
   // one by one, but a large loop must not turn it into a slideshow. Native
@@ -141,20 +146,24 @@ export function FenceMap({
       tiles.length > TILE_DISSOLVE_THRESHOLD
         ? cellsToMultiPolygon(tiles).map((rings, i) => ({
             h3: `region-${i}`,
-            coords: rings[0].map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
+            coords: toMapCoords(rings[0]),
           }))
-        : tiles.map((h3) => ({
-            h3,
-            coords: cellToBoundary(h3).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
-          })),
+        : tiles.map((h3) => ({ h3, coords: toMapCoords(cellToBoundary(h3)) })),
     [tiles],
   );
+  // Same TILE_DISSOLVE_THRESHOLD ceiling as tilePolys above, and for the
+  // same reason: this still mounts one <Polygon> per cell below it. Web's
+  // shared tileFeatureCollection already applies the threshold to both sets;
+  // native previously only bounded the owner's own tiles, leaving rivals
+  // unbounded.
   const rivalTilePolys = useMemo(
     () =>
-      rivalTiles.map((h3) => ({
-        h3,
-        coords: cellToBoundary(h3).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
-      })),
+      rivalTiles.length > TILE_DISSOLVE_THRESHOLD
+        ? cellsToMultiPolygon(rivalTiles).map((rings, i) => ({
+            h3: `rival-region-${i}`,
+            coords: toMapCoords(rings[0]),
+          }))
+        : rivalTiles.map((h3) => ({ h3, coords: toMapCoords(cellToBoundary(h3)) })),
     [rivalTiles],
   );
   // The ROUTE — the actual recorded path, not the fence boundary. Same

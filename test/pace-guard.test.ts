@@ -36,7 +36,12 @@ describe('pace guard vs real recorded runs', () => {
     expect(isImpossiblePace(REAL)).toBe(false);
   });
 
-  it('leaves a 5x margin on that run, not a hair', () => {
+  it('clears the guard by a margin, not by a hair', () => {
+    // Measured: the run peaks at ~12.1 km/h sustained against a 20 km/h
+    // guard, so ~1.65x. The bound asserted is 1.5x — deliberately below the
+    // measured figure, because the point is "there is real headroom", not
+    // "the headroom is exactly this". (The name used to claim 5x, which no
+    // assertion here ever checked and the data never supported.)
     const peak = maxSustainedKmh(REAL);
     expect(peak).toBeLessThan(13);
     expect(PACE_GUARD_KMH / peak).toBeGreaterThan(1.5);
@@ -109,10 +114,11 @@ describe('maxSustainedKmh', () => {
     // fix adds its distance to the window TWICE, going out and coming back.
     // At 300 m a mean read 80.8 km/h and a largest-segment-trimmed mean
     // still read 44.6. The median reads 9.0 — the clean run's own figure.
+    const clean = constantSpeed(10, 120);
     const points = constantSpeed(10, 120);
     points[60] = { ...points[60], lat: points[60].lat + jumpM / 110540 };
     expect(isImpossiblePace(points)).toBe(false);
-    expect(maxSustainedKmh(points)).toBeCloseTo(maxSustainedKmh(constantSpeed(10, 120)), 1);
+    expect(maxSustainedKmh(points)).toBeCloseTo(maxSustainedKmh(clean), 1);
   });
 
   it('still catches sustained speed that starts mid-run', () => {

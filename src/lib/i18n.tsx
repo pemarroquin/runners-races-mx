@@ -1153,12 +1153,14 @@ function loadInitialLocale(): Locale {
   } catch {
     // Storage failure — fall back to the device-derived locale.
   }
-  // Point the singleton at the same value BEFORE returning. `t()` reads
-  // `i18n.locale`, not React state, so deferring this to an effect would
-  // render the entire first paint in the wrong language — which is what the
-  // effect version did, and why an English user saw a flash of Spanish on
-  // every cold start. Assigning here is safe: the initializer runs once per
-  // mount and is idempotent.
+  // Keep the singleton pointed at the same value the provider is about to
+  // render with. Since PR #44 the context's `t` passes `locale` explicitly
+  // (see LocaleProvider), so this is NOT what makes the first paint come out
+  // in the right language any more — the returned state is. It stays because
+  // `i18n.locale` is still the fallback for any direct `i18n.t` call, and a
+  // singleton disagreeing with React state is precisely the split that made
+  // the language toggle dead in production. Assigning here is safe: the
+  // initializer runs once per mount and is idempotent.
   i18n.locale = locale;
   return locale;
 }

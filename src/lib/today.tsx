@@ -9,14 +9,7 @@
 //
 // Exposing today as context state gives those memos something to depend on
 // that actually changes at midnight.
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 /** `YYYY-MM-DD` for a Date in local time (not toISOString, which is UTC). */
@@ -30,10 +23,13 @@ const TodayContext = createContext<string>(localDayKey(new Date()));
 
 export function TodayProvider({ children }: { children: ReactNode }) {
   const [today, setToday] = useState(() => localDayKey(new Date()));
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    // Scoped to the effect rather than held in a ref: the timer is created,
+    // re-armed and cleared entirely inside here, so nothing outside needs a
+    // handle on it.
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     // Re-arms itself for the next local midnight rather than polling. A
     // single long timer is enough — but it is NOT trusted on its own: on
@@ -41,7 +37,7 @@ export function TodayProvider({ children }: { children: ReactNode }) {
     // the "left open overnight" case this exists for. The AppState listener
     // below is the belt to this suspenders.
     function scheduleNextMidnight() {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timer) clearTimeout(timer);
       const now = new Date();
       const nextMidnight = new Date(
         now.getFullYear(),
@@ -51,7 +47,7 @@ export function TodayProvider({ children }: { children: ReactNode }) {
         0,
         5, // a few seconds past, so a fast timer can't land on the wrong side
       );
-      timerRef.current = setTimeout(() => {
+      timer = setTimeout(() => {
         if (cancelled) return;
         setToday(localDayKey(new Date()));
         scheduleNextMidnight();
@@ -70,7 +66,7 @@ export function TodayProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timer) clearTimeout(timer);
       sub.remove();
     };
   }, []);

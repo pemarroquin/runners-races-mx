@@ -9,12 +9,16 @@
 // here instead, after the fact.
 //
 // DETECTION, NOT PREVENTION, and deliberately so. At one user that is the
-// right proportion, and it buys something prevention would not: this runs
-// the app's OWN pathToTiles / enclosedCells / gap-policy, so there is no
-// second implementation to drift. Re-implementing enclosure in SQL was the
-// alternative, and this repo already has the scar from that pattern —
-// gap-policy.ts exists only because the recorder and the tile builder each
-// applied the caps themselves and disagreed about one real gap.
+// right proportion, and it buys something prevention would not: the visits
+// check runs the app's OWN pathToTiles and gap-policy, so there is no second
+// implementation to drift. Re-implementing that in SQL was the alternative,
+// and this repo already has the scar from that pattern — gap-policy.ts
+// exists only because the recorder and the tile builder each applied the
+// caps themselves and disagreed about one real gap.
+//
+// ENCLOSURE is the exception, and not by oversight: it is checked against a
+// bounding box rather than by re-running enclosedCells, because the path
+// stored here is the privacy-MASKED one. See OFF_PATH_MARGIN_M below.
 //
 // Read-only. Uses the anon key and the read-all policies; it cannot modify
 // or delete anything. Same posture as audit-territories.mjs.
@@ -28,8 +32,7 @@ import { fileURLToPath } from 'node:url';
 
 import { cellToLatLng } from 'h3-js';
 
-import { enclosedCells } from '@/lib/enclosure';
-import { DEFAULT_TILE_RES, pathToTiles, type TilePoint } from '@/lib/tiles';
+import { pathToTiles, type TilePoint } from '@/lib/tiles';
 import { haversineM } from '@/lib/territory';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

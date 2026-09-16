@@ -44,7 +44,11 @@ import { TILE_DISSOLVE_THRESHOLD } from '@/constants/map';
 // catch block rather than mocking something it never reaches.
 vi.mock('h3-js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('h3-js')>();
-  return { ...actual, gridPathCells: vi.fn(actual.gridPathCells) };
+  return {
+    ...actual,
+    gridPathCells: vi.fn(actual.gridPathCells),
+    latLngToCell: vi.fn(actual.latLngToCell),
+  };
 });
 
 // Monterrey-ish latitude, matching territory.test.ts's own fixtures.
@@ -225,6 +229,58 @@ describe('pathToTiles', () => {
     expect(result.cells).toHaveLength(2);
     expect(result.directCount).toBe(2);
     expect(result.gapFilledCount).toBe(0);
+  });
+
+  it('never bridges across a skipped (unconvertible) point using a plan verdict computed for a different segment', async () => {
+    // planGapClosures indexes `bridged` by RAW path position: bridged[i]
+    // describes path[i-1] -> path[i] alone. If path[i-1] itself gets
+    // skipped in this loop (latLngToCell threw for it), `prevCell` here is
+    // some EARLIER point, and reusing bridged[i] for that longer span would
+    // apply a verdict the planner never made for it. Construct exactly that:
+    // p0 -> p1 is a huge jump in a few seconds (implausible on its own —
+    // ~300 m/s), p1's coordinate conversion is forced to throw (simulating
+    // a malformed fix), and p1 -> p2 is an ordinary 50m jog-pace step that
+    // the planner legitimately marks bridgeable. Without the fix, pathToTiles
+    // would splice cellA (p0) straight to cellC (p2) — silently claiming the
+    // ~5000m the runner never ran, using a plausibility check that was never
+    // actually performed on that span.
+    const p0 = pointEast(0, 0);
+    const p1 = pointEast(5050, 17_000); // ~5050m in 17s if it counted at all
+    const p2 = pointEast(5100, 17_000 + (50 / JOG_MS) * 1000); // +50m at jog pace
+
+    const { latLngToCell: realLatLngToCell } = await vi.importActual<typeof import('h3-js')>(
+      'h3-js',
+    );
+    const cellA = realLatLngToCell(p0.lat, p0.lng, DEFAULT_TILE_RES);
+    const cellC = realLatLngToCell(p2.lat, p2.lng, DEFAULT_TILE_RES);
+
+    // Three queued one-shot calls, matching pathToTiles's own p0/p1/p2 call
+    // order exactly, so only p1's conversion throws and the mock reverts to
+    // its module-scope passthrough default afterwards — no manual restore
+    // needed for later tests (same idiom as the gridPathCells mock above).
+    vi.mocked(latLngToCell)
+      .mockImplementationOnce(realLatLngToCell)
+      .mockImplementationOnce(() => {
+        throw new Error('simulated malformed fix');
+      })
+      .mockImplementationOnce(realLatLngToCell);
+
+    const result = pathToTiles([p0, p1, p2]);
+
+    // Only the two convertible points are claimed, directly — nothing
+    // gap-filled between them.
+    expect(result.directCount).toBe(2);
+    expect(result.gapFilledCount).toBe(0);
+    expect(result.cells.sort()).toEqual([cellA, cellC].sort());
+
+    // The invented-ground failure mode this guards against: every cell
+    // gridPathCells would have spliced in between cellA and cellC must be
+    // absent from the result.
+    const wouldHaveBridged = gridPathCells(cellA, cellC).filter(
+      (c) => c !== cellA && c !== cellC,
+    );
+    expect(wouldHaveBridged.length).toBeGreaterThan(0);
+    for (const c of wouldHaveBridged) expect(result.cells).not.toContain(c);
   });
 });
 

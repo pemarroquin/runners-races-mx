@@ -34,16 +34,22 @@ const BOWTIE: LatLng[] = [
   { lat: 25.672, lng: -100.308 },
 ];
 
+/** A path as GeoJSON position pairs — [lng, lat], the order turf wants and
+ *  the reverse of how expo-location reports it. */
+function toCoords(path: LatLng[]): [number, number][] {
+  return path.map((p): [number, number] => [p.lng, p.lat]);
+}
+
 describe('closeRing', () => {
   it('appends the start point when the path is open', () => {
-    const coords = SQUARE_OPEN.map((p): [number, number] => [p.lng, p.lat]);
+    const coords = toCoords(SQUARE_OPEN);
     const closed = closeRing(coords);
     expect(closed.length).toBe(coords.length + 1);
     expect(closed[closed.length - 1]).toEqual(closed[0]);
   });
 
   it('is a no-op when the path is already closed', () => {
-    const coords = SQUARE_OPEN.map((p): [number, number] => [p.lng, p.lat]);
+    const coords = toCoords(SQUARE_OPEN);
     const alreadyClosed = [...coords, coords[0]];
     expect(closeRing(alreadyClosed)).toEqual(alreadyClosed);
   });
@@ -51,8 +57,7 @@ describe('closeRing', () => {
 
 describe('cleanPolygon', () => {
   it('leaves a simple (non-self-intersecting) polygon untouched', () => {
-    const coords = SQUARE_OPEN.map((p): [number, number] => [p.lng, p.lat]);
-    const simple = polygon([closeRing(coords)]);
+    const simple = polygon([closeRing(toCoords(SQUARE_OPEN))]);
     expect(cleanPolygon(simple)).toBe(simple); // same reference — true no-op, not just equal
   });
 });
@@ -62,8 +67,7 @@ describe('buildFence', () => {
     const fence = buildFence(SQUARE_OPEN, 0); // tolerance 0: skip simplification noise for this check
     expect(fence).not.toBeNull();
 
-    const coords = SQUARE_OPEN.map((p): [number, number] => [p.lng, p.lat]);
-    const manuallyClosed = polygon([closeRing(coords)]);
+    const manuallyClosed = polygon([closeRing(toCoords(SQUARE_OPEN))]);
     expect(fence!.areaM2).toBeCloseTo(area(manuallyClosed), 6);
   });
 
@@ -72,9 +76,7 @@ describe('buildFence', () => {
     expect(fence).not.toBeNull();
     expect(fence!.areaM2).toBeGreaterThan(0);
 
-    const coords = BOWTIE.map((p): [number, number] => [p.lng, p.lat]);
-    const naiveRaw = polygon([closeRing(coords)]);
-    const naiveArea = area(naiveRaw);
+    const naiveArea = area(polygon([closeRing(toCoords(BOWTIE))]));
 
     // The whole point of the cleaning step: this must NOT just equal the
     // naive shoelace answer on the crossed ring. If it ever does, the
@@ -115,7 +117,7 @@ describe('outerRings', () => {
     const rings = outerRings(fence!.geometry.geometry);
     expect(rings).toHaveLength(1);
     // Closed — first and last coordinate match.
-    expect(rings[0][0]).toEqual(rings[0][rings[0].length - 1]);
+    expect(rings[0][0]).toEqual(rings[0].at(-1));
   });
 
   it('returns one ring per lobe of a MultiPolygon', () => {
@@ -126,7 +128,7 @@ describe('outerRings', () => {
     // The bowtie splits into two simple lobes at the crossing.
     expect(rings.length).toBeGreaterThan(1);
     for (const ring of rings) {
-      expect(ring[0]).toEqual(ring[ring.length - 1]);
+      expect(ring[0]).toEqual(ring.at(-1));
     }
   });
 });
@@ -223,16 +225,18 @@ describe('buildFence on shapes that enclose nothing', () => {
 
   it('returns null for an out-and-back along the same path', () => {
     const out = Array.from({ length: 15 }, (_, i) => ({ lat: O.lat + m(i * 3.5), lng: O.lng }));
-    expect(() => buildFence([...out, ...out.slice().reverse()])).not.toThrow();
-    expect(buildFence([...out, ...out.slice().reverse()])).toBeNull();
+    const thereAndBack = [...out, ...out.slice().reverse()];
+    expect(() => buildFence(thereAndBack)).not.toThrow();
+    expect(buildFence(thereAndBack)).toBeNull();
   });
 
-  it('never returns a zero-area fence', () => {
-    // A 0 m² territory is not something to offer the runner a Save button for.
-    const straight = Array.from({ length: 8 }, (_, i) => ({ lat: O.lat + m(i * 10), lng: O.lng }));
-    const fence = buildFence(straight);
-    expect(fence === null || fence.areaM2 > 0).toBe(true);
-  });
+  // A 0 m² territory is not something to offer the runner a Save button for
+  // — covered without a dedicated test: the null branch duplicates 'returns
+  // null for a straight walk' above, and 'still builds a real fence from a
+  // small loop' below already asserts a real fence's area is never zero
+  // (areaM2 > 500). A standalone `fence === null || fence.areaM2 > 0` test
+  // on a straight-walk fixture always took the null branch, so the > 0 half
+  // was never actually evaluated — a vacuous assertion, not a passing one.
 
   it('still builds a real fence from a small loop', () => {
     const loop = [

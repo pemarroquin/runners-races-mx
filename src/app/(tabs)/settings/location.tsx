@@ -117,8 +117,22 @@ export default function LocationSettingsScreen() {
     setZoneBusy(true);
     setZoneError(false);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      // Through the app's OWN layer, for the same reason readPermission above
+      // does — and this call was the last one on this screen that still
+      // wasn't. `Location.requestForegroundPermissionsAsync()` awaits
+      // `navigator.permissions.query({ name: 'geolocation' })` with no catch
+      // of its own (ExpoLocation.web.js, getPermissionsAsync), and Safari has
+      // no 'geolocation' entry in the Permissions API — so that query rejects
+      // and takes the whole call with it. The catch below then painted
+      // "couldn't set your zone" on a phone that had never been asked for
+      // anything, which made the privacy zone unsettable on iOS Safari, this
+      // app's primary web target. requestPermission() falls through to a real
+      // getCurrentPosition probe there (geolocation.web.ts); on native it IS
+      // this same expo-location call, so nothing changes on a phone build.
+      //
+      // The position read below stays on expo-location: a ONE-SHOT call is
+      // the case the web shim maps correctly (see src/lib/geolocation.ts).
+      if ((await requestPermission()) !== 'granted') {
         setZoneError(true);
         return;
       }
@@ -147,6 +161,15 @@ export default function LocationSettingsScreen() {
     setZoneError(false);
     setConfirmingRemove(false);
   }, []);
+
+  // Not-yet-read and no-provider read the same on screen: neither is a
+  // permission the runner has refused.
+  const permUnknown = locPerm === null || locPerm === 'unknown';
+  // The one state with no control at all — a browser will not re-open a
+  // prompt it has been told to stop showing. Named once because the hint and
+  // the button's render gate have to agree about it; they were two copies of
+  // the same expression, and a fix to one would have missed the other.
+  const browserBlocked = locPerm === 'blocked' && Platform.OS === 'web';
 
   return (
     <SettingsPage>
@@ -205,23 +228,15 @@ export default function LocationSettingsScreen() {
             // Not-yet-read and no-provider are NOT "off". Painting either the
             // same red as a blocked permission claims a problem nobody has
             // verified.
-            unknown={locPerm === null || locPerm === 'unknown'}
-            label={
-              locPerm === null || locPerm === 'unknown'
-                ? t('settings.locationUnknown')
-                : locPerm === 'granted'
-                  ? t('settings.locationOn')
-                  : locPerm === 'askable'
-                    ? t('settings.locationNotSet')
-                    : t('settings.locationOff')
-            }
+            unknown={permUnknown}
+            label={t(locationStatusKey(locPerm))}
             c={c}
           />
         </SettingRow>
         <Hint c={c}>
           {locPerm === 'granted'
             ? t('settings.locationOnHint')
-            : locPerm === 'blocked' && Platform.OS === 'web'
+            : browserBlocked
               ? // The one case with no button: a browser will not re-open a
                 // prompt it has been told to stop showing, so the hint has
                 // to carry the actual gesture instead of a control that
@@ -229,7 +244,7 @@ export default function LocationSettingsScreen() {
                 t('settings.locationBrowserBlockedHint')
               : t('settings.locationOffHint')}
         </Hint>
-        {locPerm !== null && locPerm !== 'granted' && !(locPerm === 'blocked' && Platform.OS === 'web') && (
+        {locPerm !== null && locPerm !== 'granted' && !browserBlocked && (
           <RowAction onPress={onFixLocation} busy={locBusy} c={c}>
             {locPerm === 'blocked'
               ? t('settings.locationOpenSettings')
@@ -239,6 +254,23 @@ export default function LocationSettingsScreen() {
       </View>
     </SettingsPage>
   );
+}
+
+/**
+ * What the status slot says about the OS location permission.
+ *
+ * A key, not a string, so this stays pure in its argument and independent of
+ * the locale — the same rule PR #44's i18n fix turned into a house rule (see
+ * the React Compiler note in the repo's CLAUDE.md). Same shape as
+ * `distanceTagLabelKey` in lib/races; `themeModeLabel` in ./preferences is
+ * the other half of the same idiom, taking `t` as an argument instead.
+ * `null` is "not read yet", which reads as unknown rather than as off.
+ */
+function locationStatusKey(state: GeoPermissionState | null): string {
+  if (state === null || state === 'unknown') return 'settings.locationUnknown';
+  if (state === 'granted') return 'settings.locationOn';
+  if (state === 'askable') return 'settings.locationNotSet';
+  return 'settings.locationOff';
 }
 
 /**

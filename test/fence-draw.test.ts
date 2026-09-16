@@ -43,6 +43,12 @@ describe('withAlpha', () => {
   });
 });
 
+// The wheel's two ends, which both the clamp and the stroke ramp are pinned
+// to. Upper-cased once: the literals are uppercase, interpolated results come
+// back lowercase from hexLerp.
+const FIRST_STOP = ROUTE_GRADIENT[0][1].toUpperCase();
+const LAST_STOP = ROUTE_GRADIENT[ROUTE_GRADIENT.length - 1][1].toUpperCase();
+
 describe('gradientColorAt', () => {
   it('hits the exact stop colours at their offsets', () => {
     for (const [offset, color] of ROUTE_GRADIENT) {
@@ -51,10 +57,8 @@ describe('gradientColorAt', () => {
   });
 
   it('clamps outside [0,1]', () => {
-    expect(gradientColorAt(-1).toUpperCase()).toBe(ROUTE_GRADIENT[0][1].toUpperCase());
-    expect(gradientColorAt(2).toUpperCase()).toBe(
-      ROUTE_GRADIENT[ROUTE_GRADIENT.length - 1][1].toUpperCase(),
-    );
+    expect(gradientColorAt(-1).toUpperCase()).toBe(FIRST_STOP);
+    expect(gradientColorAt(2).toUpperCase()).toBe(LAST_STOP);
   });
 });
 
@@ -62,10 +66,8 @@ describe('gradientStrokeColors', () => {
   it('returns one colour per vertex, tail-to-head', () => {
     const colors = gradientStrokeColors(5);
     expect(colors).toHaveLength(5);
-    expect(colors[0].toUpperCase()).toBe(ROUTE_GRADIENT[0][1].toUpperCase());
-    expect(colors[4].toUpperCase()).toBe(
-      ROUTE_GRADIENT[ROUTE_GRADIENT.length - 1][1].toUpperCase(),
-    );
+    expect(colors[0].toUpperCase()).toBe(FIRST_STOP);
+    expect(colors[4].toUpperCase()).toBe(LAST_STOP);
   });
 
   it('handles degenerate counts', () => {

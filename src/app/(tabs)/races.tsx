@@ -183,7 +183,10 @@ export default function FeedScreen() {
       if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery =
         !q || foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
-      const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
+      // `tag`, not `t` — `t` is the translator in this scope, and shadowing it
+      // inside a filter predicate is the kind of thing that reads fine until
+      // somebody adds a translated string to the same callback.
+      const matchesDistance = distances.size === 0 || r.distanceTags.some((tag) => distances.has(tag));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     });
@@ -210,7 +213,7 @@ export default function FeedScreen() {
       const days = daysUntil(r.date, today);
       if (!(r.date === null || (days !== null && days >= 0))) return false;
       const matchesQuery = foldForSearch(r.name).includes(q) || foldForSearch(r.city).includes(q);
-      const matchesDistance = distances.size === 0 || r.distanceTags.some((t) => distances.has(t));
+      const matchesDistance = distances.size === 0 || r.distanceTags.some((tag) => distances.has(tag));
       const matchesMonth = months.size === 0 || months.has(monthKey(r.date));
       return matchesQuery && matchesDistance && matchesMonth;
     }).length;
