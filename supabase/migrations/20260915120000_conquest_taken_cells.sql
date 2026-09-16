@@ -21,8 +21,15 @@
 -- APPLY BY HAND in the Supabase SQL editor — nothing in this repo runs
 -- migrations. Verify AFTER applying, not before: a plpgsql body is planned
 -- on first call, so a broken one installs perfectly cleanly.
+--
+-- DROP first, unlike every prior claim_run_tiles migration: this one changes
+-- the OUT parameter list (adds taken_cells), and Postgres refuses that under
+-- CREATE OR REPLACE — "cannot change return type of existing function"
+-- (42P13). Reproduced 2026-09-15 applying this by hand; Postgres's own hint
+-- names the exact fix.
+drop function if exists claim_run_tiles(uuid, text[], text[], text);
 
-create or replace function claim_run_tiles(
+create function claim_run_tiles(
   p_run_id  uuid,
   p_visited text[],
   p_enclosed text[],
