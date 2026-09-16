@@ -65,8 +65,22 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t('tabs.track'),
+          // `android`/`androidInactive` are BOTH "sprint" — not a real
+          // fill/outline pair the way every other tab's are (trophy/
+          // emoji_events, house/home_filled, heart/favorite, person/
+          // account_circle). Material Symbols has no outline sibling for
+          // "sprint" in this app's bundled set, and the stand-in that used
+          // to sit here ("directions_run") is a structurally different
+          // hand-drawn glyph (icon.web.tsx) — a completely different shape
+          // swapping in on every tab change reads as the icon "deforming"
+          // (Pedro, 2026-09-17: "the run icon totally deforms"). iOS already
+          // sidesteps this by reusing the same symbol both states
+          // ("figure.run" has no `.fill` sibling either) — matching that
+          // here removes the shape-swap entirely; focus still reads through
+          // FloatingTabBar's own color + iconWrapActive highlight, same as
+          // every other tab already relies on for its OWN focus contrast.
           tabBarIcon: ({ focused, color }) => (
-            <TabGlyph focused={focused} color={color} ios="figure.run" iosInactive="figure.run" android="sprint" androidInactive="directions_run" />
+            <TabGlyph focused={focused} color={color} ios="figure.run" iosInactive="figure.run" android="sprint" androidInactive="sprint" />
           ),
         }}
       />
