@@ -11,10 +11,13 @@
 // here are applied BY HAND and an unapplied one reads as an honest zero, so
 // a board that needs no SQL cannot be broken by forgetting to run any.
 //
-// A park-path read lived here too and is DELETED. It fed a denominator this
-// board no longer uses (see ConquestEntry.share) and a caption now taken from
-// the metro region — and it never returned anything anyway: park_path_cells
-// is empty in production and all four live districts contain zero park cells.
+// A park-path read used to live here and was deleted 2026-09-09 — at the
+// time, `park_path_cells` was genuinely empty in production, so the read fed
+// nothing and the conquest denominator moved to claimed ground instead (see
+// leaderboard.ts's ConquestEntry.share; that change stands). The table was
+// loaded the same day (36,193 cells, see BACKLOG). `fetchDistrictParkCells`
+// is restored ONLY for district.ts's districtLabel — a decorative caption,
+// never a score — not for any denominator.
 import { districtCellPattern } from '@/lib/district';
 import type { TileVisitRow } from '@/lib/mayorship';
 import { supabase } from '@/lib/supabase';
@@ -23,6 +26,45 @@ import { withSession, type Outcome } from '@/lib/territory-sync';
 /** PostgREST's hard page size. Paged rather than assumed — see this file's
  *  header for what happened the last time a read here assumed. */
 const PAGE = 1000;
+
+/** One park-path cell, with the municipio it was attributed to. The
+ *  municipio is for districtLabel's decorative caption only — see its own
+ *  comment for why nothing scores by it. */
+export interface ParkCell {
+  h3: string;
+  municipio: string;
+}
+
+/**
+ * A district's park-path cells, for districtLabel's caption only.
+ *
+ * Empty is a valid answer (most of the planet has no extracted park data);
+ * callers must fall back to something else, never render "0 parks".
+ */
+export async function fetchDistrictParkCells(
+  district: string,
+): Promise<Outcome<{ parkCells: ParkCell[] }>> {
+  return withSession<{ parkCells: ParkCell[] }>(async () => {
+    const pattern = `${districtCellPattern(district)}%`;
+    const parkCells: ParkCell[] = [];
+    for (let offset = 0; ; offset += PAGE) {
+      const { data, error } = await supabase
+        .from('park_path_cells')
+        .select('h3, municipio')
+        .like('h3', pattern)
+        // Ordered so paging is deterministic — (municipio, h3) is the
+        // primary key, so h3 alone is unique within a municipio and the pair
+        // is a total order. Same reasoning as fetchTileLeaderboard's paging.
+        .order('municipio', { ascending: true })
+        .order('h3', { ascending: true })
+        .range(offset, offset + PAGE - 1);
+      if (error || !data) return { ok: false, reason: 'network' as const };
+      parkCells.push(...data);
+      if (data.length < PAGE) break;
+    }
+    return { ok: true, parkCells };
+  });
+}
 
 /**
  * The district's visits: Board 2's raw material.

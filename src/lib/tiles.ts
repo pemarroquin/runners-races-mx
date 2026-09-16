@@ -57,22 +57,14 @@ export function isCurrentTileRes(h3: string, res: number = DEFAULT_TILE_RES): bo
   return getResolution(h3) === res;
 }
 
-/**
- * The same filter as a SQL LIKE pattern, for the one read that must stay a
- * server-side COUNT and so never sees the cell strings at all
- * (fetchMyTileTotal — see its own comment about not downloading anything
- * but a number).
- *
- * An H3 index is 15 hex characters and its SECOND character is the
- * resolution nibble: res 10 is "8a…", 11 "8b…", 12 "8c…", 13 "8d…". That is
- * the documented H3 v4 bit layout (bits 52-55), and tiles.test.ts asserts
- * it against h3-js itself for every resolution 0-15, so if the encoding
- * ever changed the suite fails loudly instead of this pattern silently
- * matching nothing — which would read as "you own zero tiles".
- */
-export function tileResLikePattern(res: number = DEFAULT_TILE_RES): string {
-  return `_${res.toString(16)}%`;
-}
+// tileResLikePattern lived here and is DELETED, not deprecated — it was the
+// same filter as a SQL LIKE pattern, for a server-side COUNT query that
+// never saw the cell strings. Its only caller, territory-sync.ts's
+// fetchMyTileTotal, is gone too (see that file's header). The invariant it
+// depended on — an H3 index's SECOND character is its resolution nibble
+// (res 10 "8a…", 11 "8b…", 12 "8c…", 13 "8d…") — is still asserted in
+// tiles.test.ts against h3-js for every resolution 0-15, since districtOfCell
+// and isCurrentTileRes both still rely on it.
 
 export interface TilePoint extends LatLng {
   /** Epoch ms — the GPS fix's own timestamp. Required, not optional: without

@@ -27,7 +27,6 @@ import {
   MAX_BRIDGE_DISTANCE_M,
   MAX_BRIDGE_SPEED_MS,
   pathToTiles,
-  tileResLikePattern,
   type TilePoint,
   tilesAreaM2,
 } from '@/lib/tiles';
@@ -413,41 +412,20 @@ describe('tile resolution filtering', () => {
 
   // THE INVARIANT THIS WHOLE MECHANISM RESTS ON. An H3 index's second
   // character is its resolution nibble ("8b…" = 11, "8c…" = 12), which is
-  // what lets fetchMyTileTotal filter by resolution in SQL — it is a COUNT
-  // query and never sees the cell strings — and what lets the conversion
-  // migration select old rows with `h3 like '_b%'` without the h3-pg
-  // extension installed.
+  // what lets districtOfCell and isCurrentTileRes filter by resolution, and
+  // what lets the conversion migration select old rows with `h3 like '_b%'`
+  // without the h3-pg extension installed.
   //
-  // If h3-js ever changed that encoding, the LIKE pattern would quietly
-  // match NOTHING: the total would read zero tiles and the migration would
-  // delete nothing, both of which look like honest answers. This test is
-  // what makes that fail loudly instead.
+  // If h3-js ever changed that encoding, a LIKE pattern built on it would
+  // quietly match NOTHING: a total would read zero tiles and the migration
+  // would delete nothing, both of which look like honest answers. This test
+  // is what makes that fail loudly instead.
   it('encodes resolution in the second character, for every resolution', () => {
     for (let res = 0; res <= 15; res++) {
       const cell = latLngToCell(...MONTERREY, res);
       expect(getResolution(cell), `res ${res} round-trips`).toBe(res);
       expect(cell[1], `res ${res} nibble`).toBe(res.toString(16));
     }
-  });
-
-  it('builds a SQL LIKE pattern that matches exactly its own resolution', () => {
-    // Mirrors what Postgres does with `_` as a single-character wildcard.
-    const matches = (pattern: string, cell: string) =>
-      new RegExp(`^${pattern.replace(/_/g, '.').replace(/%/g, '.*')}$`).test(cell);
-
-    for (let res = 8; res <= 14; res++) {
-      const pattern = tileResLikePattern(res);
-      expect(matches(pattern, latLngToCell(...MONTERREY, res)), `res ${res} matches`).toBe(true);
-      expect(
-        matches(pattern, latLngToCell(...MONTERREY, res === 14 ? 8 : res + 1)),
-        `res ${res} excludes its neighbour`,
-      ).toBe(false);
-    }
-  });
-
-  it('defaults to the resolution the app actually claims at', () => {
-    expect(tileResLikePattern()).toBe(`_${DEFAULT_TILE_RES.toString(16)}%`);
-    expect(DEFAULT_TILE_RES).toBe(12);
   });
 });
 

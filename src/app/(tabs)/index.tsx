@@ -33,18 +33,16 @@ import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { isImpossiblePace } from '@/lib/pace-guard';
+import { fetchDistrictParkCells } from '@/lib/boards';
+import { districtLabel, districtOf } from '@/lib/district';
 import { dropCellsInsideZone, enclosedCells } from '@/lib/enclosure';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
-import { getRegion, nearestRegion } from '@/lib/regions';
+import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, type FenceResult } from '@/lib/territory';
-import {
-  fetchMyTileTotal,
-  uploadRun,
-  type TileClaimResult,
-} from '@/lib/territory-sync';
+import { uploadRun, type TileClaimResult } from '@/lib/territory-sync';
 import { clusterCells, DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
@@ -152,14 +150,15 @@ export default function TrackScreen() {
       })),
     [tileClaim, t],
   );
-  // Running Layer-1 total for this run's region (brief §1.5) — the honest
-  // stand-in for "% of San Pedro stomped" until the brief §1's real
-  // municipio/runnable-tile denominator exists (explicitly out of scope
-  // this pass). A raw count, not a percentage — see fetchMyTileTotal's own
-  // doc comment for why a percentage against any denominator available
-  // today would be exactly the fabricated-denominator mistake brief §1
-  // warns against.
-  const [tileTotal, setTileTotal] = useState<number | null>(null);
+  // The conquered-tiles bubble's place name — districtLabel's real municipio
+  // by majority vote over this run's district's park cells (best-effort,
+  // fetched once the run lands), falling back to the metro region computed
+  // synchronously below. Was a running metro-wide total before (brief §1.5's
+  // stand-in for "% of San Pedro stomped") — Pedro's call, 2026-09-16: the
+  // bubble should report what THIS session conquered (tileClaim.claimedCount
+  // + takenCount), not a cumulative count, since the cumulative number paired
+  // a metro-wide total with a caption that read as one specific place.
+  const [districtPlaceName, setDistrictPlaceName] = useState<string | null>(null);
   // Runs that failed to upload and are waiting on the device. Read on mount
   // and kept in sync locally so the screen can say a run is safe rather than
   // leaving the runner to guess.
@@ -301,18 +300,18 @@ export default function TrackScreen() {
           setSavedRunId(resolved.runId);
           setQueuedId(null);
           clearCheckpoint();
-          // NOT refreshing tileClaim/tilesFailure/tileTotal here — a
+          // NOT refreshing tileClaim/tilesFailure/districtPlaceName here — a
           // real, narrow gap, not an oversight. Unlike save()'s direct call,
           // uploadRun ran inside flushQueue (upload-queue.ts), whose
           // Uploader type only surfaces {ok,runId}; the richer `tiles`
           // result claimTiles produced isn't threaded back through that
-          // queue, and runRegionId here could be stale by the time this
+          // queue, and runDistrict here could be stale by the time this
           // background path fires (this effect deliberately re-runs on
           // [isFocused] alone — see its own header comment — so it can be
-          // holding a closure over an EARLIER run's region). Rather than
-          // show a tile total that might be labelled with the wrong
-          // region's name, a background-resolved run simply shows no tile
-          // stats at all — see the executor's report.
+          // holding a closure over an EARLIER run's district). Rather than
+          // show a tiles-conquered bubble that might be labelled with the
+          // wrong place's name, a background-resolved run simply shows no
+          // tile stats at all — see the executor's report.
         } else if (result.abandonedIds.includes(current)) {
           // Retried MAX_ATTEMPTS times and given up — the run genuinely
           // will not upload. Not surfaced with copy on this screen (see the
@@ -492,16 +491,27 @@ export default function TrackScreen() {
   }, [inSession, tracker.points]);
 
 
-  // Same region derivation territory-sync.ts's uploadRun uses for
-  // `runs.region` (nearestRegion off the first masked point) — recomputed
-  // here rather than read back from the server so tileTotal/tilesHeld can
-  // be requested the instant the upload resolves, no extra round trip. Null
-  // when the run has no points left after masking (privacy-zone trimmed
-  // everything) — matches uploadRun's own null-region fallback.
-  const runRegionId = useMemo(() => {
+  // Where the tilesHeld bubble's caption is resolved from — computed here
+  // rather than read back from the server so the fetch can start the instant
+  // the upload resolves, no extra round trip to learn where the run was.
+  // Both null when the run has no points left after masking (privacy-zone
+  // trimmed everything).
+  const runDistrict = useMemo(() => {
     const first = masked?.points[0];
-    return first ? (nearestRegion(first.lat, first.lng)?.id ?? null) : null;
+    return first ? districtOf(first) : null;
   }, [masked]);
+  // Same region derivation territory-sync.ts's uploadRun uses for
+  // `runs.region` (nearestRegion off the first masked point) — the metro
+  // name, shown the instant the run lands and upgraded to the real
+  // municipio (districtPlaceName) once the park-cell read resolves.
+  const runMetroName = useMemo(() => {
+    const first = masked?.points[0];
+    return first ? (nearestRegion(first.lat, first.lng)?.name ?? null) : null;
+  }, [masked]);
+  // The tilesHeld bubble's actual caption: the real municipio once resolved,
+  // else the metro name in the meantime (or if this district has no
+  // extracted park data at all).
+  const bubblePlaceName = districtPlaceName ?? runMetroName;
 
   const save = useCallback(async () => {
     if (!fence || masked === null || tracker.startedAt === null || tracker.endedAt === null) {
@@ -574,13 +584,15 @@ export default function TrackScreen() {
       } else {
         setTilesFailure(outcome.tilesReason === 'tooOld' ? 'tooOld' : 'other');
       }
-      // Running total refresh — independent of whether the claim above
-      // succeeded (it reflects every EARLIER run too), so worth trying
-      // either way. Best-effort: a failed read just leaves tileTotal null,
-      // which the UI treats as "don't show this line" rather than "0".
-      void fetchMyTileTotal(runRegionId).then((t) => {
-        if (t.ok) setTileTotal(t.total);
-      });
+      // The conquered-tiles bubble's place name, upgraded from the metro
+      // fallback once this resolves. Best-effort: a failed or empty read
+      // (most of the planet has no extracted park data) just leaves the
+      // metro name on screen — never blocks or fails the bubble itself.
+      if (runDistrict) {
+        void fetchDistrictParkCells(runDistrict).then((r) => {
+          if (r.ok) setDistrictPlaceName(districtLabel(runDistrict, r.parkCells));
+        });
+      }
     } else {
       // Keep the run on screen. It only exists in memory, so clearing it on
       // a failed upload would destroy the thing the runner just earned.
@@ -618,7 +630,7 @@ export default function TrackScreen() {
         if (id) clearCheckpoint();
       }
     }
-  }, [fence, masked, sessionEnclosed, queuedId, runRegionId, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, masked, sessionEnclosed, queuedId, runDistrict, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   // Task 1 — fire save() itself, exactly once, the moment the finished run
   // has everything save() needs (fence + masked path). Gated on the REF, not
@@ -672,7 +684,7 @@ export default function TrackScreen() {
     setSessionEnclosed([]);
     setTileClaim(null);
     setTilesFailure(null);
-    setTileTotal(null);
+    setDistrictPlaceName(null);
     setQueuedId(null);
     tracker.reset();
   }, [tracker]);
@@ -823,6 +835,26 @@ export default function TrackScreen() {
             they just explain the number/shape above. Bottom of the screen,
             above the map's own zoom/recenter controls. */}
         <View style={styles.sessionEndBottomOverlay} pointerEvents="box-none">
+          {/* THE CONQUERED-TILES BUBBLE. A distinct pill, not folded into the
+              plain-text notice stack below it — this is the headline of a
+              successful save, not a footnote. Reports what THIS SESSION
+              claimed+took, not a running metro-wide total (Pedro, 2026-09-16:
+              a cumulative count paired with a caption that read as one
+              specific place was the actual bug). `placeName` starts as the
+              metro region (available synchronously off the run's own path)
+              and upgrades in place to the real municipio once the
+              district's park-cell read resolves — see districtPlaceName's
+              own comment for why that's best-effort. */}
+          {tileClaim && bubblePlaceName !== null && (
+            <View style={styles.tilesBubble}>
+              <Text style={[styles.tilesBubbleText, styles.onDarkNotice]}>
+                {t('track.tilesHeld', {
+                  count: tileClaim.claimedCount + tileClaim.takenCount,
+                  region: bubblePlaceName,
+                })}
+              </Text>
+            </View>
+          )}
           {tracker.gapCount > 0 && (
             <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
               {t('track.gapNotice', {
@@ -880,13 +912,6 @@ export default function TrackScreen() {
           {tileClaim && tileClaim.skippedOlder > 0 && (
             <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
               {t('track.keptByNewer', { count: tileClaim.skippedOlder })}
-            </Text>
-          )}
-          {/* Running Layer-1 total (brief §1.5) — a plain count, not a
-              percentage; see tileTotal's own state comment for why. */}
-          {tileTotal !== null && runRegionId && (
-            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
-              {t('track.tilesHeld', { count: tileTotal, region: getRegion(runRegionId).name })}
             </Text>
           )}
         </View>
@@ -1341,6 +1366,16 @@ const styles = StyleSheet.create({
 
   notice: { fontSize: 14, lineHeight: 20 },
   noticeSmall: { fontSize: 12, lineHeight: 17 },
+  // A distinct pill, not another line in the plain-text notice stack — same
+  // dark treatment as the stats bar and RoundButton on this screen.
+  tilesBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    borderRadius: 999,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  tilesBubbleText: { fontSize: 13, fontWeight: '700' },
   primary: {
     flexDirection: 'row',
     alignItems: 'center',

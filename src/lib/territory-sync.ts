@@ -14,7 +14,7 @@ import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtCellPattern } from '@/lib/district';
-import { isCurrentTileRes, pathToTiles, tileResLikePattern } from '@/lib/tiles';
+import { isCurrentTileRes, pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
@@ -652,39 +652,13 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
   });
 }
 
-export type TileTotalOutcome =
-  | { ok: true; total: number }
-  | { ok: false; reason: 'disabled' | 'auth' | 'network' };
-
-/**
- * How many tiles this device's identity currently owns, optionally narrowed
- * to one region — the running Layer-1 "permanent progression" total (brief
- * §1.5), read back after a save so the summary screen can show it growing.
- * Deliberately a `count`-only query (`head: true`), not a row fetch — this
- * can run every time a run ends without downloading anything but a number.
- *
- * See index.tsx / the executor's report for why this is a raw count, not a
- * percentage: a true "% of San Pedro stomped" needs the brief §1's real
- * municipio + runnable-tile denominator, explicitly out of scope this pass.
- */
-export async function fetchMyTileTotal(regionId: string | null): Promise<TileTotalOutcome> {
-  return withSession<{ total: number }>(async (session) => {
-    let query = supabase
-      .from('territory_tiles')
-      .select('h3', { count: 'exact', head: true })
-      .eq('owner_id', session.user.id)
-      // Only cells at the resolution this build claims at. Without it, any
-      // not-yet-converted res-11 row still counts and the total reads high
-      // — see isCurrentTileRes' doc. Done as a LIKE because this query
-      // deliberately returns a count and never the cell strings.
-      .like('h3', tileResLikePattern());
-    if (regionId !== null) query = query.eq('region_id', regionId);
-
-    const { count, error } = await query;
-    if (error || count === null) return { ok: false, reason: 'network' };
-    return { ok: true, total: count };
-  });
-}
+// fetchMyTileTotal lived here and is DELETED, not deprecated. It read a
+// running metro-wide total ("% of San Pedro stomped" brief §1.5's stand-in)
+// for the Track screen's tilesHeld bubble; that bubble now reports what the
+// session that just ended conquered (tileClaim.claimedCount + takenCount,
+// already in memory client-side), not a cumulative server total — Pedro's
+// call, 2026-09-16, after the metro-wide count paired with a district-level
+// place name read as a bug. Nothing else called this.
 
 export type TileLeaderboardOutcome =
   | { ok: true; tiles: TileOwnerRow[]; meUserId: string; skipped: number }

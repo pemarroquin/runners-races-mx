@@ -207,14 +207,12 @@ const translations = {
       // Stat-bar label replacing `area` (still defined above, unused by the
       // session-end screen now — see index.tsx) — brief §6 step 5.
       tiles: 'Casillas',
-      // Running total, best-effort (fetchMyTileTotal) — the honest stand-in
-      // for the brief §1.5 "% of San Pedro stomped" headline, which needs
-      // §1's real municipio/runnable-tile denominator (explicitly out of
-      // scope this pass). A raw count against "everyone who's played so
-      // far", not against the true reachable area — see index.tsx and the
-      // executor's report for why a fabricated-denominator percentage would
-      // be exactly the mistake the brief §1 warns against.
-      tilesHeld: 'Ahora tienes %{count} casillas en %{region}.',
+      // What THIS session conquered (claimed + taken), not a running
+      // metro-wide total — changed 2026-09-16, Pedro's call: pairing a
+      // cumulative metro-wide count with a caption that names one specific
+      // place read as a bug. `region` is the real municipio where
+      // district.ts's districtLabel resolves one, else the metro name.
+      tilesHeld: 'Conquistaste %{count} casillas en %{region} en esta carrera.',
       // Shown instead of a tile count when claimTiles() didn't complete
       // (network hiccup, or the §2.5 forgery guard rejected the batch) —
       // the run itself is still saved either way; see uploadRun's own doc
@@ -763,7 +761,7 @@ const translations = {
       } as PluralForm,
       claimTooOld: 'This session was uploaded too late to compete for territory. It is saved to your history.',
       tiles: 'Tiles',
-      tilesHeld: 'You now hold %{count} tiles in %{region}.',
+      tilesHeld: 'You conquered %{count} tiles in %{region} this run.',
       tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
     },
     leaderboard: {
