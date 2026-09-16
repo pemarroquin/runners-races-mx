@@ -8,8 +8,7 @@
 // constants/map.ts.
 //
 // GL JS also buys what a baked PNG structurally cannot: a gradient route
-// line, an extruded 3D fence, and a camera that moves. The route renders in
-// two pieces while running — see fence-3d.ts for the split.
+// line, an extruded 3D fence, and a camera that moves.
 //
 // mapbox-gl is loaded by dynamic import and its CSS by a runtime <link>, both
 // copied from route-map.web.tsx — see that file's header for why the CSS
@@ -24,11 +23,12 @@
 // its intended brightness (P3 §7a).
 //
 // There is exactly ONE traced line on this map: ROUTE_SRC (plus its blurred
-// glow twin), fed the live edge of the newest leg. There used to be a second
-// pair — an enclosure fill and its gradient rim, built by buildFence() over
-// the whole growing path. buildFence AUTO-CLOSES the path into a ring, so
-// drawing that ring's boundary as a LineString put three artefacts on screen
-// at once (reported with screenshots 2026-09-08):
+// glow twin), fed the WHOLE recorded path — every leg (see gap-policy.ts's
+// splitLegs), not just its newest one. There used to be a second pair — an
+// enclosure fill and its gradient rim, built by buildFence() over the whole
+// growing path. buildFence AUTO-CLOSES the path into a ring, so drawing that
+// ring's boundary as a LineString put three artefacts on screen at once
+// (reported with screenshots 2026-09-08):
 //   1. a straight chord from the runner's live position back to the start,
 //      cutting across ground nobody ran (through the middle of a park);
 //   2. what looked like a duplicated route — the ring traces the path
@@ -41,11 +41,27 @@
 // summary (fence-map.web.tsx) already draw tiles only; this brings the web
 // track map to parity. Do not reintroduce an enclosure outline here.
 //
+// ROUTE_SRC used to be fed only the trailing FENCE_LAG_M metres
+// (fence-3d.ts's splitTrailing), from back when everything older "set" into
+// a wall built along the path. That wall is long gone (replaced by the tile
+// footprint above), but the trailing-only feed was never removed with it —
+// so the vibrant line only ever showed roughly the last 100m of a run, and
+// everything behind that had NOTHING drawn for it at all, not even the flat
+// colour it used to fade into. Reported 2026-09-16: the tile fill still
+// showed the whole run as claimed ground, which is why this went unnoticed
+// for as long as it did. Fixed by feeding every leg's full length, same
+// FeatureCollection-of-legs shape fence-map.web.tsx's summary route already
+// uses (and already proven to keep lineMetrics' per-feature line-progress
+// correct — see that file's own header). fence-3d.ts/splitTrailing/
+// FENCE_LAG_M are deleted, not just unused: nothing on either platform reads
+// them any more.
+//
 // One thing animates continuously while a session is live, so the map
 // doesn't read as flat/static even when the runner is standing still: the
-// route line flows ROUTE_GRADIENT along itself via gradient-flow.ts. It's a
-// plain setInterval timer, not a requestAnimationFrame loop — see the
-// pulse-dot comment below.
+// route line flows ROUTE_GRADIENT along its own length via gradient-flow.ts
+// — now the WHOLE route, not just its trailing edge. It's a plain
+// setInterval timer, not a requestAnimationFrame loop — see the pulse-dot
+// comment below.
 import { cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
@@ -60,7 +76,6 @@ import {
   AUTO_RETURN_IDLE_MS,
   type CameraMode,
   EMISSIVE_STRENGTH_FULL,
-  FENCE_LAG_M,
   FENCE_RISE_MS,
   FENCE_SHIMMER_STEP_MS,
   FENCE_WALL_COLOR,
@@ -84,6 +99,7 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
+  START_MARKER_COLOR,
   TILE_FILL_OPACITY,
   ZOOM_STEP,
 } from '@/constants/map';
@@ -95,7 +111,6 @@ import {
   smoothBearing,
   type ChromeInsets,
 } from '@/lib/camera';
-import { splitTrailing } from '@/lib/fence-3d';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
@@ -211,10 +226,12 @@ function ensureMapboxCss() {
   document.head.appendChild(link);
 }
 
-// The "you are here" pulse. A keyframed DOM element rather than a GL layer:
-// GL has no repeating animation primitive, so driving one would mean a
-// requestAnimationFrame loop repainting the map every frame for the whole
-// run — this costs nothing and the compositor handles it.
+// The "you are here" pulse, plus the static start-pin style below it (one
+// injected stylesheet for both DOM markers this file creates). The pulse is
+// a keyframed DOM element rather than a GL layer: GL has no repeating
+// animation primitive, so driving one would mean a requestAnimationFrame
+// loop repainting the map every frame for the whole run — this costs
+// nothing and the compositor handles it.
 function ensurePulseStyle() {
   if (document.getElementById(PULSE_STYLE_ID)) return;
   const style = document.createElement('style');
@@ -239,6 +256,12 @@ function ensurePulseStyle() {
 }
 @media (prefers-reduced-motion: reduce) {
   .track-dot__halo { animation: none; opacity: 0; }
+}
+.track-start-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: ${START_MARKER_COLOR};
+  border: 2.5px solid #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.45);
 }`;
   document.head.appendChild(style);
 }
@@ -263,6 +286,11 @@ export function TrackMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  // The start pin — dropped once a session has a first point and left there
+  // for the rest of the run, unlike markerRef's "you are here" dot which
+  // tracks the runner. See fence-map.web.tsx's own start marker for the
+  // post-run equivalent (same colour, START_MARKER_COLOR).
+  const startMarkerRef = useRef<Marker | null>(null);
   const readyRef = useRef(false);
   // The same fact as readyRef, as STATE — because a ref cannot wake an
   // effect. Every effect below bails until the map has loaded, and most
@@ -638,6 +666,11 @@ export function TrackMap({
           applyCameraForMode(900);
         });
         markerRef.current = new mapboxgl.Marker({ element: el });
+
+        const startEl = document.createElement('div');
+        startEl.className = 'track-start-dot';
+        startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
+
         readyRef.current = true;
         // Ref first, then state: the ref is what the imperative call sites
         // read (the marker's dblclick, applyCameraForMode's callers), and it
@@ -652,6 +685,8 @@ export function TrackMap({
       flownRef.current = false;
       markerRef.current?.remove();
       markerRef.current = null;
+      startMarkerRef.current?.remove();
+      startMarkerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -843,6 +878,22 @@ export function TrackMap({
     marker.setLngLat([head.lng, head.lat]).addTo(map);
   }, [points, here, mapReady]);
 
+  // Start pin — `points[0]` is stable once a session has recorded anything
+  // (the array only ever grows), so this only actually moves the marker
+  // when a new session starts with a fresh, empty `points`. Live, the
+  // runner IS the privacy zone's owner (see index.tsx's `tiles` prop doc),
+  // so unlike fence-map's masked start this is the real first fix.
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = startMarkerRef.current;
+    if (!map || !readyRef.current || !marker) return;
+    if (points.length === 0) {
+      marker.remove();
+      return;
+    }
+    marker.setLngLat([points[0].lng, points[0].lat]).addTo(map);
+  }, [points, mapReady]);
+
   // Idle: keep the camera over the runner as they move, so the map isn't
   // still framing wherever they were when the tab opened. Skipped during a
   // session — the fly-in and follow below own the camera then.
@@ -964,35 +1015,38 @@ export function TrackMap({
           : smoothBearing(bearingRef.current, rawBearing, MAX_BEARING_STEP_DEG);
     }
 
-    // Legs FIRST, then the trailing split — `points` is one flat array with
-    // no record of its own seams, so drawing straight from it joins the two
-    // sides of an unrecorded gap with a straight line. On a real iOS Safari
-    // run that showed as a chord from the start point to the runner's
-    // current position, and again as the wall ribbon's two edges (reported
-    // with screenshots 2026-09-07). splitLegs cuts exactly where
-    // pathToTiles already refuses to bridge, so the drawn route and the
-    // claimed tiles agree about what is a hole.
+    // `points` is one flat array with no record of its own seams, so drawing
+    // straight from it joins the two sides of an unrecorded gap with a
+    // straight line. On a real iOS Safari run that showed as a chord from
+    // the start point to the runner's current position, and again as the
+    // wall ribbon's two edges (reported with screenshots 2026-09-07).
+    // splitLegs cuts exactly where pathToTiles already refuses to bridge, so
+    // the drawn route and the claimed tiles agree about what is a hole.
+    //
+    // EVERY leg, the whole way back to the start — not just the newest one's
+    // trailing edge (see this file's header, 2026-09-16). One Feature per
+    // leg rather than one LineString across all of them, same reasoning as
+    // fence-map.web.tsx's summary route: `line-gradient` reads line-progress,
+    // which lineMetrics computes per feature, so each leg gets its own clean
+    // 0->1 gradient run instead of one that resets across an unrecorded gap.
     const legs = splitLegs(points);
-    // The live edge can only be in the newest leg, by definition.
-    const newestLeg = legs.length > 0 ? legs[legs.length - 1] : [];
-    // Only the live edge is wanted now — `settled` used to feed the wall
-    // ribbon, which the tile footprint replaced.
-    const { active: liveEdge } = splitTrailing(newestLeg, FENCE_LAG_M);
-
     const routeSource = map.getSource(ROUTE_SRC) as GeoJSONSource | undefined;
     routeSource?.setData({
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: liveEdge.map((p) => [p.lng, p.lat] as [number, number]),
-      },
+      type: 'FeatureCollection',
+      features: legs
+        .filter((leg) => leg.length >= 2)
+        .map((leg) => ({
+          type: 'Feature' as const,
+          properties: {},
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: leg.map((p) => [p.lng, p.lat] as [number, number]),
+          },
+        })),
     });
 
     // The wall is no longer built from this path — it is the tile footprint
-    // now, fed by the tiles effect above. `settled` is still computed
-    // because splitTrailing is what separates the live gradient edge from
-    // everything behind it.
+    // now, fed by the tiles effect above.
     //
     // Nothing else on this map is derived from `points`. The enclosure fill
     // and its rim used to be, via a throttled buildFence() right here; both

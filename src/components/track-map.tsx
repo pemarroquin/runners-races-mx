@@ -12,12 +12,12 @@
 // What this deliberately does NOT have, versus track-map.web.tsx: the custom
 // Mapbox Studio style (a Mapbox GL SDK needs a dev client, which would break
 // the Expo Go testing workflow), and the extruded 3D fence wall — no
-// fill-extrusion primitive here, so the settled fence renders as a flat
-// filled ribbon in the run's colour instead. The camera choreography — idle
-// follow, fly-in to a tilted close-up on start, the follow/overview mode
-// cycle while running — uses the same constants as web so both platforms
-// feel like the same feature; see src/lib/camera.ts for the shared pure
-// geometry.
+// fill-extrusion primitive here, so claimed ground renders as a flat filled
+// polygon (tilePolys below) instead of a raised wall. The camera
+// choreography — idle follow, fly-in to a tilted close-up on start, the
+// follow/overview mode cycle while running — uses the same constants as web
+// so both platforms feel like the same feature; see src/lib/camera.ts for
+// the shared pure geometry.
 //
 // P4 native gap this file used to leave unfixed: it accepted zoomInLabel /
 // zoomOutLabel / recenterLabel purely for interface parity with
@@ -29,13 +29,12 @@
 import { cellsToMultiPolygon } from 'h3-js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
-import MapView, { Polygon, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
 
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
   type CameraMode,
-  FENCE_LAG_M,
   FOLLOW_LOOKAHEAD_M,
   GOOGLE_DARK_MAP_STYLE,
   MAP_DEFAULT_ZOOM,
@@ -47,6 +46,7 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
+  START_MARKER_COLOR,
   TILE_FILL_OPACITY,
   withAlpha,
   ZOOM_STEP,
@@ -59,7 +59,6 @@ import {
   smoothBearing,
   type ChromeInsets,
 } from '@/lib/camera';
-import { splitTrailing } from '@/lib/fence-3d';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { gradientStrokeColors } from '@/lib/fence-draw';
 import { useRegion } from '@/lib/region-context';
@@ -357,36 +356,37 @@ export function TrackMap({
     if (cameraMode === 'follow') applyCamera('follow', 300);
   };
 
-  // Same split as web (fence-3d.ts): everything older than the trailing
-  // FENCE_LAG_M "sets" into the fence — here a flat filled ribbon in this
-  // run's colour, since react-native-maps has no fill-extrusion — while the
-  // newest stretch stays the vibrant gradient line. The two share their join
-  // point, so the line feeds visually into the fence.
   // Legs FIRST — `points` is one flat array with no record of its own seams,
   // so drawing straight from it joins the two sides of an unrecorded gap
   // with a straight line (reported on the web build with screenshots
   // 2026-09-07; the same flat-array assumption is here). splitLegs cuts
   // exactly where pathToTiles already refuses to bridge.
+  //
+  // EVERY leg draws, the whole way back to the start — this used to keep
+  // only the trailing FENCE_LAG_M metres of the newest leg (splitTrailing,
+  // fence-3d.ts), from back when everything older "set" into a flat filled
+  // ribbon in the run's colour. That ribbon is gone (see the removed
+  // comment below), but the trailing-only line was never widened back out
+  // with it: the vibrant gradient only ever showed roughly the runner's
+  // last 100m, with nothing drawn at all behind that. Reported 2026-09-16;
+  // fence-3d.ts/splitTrailing/FENCE_LAG_M are deleted, not just unused —
+  // nothing on either platform reads them any more.
+  //
+  // One <Polyline> per leg, each with its own gradient (gradientStrokeColors
+  // samples the ramp across just that leg's own point count), same
+  // per-feature reasoning as the web map's line-progress and the summary
+  // map's routeLegs.
   const legs = useMemo(() => splitLegs(points), [points]);
-  const { active: liveEdge } = useMemo(
-    // The live edge can only be in the newest leg, by definition.
-    () => splitTrailing(legs.length > 0 ? legs[legs.length - 1] : [], FENCE_LAG_M),
+  const routeLegs = useMemo(
+    () =>
+      legs
+        .filter((leg) => leg.length >= 2)
+        .map((leg) => ({
+          coords: leg.map((p) => ({ latitude: p.lat, longitude: p.lng })),
+          colors: gradientStrokeColors(leg.length),
+        })),
     [legs],
   );
-  // No ribbon any more. It was a flat filled polygon tracing the path, and
-  // react-native-maps has no fill-extrusion, so it duplicated exactly what
-  // the tile polygons below already draw — while ALSO stacking its own
-  // opacity wherever the path doubled back (one ring that self-intersects
-  // triangulates into overlapping triangles). Reported 2026-09-07: the
-  // fence should mark total area, not how many times it was crossed. The
-  // tiles are H3 cells, deduplicated and non-overlapping by construction,
-  // so they cannot stack. Web keeps a wall because it has a real extrusion
-  // — and that wall is now the same tile footprint.
-  const edgeCoords = useMemo(
-    () => liveEdge.map((p) => ({ latitude: p.lat, longitude: p.lng })),
-    [liveEdge],
-  );
-  const edgeColors = useMemo(() => gradientStrokeColors(liveEdge.length), [liveEdge.length]);
   // Tile Coverage brief §6 step 4 — additive alongside the ribbon/edge
   // above, not a replacement: the ribbon is model-agnostic scene-dressing
   // (a visual "trail so far"), tiles are the actual claimed-ground fill.
@@ -439,9 +439,9 @@ export function TrackMap({
         userInterfaceStyle="dark"
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
-        {/* Tile Coverage brief §6 step 4 — rendered BELOW the ribbon so the
-            ribbon's own stroke/fill still reads as the "trail so far" edge
-            on top of the real claimed-ground fill. */}
+        {/* Tile Coverage brief §6 step 4 — rendered BELOW the route so the
+            route's own stroke still reads as the "trail so far" edge on top
+            of the real claimed-ground fill. */}
         {tilePolys.map((p) => (
           <Polygon
             key={p.key}
@@ -452,15 +452,29 @@ export function TrackMap({
           />
         ))}
 
-        {edgeCoords.length >= 2 && (
+        {routeLegs.map((leg, i) => (
           <Polyline
-            coordinates={edgeCoords}
+            key={`route-leg-${i}`}
+            coordinates={leg.coords}
             strokeWidth={ROUTE_LINE_WIDTH}
             strokeColor={ROUTE_LINE_COLOR}
-            strokeColors={edgeColors}
+            strokeColors={leg.colors}
             lineCap="round"
             lineJoin="round"
           />
+        ))}
+
+        {/* Start pin — live, the runner IS the privacy zone's owner (see
+            index.tsx's `tiles` prop doc), so unlike fence-map's masked start
+            this is the real first fix. `points[0]` is stable once a session
+            has recorded anything; it only actually moves on a new session. */}
+        {points.length > 0 && (
+          <Marker
+            coordinate={{ latitude: points[0].lat, longitude: points[0].lng }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}>
+            <View style={styles.startDot} />
+          </Marker>
         )}
       </MapView>
 
@@ -518,6 +532,14 @@ function MapButton({
 
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
+  startDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: START_MARKER_COLOR,
+    borderWidth: 2.5,
+    borderColor: '#fff',
+  },
   waiting: {
     position: 'absolute',
     left: 0,

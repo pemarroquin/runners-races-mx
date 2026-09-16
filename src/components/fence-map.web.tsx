@@ -54,6 +54,7 @@ import {
   ROUTE_GRADIENT,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
+  START_MARKER_COLOR,
   TILE_DISSOLVE_THRESHOLD,
   TILE_FILL_OPACITY,
   TILE_RIVAL_COLOR,
@@ -445,7 +446,7 @@ export function FenceMap({
         if (p.length > 0) {
           const startEl = document.createElement('div');
           startEl.style.cssText =
-            'width:16px;height:16px;border-radius:50%;background:#22c55e;' +
+            `width:16px;height:16px;border-radius:50%;background:${START_MARKER_COLOR};` +
             'border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.45);';
           startMarkerRef.current = new mapboxgl.Marker({ element: startEl })
             .setLngLat([p[0].lng, p[0].lat])
