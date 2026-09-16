@@ -68,13 +68,17 @@ export const MAP_DEFAULT_ZOOM = 15;
 export const ROUTE_LINE_COLOR = '#E4572E';
 /** Same colour without '#', for Static Images URL overlays. */
 export const ROUTE_LINE_COLOR_URL = 'e4572e';
+/** Start-point pin, both platforms and both the live map and the
+ *  post-run summary — one constant so "start" reads as the same colour
+ *  everywhere it appears, same reasoning as ROUTE_LINE_WIDTH below. */
+export const START_MARKER_COLOR = '#22c55e';
 /**
  * Halved 2026-09-08 (5 -> 2.5), Pedro's call: the gradient line read as too
  * heavy on every surface that draws it. The glow below is halved with it so
  * the proportion between line and halo is unchanged — the style is the same,
  * just finer.
  *
- * ONE constant for every surface: the live edge (track-map), the run summary
+ * ONE constant for every surface: the live route (track-map), the run summary
  * (fence-map) and saved territories (territories-map) all read it, which is
  * what keeps a route looking like the same route wherever it appears.
  */
@@ -305,9 +309,6 @@ export const ROUTE_GRADIENT_LOOP_MS = 4400;
  * frame, not once per call.
  */
 export const ROUTE_GRADIENT_FRAME_MS = 60;
-
-/** Trailing distance that stays a flat line before the route sets into wall. */
-export const FENCE_LAG_M = 100;
 /** Wall height, metres. */
 export const FENCE_WALL_HEIGHT_M = 18;
 export const FENCE_WALL_OPACITY = 0.55;

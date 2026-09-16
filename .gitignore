@@ -69,3 +69,4 @@ example
 # history — that does not belong in git permanently. The SCHEMA half of any
 # such change lives in supabase/migrations/ and IS committed.
 supabase/generated/
+.vercel
