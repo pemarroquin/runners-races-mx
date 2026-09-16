@@ -22,8 +22,8 @@
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import MapView, { Polygon, Polyline } from 'react-native-maps';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
@@ -75,6 +75,12 @@ interface FenceMapProps {
    *  see index.tsx's `tileClaim` state, which is null (so this is `[]`)
    *  while a save is still in flight. */
   rivalTiles: string[];
+  /** Per-area "+N" conquest bubbles — one per contiguous patch of ground
+   *  taken off another runner (clusterCells, tiles.ts). Replaces the old
+   *  single aggregate "You took N tiles" banner. `label` is pre-translated
+   *  by the caller, same convention as `controls` below. Empty until the
+   *  upload resolves, same as rivalTiles. */
+  takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -100,6 +106,7 @@ export function FenceMap({
   path,
   tiles,
   rivalTiles,
+  takenClusters,
   color,
   others,
   excludeId,
@@ -302,6 +309,46 @@ export function FenceMap({
             lineJoin="round"
           />
         ))}
+        {/* Start/finish pins at the ends of the masked path — path[0] is
+            already the trimmed start (privacy-zone.ts), not the runner's
+            real front door, so marking it reveals nothing the route line
+            itself doesn't already show. Web equivalent: fence-map.web.tsx's
+            DOM markers. */}
+        {path.length > 0 && (
+          <Marker
+            coordinate={{ latitude: path[0].lat, longitude: path[0].lng }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}>
+            <View style={styles.startDot} />
+          </Marker>
+        )}
+        {path.length > 1 && (
+          <Marker
+            coordinate={{ latitude: path[path.length - 1].lat, longitude: path[path.length - 1].lng }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}>
+            <Text style={styles.finishFlag}>🏁</Text>
+          </Marker>
+        )}
+        {/* Per-area "+N" conquest bubbles (clusterCells, tiles.ts) — replaces
+            the old single aggregate "You took N tiles" banner, which said
+            THAT ground was won but never WHERE. Web equivalent:
+            fence-map.web.tsx's DOM markers with the same visual language. */}
+        {takenClusters.map((cluster, i) => (
+          <Marker
+            key={`taken-${i}`}
+            coordinate={{ latitude: cluster.center.lat, longitude: cluster.center.lng }}
+            anchor={{ x: 0.5, y: 1 }}
+            accessibilityLabel={cluster.label}
+            tracksViewChanges={false}>
+            <View style={styles.takenBubbleWrap}>
+              <View style={styles.takenBubble}>
+                <Text style={styles.takenBubbleText}>+{cluster.count}</Text>
+              </View>
+              <View style={styles.takenBubbleTail} />
+            </View>
+          </Marker>
+        ))}
       </MapView>
       {controls && (
         <View style={styles.mapControls} pointerEvents="box-none">
@@ -380,6 +427,49 @@ function regionAround(coords: MapCoord[]) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, overflow: 'hidden' },
+  startDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22c55e',
+    borderWidth: 2.5,
+    borderColor: '#fff',
+  },
+  finishFlag: { fontSize: 18 },
+  takenBubbleWrap: { alignItems: 'center' },
+  takenBubble: {
+    minWidth: 28,
+    height: 28,
+    paddingHorizontal: 7,
+    borderRadius: 14,
+    backgroundColor: '#7c3aed',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  takenBubbleText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
+  },
+  takenBubbleTail: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 7,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#7c3aed',
+    marginTop: -1,
+  },
   mapControls: {
     position: 'absolute',
     right: Spacing.three,

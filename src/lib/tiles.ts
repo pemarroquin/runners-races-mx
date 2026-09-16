@@ -7,7 +7,7 @@
 // h3-js v4 API (verified against the installed package, not assumed from
 // memory — v3 used different names: geoToH3, h3Line): latLngToCell,
 // gridPathCells, cellToBoundary, cellToParent.
-import { cellArea, getResolution, gridPathCells, latLngToCell, UNITS } from 'h3-js';
+import { cellArea, cellToLatLng, getResolution, gridDisk, gridPathCells, latLngToCell, UNITS } from 'h3-js';
 
 import { planGapClosures } from '@/lib/gap-policy';
 import type { LatLng } from '@/lib/territory';
@@ -179,7 +179,19 @@ export function pathToTiles(path: TilePoint[], res: number = DEFAULT_TILE_RES): 
 
   for (let i = 0; i < path.length; i++) {
     const p = path[i];
-    const cell = latLngToCell(p.lat, p.lng, res);
+    let cell: string;
+    try {
+      cell = latLngToCell(p.lat, p.lng, res);
+    } catch {
+      // A single malformed fix (NaN/out-of-range lat/lng from a bad GPS
+      // read) used to throw out of the whole function, and since this walks
+      // the FULL path on every throttle tick — not just new points — that
+      // one bad fix broke every call for the rest of the run: the live
+      // wall/tile fill silently never appeared, while the finished-run
+      // summary was fine because it computes off maskPath's cleaned path,
+      // not this raw one. Skip just this point and keep going.
+      continue;
+    }
     direct.add(cell);
 
     if (prevCell !== null && prevCell !== cell && prevPoint !== null) {
@@ -233,4 +245,64 @@ export function tilesAreaM2(cells: string[]): number {
   let total = 0;
   for (const cell of cells) total += cellArea(cell, UNITS.m2);
   return total;
+}
+
+/** One contiguous group of cells conquered together, for the "+N" bubble
+ *  markers on the session-end map — see clusterCells below. */
+export interface CellCluster {
+  cells: string[];
+  /** Cell count — the number the bubble shows. */
+  count: number;
+  /** Plain average of member cells' centers, not an area-weighted or
+   *  boundary-aware centroid — good enough for dropping a pin, and res-12
+   *  cells are near-equal area so weighting would not move it meaningfully. */
+  center: { lat: number; lng: number };
+}
+
+/**
+ * Groups H3 cells into contiguous clusters by grid adjacency (BFS over
+ * gridDisk neighbors), not geographic distance. One "+N" bubble per
+ * conquered AREA, not per cell — at the res-12 tile size (~10.8 m edge), a
+ * single block of taken road is dozens of individual cells, and marking each
+ * one would bury the map in labels the way the old single "You took N
+ * tiles" banner undersold it by collapsing every area into one number with
+ * no place on the map.
+ *
+ * Order-independent and does not mutate `cells`. A cell absent from the
+ * input is never treated as a bridge between two clusters, even if it would
+ * connect them geometrically — this only clusters what was actually passed
+ * in (e.g. this run's own takenCells), not the wider board.
+ */
+export function clusterCells(cells: string[]): CellCluster[] {
+  const remaining = new Set(cells);
+  const clusters: CellCluster[] = [];
+  for (const start of cells) {
+    if (!remaining.has(start)) continue;
+    const group: string[] = [];
+    const queue = [start];
+    remaining.delete(start);
+    while (queue.length > 0) {
+      const cell = queue.pop()!;
+      group.push(cell);
+      for (const neighbor of gridDisk(cell, 1)) {
+        if (remaining.has(neighbor)) {
+          remaining.delete(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+    let latSum = 0;
+    let lngSum = 0;
+    for (const cell of group) {
+      const [lat, lng] = cellToLatLng(cell);
+      latSum += lat;
+      lngSum += lng;
+    }
+    clusters.push({
+      cells: group,
+      count: group.length,
+      center: { lat: latSum / group.length, lng: lngSum / group.length },
+    });
+  }
+  return clusters;
 }

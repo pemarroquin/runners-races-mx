@@ -32,7 +32,7 @@
 // black (Mapbox's default line-color) despite line-gradient being set and
 // lineMetrics being true (P3 §7c).
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
-import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
+import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useRef } from 'react';
@@ -144,6 +144,13 @@ interface FenceMapProps {
   /** Tile Coverage brief §5 — cells this run crossed that were already
    *  someone else's by claim time. Empty until the upload resolves. */
   rivalTiles: string[];
+  /** Per-area "+N" conquest bubbles — one per contiguous patch of ground
+   *  taken off another runner (clusterCells, tiles.ts). Replaces the old
+   *  single aggregate "You took N tiles" banner, which said THAT ground was
+   *  won but never WHERE. `label` is pre-translated by the caller (same
+   *  convention as `controls` below) so this component stays i18n-dumb.
+   *  Empty until the upload resolves, same as rivalTiles. */
+  takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -188,6 +195,7 @@ export function FenceMap({
   path,
   tiles,
   rivalTiles,
+  takenClusters,
   color,
   others,
   excludeId,
@@ -198,6 +206,13 @@ export function FenceMap({
   const readyRef = useRef(false);
   // Stopper for the route's gradient flow (gradient-flow.ts owns the timer).
   const routeFlowStopRef = useRef<(() => void) | null>(null);
+  // Start/finish endpoint pins — plain DOM markers, same technique as the
+  // live map's "you are here" dot (track-map.web.tsx), not a GL layer: two
+  // fixed points don't need a source/layer pair.
+  const startMarkerRef = useRef<Marker | null>(null);
+  const finishMarkerRef = useRef<Marker | null>(null);
+  // "+N" conquest bubbles — one DOM marker per cluster, same technique.
+  const takenMarkersRef = useRef<Marker[]>([]);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
@@ -422,6 +437,30 @@ export function FenceMap({
           });
         });
 
+        // Start/finish pins at the ends of the masked path — dropped once,
+        // like the route itself; this screen never re-renders a new run
+        // over an existing map. `path[0]` is already the trimmed start
+        // (privacy-zone.ts), not the runner's real front door, so a marker
+        // here reveals nothing the line itself doesn't already show.
+        if (p.length > 0) {
+          const startEl = document.createElement('div');
+          startEl.style.cssText =
+            'width:16px;height:16px;border-radius:50%;background:#22c55e;' +
+            'border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.45);';
+          startMarkerRef.current = new mapboxgl.Marker({ element: startEl })
+            .setLngLat([p[0].lng, p[0].lat])
+            .addTo(map);
+        }
+        if (p.length > 1) {
+          const finishEl = document.createElement('div');
+          finishEl.style.cssText =
+            'font-size:18px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55));';
+          finishEl.textContent = '🏁';
+          finishMarkerRef.current = new mapboxgl.Marker({ element: finishEl })
+            .setLngLat([p[p.length - 1].lng, p[p.length - 1].lat])
+            .addTo(map);
+        }
+
         // The entrance sweep: constructed at the fitted bounds, then eased
         // out and back in. Cheaper to read than it sounds — one fitBounds
         // from a slightly wider camera.
@@ -444,6 +483,12 @@ export function FenceMap({
       readyRef.current = false;
       routeFlowStopRef.current?.();
       routeFlowStopRef.current = null;
+      startMarkerRef.current?.remove();
+      startMarkerRef.current = null;
+      finishMarkerRef.current?.remove();
+      finishMarkerRef.current = null;
+      for (const marker of takenMarkersRef.current) marker.remove();
+      takenMarkersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -484,6 +529,45 @@ export function FenceMap({
       tileFeatureCollection(rivalTiles),
     );
   }, [tiles, rivalTiles]);
+
+  // takenClusters resolves on the same claimTiles() round trip as
+  // rivalTiles above, so the same "arrives after mount" reasoning applies.
+  // Markers, not a GL layer: a handful of point bubbles don't need a
+  // source/layer pair, and mapboxgl.Marker is what start/finish already use.
+  // Re-imports mapbox-gl rather than stashing the module in a ref — a
+  // dynamic import already resolved once is cached, so this costs nothing
+  // beyond a microtask.
+  useEffect(() => {
+    if (!readyRef.current) return;
+    let cancelled = false;
+    (async () => {
+      const { default: mapboxgl } = await import('mapbox-gl');
+      const map = mapRef.current;
+      if (cancelled || !map) return;
+      for (const marker of takenMarkersRef.current) marker.remove();
+      takenMarkersRef.current = takenClusters.map((cluster) => {
+        const el = document.createElement('div');
+        el.setAttribute('role', 'img');
+        el.setAttribute('aria-label', cluster.label);
+        el.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+        el.innerHTML =
+          `<div style="min-width:28px;height:28px;padding:0 7px;border-radius:14px;` +
+          `background:linear-gradient(180deg,#9166ff,#7c3aed);color:#fff;` +
+          `font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;` +
+          `display:flex;align-items:center;justify-content:center;` +
+          `box-shadow:0 2px 8px rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.55);">` +
+          `+${cluster.count}</div>` +
+          `<div style="width:0;height:0;border-left:6px solid transparent;` +
+          `border-right:6px solid transparent;border-top:7px solid #7c3aed;margin-top:-1px;"></div>`;
+        return new mapboxgl.Marker({ element: el, anchor: 'bottom' as const })
+          .setLngLat([cluster.center.lng, cluster.center.lat])
+          .addTo(map);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [takenClusters]);
 
   // The "recenter" control's target — re-fit to the highlighted fence,
   // shorter/snappier than the mount effect's entrance sweep (that one is a

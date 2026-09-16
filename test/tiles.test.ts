@@ -9,6 +9,7 @@
 import {
   cellArea,
   cellsToMultiPolygon,
+  cellToLatLng,
   getResolution,
   gridDisk,
   gridDistance,
@@ -20,6 +21,7 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  clusterCells,
   DEFAULT_TILE_RES,
   isCurrentTileRes,
   MAX_BRIDGE_DISTANCE_M,
@@ -450,5 +452,49 @@ describe('tilesAreaM2', () => {
   it('reports a res-12 tile at roughly 300 m2', () => {
     expect(tilesAreaM2([CELL])).toBeGreaterThan(250);
     expect(tilesAreaM2([CELL])).toBeLessThan(400);
+  });
+});
+
+// clusterCells — groups a run's takenCells into per-area "+N" conquest
+// bubbles (fence-map.web.tsx/.tsx) instead of one cell per marker.
+describe('clusterCells', () => {
+  const CELL = latLngToCell(25.6866, -100.3161, DEFAULT_TILE_RES);
+  // Far enough away (a whole city block) to guarantee no adjacency with CELL
+  // or its disk, so it always lands in its own cluster.
+  const FAR_CELL = latLngToCell(25.75, -100.2, DEFAULT_TILE_RES);
+
+  it('returns nothing for an empty list', () => {
+    expect(clusterCells([])).toEqual([]);
+  });
+
+  it('groups a contiguous patch into one cluster', () => {
+    const patch = gridDisk(CELL, 2);
+    const clusters = clusterCells(patch);
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].count).toBe(patch.length);
+    expect(clusters[0].cells.slice().sort()).toEqual(patch.slice().sort());
+  });
+
+  it('keeps geographically separate patches as separate clusters', () => {
+    const near = gridDisk(CELL, 1);
+    const far = gridDisk(FAR_CELL, 1);
+    const clusters = clusterCells([...near, ...far]);
+    expect(clusters).toHaveLength(2);
+    const counts = clusters.map((c) => c.count).sort((a, b) => a - b);
+    expect(counts).toEqual([near.length, far.length].sort((a, b) => a - b));
+  });
+
+  it("centers a single-cell cluster on that cell's own center", () => {
+    const [clusterOnly] = clusterCells([CELL]);
+    const [lat, lng] = cellToLatLng(CELL);
+    expect(clusterOnly.center.lat).toBeCloseTo(lat, 9);
+    expect(clusterOnly.center.lng).toBeCloseTo(lng, 9);
+  });
+
+  it('does not mutate the input array', () => {
+    const patch = gridDisk(CELL, 1);
+    const copy = [...patch];
+    clusterCells(patch);
+    expect(patch).toEqual(copy);
   });
 });

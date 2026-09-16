@@ -45,7 +45,7 @@ import {
   uploadRun,
   type TileClaimResult,
 } from '@/lib/territory-sync';
-import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
+import { clusterCells, DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
@@ -137,6 +137,21 @@ export default function TrackScreen() {
   // fine and simply arrived too late to compete for ground. Telling that
   // runner "we couldn't confirm your tiles" would be false.
   const [tilesFailure, setTilesFailure] = useState<'tooOld' | 'other' | null>(null);
+  // Per-area "+N" conquest bubbles for FenceMap — one per contiguous patch
+  // of tileClaim.takenCells (clusterCells, tiles.ts), replacing the old
+  // single aggregate "You took N tiles" banner that had no place on the
+  // map. `label` is computed here, not inside FenceMap, so the map
+  // components (both platforms) stay dumb about i18n, same convention as
+  // `controls.zoomInLabel` etc.
+  const takenClusters = useMemo(
+    () =>
+      clusterCells(tileClaim?.takenCells ?? []).map((cluster) => ({
+        center: cluster.center,
+        count: cluster.count,
+        label: t('track.tookTiles', { count: cluster.count }),
+      })),
+    [tileClaim, t],
+  );
   // Running Layer-1 total for this run's region (brief §1.5) — the honest
   // stand-in for "% of San Pedro stomped" until the brief §1's real
   // municipio/runnable-tile denominator exists (explicitly out of scope
@@ -447,13 +462,18 @@ export default function TrackScreen() {
         // Live, the runner IS the privacy zone's owner and the map is not a
         // shareable surface, so the unfiltered enclosure is what to show —
         // the same thing they will own, minus what gets dropped at upload.
+        //
+        // This runs against the RAW, unmasked path (unlike the finished-run
+        // effect above, which computes off maskPath's cleaned result) — see
+        // pathToTiles' per-point guard (tiles.ts) for why one malformed fix
+        // used to blank the live fill for the rest of the run while the
+        // finished summary was unaffected.
         const live = pathToTiles(tracker.points).cells;
-        // Guarded for the same reason the finished-run effect is, and more
-        // urgently: this runs every throttle tick for the whole length of a
-        // session, so an h3 failure on one odd shape would throw repeatedly
-        // mid-run. Falling back to no enclosure shows less than the runner
-        // owns, which is the safe direction — the claim itself is computed
-        // separately at save time.
+        // Guarded for the same reason: this runs every throttle tick for the
+        // whole length of a session, so an h3 failure on one odd shape would
+        // throw repeatedly mid-run. Falling back to no enclosure shows less
+        // than the runner owns, which is the safe direction — the claim
+        // itself is computed separately at save time.
         //
         // enclosedCells excludes anything already in `live` (its own
         // contract), so these two sets are disjoint and neither the fill
@@ -756,6 +776,9 @@ export default function TrackScreen() {
             // (tileClaim starts null); see TileClaimResult.rivalCells' own
             // doc comment.
             rivalTiles={tileClaim?.rivalCells ?? []}
+            // The "+N" conquest bubbles — see takenClusters' own comment
+            // above. Empty until claimTiles() resolves, same as rivalTiles.
+            takenClusters={takenClusters}
             color={fenceColor}
             others={[]}
             excludeId={savedRunId}
@@ -852,18 +875,12 @@ export default function TrackScreen() {
               {t(tilesFailure === 'tooOld' ? 'track.claimTooOld' : 'track.tilesUnavailable')}
             </Text>
           )}
-          {/* Ground won off another runner. Under first-to-claim this said
-              "crossed" — a run could pass over someone's tile and never get
-              it. Conquest makes that a lie: the later run takes it. */}
-          {tileClaim && tileClaim.takenCount > 0 && (
-            <Animated.View
-              entering={FadeInDown.duration(400).delay(200)}
-              style={[styles.spoils, { borderColor: fenceColor, backgroundColor: 'rgba(20,20,20,0.65)' }]}>
-              <Text style={[styles.spoilsArea, { color: '#ffffff' }]}>
-                {t('track.tookTiles', { count: tileClaim.takenCount })}
-              </Text>
-            </Animated.View>
-          )}
+          {/* Ground won off another runner used to be one aggregate banner
+              ("You took N tiles") with no place on the map. Replaced with
+              per-area "+N" bubble markers on FenceMap itself (takenClusters
+              below) — under first-to-claim this said "crossed", a run could
+              pass over someone's tile and never get it; conquest makes that
+              a lie, the later run takes it, and now the map shows WHERE. */}
           {/* The other side of it: ground you ran over and did NOT get,
               because whoever holds it was there more recently. Says the
               reason — "I ran here and it isn't mine" is otherwise
@@ -1158,7 +1175,16 @@ function Stat({
   return (
     <View style={styles.stat}>
       <Text style={[styles.statLabel, { color: c.textSecondary }]}>{label.toUpperCase()}</Text>
-      <Text style={[styles.statValue, { color: c.text }]}>{value}</Text>
+      {/* numberOfLines=1 stops a long unbroken value (e.g. "1:23:33" once a
+          run crosses an hour) from wrapping mid-digit inside this flex:1
+          column — DISTANCE's "10.66 km" wraps at the space, which reads
+          fine, but TIME has no space to wrap at. The size step keeps it
+          legible instead of letting it clip/ellipsize. */}
+      <Text
+        style={[styles.statValue, { color: c.text }, value.length > 6 && styles.statValueCompact]}
+        numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -1285,6 +1311,7 @@ const styles = StyleSheet.create({
   stat: { flex: 1, gap: Spacing.half },
   statLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   statValue: { fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  statValueCompact: { fontSize: 19 },
 
   paceGuardWrap: {
     position: 'absolute',
@@ -1319,13 +1346,6 @@ const styles = StyleSheet.create({
 
   notice: { fontSize: 14, lineHeight: 20 },
   noticeSmall: { fontSize: 12, lineHeight: 17 },
-  spoils: {
-    borderWidth: 2,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.half,
-  },
-  spoilsArea: { fontSize: 20, fontWeight: '700' },
   primary: {
     flexDirection: 'row',
     alignItems: 'center',
