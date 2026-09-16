@@ -1,0 +1,4 @@
+{
+  "buildCommand": "node scripts/check-web-env.mjs && npx expo export -p web",
+  "outputDirectory": "dist"
+}
