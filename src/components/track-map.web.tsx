@@ -86,6 +86,7 @@ import {
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
+  MAP_STYLE_GL_IDLE,
   MAX_BEARING_STEP_DEG,
   MIN_BEARING_SEPARATION_M,
   OVERVIEW_FIT_PADDING_PX,
@@ -161,6 +162,158 @@ function tileFeatureCollection(cells: string[]): FeatureCollection {
       }),
     ),
   };
+}
+
+/**
+ * Adds every custom source/layer a session needs (route, wall, tile fill,
+ * enclosed shimmer) — called from the mount effect's `load` handler AFTER a
+ * runner presses Start, once the map has upgraded from MAP_STYLE_GL_IDLE to
+ * MAP_STYLE_GL (see that constant's own header for why the upgrade exists).
+ * NOT called on the initial idle load: `setStyle()` wipes every custom
+ * source/layer a style had, so whichever style is active when a session
+ * starts needs these added (or re-added) fresh — and the idle style never
+ * needs them at all, since index.tsx's liveTiles/liveEnclosed both start
+ * empty and only populate once a session is active anyway.
+ *
+ * Pure function of `map` — everything else it touches is either a module
+ * constant or a small immutable literal, so this needs no closure over
+ * component state and can be shared between the mount effect and the
+ * style-upgrade effect without either capturing stale values.
+ */
+function setupSessionLayers(map: MapboxMap): void {
+  // lineMetrics is REQUIRED for line-gradient. Without it the paint
+  // property is ignored silently and the line renders flat — which
+  // looks like a styling mistake rather than a missing source option.
+  map.addSource(ROUTE_SRC, {
+    type: 'geojson',
+    lineMetrics: true,
+    data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
+  });
+  map.addSource(WALL_SRC, {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+  // Tile Coverage brief §6 step 4 — this session's live tile fill, fed
+  // by the `tiles` prop's own effect below (NOT the points-driven
+  // effect that owns ROUTE_SRC — index.tsx already throttles the prop,
+  // so this source just renders whatever it's handed).
+  map.addSource(TILES_SRC, {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+  // Ground captured by closing a loop around it, as its own source so
+  // it can carry the conquered shimmer — see the `enclosedTiles` prop.
+  map.addSource(ENCLOSED_SRC, {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+
+  map.addLayer({
+    id: `${ROUTE_SRC}-glow`,
+    type: 'line',
+    source: ROUTE_SRC,
+    slot: MAP_SLOT_ROUTE,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': ROUTE_LINE_COLOR,
+      'line-width': ROUTE_GLOW_WIDTH,
+      'line-blur': ROUTE_GLOW_BLUR,
+      'line-opacity': ROUTE_GLOW_OPACITY,
+      'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+    },
+  });
+  map.addLayer({
+    id: ROUTE_SRC,
+    type: 'line',
+    source: ROUTE_SRC,
+    slot: MAP_SLOT_ROUTE,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-width': ROUTE_LINE_WIDTH,
+      // Fallback for if line-gradient is ever rejected (unsupported
+      // source, dropped lineMetrics, etc.) — Mapbox's default
+      // line-color is #000000, and without this a rejected gradient
+      // silently renders pure black instead of failing loudly. Never
+      // fires today (the gradient renders — confirmed on device), but
+      // costs nothing and matches the fix applied to the summary
+      // outline below, which WAS silently falling back to black.
+      'line-color': ROUTE_GRADIENT[0][1],
+      // The static ramp is only what the line looks like BEFORE a
+      // session arms the flow below — mid-run this property is
+      // repainted every ROUTE_GRADIENT_FRAME_MS.
+      'line-gradient': lineGradientExpression(),
+      'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+    },
+  });
+
+  // Tile Coverage brief §6 step 4/§5 — below everything else in
+  // MAP_SLOT_FILL (added first, so it's the bottom-most fill layer)
+  // so the wall/enclosure-fill scene-dressing above still reads as
+  // distinct edges/rise on top of the real claimed-ground fill.
+  map.addLayer({
+    id: TILES_SRC,
+    type: 'fill',
+    source: TILES_SRC,
+    slot: MAP_SLOT_FILL,
+    paint: {
+      // Default colour at mount, same as WALL_SRC below —
+      // this component persists across sessions (it's not remounted
+      // per-run), so the real per-run colour is applied by the
+      // fenceColor-sync effect, not baked in here.
+      'fill-color': FENCE_WALL_COLOR,
+      'fill-opacity': TILE_FILL_OPACITY,
+      'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
+    },
+  });
+
+  // Conquered ground. Same slot and opacity as TILES_SRC above and
+  // added right after it, so the two fills sit at the same depth and
+  // read as one continuous territory — what separates them is COLOUR,
+  // not stacking: this one sweeps the ROUTE_GRADIENT wheel while the
+  // run-over ground holds the run's own identity colour.
+  //
+  // `fill-color-transition` is where the shimmer's smoothness comes
+  // from. The interval below only advances the hue one step every
+  // FENCE_SHIMMER_STEP_MS; GL interpolates between each pair on the
+  // GPU. That is the whole reason this can be a 2.2s timer instead of
+  // a requestAnimationFrame loop — see the pulse-dot comment above
+  // for why a per-frame map repaint is the specific trap here.
+  //
+  // Mapbox has no positional gradient for fills at all (only lines
+  // take `line-gradient`), so a fill can only sweep the wheel through
+  // TIME. Same technique, same constant, as a saved territory's
+  // shimmer in territories-map.web.tsx — deliberately, so the live
+  // capture and the saved territory it becomes read as the same thing.
+  map.addLayer({
+    id: ENCLOSED_SRC,
+    type: 'fill',
+    source: ENCLOSED_SRC,
+    slot: MAP_SLOT_FILL,
+    paint: {
+      'fill-color': ROUTE_GRADIENT_COLORS[0],
+      'fill-color-transition': { duration: FENCE_SHIMMER_STEP_MS, delay: 0 },
+      'fill-opacity': TILE_FILL_OPACITY,
+      'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
+    },
+  });
+
+  // The fence. Height is animated per-feature via a paint transition
+  // rather than a rAF loop: GL interpolates fill-extrusion-height on
+  // the GPU, so the rise costs nothing on the main thread.
+  map.addLayer({
+    id: WALL_SRC,
+    type: 'fill-extrusion',
+    source: WALL_SRC,
+    slot: MAP_SLOT_FILL,
+    paint: {
+      'fill-extrusion-color': FENCE_WALL_COLOR,
+      'fill-extrusion-opacity': FENCE_WALL_OPACITY,
+      'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
+      'fill-extrusion-base': 0,
+      'fill-extrusion-height-transition': { duration: FENCE_RISE_MS, delay: 0 },
+      'fill-extrusion-emissive-strength': EMISSIVE_STRENGTH_FULL,
+    },
+  });
 }
 
 interface TrackMapProps {
@@ -291,6 +444,10 @@ export function TrackMap({
   // tracks the runner. See fence-map.web.tsx's own start marker for the
   // post-run equivalent (same colour, START_MARKER_COLOR).
   const startMarkerRef = useRef<Marker | null>(null);
+  // True until the style-upgrade effect below fires once, on the first
+  // Start of the component's life — see MAP_STYLE_GL_IDLE's header for why
+  // the idle map boots on a cheaper style than the one a session needs.
+  const usingIdleStyleRef = useRef(true);
   const readyRef = useRef(false);
   // The same fact as readyRef, as STATE — because a ref cannot wake an
   // effect. Every effect below bails until the map has loaded, and most
@@ -491,7 +648,10 @@ export function TrackMap({
       mapboxgl.accessToken = TOKEN;
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        style: MAP_STYLE_GL,
+        // Idle style, not MAP_STYLE_GL — see MAP_STYLE_GL_IDLE's own header.
+        // The upgrade-on-Start effect further down swaps this for the full
+        // Standard style once a session actually needs it.
+        style: MAP_STYLE_GL_IDLE,
         center: [initialLng, initialLat],
         zoom: MAP_DEFAULT_ZOOM,
         attributionControl: false,
@@ -513,145 +673,13 @@ export function TrackMap({
         map.touchPitch.disable();
         map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
 
-        // lineMetrics is REQUIRED for line-gradient. Without it the paint
-        // property is ignored silently and the line renders flat — which
-        // looks like a styling mistake rather than a missing source option.
-        map.addSource(ROUTE_SRC, {
-          type: 'geojson',
-          lineMetrics: true,
-          data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
-        });
-        map.addSource(WALL_SRC, {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-        });
-        // Tile Coverage brief §6 step 4 — this session's live tile fill, fed
-        // by the `tiles` prop's own effect below (NOT the points-driven
-        // effect that owns ROUTE_SRC — index.tsx already throttles the prop,
-        // so this source just renders whatever it's handed).
-        map.addSource(TILES_SRC, {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-        });
-        // Ground captured by closing a loop around it, as its own source so
-        // it can carry the conquered shimmer — see the `enclosedTiles` prop.
-        map.addSource(ENCLOSED_SRC, {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-        });
-
-        map.addLayer({
-          id: `${ROUTE_SRC}-glow`,
-          type: 'line',
-          source: ROUTE_SRC,
-          slot: MAP_SLOT_ROUTE,
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-color': ROUTE_LINE_COLOR,
-            'line-width': ROUTE_GLOW_WIDTH,
-            'line-blur': ROUTE_GLOW_BLUR,
-            'line-opacity': ROUTE_GLOW_OPACITY,
-            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
-        map.addLayer({
-          id: ROUTE_SRC,
-          type: 'line',
-          source: ROUTE_SRC,
-          slot: MAP_SLOT_ROUTE,
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-width': ROUTE_LINE_WIDTH,
-            // Fallback for if line-gradient is ever rejected (unsupported
-            // source, dropped lineMetrics, etc.) — Mapbox's default
-            // line-color is #000000, and without this a rejected gradient
-            // silently renders pure black instead of failing loudly. Never
-            // fires today (the gradient renders — confirmed on device), but
-            // costs nothing and matches the fix applied to the summary
-            // outline below, which WAS silently falling back to black.
-            'line-color': ROUTE_GRADIENT[0][1],
-            // The static ramp is only what the line looks like BEFORE a
-            // session arms the flow below — mid-run this property is
-            // repainted every ROUTE_GRADIENT_FRAME_MS.
-            'line-gradient': lineGradientExpression(),
-            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
-
-        // Tile Coverage brief §6 step 4/§5 — below everything else in
-        // MAP_SLOT_FILL (added first, so it's the bottom-most fill layer)
-        // so the wall/enclosure-fill scene-dressing above still reads as
-        // distinct edges/rise on top of the real claimed-ground fill.
-        map.addLayer({
-          id: TILES_SRC,
-          type: 'fill',
-          source: TILES_SRC,
-          slot: MAP_SLOT_FILL,
-          paint: {
-            // Default colour at mount, same as WALL_SRC below —
-            // this component persists across sessions (it's not remounted
-            // per-run), so the real per-run colour is applied by the
-            // fenceColor-sync effect, not baked in here.
-            'fill-color': FENCE_WALL_COLOR,
-            'fill-opacity': TILE_FILL_OPACITY,
-            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
-
-        // Conquered ground. Same slot and opacity as TILES_SRC above and
-        // added right after it, so the two fills sit at the same depth and
-        // read as one continuous territory — what separates them is COLOUR,
-        // not stacking: this one sweeps the ROUTE_GRADIENT wheel while the
-        // run-over ground holds the run's own identity colour.
-        //
-        // `fill-color-transition` is where the shimmer's smoothness comes
-        // from. The interval below only advances the hue one step every
-        // FENCE_SHIMMER_STEP_MS; GL interpolates between each pair on the
-        // GPU. That is the whole reason this can be a 2.2s timer instead of
-        // a requestAnimationFrame loop — see the pulse-dot comment above
-        // for why a per-frame map repaint is the specific trap here.
-        //
-        // Mapbox has no positional gradient for fills at all (only lines
-        // take `line-gradient`), so a fill can only sweep the wheel through
-        // TIME. Same technique, same constant, as a saved territory's
-        // shimmer in territories-map.web.tsx — deliberately, so the live
-        // capture and the saved territory it becomes read as the same thing.
-        map.addLayer({
-          id: ENCLOSED_SRC,
-          type: 'fill',
-          source: ENCLOSED_SRC,
-          slot: MAP_SLOT_FILL,
-          paint: {
-            'fill-color': ROUTE_GRADIENT_COLORS[0],
-            'fill-color-transition': { duration: FENCE_SHIMMER_STEP_MS, delay: 0 },
-            'fill-opacity': TILE_FILL_OPACITY,
-            'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
-
-        // The fence. Height is animated per-feature via a paint transition
-        // rather than a rAF loop: GL interpolates fill-extrusion-height on
-        // the GPU, so the rise costs nothing on the main thread.
-        map.addLayer({
-          id: WALL_SRC,
-          type: 'fill-extrusion',
-          source: WALL_SRC,
-          slot: MAP_SLOT_FILL,
-          paint: {
-            'fill-extrusion-color': FENCE_WALL_COLOR,
-            'fill-extrusion-opacity': FENCE_WALL_OPACITY,
-            'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
-            'fill-extrusion-base': 0,
-            'fill-extrusion-height-transition': { duration: FENCE_RISE_MS, delay: 0 },
-            'fill-extrusion-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
-        // "Feels alive even standing still" (mid-run, not idling — see the
-        // dedicated effect below that arms it) — the route's gradient flow is
-        // a plain setInterval, not requestAnimationFrame: see this file's
-        // pulse-dot comment for why a per-frame GL repaint for the whole
-        // length of a run is the specific trap being avoided. Each tick is
-        // one cheap setPaintProperty call, not a geometry rebuild.
+        // Custom sources/layers (route, wall, tile fill, enclosed shimmer)
+        // are NOT added here — see setupSessionLayers's own header. The idle
+        // style loaded above has nothing to show in them yet (index.tsx's
+        // liveTiles/liveEnclosed both start empty), and setStyle() wipes any
+        // sources/layers a style had regardless, so whichever style is
+        // active when a session actually starts is what adds them (the
+        // style-upgrade effect further down, on the very first Start).
 
         const el = document.createElement('div');
         el.className = 'track-dot';
@@ -695,6 +723,39 @@ export function TrackMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Upgrades the idle map to the full Standard style the FIRST time a
+  // session goes active — see MAP_STYLE_GL_IDLE's header for why the map
+  // doesn't just boot on that style directly. Every other effect in this
+  // file that touches a custom source/layer already gates on `mapReady`
+  // (the file's own long-standing rule — see readyRef's comment above), so
+  // toggling it off for the swap's duration and back on once
+  // setupSessionLayers has re-added everything is enough to keep them all
+  // safe with no changes needed anywhere else: none of them can run against
+  // a style that's mid-swap and missing its sources.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!active || !map || !usingIdleStyleRef.current) return;
+    usingIdleStyleRef.current = false;
+    readyRef.current = false;
+    setMapReady(false);
+    map.once('style.load', () => {
+      // Guards the same class of bug this file has shipped before (see
+      // track-map.web.tsx's CLAUDE.md entry on cleanup touching a destroyed
+      // map): if the component unmounted while setStyle's swap was still in
+      // flight, the mount effect's cleanup already called map.remove() and
+      // nulled mapRef — acting on this `map` after that would touch a
+      // corpse. mapRef.current === map is also false if a second call
+      // somehow re-created the map in between, which can't happen here
+      // (usingIdleStyleRef already guards re-entry) but costs nothing to
+      // check too.
+      if (mapRef.current !== map) return;
+      setupSessionLayers(map);
+      readyRef.current = true;
+      setMapReady(true);
+    });
+    map.setStyle(MAP_STYLE_GL);
+  }, [active]);
+
   // Arms the route-colour-cycle timer ONLY while a session is active —
   // gated here, not inside the mount effect above, specifically because it
   // used to run from map mount to unmount regardless of whether a run was in
@@ -716,7 +777,12 @@ export function TrackMap({
     // ROUTE_GRADIENT_FRAME_MS. The previous version rotated whole colour
     // stops and read as stepped.
     routeFlowStopRef.current = startGradientFlow((gradient) => {
-      map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
+      // Guarded, not assumed to exist: ROUTE_SRC's layer is only added once
+      // setupSessionLayers has run (a session's first Start, post style
+      // upgrade — see MAP_STYLE_GL_IDLE's header), and this effect's own
+      // `readyRef.current` check above passes on the map's very first idle
+      // `load` too, before that has happened.
+      if (map.getLayer(ROUTE_SRC)) map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
     });
 
     // The conquered-ground shimmer. One step of the wheel per tick; GL
@@ -734,7 +800,10 @@ export function TrackMap({
     let shimmerStep = 0;
     shimmerIntervalRef.current = setInterval(() => {
       shimmerStep = (shimmerStep + 1) % ROUTE_GRADIENT_COLORS.length;
-      map.setPaintProperty(ENCLOSED_SRC, 'fill-color', ROUTE_GRADIENT_COLORS[shimmerStep]);
+      // Guarded for the same reason the gradient-flow callback above is.
+      if (map.getLayer(ENCLOSED_SRC)) {
+        map.setPaintProperty(ENCLOSED_SRC, 'fill-color', ROUTE_GRADIENT_COLORS[shimmerStep]);
+      }
     }, FENCE_SHIMMER_STEP_MS);
 
     return () => {
@@ -948,8 +1017,14 @@ export function TrackMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
-    map.setPaintProperty(TILES_SRC, 'fill-color', fenceColor);
+    // Guarded, not assumed to exist: these layers are only added once
+    // setupSessionLayers has run (a session's first Start, post style
+    // upgrade — see MAP_STYLE_GL_IDLE's header), and readyRef.current above
+    // is also true on the map's very first idle `load`, before that has
+    // happened — this effect fires then too (fenceColor is already set at
+    // that point) and used to throw on the missing layer.
+    if (map.getLayer(WALL_SRC)) map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
+    if (map.getLayer(TILES_SRC)) map.setPaintProperty(TILES_SRC, 'fill-color', fenceColor);
   }, [fenceColor, active, mapReady]);
 
   // Tile Coverage brief §6 step 4 — deliberately its OWN effect, not folded
