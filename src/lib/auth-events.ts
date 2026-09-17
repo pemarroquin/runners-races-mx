@@ -21,7 +21,7 @@
 // for the same fact.
 import type { Session } from '@supabase/supabase-js';
 
-import { supabase, TERRITORY_ENABLED } from '@/lib/supabase';
+import { isRealRuntime, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 
 type Listener = () => void;
 
@@ -53,7 +53,12 @@ let started = false;
  * anything at all.
  */
 function startIdentityWatch(): void {
-  if (started || !TERRITORY_ENABLED) return;
+  // isRealRuntime: onAuthStateChange() always triggers gotrue's
+  // _emitInitialSession internally (unconditional storage read), and
+  // expo-router's static-rendering export flushes this module's callers'
+  // mount effects during the Node prerender pass — see supabase.ts's own
+  // header on isRealRuntime for the full crash this guards against.
+  if (started || !TERRITORY_ENABLED || !isRealRuntime) return;
   started = true;
   supabase.auth.onAuthStateChange((_event, session) => {
     const key = identityKey(session);

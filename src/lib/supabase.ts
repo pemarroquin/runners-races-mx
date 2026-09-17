@@ -9,12 +9,54 @@
 import 'react-native-get-random-values';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient, type Session } from '@supabase/supabase-js';
+import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 
 const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const TERRITORY_ENABLED = !!URL && !!ANON_KEY;
+
+// True on native (no `window`, but a real RN runtime — `navigator.product`
+// is how RN itself self-identifies, see react-native/Libraries/Core/setUpNavigator)
+// and in an actual browser tab. False ONLY during expo-router's
+// static-rendering export pass, which runs the web bundle under NODE to
+// prerender HTML. Deliberately NOT `Platform.OS !== 'web'`: that read 'web'
+// even in this Node pass (it's building the web target, just executing it
+// server-side), which made an earlier version of this guard a no-op — this
+// checks for an actual DOM/RN runtime instead of which platform was built.
+//
+// Why this matters: merely constructing a real client is enough to crash
+// the export. gotrue's GoTrueClient reads the persisted session from
+// `storage.getItem()` proactively from more than one internal path the
+// moment `persistSession` is true — the auto-init in its constructor
+// (guardable with `skipAutoInitialize`) is only ONE of them; tracing an
+// actual crash here (2026-09-16) found a SECOND, unguarded path still firing
+// `_emitInitialSession` → `__loadSession` → AsyncStorage's web shim, which
+// reads `window.localStorage` and throws `ReferenceError: window is not
+// defined`. Rather than keep chasing individual internal gotrue call paths,
+// this file never constructs a real client at all when `!isRealRuntime` —
+// see inertSupabaseStub below.
+export const isRealRuntime =
+  (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') ||
+  (typeof window !== 'undefined' && typeof window.document !== 'undefined');
+
+// Every real caller (territory-sync.ts, account.ts, etc.) only ever touches
+// `supabase.*` from inside an effect or an event handler — never during a
+// component's synchronous render — so nothing legitimate should reach this
+// during the Node prerender pass. Throwing on first access (rather than
+// silently no-opping) turns a future regression here into a loud, readable
+// error instead of another multi-hour hunt through minified gotrue frames.
+const inertSupabaseStub = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      throw new Error(
+        `Supabase client accessed during static prerendering (property "${String(prop)}"). ` +
+          'This code path must not run outside an effect/handler — see isRealRuntime in supabase.ts.',
+      );
+    },
+  },
+) as SupabaseClient;
 
 // `createClient` requires non-empty strings even when unused; the app must
 // still start (and every other feature must still work) if these env vars
@@ -31,14 +73,16 @@ export const TERRITORY_ENABLED = !!URL && !!ANON_KEY;
 // itself finish what that link starts: parse the session out of the
 // redirect's URL fragment on load. See emailLinkType below for how the UI
 // knows this just happened.
-export const supabase = createClient(URL || 'https://placeholder.invalid', ANON_KEY || 'placeholder', {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-});
+export const supabase: SupabaseClient = isRealRuntime
+  ? createClient(URL || 'https://placeholder.invalid', ANON_KEY || 'placeholder', {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : inertSupabaseStub;
 
 /**
  * Which Supabase auth flow (if any) this page load's URL fragment carries —
@@ -140,7 +184,14 @@ let cachedSession: Session | null = null;
 // thing without deferring. The callback only assigns — it never re-enters
 // the client, which supabase-js documents as deadlock-prone from inside
 // this handler.
-if (TERRITORY_ENABLED) {
+//
+// Also gated on isRealRuntime: subscribing immediately triggers gotrue's
+// `_emitInitialSession`, which reads storage via `__loadSession` regardless
+// of `skipAutoInitialize` above (that flag only guards the constructor's
+// OWN auto-init, not this). Same Node-SSR `window`-less crash, different
+// code path — skipping the subscription entirely during the static-export
+// prerender is fine since nothing awaits a session during it anyway.
+if (TERRITORY_ENABLED && isRealRuntime) {
   supabase.auth.onAuthStateChange((_event, session) => {
     cachedSession = session ?? null;
   });
