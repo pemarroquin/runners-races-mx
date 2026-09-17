@@ -13,10 +13,12 @@ import type { Race } from '@/lib/races';
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const ROUTE_COLOR = ROUTE_LINE_COLOR_URL; // shared with GL JS — see constants/map.ts
 const IMG = { w: 800, h: 300, retina: '@2x' };
-// Taller frame, used by the pin map. Named for the fence map it was
-// introduced with; that builder is gone (the GL maps replaced it) and
-// buildPinMapUrl still wants these dimensions.
-const FENCE_IMG = { w: 800, h: 500, retina: '@2x' };
+// Taller frame, used by the pin map. No @2x suffix — this is a blurred
+// background placeholder, not a sharp detail view, and 800x500 at 1x is
+// ~4x fewer pixels than 800x500@2x (which generates a 1600x1000 pixel
+// image). The size difference (222 KiB → ~55 KiB) is the LCP bottleneck
+// on the Track tab's initial paint.
+const FENCE_IMG = { w: 800, h: 500, retina: '' };
 const MARKER_ZOOM = 14;
 
 

@@ -1177,6 +1177,10 @@ export function TrackMap({
         <img
           src={pinnedUrl ?? pinUrl ?? undefined}
           alt=""
+          // High-priority so the browser front-loads this against
+          // any other competing resource — it's the LCP element on
+          // the Track tab's initial paint.
+          fetchPriority="high"
           style={{
             position: 'absolute',
             inset: 0,
