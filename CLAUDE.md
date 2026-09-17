@@ -91,6 +91,40 @@ CI runs it on every pull request and every push to main
 - `_meta.count` is not read by the app, but it drifted to 114 against 195 real
   records because sweeps never touched it. The gate now checks it.
 
+## Nav restructure (2026-09-17) — three tabs, Profile as a floating pill
+
+Bottom nav dropped from five tabs to three: **Run** (`index.tsx`),
+**Leaderboard** (`leaderboard.tsx`), **Races** (`races.tsx`). Two things had
+to move because of it:
+
+- **Saved races** folded into Races as a "Discover/Saved" segmented toggle
+  at the top of that screen (`races.tsx`), reusing the same `RaceCard` and
+  the same upcoming/past section logic the old `myraces.tsx` had.
+- **Conquered Areas** (the old Saved tab's territory map) moved into
+  Leaderboard as a new first sub-tab, **My Achievements**
+  (`achievements-view.tsx`) — same map/detail-bubble/fetch logic the deleted
+  `myraces.tsx`'s `FencesView` used, but self-contained (owns its own
+  fetch/focus/signal wiring) rather than sharing Leaderboard's other two
+  boards' effects. It needs no location/district at all, unlike its two
+  sibling sub-tabs (Municipio, Local Leaders — see below), and
+  `leaderboard.tsx`'s `useCurrentLocation({ autoRequest: activeBoard !==
+  'mine' })` is what keeps opening the app from prompting for location just
+  because My Achievements happens to be the default sub-tab.
+- Its detail bubble gained Distance/Pace/Time/Tiles stats — `duration_s` was
+  already stored on every run (`territory-sync.ts`'s `MyFence.durationS`)
+  but never read back before this; `formatPace()` (`tracking.ts`) is new.
+
+**Profile dropped off the tab bar entirely.** It's a root Stack push at
+`/profile` (`src/app/profile/`, moved out of `(tabs)/settings/` — the old
+`settings/profile.tsx` sub-page is now `profile/account.tsx`, to avoid a
+`/profile/profile` route), reached via a floating avatar pill
+(`profile-pill.tsx`) rendered on all three main tabs. Being a root push
+(same level as `race/[id]`) means it has no bottom tab bar to fall back on,
+so its own back chevron checks `router.canGoBack()` and falls back to
+`router.replace('/')` — a direct reload or a shared link to `/profile`
+arrives with no history, and a bare `router.back()` would silently strand
+the runner there.
+
 ## Territory Mode — the two boards
 
 Two leaderboards, and they measure different things on purpose. Do not merge
@@ -222,6 +256,68 @@ indistinguishable from one reading 0% because nobody ran.
 - **Measure a denominator against production before shipping a percentage.**
   Two denominators for one number were written down as decided and then
   measured to be unusable. A percentage is a claim about a denominator.
+
+- **A continuous animation timer inside a Tabs screen keeps running after
+  you switch tabs away from it, because expo-router never unmounts a tab on
+  switching away — it only stops reporting focus.** `TerritoriesMap.web.tsx`
+  (My Achievements' map, `achievements-view.tsx`) runs two setInterval-driven
+  loops whenever it has a saved territory — a gradient flow along each
+  outline and a colour-shimmer on its fill wall — gated only on `hasSaved`,
+  never on whether the screen was actually visible. Reported as the phone
+  heating up during ordinary browsing (2026-09-17): once a runner opened
+  Leaderboard even once (My Achievements became the DEFAULT sub-tab in the
+  same nav restructure that surfaced this), both timers kept ticking and
+  Mapbox kept repainting indefinitely in the background, on Run or Races,
+  with nothing on screen to show for it. Fixed with an `active` prop on
+  `TerritoriesMap`, threaded from `achievements-view.tsx`'s own
+  `useIsFocused()` — same pattern `track-map.web.tsx`'s pre-existing `active`
+  prop already used for its own shimmer, just never carried over here. Rule:
+  any component that starts a `setInterval`/`requestAnimationFrame` loop and
+  can be mounted inside a Tabs screen needs an explicit "is my own screen
+  focused" gate — "does it have something to animate" is not the same
+  question. `gradient-flow.ts`'s `startGradientFlow` already paused on a
+  hidden BROWSER tab (`visibilitychange`); the shimmer's own raw
+  `setInterval` had no such handling at all until this fix, which is a second,
+  independent instance of the same class of gap.
+
+- **Don't "fix" a lost-fetched-state regression by hiding a live Mapbox
+  surface with `display: 'none'` instead of unmounting it — tried and
+  reverted, 2026-09-17.** Once My Achievements got its own `active`-gated
+  timers (above), switching Leaderboard's sub-tabs still fully unmounts/
+  remounts `AchievementsView` (it's an early-return branch keyed on
+  `activeBoard`), so toggling away and back re-fetches and briefly flashes a
+  loading spinner — a real, minor regression from when Conquered Areas was
+  its own top-level tab (which expo-router never unmounts on tab-switch, so
+  it never lost state). The fix attempted was keeping `AchievementsView`
+  permanently mounted and toggling `display:'none'` on its wrapper instead.
+  Reverted before shipping: none of this codebase's Mapbox components
+  (`territories-map.web.tsx`, `fence-map.web.tsx`, `track-map.web.tsx`) call
+  `.resize()` on their container, because until this attempt none of them
+  had ever needed to survive a hidden-then-shown container — going from
+  `display:'none'` (0×0) back to visible is a known way to leave a Mapbox GL
+  canvas blank or misaligned until something else forces a resize, and this
+  session cannot drive a real browser to verify it (see the no-self-visual-QA
+  memory). Left as the accepted tradeoff: a brief refetch-flash on sub-tab
+  toggle, not an unverifiable maybe-broken map. If this is revisited, it
+  needs either an explicit `map.resize()` wired to the visibility toggle, or
+  real device/browser verification before it ships — not both skipped again.
+
+- **Two Claude Code sessions can be editing this exact working directory at
+  the same time, and their work lands in ONE shared commit.** During the
+  2026-09-17 nav-restructure session, a second, independent agent was
+  building the shareable route/stats sticker (`share-card.tsx`,
+  `route-shape.ts`) in the same checkout concurrently — files the first
+  session hadn't touched (and hadn't been told about) kept appearing
+  fully-formed mid-read, and a file already read minutes earlier would come
+  back changed on a later read. Neither session's `git status` showed
+  anything odd because there was only ever one working tree; the two bodies
+  of work were git-committed and PR'd together as one commit
+  (`Co-Authored-By: Claude Sonnet 5`) without either session initiating that
+  commit itself. Not a bug — just a fact about this workspace worth knowing
+  before assuming an unexplained diff is your own mistake: re-read a file
+  fresh before editing it if its content doesn't match what you last saw,
+  and don't assume a repo's working tree reflects only your own session's
+  changes.
 
 ## Project shape
 
