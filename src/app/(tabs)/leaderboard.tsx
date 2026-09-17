@@ -48,8 +48,8 @@ import { Icon } from '@/components/ui/icon';
 import { FENCE_COLOR_SETS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { onIdentityChanged } from '@/lib/auth-events';
-import { fetchDistrictVisits } from '@/lib/boards';
-import { districtOf, districtOfCell } from '@/lib/district';
+import { fetchDistrictParkCells, fetchDistrictVisits, type ParkCell } from '@/lib/boards';
+import { districtLabel, districtOf, districtOfCell } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
@@ -68,6 +68,9 @@ import { fetchTileLeaderboard } from '@/lib/territory-sync';
 interface BoardData {
   tiles: TileOwnerRow[] | null;
   meUserId: string | null;
+  /** For districtLabel's caption only — a failed or empty read just means
+   *  the arena falls back to the metro region name, never a failed board. */
+  parkCells: ParkCell[];
   visits: Parameters<typeof mayorByCell>[0];
   failed: boolean;
 }
@@ -91,26 +94,29 @@ export default function LeaderboardScreen() {
   useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
 
   const load = useCallback(async (forDistrict: string): Promise<BoardData> => {
-    // Two independent reads, no ordering between them.
+    // Three independent reads, no ordering between them.
     //
-    // The park-path read that used to be here is GONE, along with the whole
-    // dependency on a hand-applied migration. It fed a denominator this
-    // board no longer uses (see ConquestEntry.share), and a caption. It also
-    // never returned anything: park_path_cells is empty in production and
-    // all four live districts contain zero park cells.
-    const [board, visits] = await Promise.all([
+    // The park-path read is back, `park_path_cells` having been loaded into
+    // production 2026-09-09 — but ONLY for districtLabel's caption. The
+    // denominator it used to feed stays gone (see ConquestEntry.share); a
+    // failed or empty read here must never fail the board, just fall back
+    // the caption to the metro region name.
+    const [board, parks, visits] = await Promise.all([
       // Scoped to this district server-side, like the two reads beside it —
       // see fetchTileLeaderboard's own `district` param for what the
       // unscoped version cost.
       fetchTileLeaderboard(forDistrict),
+      fetchDistrictParkCells(forDistrict),
       fetchDistrictVisits(forDistrict),
     ]);
     return {
       tiles: board.ok ? board.tiles : null,
       meUserId: board.ok ? board.meUserId : null,
+      parkCells: parks.ok ? parks.parkCells : [],
       visits: visits.ok ? visits.visits : [],
-      // Only the ownership read failing is a failed BOARD; missing visits
-      // just means an empty Local Leaders section.
+      // Only the ownership read failing is a failed BOARD; missing park
+      // cells or visits just means a decorative fallback / an empty Local
+      // Leaders section.
       failed: !board.ok,
     };
   }, []);
@@ -171,14 +177,19 @@ export default function LeaderboardScreen() {
     [data, district],
   );
 
-  // The arena's caption. From the metro region rather than a majority vote
-  // over park cells — that vote could only ever return null, since the park
-  // table is empty, and it inherited a 21.3% boundary error besides.
-  // Decorative either way: the district id is what scores.
-  const label = useMemo(
-    () => (coords ? (nearestRegion(coords.lat, coords.lng)?.name ?? null) : null),
-    [coords],
-  );
+  // The arena's caption. districtLabel first — the real municipio name by
+  // majority vote over this district's park cells, matching what the Saved
+  // tab's progress screen shows for the same ground — falling back to the
+  // metro region where no park data has been extracted for this district
+  // (most of the planet). Decorative either way: the district id is what
+  // scores, never this string.
+  const label = useMemo(() => {
+    if (district !== null && data) {
+      const fromParks = districtLabel(district, data.parkCells);
+      if (fromParks) return fromParks;
+    }
+    return coords ? (nearestRegion(coords.lat, coords.lng)?.name ?? null) : null;
+  }, [district, data, coords]);
 
   // ---- Your own standing, which is the hero ------------------------------
   const me = conquest?.entries.find((e) => e.userId === data?.meUserId) ?? null;
@@ -307,8 +318,9 @@ export default function LeaderboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
         }>
         {/* THE ARENA. A caption, not a control — there is nothing to pick.
-            `label` is the metro region, and null before the first fix — the
-            fallback says "where you are" rather than inventing a place
+            `label` is the real municipio where park data covers this
+            district, else the metro region, and null before the first fix —
+            the fallback says "where you are" rather than inventing a place
             name. Decorative: the district id is what scores. */}
         <Animated.View entering={FadeIn.duration(300)} style={styles.arena}>
           <Text style={[styles.arenaKicker, { color: c.textSecondary }]}>

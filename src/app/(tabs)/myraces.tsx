@@ -1,18 +1,35 @@
-// The Saved tab — two collections behind one segmented switch: the races
-// you've bookmarked, and the territories you've captured in Territory Mode.
+// The Saved tab — two collections behind one floating switch: the races
+// you've bookmarked, and the areas you've conquered in Territory Mode.
 // Pedro's call (2026-08-27): past fences live HERE, not on the live Track
-// map — a run-history surface, not run-time chrome.
+// map — a run-history surface, not run-time chrome. The third segment
+// (park-path progress per municipio) moved to Settings 2026-09-16 — see
+// settings/progress.tsx — leaving exactly the two collections this screen's
+// own name says it holds.
 //
 // Territories redesign (2026-09-02, Pedro's ask): one map showing every
 // saved territory at once (fit to bounds around ALL of them, however far
 // the spread — his call over per-city scoping), not a scrolling list of
-// fence-card thumbnails. Tapping a territory opens a detail card with its
+// fence-card thumbnails. Tapping a territory opens a detail bubble with its
 // stats and actions. A run still in the offline retry queue (see
 // upload-queue.ts) shows too, in a visually distinct PENDING state — Pedro,
 // mid-session: "let's show it on the unified map but ... a different state
 // that reflects that area haven't been uploaded", with Retry/Delete in its
-// card; it promotes to the normal saved look automatically the moment its
+// bubble; it promotes to the normal saved look automatically the moment its
 // upload succeeds.
+//
+// Full-bleed redesign (2026-09-16, Pedro's ask, Apple Maps as the
+// reference): the map fills the whole screen — no title bar, no solid
+// segment row sitting on top of it — and the Races⟷Conquested Areas switch
+// floats as one wide glass capsule near the TOP instead, under the status
+// bar. Styled after Apple Maps' own floating search bar's MATERIAL, not its
+// position or its lack of a view switcher — Pedro's clarification mid-build:
+// "there's no tabs in apple maps, but let's use the reference from the
+// search bar" — the shape/glass is the transferable part. Top rather than
+// stacked above the app's own bottom tab bar: this app already has bottom
+// chrome (the 5-tab pill), and a second floating bar crowding the same
+// corner is worse than Apple's single bottom bar with nothing competing
+// under it. The detail bubble (below) stays bottom-anchored independently —
+// map detail belongs near the thumb, the view switch doesn't need to.
 import { useIsFocused, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -27,15 +44,17 @@ import {
   useColorScheme,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 
 import { cellsToMultiPolygon } from 'h3-js';
 import type { MultiPolygon, Polygon } from 'geojson';
 
 import { RaceCard } from '@/components/race-card';
-import { MunicipioProgressList } from '@/components/municipio-progress';
 import { TerritoriesMap, type TerritoryFeature } from '@/components/territories-map';
+import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { daysUntil, type Race } from '@/lib/races';
@@ -66,16 +85,14 @@ interface RaceSection {
   data: Race[];
 }
 
-type SavedView = 'races' | 'fences' | 'progress';
+type SavedView = 'races' | 'fences';
 
 /** The segment labels, as keys rather than as a ternary ladder inside the
- *  JSX — the branch you are looking for is on its own line, and a fourth view
- *  becomes one entry instead of another level of nesting. The ORDER of the
+ *  JSX — the branch you are looking for is on its own line. The ORDER of the
  *  segments is the array at the call site, not this record. */
 const SAVED_VIEW_LABEL_KEYS: Record<SavedView, string> = {
   races: 'myraces.tabRaces',
   fences: 'myraces.tabFences',
-  progress: 'myraces.tabProgress',
 };
 
 /** Why a queued run's retry failed. The `track.*` key namespace is inherited
@@ -113,6 +130,7 @@ export default function MyRacesScreen() {
   const { savedIds, dropMissing, storageError } = useSaved();
   const allRaces = useRaces();
   const today = useToday();
+  const insets = useSafeAreaInsets();
 
   const [view, setView] = useState<SavedView>('races');
   const isFocused = useIsFocused();
@@ -255,45 +273,22 @@ export default function MyRacesScreen() {
 
   const [selection, setSelection] = useState<Selection | null>(null);
 
+  // The switcher's own top offset + height, so the races list's top padding
+  // and SavedSwitcher's own position agree on how much room it takes — one
+  // formula, not two guesses that can drift apart.
+  const switcherClearance = insets.top + SWITCHER_TOP_MARGIN + SWITCHER_HEIGHT + Spacing.two;
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
-      <Text style={[styles.title, { color: c.text }]}>{t('myraces.title')}</Text>
-
-      <View style={styles.segmentRow}>
-        {(['races', 'fences', 'progress'] as const).map((key) => {
-          const selected = view === key;
-          return (
-            <Pressable
-              key={key}
-              onPress={() => setView(key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              style={[
-                styles.segment,
-                { backgroundColor: selected ? c.accent : c.backgroundElement },
-              ]}>
-              <Text
-                style={[styles.segmentLabel, { color: selected ? '#ffffff' : c.textSecondary }]}>
-                {t(SAVED_VIEW_LABEL_KEYS[key])}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {view === 'progress' ? (
-        /* Park-path progress per municipio. A THIRD segment on this tab
-           rather than a new one: the standing rule here is to look for
-           reusable space before adding nav surface, and this is the same
-           question the other two answer — what have I done, and where. */
-        <ScrollView contentContainerStyle={styles.progressScroll}>
-          <MunicipioProgressList c={c} />
-        </ScrollView>
-      ) : view === 'races' ? (
+    // A plain View, not SafeAreaView — the fences map draws edge-to-edge
+    // behind the status bar, Apple Maps style (Pedro's ask, 2026-09-16). The
+    // races list insets itself instead (switcherClearance below), and
+    // SavedSwitcher reads insets.top directly, since it floats over both.
+    <View style={[styles.safe, { backgroundColor: c.background }]}>
+      {view === 'races' ? (
         <SectionList
           sections={sections}
           keyExtractor={(r) => r.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingTop: switcherClearance }]}
           stickySectionHeadersEnabled={false}
           ListHeaderComponent={
             // Both of these were tracked in state and rendered nowhere: a
@@ -355,9 +350,93 @@ export default function MyRacesScreen() {
           scheme={scheme}
         />
       )}
-    </SafeAreaView>
+
+      <SavedSwitcher view={view} onChange={setView} insets={insets} />
+    </View>
   );
 }
+
+/**
+ * The Races ⟷ Conquested Areas switch — one floating glass capsule under
+ * the status bar, styled after Apple Maps' own floating search bar's
+ * material rather than a solid segmented row sitting in a title block. See
+ * this file's header for why it floats at the TOP rather than stacked
+ * above the app's own bottom tab bar.
+ *
+ * Always dark glass regardless of the app's own theme, same reasoning as
+ * the global tab bar (`(tabs)/_layout.tsx`'s TabBarBackground): this floats
+ * OVER content — a dark map behind it in one view, a light-or-dark list in
+ * the other — rather than docking at a page edge, so it needs its own fixed
+ * chrome rather than tracking the page theme.
+ */
+function SavedSwitcher({
+  view,
+  onChange,
+  insets,
+}: {
+  view: SavedView;
+  onChange: (v: SavedView) => void;
+  insets: { top: number };
+}) {
+  const { t } = useI18n();
+  return (
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.switcherWrap,
+        { top: insets.top + SWITCHER_TOP_MARGIN, height: SWITCHER_HEIGHT },
+      ]}>
+      {isLiquidGlassAvailable() ? (
+        <GlassView
+          style={StyleSheet.absoluteFill}
+          glassEffectStyle="regular"
+          colorScheme="dark"
+        />
+      ) : (
+        <GlassSurface scheme="dark" radius={GlassRadii.pill} noShadow style={StyleSheet.absoluteFill} />
+      )}
+      <View style={styles.switcherRow}>
+        {(['races', 'fences'] as const).map((key) => {
+          const selected = view === key;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => onChange(key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={styles.switcherItem}>
+              <View
+                style={[
+                  styles.switcherPill,
+                  selected && { backgroundColor: 'rgba(255,255,255,0.22)' },
+                ]}>
+                <Text
+                  style={[
+                    styles.switcherLabel,
+                    { color: selected ? '#ffffff' : 'rgba(255,255,255,0.6)' },
+                  ]}
+                  numberOfLines={1}>
+                  {t(SAVED_VIEW_LABEL_KEYS[key])}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const SWITCHER_HEIGHT = 52;
+const SWITCHER_TOP_MARGIN = Spacing.two;
+
+// The detail bubble (DetailCard, below) always sits on dark glass now,
+// regardless of the app's own theme — same reasoning as SavedSwitcher's own
+// fixed colors. `c.accent` stays theme-driven where it's still used (warning/
+// danger text) because it's identical in both themes (#E4572E) and was
+// already legible on dark.
+const ON_DARK_TEXT = '#ffffff';
+const ON_DARK_TEXT_SECONDARY = 'rgba(255,255,255,0.65)';
 
 function FencesView({
   fences,
@@ -500,7 +579,19 @@ function FencesView({
 
   return (
     <View style={styles.mapStage}>
-      <TerritoriesMap features={features} onSelect={(id, kind) => onSelect({ id, kind })} />
+      <TerritoriesMap
+        features={features}
+        onSelect={(id, kind) => onSelect({ id, kind })}
+        controls={{
+          zoomInLabel: t('track.zoomIn'),
+          zoomOutLabel: t('track.zoomOut'),
+          refitLabel: t('myraces.fencesRefit'),
+        }}
+        // This view is full-bleed behind the app's own floating tab bar
+        // (2026-09-16 redesign) — see TerritoriesMap's own prop doc for why
+        // that means clearing BottomTabInset here specifically.
+        controlsBottomOffset={BottomTabInset + Spacing.three}
+      />
       {(selectedFence || selectedQueued) && (
         <DetailCard
           fence={selectedFence}
@@ -617,25 +708,28 @@ function DetailCard({
   }, [queued, onDeleted]);
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(280)}
-      style={[styles.detailCard, { backgroundColor: c.backgroundElement }]}>
+    <Animated.View entering={FadeInDown.duration(280)} style={styles.detailBubbleWrap}>
+      {isLiquidGlassAvailable() ? (
+        <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" colorScheme="dark" />
+      ) : (
+        <GlassSurface scheme="dark" radius={GlassRadii.sheet} style={StyleSheet.absoluteFill} />
+      )}
       <View style={styles.detailHeader}>
         <View style={styles.detailMeta}>
-          <Text style={[styles.detailDate, { color: c.text }]}>{date}</Text>
-          <Text style={[styles.detailStats, { color: c.textSecondary }]}>
+          <Text style={[styles.detailDate, { color: ON_DARK_TEXT }]}>{date}</Text>
+          <Text style={[styles.detailStats, { color: ON_DARK_TEXT_SECONDARY }]}>
             {formatArea(areaM2)}  ·  {formatDistance(distanceM)}
           </Text>
         </View>
         <Pressable onPress={onClose} accessibilityRole="button" hitSlop={10}>
-          <Icon ios="xmark" android="close" size={18} color={c.textSecondary} />
+          <Icon ios="xmark" android="close" size={18} color={ON_DARK_TEXT_SECONDARY} />
         </Pressable>
       </View>
 
       {queued && (
-        <View style={[styles.pendingBadge, { backgroundColor: c.background }]}>
-          <ActivityIndicator size="small" color={c.textSecondary} />
-          <Text style={[styles.pendingBadgeText, { color: c.textSecondary }]}>
+        <View style={styles.pendingBadge}>
+          <ActivityIndicator size="small" color={ON_DARK_TEXT_SECONDARY} />
+          <Text style={[styles.pendingBadgeText, { color: ON_DARK_TEXT_SECONDARY }]}>
             {t('myraces.pendingLabel')}
           </Text>
         </View>
@@ -673,12 +767,12 @@ function DetailCard({
 
       {confirmingDelete ? (
         <View style={styles.detailConfirm}>
-          <Text style={[styles.detailNoticeText, { color: c.textSecondary }]}>
+          <Text style={[styles.detailNoticeText, { color: ON_DARK_TEXT_SECONDARY }]}>
             {t('track.deleteConfirmBody')}
           </Text>
           <View style={styles.detailActions}>
             <Pressable onPress={() => setConfirmingDelete(false)} accessibilityRole="button" hitSlop={10}>
-              <Text style={[styles.detailAction, { color: c.textSecondary }]}>
+              <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY }]}>
                 {t('common.cancel')}
               </Text>
             </Pressable>
@@ -714,7 +808,7 @@ function DetailCard({
             <Text
               style={[
                 styles.detailAction,
-                { color: c.textSecondary, opacity: deleting || retrying ? 0.5 : 1 },
+                { color: ON_DARK_TEXT_SECONDARY, opacity: deleting || retrying ? 0.5 : 1 },
               ]}>
               {t('track.deleteRun')}
             </Text>
@@ -727,25 +821,38 @@ function DetailCard({
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
+  // Floats over both the races list and the fences map — see SavedSwitcher's
+  // own doc comment for why it's positioned at the top rather than stacked
+  // above the global tab bar.
+  switcherWrap: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three,
+    overflow: 'hidden',
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  progressScroll: { paddingBottom: BottomTabInset },
-  segmentRow: {
+  switcherRow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: 'row',
-    gap: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
+    padding: 4,
   },
-  segment: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
+  switcherItem: { flex: 1 },
+  switcherPill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 999,
   },
-  segmentLabel: { fontSize: 14, fontWeight: '700' },
+  switcherLabel: { fontSize: 15, fontWeight: '700' },
   list: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1, paddingBottom: BottomTabInset },
   sectionTitle: {
     fontSize: 13,
@@ -767,12 +874,18 @@ const styles = StyleSheet.create({
   noticeAction: { fontSize: 13, fontWeight: '700' },
 
   mapStage: { flex: 1 },
-  detailCard: {
+  // A glass bubble, not a card — large radius (GlassRadii.sheet, double the
+  // old Spacing.three) rather than a literal ellipse, which would clip
+  // multi-line notices and the action row at different content lengths.
+  // Always dark glass regardless of theme (ON_DARK_TEXT/ON_DARK_TEXT_SECONDARY
+  // above), same reasoning as SavedSwitcher.
+  detailBubbleWrap: {
     position: 'absolute',
     left: Spacing.three,
     right: Spacing.three,
     bottom: BottomTabInset + Spacing.three,
-    borderRadius: Spacing.three,
+    overflow: 'hidden',
+    borderRadius: GlassRadii.sheet,
     padding: Spacing.three,
     gap: Spacing.two,
     shadowColor: '#000',
@@ -793,6 +906,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.half,
     paddingHorizontal: Spacing.two,
     borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   pendingBadgeText: { fontSize: 12, fontWeight: '700' },
   detailNoticeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },

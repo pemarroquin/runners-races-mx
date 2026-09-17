@@ -79,6 +79,17 @@ export default function SettingsIndexScreen() {
               hint={t('settings.historyNavHint')}
               c={c}
             />
+            {/* Moved from the Saved tab's third segment (2026-09-16) — same
+                "personal record, not a contest" reasoning as History above
+                it, so the two sit together. */}
+            <NavRow
+              href="/settings/progress"
+              ios="figure.run"
+              android="directions_run"
+              label={t('settings.sectionProgress')}
+              hint={t('settings.navProgressHint')}
+              c={c}
+            />
             <GroupBreak c={c} />
           </>
         )}

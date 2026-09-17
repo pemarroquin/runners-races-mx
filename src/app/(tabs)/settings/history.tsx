@@ -150,7 +150,18 @@ export default function HistoryScreen() {
       <View style={styles.map}>
         {/* No onSelect target here — a cell is not a run, and there is
             nothing to open. */}
-        <TerritoriesMap features={features} onSelect={() => {}} />
+        <TerritoriesMap
+          features={features}
+          onSelect={() => {}}
+          controls={{
+            zoomInLabel: t('track.zoomIn'),
+            zoomOutLabel: t('track.zoomOut'),
+            refitLabel: t('myraces.fencesRefit'),
+          }}
+          // No `controlsBottomOffset` — this map is a fixed-height box
+          // inside a scrolling settings page, not a full screen, so the
+          // small default inset is correct (see TerritoriesMap's own doc).
+        />
       </View>
     </SettingsPage>
   );

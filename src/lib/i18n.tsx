@@ -207,14 +207,12 @@ const translations = {
       // Stat-bar label replacing `area` (still defined above, unused by the
       // session-end screen now — see index.tsx) — brief §6 step 5.
       tiles: 'Casillas',
-      // Running total, best-effort (fetchMyTileTotal) — the honest stand-in
-      // for the brief §1.5 "% of San Pedro stomped" headline, which needs
-      // §1's real municipio/runnable-tile denominator (explicitly out of
-      // scope this pass). A raw count against "everyone who's played so
-      // far", not against the true reachable area — see index.tsx and the
-      // executor's report for why a fabricated-denominator percentage would
-      // be exactly the mistake the brief §1 warns against.
-      tilesHeld: 'Ahora tienes %{count} casillas en %{region}.',
+      // What THIS session conquered (claimed + taken), not a running
+      // metro-wide total — changed 2026-09-16, Pedro's call: pairing a
+      // cumulative metro-wide count with a caption that names one specific
+      // place read as a bug. `region` is the real municipio where
+      // district.ts's districtLabel resolves one, else the metro name.
+      tilesHeld: 'Conquistaste %{count} casillas en %{region} en esta carrera.',
       // Shown instead of a tile count when claimTiles() didn't complete
       // (network hiccup, or the §2.5 forgery guard rejected the batch) —
       // the run itself is still saved either way; see uploadRun's own doc
@@ -361,7 +359,6 @@ const translations = {
       shareMessage: '%{name} — %{date}',
     },
     myraces: {
-      title: 'Mis carreras',
       empty: 'Aún no has guardado carreras.\nExplora y guarda las que te interesen.',
       pastSection: 'Anteriores',
       upcomingSection: 'Próximas',
@@ -375,8 +372,12 @@ const translations = {
       clearMissing: 'Quitarlas de mi lista',
       remove: 'Quitar de mis carreras',
       tabRaces: 'Carreras',
-      tabFences: 'Territorios',
-      tabProgress: 'Progreso',
+      // "Áreas conquistadas", no "Territorios" — Pedro, 2026-09-16, junto con
+      // el rediseño a mapa completo con las pestañas flotando.
+      tabFences: 'Áreas conquistadas',
+      // Estas cuatro claves de progreso siguen viviendo aquí (namespace
+      // heredado) aunque la pantalla se movió a Ajustes › Progreso en
+      // parques — ver settings/progress.tsx.
       // La unidad es lo que costó decidir: medido sobre datos reales, una
       // corrida de 5.7 km en San Pedro es 0.262% del ÁREA del municipio,
       // 0.63% de toda su red de calles y 5.5% de sus senderos de parques.
@@ -394,6 +395,11 @@ const translations = {
         'Marcamos esta sesión: la velocidad no parece de carrera a pie. Sigue contando para tu territorio.',
       fenceLost: 'Perdiste %{area} de este territorio',
       fenceFullyTaken: 'Te quitaron todo este territorio',
+      // TerritoriesMap's "fit all" control — reported missing entirely
+      // 2026-09-17, this map had NO on-screen controls at all (zoom or fit),
+      // unlike every other map in the app. Shared by both callers
+      // (Conquested Areas here and Settings' History screen).
+      fencesRefit: 'Ver todo',
       // Territories map detail card (2026-09-02) — a run still in the
       // offline retry queue, drawn in its own dashed/muted state on the
       // map, gets this badge instead of the usual stats-only card.
@@ -503,6 +509,11 @@ const translations = {
       } as PluralForm,
       historyEmpty: 'Todavía no has guardado ninguna sesión.',
       historyFailed: 'No pudimos cargar tu historial. Revisa tu conexión.',
+      // Settings › Progreso. Movido del tercer segmento de Guardado
+      // (2026-09-16) — el contenido de MunicipioProgressList no cambió,
+      // solo dónde vive. Ver settings/progress.tsx.
+      sectionProgress: 'Progreso en parques',
+      navProgressHint: 'Cuánto de los senderos de cada municipio has recorrido.',
       displayName: 'Nombre en la tabla',
       displayNamePlaceholder: 'Anónimo',
       displayNameHint:
@@ -763,7 +774,7 @@ const translations = {
       } as PluralForm,
       claimTooOld: 'This session was uploaded too late to compete for territory. It is saved to your history.',
       tiles: 'Tiles',
-      tilesHeld: 'You now hold %{count} tiles in %{region}.',
+      tilesHeld: 'You conquered %{count} tiles in %{region} this run.',
       tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
     },
     leaderboard: {
@@ -882,7 +893,6 @@ const translations = {
       shareMessage: '%{name} — %{date}',
     },
     myraces: {
-      title: 'My races',
       empty: "You haven't saved any races yet.\nBrowse and save the ones you like.",
       pastSection: 'Past',
       upcomingSection: 'Upcoming',
@@ -895,8 +905,12 @@ const translations = {
       clearMissing: 'Remove them from my list',
       remove: 'Remove from my races',
       tabRaces: 'Races',
-      tabFences: 'Territories',
-      tabProgress: 'Progress',
+      // "Conquested Areas", not "Territories" — Pedro, 2026-09-16, alongside
+      // the redesign to a full-bleed map with floating tabs.
+      tabFences: 'Conquested Areas',
+      // These four progress keys still live here (inherited namespace) even
+      // though the screen moved to Settings › Park progress — see
+      // settings/progress.tsx.
       progressExplainer:
         "Park paths you've covered in each municipio. Counts ground you ran over, not ground you surrounded.",
       progressDetail: '%{covered} of %{total} tiles · %{km} km of path across %{parks} parks',
@@ -910,6 +924,7 @@ const translations = {
         "We flagged this session \u2014 the speed doesn't look like running. It still counts toward your territory.",
       fenceLost: 'You lost %{area} of this territory',
       fenceFullyTaken: 'This territory was taken from you entirely',
+      fencesRefit: 'Fit all',
       // Territories map detail card — see the ES entry's comment.
       pendingLabel: "Not uploaded yet — will retry on its own",
     },
@@ -1000,6 +1015,8 @@ const translations = {
       } as PluralForm,
       historyEmpty: "You haven't saved a session yet.",
       historyFailed: "We couldn't load your history. Check your connection.",
+      sectionProgress: 'Park progress',
+      navProgressHint: "How much of each municipio's park paths you've covered.",
       displayName: 'Leaderboard name',
       displayNamePlaceholder: 'Anonymous',
       displayNameHint:
