@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import { getPref, initDb, setPref } from '@/lib/db';
+import { deferToIdle } from '@/lib/idle';
 import { detectRegion, type DetectMethod } from '@/lib/location';
 import { DEFAULT_REGION_ID, getRegion, type Region } from '@/lib/regions';
 
@@ -130,12 +131,13 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     // the default if both fail. Record the attempt regardless of outcome so a
     // denial/offline result doesn't re-prompt on every cold start — the
     // picker's "use my location" button can still always retry.
-    // Deferred a tick rather than called inline: detect() flips `detecting`
+    // Deferred to idle rather than called inline: detect() flips `detecting`
     // synchronously, which inside an effect body is a cascading render (and
     // the rule that catches it is live — `reactCompiler` is on). Deferring
-    // also keeps the OS location prompt from firing in the same frame the app
-    // is painting its first screen, which is better anyway.
-    const timer = setTimeout(() => {
+    // also keeps the OS location prompt (and on web, the ipapi.co fallback
+    // fetch — see deferToIdle's own header) from firing in the same window
+    // the app is painting its first screen, which is better anyway.
+    const cancel = deferToIdle(() => {
       detect().finally(() => {
         try {
           setPref(PREF_DETECT_ATTEMPTED, '1');
@@ -143,8 +145,8 @@ export function RegionProvider({ children }: { children: ReactNode }) {
           console.warn('persist region-detect-attempted failed', e);
         }
       });
-    }, 0);
-    return () => clearTimeout(timer);
+    });
+    return cancel;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

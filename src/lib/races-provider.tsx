@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { deferToIdle } from '@/lib/idle';
 import {
   fetchRemoteRaces,
   loadCachedRaces,
@@ -95,7 +96,10 @@ export function RacesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     aliveRef.current = true;
 
-    refresh();
+    // Deferred to idle, not called inline — see deferToIdle's own header.
+    // The seed/cached data above already renders instantly; this is a
+    // background refresh, not something the first paint needs to wait for.
+    const cancel = deferToIdle(refresh);
 
     const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next !== 'active') return;
@@ -106,6 +110,7 @@ export function RacesProvider({ children }: { children: ReactNode }) {
 
     return () => {
       aliveRef.current = false;
+      cancel();
       subscription.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount; refresh is stable
