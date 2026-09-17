@@ -40,27 +40,6 @@ export const MAP_STYLE_GL = 'mapbox://styles/pmarroquin/cmtapbd8m00zi01qjhx0jbmu
 export const MAP_STYLE_STATIC = 'mapbox/dark-v11';
 
 /**
- * GL JS form of MAP_STYLE_STATIC — the Track tab's IDLE (pre-run) style on
- * web, not MAP_STYLE_GL. Standard is dramatically more expensive to boot
- * than a classic style (atmosphere/lighting/3D-building pipeline vs. a flat
- * vector style) — measured via PageSpeed Insights under forced software
- * WebGL rendering (2026-09-17, the realistic case for both PSI's own test
- * runners and a lot of real budget/mid-range Android phones with no GPU
- * acceleration): several seconds of main-thread blocking just to boot
- * Standard, before a runner has even pressed Start. Nothing on the idle
- * screen needs Standard's look — no fence, no route, no territory fill (see
- * index.tsx's liveTiles/liveEnclosed: both start empty and only populate
- * once a session is active) — so track-map.web.tsx boots on this cheap
- * style and only calls `map.setStyle(MAP_STYLE_GL)` once a session actually
- * starts, when the 3D wall/glow look is what a runner is actually looking
- * at. The map stays live and interactive throughout; only the boot cost
- * moves from "before you can even see the screen" to "the moment you press
- * Start," which is a much smaller, well-precedented place to spend it (the
- * mapbox-gl dynamic import already costs a similar beat there).
- */
-export const MAP_STYLE_GL_IDLE = `mapbox://styles/${MAP_STYLE_STATIC}`;
-
-/**
  * The map is dark regardless of the app's light/dark setting, deliberately:
  * it's a full-bleed game surface, and the route line and territory fill are
  * tuned for contrast against a dark ground.

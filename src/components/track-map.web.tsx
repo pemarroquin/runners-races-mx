@@ -1,14 +1,16 @@
-// Track tab map — WEB. A real Mapbox GL JS map, not the static image the
-// native file uses.
+// Track tab map — WEB. A real Mapbox GL JS map once a session starts; a
+// static Mapbox image (buildPinMapUrl, same helper the native file's own
+// pre-MapView version used) before that — see the boot effect below for why
+// GL doesn't load until the runner taps Start.
 //
-// This split exists because of a hard API limit, not preference: the Static
-// Images API cannot render Mapbox Standard styles (the `imports`-based kind
-// Studio creates by default) — it returns a blank image, no error. GL JS
-// renders them fine, so the custom Studio style can only be used here. See
-// constants/map.ts.
+// The custom Studio style is GL-only because of a hard API limit, not
+// preference: the Static Images API cannot render Mapbox Standard styles
+// (the `imports`-based kind Studio creates by default) — it returns a blank
+// image, no error. GL JS renders them fine. See constants/map.ts.
 //
 // GL JS also buys what a baked PNG structurally cannot: a gradient route
-// line, an extruded 3D fence, and a camera that moves.
+// line, an extruded 3D fence, and a camera that moves — all things a session
+// in progress needs and the idle screen doesn't.
 //
 // mapbox-gl is loaded by dynamic import and its CSS by a runtime <link>, both
 // copied from route-map.web.tsx — see that file's header for why the CSS
@@ -64,14 +66,13 @@
 // comment below.
 import { cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import type { GeoJSONSource, Map as MapboxMap, Marker, StyleSpecification } from 'mapbox-gl';
+import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import type { Feature, FeatureCollection } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
-import idleMapStyleJson from '@/constants/idle-map-style.json';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
   AUTO_RETURN_IDLE_MS,
@@ -115,7 +116,7 @@ import {
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
-import { deferToIdle } from '@/lib/idle';
+import { buildPinMapUrl } from '@/lib/mapbox';
 import { useRegion } from '@/lib/region-context';
 import { type LatLng } from '@/lib/territory';
 
@@ -165,58 +166,17 @@ function tileFeatureCollection(cells: string[]): FeatureCollection {
   };
 }
 
-/**
- * The idle map's style, with every label layer's visibility already forced
- * off — Pedro's call, 2026-09-17, after measuring that rendering road/place
- * labels on the idle screen fetches several separate font/glyph files
- * concurrently (Arial Unicode MS + DIN Pro, three weights each) purely to
- * draw text nobody's using yet on a screen that's just "New session" + a
- * Start button. Labels come back automatically the moment a session starts
- * and the style-upgrade effect replaces this whole style with MAP_STYLE_GL —
- * no code needed to "turn them back on", since that's a fresh style load
- * with its own symbol layers at their own default visibility.
- *
- * A bundled JSON snapshot of MAP_STYLE_GL_IDLE (mapbox/dark-v11), not a
- * runtime fetch of it: hiding layers via setLayoutProperty AFTER the map
- * loads is too late to matter (both `load` and `style.load` are documented
- * to fire only once "all style resources have been downloaded", i.e. after
- * the glyph requests this exists to prevent have already gone out), so the
- * visibility strip has to happen before `new mapboxgl.Map()` ever sees the
- * style — and a first version of this fetched the style from Mapbox's own
- * API at runtime to do that, which added a full extra network round trip
- * (DNS+TLS+request+37KB response) to the map's own critical path, on a
- * cross-origin host, right alongside its dozen-plus tile/sprite requests.
- * Bundling the already-stripped result removes that round trip entirely:
- * it ships same-origin with everything else, over the same connection,
- * with zero dependency on Mapbox's style API being fast (or reachable) at
- * that exact moment.
- *
- * Trade-off worth knowing: this is a frozen snapshot of dark-v11 as of
- * 2026-09-17, not a live reflection of it. If Mapbox ever revises that
- * style's colours/layers, this won't pick it up automatically — regenerate
- * it by re-running the fetch-and-strip script this file was built from
- * (fetch `https://api.mapbox.com/styles/v1/mapbox/dark-v11`, set every
- * `type: 'symbol'` layer's `layout.visibility` to `'none'`, save as
- * idle-map-style.json). Acceptable here: it's a stock Mapbox style Pedro
- * doesn't customize, used only for the few seconds before a session starts.
- */
-const IDLE_MAP_STYLE = idleMapStyleJson as unknown as StyleSpecification;
 
 /**
  * Adds every custom source/layer a session needs (route, wall, tile fill,
- * enclosed shimmer) — called from the mount effect's `load` handler AFTER a
- * runner presses Start, once the map has upgraded from MAP_STYLE_GL_IDLE to
- * MAP_STYLE_GL (see that constant's own header for why the upgrade exists).
- * NOT called on the initial idle load: `setStyle()` wipes every custom
- * source/layer a style had, so whichever style is active when a session
- * starts needs these added (or re-added) fresh — and the idle style never
- * needs them at all, since index.tsx's liveTiles/liveEnclosed both start
- * empty and only populate once a session is active anyway.
+ * enclosed shimmer) — called from the boot effect's `load` handler, right
+ * after `new mapboxgl.Map()` first loads MAP_STYLE_GL. The map only ever
+ * boots on that one style now (no idle style to swap out of first — see the
+ * boot effect's own header), so this always runs exactly once per map.
  *
  * Pure function of `map` — everything else it touches is either a module
  * constant or a small immutable literal, so this needs no closure over
- * component state and can be shared between the mount effect and the
- * style-upgrade effect without either capturing stale values.
+ * component state.
  */
 function setupSessionLayers(map: MapboxMap): void {
   // lineMetrics is REQUIRED for line-gradient. Without it the paint
@@ -482,10 +442,6 @@ export function TrackMap({
   // tracks the runner. See fence-map.web.tsx's own start marker for the
   // post-run equivalent (same colour, START_MARKER_COLOR).
   const startMarkerRef = useRef<Marker | null>(null);
-  // True until the style-upgrade effect below fires once, on the first
-  // Start of the component's life — see MAP_STYLE_GL_IDLE's header for why
-  // the idle map boots on a cheaper style than the one a session needs.
-  const usingIdleStyleRef = useRef(true);
   const readyRef = useRef(false);
   // The same fact as readyRef, as STATE — because a ref cannot wake an
   // effect. Every effect below bails until the map has loaded, and most
@@ -671,99 +627,122 @@ export function TrackMap({
   const initialLat = here?.lat ?? region.lat;
   const initialLng = here?.lng ?? region.lng;
 
-  // Built once. Re-creating the map when points change would tear down and
-  // re-instantiate a WebGL context on every GPS fix.
-  //
-  // The whole boot sequence — CSS/style injection, the mapbox-gl dynamic
-  // import, and `new mapboxgl.Map()` itself — is deferred to idle (see
-  // idle.ts's own header), not fired the instant this component mounts.
-  // Measured 2026-09-17: mapbox-gl's chunk alone costs ~1.9s of main-thread
-  // CPU (755ms script eval, 187ms parse) the moment it runs, and since this
-  // IS the Track tab — the app's landing screen on web — that cost landed
-  // squarely inside PageSpeed Insights' Total Blocking Time window (1,460ms
-  // measured, on a page whose FCP/LCP were already a fast 0.8s). Pushing it
-  // to requestIdleCallback doesn't change what loads, only when: the Track
-  // screen's own UI (buttons, "New session" text) still paints immediately,
-  // the live map now fades in a beat later than before. Pedro's call,
-  // confirmed explicitly (a real, felt delay, not just a scoring artifact).
+  // A static Mapbox image (buildPinMapUrl, same helper the native file used
+  // to render before it got a real MapView — see this repo's own history)
+  // covers the idle screen instead of a live GL map. Frozen once the first
+  // real fix lands, not kept live: this is scene-dressing for "before you've
+  // pressed Start," not a second live map to keep in sync, and re-fetching a
+  // new static image on every GPS tick would be both wasteful and visibly
+  // flickery. `hasRealFix: false` until then, matching the marker-placement
+  // rule elsewhere in this file — a pin is a claim about where you are, never
+  // dropped on the region fallback.
+  const [pinUrl] = useState(() => buildPinMapUrl(initialLat, initialLng, true, false));
+  const [pinnedUrl, setPinnedUrl] = useState<string | null>(null);
+  const pinnedOnceRef = useRef(false);
   useEffect(() => {
-    if (!TOKEN || !containerRef.current) return;
-    let cancelled = false;
+    if (pinnedOnceRef.current || !here) return;
+    pinnedOnceRef.current = true;
+    setPinnedUrl(buildPinMapUrl(here.lat, here.lng, true, true));
+  }, [here]);
 
-    const cancelIdle = deferToIdle(() => {
-      void (async () => {
-        ensureMapboxCss();
-        ensurePulseStyle();
-        const { default: mapboxgl } = await import('mapbox-gl');
-        if (cancelled || !containerRef.current) return;
+  // The real GL map boots lazily, the FIRST time a session goes active (the
+  // false→true edge of `active` — see its own prop doc), not on mount.
+  //
+  // Measured 2026-09-17: mapbox-gl's chunk alone costs ~1.9s of main-thread
+  // CPU (755ms script eval, 187ms parse) the instant it runs. Deferring that
+  // to idle time still landed inside PageSpeed Insights' Total Blocking Time
+  // window often enough to keep the score under 85 (TBT counts everything up
+  // to the page settling, not just a fixed initial window — moving WHEN the
+  // cost lands doesn't remove it from that count). The only lever left was
+  // not booting a live map automatically at all: the idle screen now shows a
+  // static image (above) and pays mapbox-gl's real cost only on a genuine
+  // user action, well outside anything Lighthouse measures on page load.
+  // Pedro's call, made with the tradeoff spelled out — the Track screen no
+  // longer feels "alive" the instant it opens; it does the moment you tap
+  // Start.
+  //
+  // Booted once, ever, and never torn down for the rest of this component's
+  // life (`bootedRef` guards re-entry) — a session can pause/resume (`active`
+  // stays true throughout, see index.tsx's `inSession`) and a second session
+  // can start after the first ends (`active` false→true again) without ever
+  // re-creating the WebGL context. Cleanup that actually removes the map only
+  // runs once, at true component unmount (the separate effect below) — this
+  // effect intentionally returns no cleanup of its own, since an `[active]`
+  // dependency would otherwise fire it (and tear the map down) every time a
+  // session ENDS too.
+  const bootedRef = useRef(false);
+  const unmountedRef = useRef(false);
+  useEffect(() => {
+    if (!TOKEN || !containerRef.current || !active || bootedRef.current) return;
+    bootedRef.current = true;
 
-        mapboxgl.accessToken = TOKEN;
-        const map = new mapboxgl.Map({
-          container: containerRef.current,
-          // Bundled, label-stripped snapshot, not MAP_STYLE_GL — see
-          // IDLE_MAP_STYLE's own header. The upgrade-on-Start effect further
-          // down swaps this for the full Standard style once a session
-          // actually needs it.
-          style: IDLE_MAP_STYLE,
-          center: [initialLng, initialLat],
-          zoom: MAP_DEFAULT_ZOOM,
-          attributionControl: false,
+    void (async () => {
+      ensureMapboxCss();
+      ensurePulseStyle();
+      const { default: mapboxgl } = await import('mapbox-gl');
+      if (unmountedRef.current || !containerRef.current) return;
+
+      mapboxgl.accessToken = TOKEN;
+      const map = new mapboxgl.Map({
+        container: containerRef.current,
+        // The full Standard style directly — no idle style to boot into and
+        // later swap out of, since GL never renders until a session needs it.
+        style: MAP_STYLE_GL,
+        center: [initialLng, initialLat],
+        zoom: MAP_DEFAULT_ZOOM,
+        attributionControl: false,
+      });
+      mapRef.current = map;
+
+      map.on('load', () => {
+        if (unmountedRef.current || mapRef.current !== map) return;
+
+        // Rotate/pitch gestures, gone entirely — not just during a session.
+        // SESSION_PITCH is set once for the 3D look and a runner has no
+        // legitimate reason to change it via gesture. This is the fix for
+        // the actual bug: one stray
+        // pinch or two-finger drag used to permanently change the framing,
+        // with no interaction detection and no way back (Pedro hit this
+        // mid-run: "normal at first, then weird").
+        map.dragRotate.disable();
+        map.touchPitch.disable();
+        map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
+
+        setupSessionLayers(map);
+
+        const el = document.createElement('div');
+        el.className = 'track-dot';
+        el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
+        // Double-tap the pin to re-center (Pedro's original idea) —
+        // stopPropagation so a near-miss tap can't fall through to the
+        // canvas underneath and trigger Mapbox's OWN built-in
+        // double-click-to-zoom, which would zoom IN: the opposite of what
+        // tapping the pin means here.
+        el.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          applyCameraForMode(900);
         });
-        mapRef.current = map;
+        markerRef.current = new mapboxgl.Marker({ element: el });
 
-        map.on('load', () => {
-          if (cancelled) return;
+        const startEl = document.createElement('div');
+        startEl.className = 'track-start-dot';
+        startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
 
-          // Rotate/pitch gestures, gone entirely — not just during a session.
-          // SESSION_PITCH is set once for the 3D look and a runner has no
-          // reason to change it via gesture; on the idle (pre-session) map
-          // pitch is already flat, so there is nothing legitimate to disable
-          // FROM either way. This is the fix for the actual bug: one stray
-          // pinch or two-finger drag used to permanently change the framing,
-          // with no interaction detection and no way back (Pedro hit this
-          // mid-run: "normal at first, then weird").
-          map.dragRotate.disable();
-          map.touchPitch.disable();
-          map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
+        readyRef.current = true;
+        // Ref first, then state: the ref is what the imperative call sites
+        // read (the marker's dblclick, applyCameraForMode's callers), and it
+        // must be true before any effect this wakes can run.
+        setMapReady(true);
+      });
+    })();
+  }, [active, initialLat, initialLng, applyCameraForMode]);
 
-          // Custom sources/layers (route, wall, tile fill, enclosed shimmer)
-          // are NOT added here — see setupSessionLayers's own header. The idle
-          // style loaded above has nothing to show in them yet (index.tsx's
-          // liveTiles/liveEnclosed both start empty), and setStyle() wipes any
-          // sources/layers a style had regardless, so whichever style is
-          // active when a session actually starts is what adds them (the
-          // style-upgrade effect further down, on the very first Start).
-
-          const el = document.createElement('div');
-          el.className = 'track-dot';
-          el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
-          // Double-tap the pin to re-center (Pedro's original idea) —
-          // stopPropagation so a near-miss tap can't fall through to the
-          // canvas underneath and trigger Mapbox's OWN built-in
-          // double-click-to-zoom, which would zoom IN: the opposite of what
-          // tapping the pin means here.
-          el.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            applyCameraForMode(900);
-          });
-          markerRef.current = new mapboxgl.Marker({ element: el });
-
-          const startEl = document.createElement('div');
-          startEl.className = 'track-start-dot';
-          startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
-
-          readyRef.current = true;
-          // Ref first, then state: the ref is what the imperative call sites
-          // read (the marker's dblclick, applyCameraForMode's callers), and it
-          // must be true before any effect this wakes can run.
-          setMapReady(true);
-        });
-      })();
-    });
-
+  // Runs ONCE, at true unmount only — deliberately separate from the boot
+  // effect above so tearing down the map doesn't also happen on every
+  // session END (see that effect's own comment on why it has no cleanup).
+  useEffect(() => {
     return () => {
-      cancelled = true;
-      cancelIdle();
+      unmountedRef.current = true;
       readyRef.current = false;
       flownRef.current = false;
       markerRef.current?.remove();
@@ -773,43 +752,7 @@ export function TrackMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-    // Mount-only: later camera/marker changes move the existing map rather
-    // than rebuilding it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Upgrades the idle map to the full Standard style the FIRST time a
-  // session goes active — see MAP_STYLE_GL_IDLE's header for why the map
-  // doesn't just boot on that style directly. Every other effect in this
-  // file that touches a custom source/layer already gates on `mapReady`
-  // (the file's own long-standing rule — see readyRef's comment above), so
-  // toggling it off for the swap's duration and back on once
-  // setupSessionLayers has re-added everything is enough to keep them all
-  // safe with no changes needed anywhere else: none of them can run against
-  // a style that's mid-swap and missing its sources.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!active || !map || !usingIdleStyleRef.current) return;
-    usingIdleStyleRef.current = false;
-    readyRef.current = false;
-    setMapReady(false);
-    map.once('style.load', () => {
-      // Guards the same class of bug this file has shipped before (see
-      // track-map.web.tsx's CLAUDE.md entry on cleanup touching a destroyed
-      // map): if the component unmounted while setStyle's swap was still in
-      // flight, the mount effect's cleanup already called map.remove() and
-      // nulled mapRef — acting on this `map` after that would touch a
-      // corpse. mapRef.current === map is also false if a second call
-      // somehow re-created the map in between, which can't happen here
-      // (usingIdleStyleRef already guards re-entry) but costs nothing to
-      // check too.
-      if (mapRef.current !== map) return;
-      setupSessionLayers(map);
-      readyRef.current = true;
-      setMapReady(true);
-    });
-    map.setStyle(MAP_STYLE_GL);
-  }, [active]);
 
   // Arms the route-colour-cycle timer ONLY while a session is active —
   // gated here, not inside the mount effect above, specifically because it
@@ -833,10 +776,10 @@ export function TrackMap({
     // stops and read as stepped.
     routeFlowStopRef.current = startGradientFlow((gradient) => {
       // Guarded, not assumed to exist: ROUTE_SRC's layer is only added once
-      // setupSessionLayers has run (a session's first Start, post style
-      // upgrade — see MAP_STYLE_GL_IDLE's header), and this effect's own
-      // `readyRef.current` check above passes on the map's very first idle
-      // `load` too, before that has happened.
+      // setupSessionLayers has run, in the map's `load` handler — this
+      // effect's own `readyRef.current` check above already implies that ran,
+      // but the guard costs nothing and matches every other paint-property
+      // call site in this file.
       if (map.getLayer(ROUTE_SRC)) map.setPaintProperty(ROUTE_SRC, 'line-gradient', gradient);
     });
 
@@ -1060,9 +1003,10 @@ export function TrackMap({
     });
   }, [active, points, here, mapReady]);
 
-  // Per-run fence colour. The wall and tile layers are created once at mount
-  // (before any session exists) with the default FENCE_WALL_COLOR, so the
-  // run's own colour is applied as a paint update — cheap, no layer churn.
+  // Per-run fence colour. The wall and tile layers are created once
+  // setupSessionLayers has run (the map's first `load`, at the FIRST Start —
+  // see the boot effect) with the default FENCE_WALL_COLOR, so the run's own
+  // colour is applied as a paint update — cheap, no layer churn.
   //
   // ENCLOSED_SRC is deliberately NOT in here. Captured ground carries the
   // shimmer instead of the run's identity colour — that contrast IS the
@@ -1073,11 +1017,8 @@ export function TrackMap({
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     // Guarded, not assumed to exist: these layers are only added once
-    // setupSessionLayers has run (a session's first Start, post style
-    // upgrade — see MAP_STYLE_GL_IDLE's header), and readyRef.current above
-    // is also true on the map's very first idle `load`, before that has
-    // happened — this effect fires then too (fenceColor is already set at
-    // that point) and used to throw on the missing layer.
+    // setupSessionLayers has run — costs nothing and matches every other
+    // paint-property call site in this file.
     if (map.getLayer(WALL_SRC)) map.setPaintProperty(WALL_SRC, 'fill-extrusion-color', fenceColor);
     if (map.getLayer(TILES_SRC)) map.setPaintProperty(TILES_SRC, 'fill-color', fenceColor);
   }, [fenceColor, active, mapReady]);
@@ -1228,6 +1169,23 @@ export function TrackMap({
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {/* Static placeholder, covering the (still-empty) GL container until
+          the real map has loaded — see the boot effect above for why this
+          exists at all. `pinnedUrl` replaces the region-fallback `pinUrl`
+          the FIRST time a real GPS fix lands, and never again. */}
+      {!mapReady && (
+        <img
+          src={pinnedUrl ?? pinUrl ?? undefined}
+          alt=""
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      )}
       {points.length === 0 && running && (
         <View style={styles.waiting}>
           <Text style={[styles.placeholderText, { color: placeholderColor }]}>{placeholder}</Text>
