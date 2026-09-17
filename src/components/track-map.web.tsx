@@ -114,6 +114,7 @@ import {
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
+import { buildPinMapUrl } from '@/lib/mapbox';
 import { useRegion } from '@/lib/region-context';
 import { type LatLng } from '@/lib/territory';
 
@@ -1097,6 +1098,28 @@ export function TrackMap({
 
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
+      {/* Covers the container's blank gap while mapbox-gl downloads and the
+          WebGL map spins up (a real cost — see track-map.web.tsx's own
+          header for what that costs on non-GPU-accelerated devices) — a
+          static image of the SAME spot native already falls back to
+          (buildPinMapUrl), not a generic placeholder, so there's no
+          flash-to-different-content when the live map takes over. Sits
+          behind containerRef in DOM order (default stacking, no z-index
+          needed) and is simply unmounted once mapReady — the live map's own
+          canvas has already painted the same area by then. Purely a visual
+          polish: this doesn't change WHEN the live map starts loading (an
+          attempt to delay that specifically to improve PageSpeed's Total
+          Blocking Time was tried and reverted, 2026-09-17 — see PR
+          description/session notes: a delay small enough to not be a real
+          interaction regression didn't move the metric, and one long enough
+          to move it made the map non-interactive for several seconds). */}
+      {!mapReady && (
+        <img
+          src={buildPinMapUrl(initialLat, initialLng, true, !!here) ?? undefined}
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      )}
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {points.length === 0 && running && (
         <View style={styles.waiting}>

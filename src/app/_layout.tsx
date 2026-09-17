@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 // Deep import, not the package's barrel `react-native-gesture-handler` — the
@@ -31,6 +32,27 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Static, locale-agnostic fallback — this is what's actually present
+          in the STATIC PRERENDERED html (web.output: "static"), before any
+          client JS runs. Was missing entirely: PageSpeed flagged a real
+          `document-title`/`meta-description` gap (SEO, Accessibility's
+          document-title check, and Agentic Browsing's accessibility-tree
+          check all failed on it, 2026-09-16). expo-router/head's <Head> is
+          the supported way to set this — react-helmet-async under the
+          hood, already wired up by expo-router itself (confirmed by the
+          `data-rh` attribute already on the empty <title> before this
+          change) — and it's a safe no-op on native (Head.ios/.android fall
+          back to rendering null outside a bare Handoff/Spotlight build).
+          Any screen that wants its OWN title can still render its own
+          <Head> further down the tree — react-helmet-async lets a
+          later-mounted one win. */}
+      <Head>
+        <title>Runners&apos; Races MX</title>
+        <meta
+          name="description"
+          content="Encuentra carreras en México y compite por territorio mientras corres."
+        />
+      </Head>
       <ThemeModeProvider>
       <LocaleProvider>
         <TodayProvider>
