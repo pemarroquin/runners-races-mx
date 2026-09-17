@@ -47,7 +47,19 @@ export function ProfilePill() {
         ) : (
           <GlassSurface scheme="dark" radius={GlassRadii.pill} noShadow style={StyleSheet.absoluteFill} />
         )}
-        <Icon ios="person.fill" android="person" size={19} color="#ffffff" />
+        {/* react-native-web gives every View `position: relative` by default,
+            which is what makes absolute overlays and normal siblings paint in
+            DOM order almost everywhere in this app. icon.web.tsx's <Icon>
+            breaks that: it returns a bare <svg>, so on web it stays
+            `position: static` and paints BEFORE the absolutely-positioned
+            glass layer above regardless of JSX order — the glyph rendered,
+            just buried under the glass. Every other <Icon> call site in the
+            app is wrapped in at least a Pressable/View, which inherits the
+            relative-by-default position and stacks correctly; this is the
+            one place it sat bare next to an absolute sibling. */}
+        <View>
+          <Icon ios="person.fill" android="person" size={23} color="#ffffff" />
+        </View>
       </Pressable>
     </View>
   );
