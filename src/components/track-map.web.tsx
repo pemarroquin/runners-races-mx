@@ -655,6 +655,9 @@ export function TrackMap({
   // If `here` is already defined at mount, initialize pinnedUrl directly (with
   // the real pin) and skip pinUrl entirely — avoids a "no-pin → real-pin"
   // double fetch that would otherwise happen on a warm component mount.
+  // pinnedOnceRef guards the effect instead of `pinnedUrl !== null` in deps —
+  // the latter triggers a cascading re-render (setState → dep changes → effect
+  // fires again), which the React Compiler lint rejects as unstable.
   const pinnedOnceRef = useRef(!!here);
   const [pinUrl] = useState(() =>
     here ? null : buildPinMapUrl(initialLat, initialLng, true, false),
@@ -1024,6 +1027,12 @@ export function TrackMap({
   // Idle: keep the camera over the runner as they move, so the map isn't
   // still framing wherever they were when the tab opened. Skipped during a
   // session — the fly-in and follow below own the camera then.
+  //
+  // Dead before the very first Start of this component's life (GL hasn't
+  // booted yet, so mapRef.current is null). The static placeholder covers
+  // that window — it freezes on the first real GPS fix and doesn't track
+  // further movement, which is deliberate: re-fetching on every fix would be
+  // wasteful and visibly flickery.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current || active || !here) return;
