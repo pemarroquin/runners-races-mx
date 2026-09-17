@@ -458,6 +458,13 @@ export function TrackMap({
   // loading" is an event they can all react to rather than a value they
   // happened to read too early.
   const [mapReady, setMapReady] = useState(false);
+  // True once the first set of tiles has finished painting (not just style
+  // loaded) — used to keep the static placeholder visible until GL is
+  // actually drawn, preventing the hard white flash between `load` and tiles.
+  const [mapPainted, setMapPainted] = useState(false);
+  // Set when the GL boot throws (import failure, WebGL unavailable, bad token).
+  // Resets bootedRef so the next false→true edge of `active` can retry.
+  const [mapError, setMapError] = useState(false);
   const flownRef = useRef(false);
   // The "feels alive even standing still" animation timer — a JS interval,
   // not a requestAnimationFrame loop (see the pulse-dot comment below for
@@ -627,6 +634,14 @@ export function TrackMap({
   const initialLat = here?.lat ?? region.lat;
   const initialLng = here?.lng ?? region.lng;
 
+  // Stays current across async gaps (used in the boot effect after
+  // `await import()`, where the closure would otherwise see the render-time
+  // value rather than a GPS fix that arrived during the 1.9s load).
+  const hereRenderRef = useRef(here);
+  useEffect(() => {
+    hereRenderRef.current = here;
+  }); // no deps — syncs after every render, always current before any async reads it
+
   // A static Mapbox image (buildPinMapUrl, same helper the native file used
   // to render before it got a real MapView — see this repo's own history)
   // covers the idle screen instead of a live GL map. Frozen once the first
@@ -636,9 +651,17 @@ export function TrackMap({
   // flickery. `hasRealFix: false` until then, matching the marker-placement
   // rule elsewhere in this file — a pin is a claim about where you are, never
   // dropped on the region fallback.
-  const [pinUrl] = useState(() => buildPinMapUrl(initialLat, initialLng, true, false));
-  const [pinnedUrl, setPinnedUrl] = useState<string | null>(null);
-  const pinnedOnceRef = useRef(false);
+  //
+  // If `here` is already defined at mount, initialize pinnedUrl directly (with
+  // the real pin) and skip pinUrl entirely — avoids a "no-pin → real-pin"
+  // double fetch that would otherwise happen on a warm component mount.
+  const pinnedOnceRef = useRef(!!here);
+  const [pinUrl] = useState(() =>
+    here ? null : buildPinMapUrl(initialLat, initialLng, true, false),
+  );
+  const [pinnedUrl, setPinnedUrl] = useState<string | null>(() =>
+    here ? buildPinMapUrl(here.lat, here.lng, true, true) : null,
+  );
   useEffect(() => {
     if (pinnedOnceRef.current || !here) return;
     pinnedOnceRef.current = true;
@@ -674,66 +697,103 @@ export function TrackMap({
   const unmountedRef = useRef(false);
   useEffect(() => {
     if (!TOKEN || !containerRef.current || !active || bootedRef.current) return;
+    // Guard concurrent boot attempts: if active fires twice before the dynamic
+    // import resolves, only the first attempt proceeds. On any failure below,
+    // bootedRef is reset so a new false→true edge of `active` can retry.
     bootedRef.current = true;
 
     void (async () => {
-      ensureMapboxCss();
-      ensurePulseStyle();
-      const { default: mapboxgl } = await import('mapbox-gl');
-      if (unmountedRef.current || !containerRef.current) return;
+      try {
+        ensureMapboxCss();
+        ensurePulseStyle();
+        const { default: mapboxgl } = await import('mapbox-gl');
+        if (unmountedRef.current || !containerRef.current) {
+          // Unmounted during import — release the guard so a remount can retry.
+          bootedRef.current = false;
+          return;
+        }
 
-      mapboxgl.accessToken = TOKEN;
-      const map = new mapboxgl.Map({
-        container: containerRef.current,
-        // The full Standard style directly — no idle style to boot into and
-        // later swap out of, since GL never renders until a session needs it.
-        style: MAP_STYLE_GL,
-        center: [initialLng, initialLat],
-        zoom: MAP_DEFAULT_ZOOM,
-        attributionControl: false,
-      });
-      mapRef.current = map;
-
-      map.on('load', () => {
-        if (unmountedRef.current || mapRef.current !== map) return;
-
-        // Rotate/pitch gestures, gone entirely — not just during a session.
-        // SESSION_PITCH is set once for the 3D look and a runner has no
-        // legitimate reason to change it via gesture. This is the fix for
-        // the actual bug: one stray
-        // pinch or two-finger drag used to permanently change the framing,
-        // with no interaction detection and no way back (Pedro hit this
-        // mid-run: "normal at first, then weird").
-        map.dragRotate.disable();
-        map.touchPitch.disable();
-        map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
-
-        setupSessionLayers(map);
-
-        const el = document.createElement('div');
-        el.className = 'track-dot';
-        el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
-        // Double-tap the pin to re-center (Pedro's original idea) —
-        // stopPropagation so a near-miss tap can't fall through to the
-        // canvas underneath and trigger Mapbox's OWN built-in
-        // double-click-to-zoom, which would zoom IN: the opposite of what
-        // tapping the pin means here.
-        el.addEventListener('dblclick', (e) => {
-          e.stopPropagation();
-          applyCameraForMode(900);
+        mapboxgl.accessToken = TOKEN;
+        // Use hereRenderRef (updated on every render) rather than the
+        // render-time initialLat/initialLng: a GPS fix that arrived during the
+        // ~1.9s import window would otherwise be ignored, booting the map at
+        // the region centre instead of the runner's actual position.
+        const bootLat = hereRenderRef.current?.lat ?? initialLat;
+        const bootLng = hereRenderRef.current?.lng ?? initialLng;
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          // The full Standard style directly — no idle style to boot into and
+          // later swap out of, since GL never renders until a session needs it.
+          style: MAP_STYLE_GL,
+          center: [bootLng, bootLat],
+          zoom: MAP_DEFAULT_ZOOM,
+          attributionControl: false,
         });
-        markerRef.current = new mapboxgl.Marker({ element: el });
+        mapRef.current = map;
 
-        const startEl = document.createElement('div');
-        startEl.className = 'track-start-dot';
-        startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
+        map.on('load', () => {
+          if (unmountedRef.current || mapRef.current !== map) return;
 
-        readyRef.current = true;
-        // Ref first, then state: the ref is what the imperative call sites
-        // read (the marker's dblclick, applyCameraForMode's callers), and it
-        // must be true before any effect this wakes can run.
-        setMapReady(true);
-      });
+          // Rotate/pitch gestures, gone entirely — not just during a session.
+          // SESSION_PITCH is set once for the 3D look and a runner has no
+          // legitimate reason to change it via gesture. This is the fix for
+          // the actual bug: one stray
+          // pinch or two-finger drag used to permanently change the framing,
+          // with no interaction detection and no way back (Pedro hit this
+          // mid-run: "normal at first, then weird").
+          map.dragRotate.disable();
+          map.touchPitch.disable();
+          map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
+
+          setupSessionLayers(map);
+
+          const el = document.createElement('div');
+          el.className = 'track-dot';
+          el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
+          // Double-tap the pin to re-center (Pedro's original idea) —
+          // stopPropagation so a near-miss tap can't fall through to the
+          // canvas underneath and trigger Mapbox's OWN built-in
+          // double-click-to-zoom, which would zoom IN: the opposite of what
+          // tapping the pin means here.
+          el.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            applyCameraForMode(900);
+          });
+          markerRef.current = new mapboxgl.Marker({ element: el });
+
+          const startEl = document.createElement('div');
+          startEl.className = 'track-start-dot';
+          startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
+
+          readyRef.current = true;
+          // Ref first, then state: the ref is what the imperative call sites
+          // read (the marker's dblclick, applyCameraForMode's callers), and it
+          // must be true before any effect this wakes can run.
+          setMapReady(true);
+
+          // Keep the static placeholder visible until GL tiles have actually
+          // painted — `load` fires when the style is ready but before tile
+          // data has rendered. We poll `areTilesLoaded()` on each `render`
+          // event (one per frame) and remove the listener the moment it's true,
+          // which avoids the hard flash between a white canvas and the basemap.
+          const onFirstPaint = () => {
+            if (unmountedRef.current || mapRef.current !== map) {
+              map.off('render', onFirstPaint);
+              return;
+            }
+            if (map.areTilesLoaded()) {
+              map.off('render', onFirstPaint);
+              setMapPainted(true);
+            }
+          };
+          map.on('render', onFirstPaint);
+        });
+      } catch {
+        // Import failure (CDN timeout), WebGL unavailable, bad token, etc.
+        // Reset the guard so a new false→true edge of `active` can retry.
+        bootedRef.current = false;
+        setMapError(true);
+      }
     })();
   }, [active, initialLat, initialLng, applyCameraForMode]);
 
@@ -1158,7 +1218,7 @@ export function TrackMap({
     // remember.
   }, [points, running, here, applyCameraForMode, mapReady]);
 
-  if (!TOKEN) {
+  if (!TOKEN || mapError) {
     return (
       <View style={[styles.wrap, StyleSheet.absoluteFill, styles.centre]}>
         <Text style={[styles.placeholderText, { color: placeholderColor }]}>{unavailable}</Text>
@@ -1172,8 +1232,12 @@ export function TrackMap({
       {/* Static placeholder, covering the (still-empty) GL container until
           the real map has loaded — see the boot effect above for why this
           exists at all. `pinnedUrl` replaces the region-fallback `pinUrl`
-          the FIRST time a real GPS fix lands, and never again. */}
-      {!mapReady && (
+          the FIRST time a real GPS fix lands, and never again.
+          Gated on `mapPainted` (not `mapReady`) so the image stays until
+          GL tiles are actually drawn on screen — `mapReady` fires on the
+          map's `load` event before any tiles have rendered, which would
+          hard-cut to a white canvas for ~0.5–2s on a normal connection. */}
+      {!mapPainted && (
         <img
           src={pinnedUrl ?? pinUrl ?? undefined}
           alt=""
@@ -1211,7 +1275,7 @@ export function TrackMap({
           icon/copy as the old always-present recenter button). Fixed order
           — it and the +/- buttons never mount/unmount, so this cluster
           never shifts. */}
-      {active && (
+      {active && mapReady && (
         <View style={styles.cameraControls} pointerEvents="box-none">
           {cameraMode === 'follow' ? (
             <MapButton label={overviewLabel} onPress={toggleCameraMode} ios="map" android="map" />
