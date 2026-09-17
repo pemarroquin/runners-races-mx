@@ -1,4 +1,12 @@
 {
-  "buildCommand": "node scripts/check-web-env.mjs && npx expo export -p web",
-  "outputDirectory": "dist"
+  "buildCommand": "node scripts/check-web-env.mjs && npx expo export -p web && cp 'dist/race/[id].html' dist/race/_detail.html",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/race/:id", "destination": "/race/_detail" }],
+  "headers": [
+    {
+      "source": "/_expo/static/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
 }
