@@ -682,12 +682,6 @@ export function TrackMap({
     let cancelled = false;
 
     (async () => {
-      // TEMP PERF EXPERIMENT — measuring whether a small (not near-zero,
-      // not multi-second) delay before ANY map-related network activity
-      // starts is enough to separate it from PageSpeed's critical-path
-      // window, now that TBT/labels/fan-out are already fixed.
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      if (cancelled) return;
       ensureMapboxCss();
       ensurePulseStyle();
       // Run together, not sequentially: neither depends on the other, and
