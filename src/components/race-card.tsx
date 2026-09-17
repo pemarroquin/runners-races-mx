@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     // card whose sibling has more text just left dead transparent space in
     // its own (taller) gridItem, while the two visible card backgrounds
     // ended at different heights. flex:1 here is a no-op in every other
-    // usage (hero row, myraces.tsx's single-column list) since those have
+    // usage (hero row, races.tsx's Saved single-column list) since those have
     // no height-mismatched sibling to stretch against.
     flex: 1,
   },

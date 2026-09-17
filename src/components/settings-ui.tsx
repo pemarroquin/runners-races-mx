@@ -1,10 +1,11 @@
-// Shared chrome for the Settings stack (src/app/(tabs)/settings/*).
+// Shared chrome for the Profile stack (src/app/profile/*, formerly
+// (tabs)/settings/* — moved to a root push 2026-09-17, see profile/_layout.tsx).
 //
-// The Settings tab used to be one 697-line scroll with every control inline.
-// It is now a list screen whose rows push their own sub-page, so the two
-// things all six sub-pages have in common — the scroll container and the
-// handful of label/hint/row type styles — live here rather than being copied
-// six times and drifting.
+// Settings used to be one 697-line scroll with every control inline. It is
+// now a list screen whose rows push their own sub-page, so the two things
+// all six sub-pages have in common — the scroll container and the handful of
+// label/hint/row type styles — live here rather than being copied six times
+// and drifting.
 //
 // Deliberately small: anything used by exactly one page (the nav row, the
 // version/support row, the privacy prose section) stays in that page's own
@@ -22,15 +23,15 @@ export function useSettingsColors(): { c: Record<ThemeColor, string>; scheme: 'l
 }
 
 /**
- * A pushed settings sub-page: background + scroll + the app's standard
+ * A pushed Profile sub-page: background + scroll + the app's standard
  * content padding.
  *
  * No SafeAreaView top edge, unlike the tab screens: these sit under the
- * stack's native header (see settings/_layout.tsx), which already clears the
+ * stack's native header (see profile/_layout.tsx), which already clears the
  * status bar. Bottom padding is the app's normal content padding, not
- * BottomTabInset — the floating pill tab bar is now hidden on every pushed
- * settings page (see (tabs)/_layout.tsx's FloatingTabBar), so there is
- * nothing left to clear.
+ * BottomTabInset — this whole stack is a root push now (see
+ * profile/_layout.tsx), so there is no floating tab bar under it to clear at
+ * any depth.
  */
 export function SettingsPage({ children }: { children: ReactNode }) {
   const { c } = useSettingsColors();

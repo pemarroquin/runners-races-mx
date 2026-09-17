@@ -96,7 +96,7 @@ describe('route hrefs', () => {
     // below would "pass" by matching nothing to nothing. It must not.
     expect(routes.length).toBeGreaterThan(5);
     expect(routes).toContain('/');
-    expect(routes).toContain('/settings');
+    expect(routes).toContain('/profile');
   });
 
   it('finds the hrefs it is meant to check', () => {

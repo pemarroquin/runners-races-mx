@@ -1,30 +1,28 @@
-// The leaderboard. ONE screen, ONE arena, no mode toggles.
+// The leaderboard. ONE screen, THREE tabs (2026-09-17 nav restructure).
 //
-// WHAT WAS WRONG, in Pedro's words: "Leaderboard navigation is totally off.
-// What is Regulars? Why does regulars have Monterrey and Global territory?"
+// This file used to open with "ONE screen, ONE arena, no mode toggles" and a
+// long argument against a tab/toggle UI here, after an EARLIER toggle
+// (`Territory`/`Regulars` × `Monterrey`/`Global`) confused Pedro badly enough
+// that he asked for it gone entirely ("What is Regulars? Why does regulars
+// have Monterrey and Global territory?"). That argument doesn't apply to
+// THIS tab split, and it's worth saying why, since a future reader will find
+// the two side by side in git blame:
 //
-// The old screen stacked two identical-looking pill rows that crossed two
-// unrelated axes — WHICH GAME (`Territory` / `Regulars`) by WHERE
-// (`Monterrey` / `Global`). Four combinations, one of them meaningless (a
-// global list of user-drawn shapes across cities), and neither row said what
-// it measured. "Regulars" was also a demographic rather than a game, and the
-// thing it ranked was a user-NAMED shape, which is gone entirely.
+//   The old toggle crossed two unrelated, easily-confused axes on unlabelled
+//   pills. These three tabs are one axis — WHICH BOARD — and each is
+//   self-explanatory by name: My Achievements (a personal record, no
+//   location needed), Municipio (Board 1, live conquest), Local Leaders
+//   (Board 2, mayorship). Nothing here recreates "Regulars."
 //
-// Both axes are removed rather than relabelled:
+//   WHERE still collapses to the district you're standing in (district.ts)
+//   for the two boards that need a place at all — that reasoning is
+//   untouched. My Achievements needs no district: it's everything you've
+//   ever taken, not what you hold in any one place right now.
 //
-//   WHERE collapses to the district you are standing in (district.ts). There
-//   is nothing to choose — it is where you are. A leaderboard scoped to
-//   ground you cannot reach on foot was never a contest.
-//
-//   WHICH GAME collapses to two labelled sections on one scroll. They were
-//   behind a toggle for a real reason (two incomparable numbers must not read
-//   as one ranking), and that reason is answered by every row stating its own
-//   unit instead of by hiding one board from the other.
-//
-// The share bar, not the list, is the thing you look at first — "having
-// leaderboard with only cards is boring and i do not like it at all". See
-// share-bar.tsx for why a bar survives having one player and a card list
-// does not.
+// The share bar, not the list, is still the thing you look at first inside
+// Municipio — "having leaderboard with only cards is boring and i do not
+// like it at all". See share-bar.tsx for why a bar survives having one
+// player and a card list does not.
 import { useIsFocused } from 'expo-router';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -41,8 +39,10 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AchievementsView } from '@/components/achievements-view';
 import { BoardRow } from '@/components/board-row';
 import { DistrictMap, type DistrictHolding } from '@/components/district-map';
+import { ProfilePill } from '@/components/profile-pill';
 import { ShareBar, type ShareSegment } from '@/components/share-bar';
 import { Icon } from '@/components/ui/icon';
 import { FENCE_COLOR_SETS } from '@/constants/map';
@@ -78,13 +78,30 @@ interface BoardData {
 export default function LeaderboardScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isFocused = useIsFocused();
+
+  // Three sub-tabs, one screen (2026-09-17 nav restructure, Pedro's ask,
+  // in his own A/B/C order): My Achievements (A — a personal record, needs
+  // no location or district data at all, see the branch below), Municipio
+  // (B — Board 1, the old file's "conquest" section) and Local Leaders
+  // (C — Board 2, "mayorship"). Defaults to the first tab, same as any
+  // segmented control.
+  const [activeBoard, setActiveBoard] = useState<'mine' | 'municipio' | 'local'>('mine');
   // The arena follows the runner. A real fix or nothing — never a region
   // fallback, for the same reason the Track map refuses to place its pin on a
   // city centre: this decides which ground a runner is being ranked on, and
   // a guess would rank them somewhere they have never been.
-  const { coords, status: locationStatus, request: requestLocation } = useCurrentLocation();
+  //
+  // `autoRequest` is OFF while My Achievements is the visible tab: that
+  // board needs no location at all (see the district gate below), so a
+  // runner whose default landing tab is now 'mine' should never see a
+  // location permission prompt just for opening Leaderboard. Flips reactive
+  // — the moment they tap Municipio or Local Leaders, `autoRequest` goes
+  // true and useCurrentLocation's own effect fires the request then.
+  const { coords, status: locationStatus, request: requestLocation } = useCurrentLocation({
+    autoRequest: activeBoard !== 'mine',
+  });
 
   const district = useMemo(() => (coords ? districtOf(coords) : null), [coords]);
 
@@ -247,7 +264,11 @@ export default function LeaderboardScreen() {
     }));
   }, [conquest, data, t, tintOf]);
 
-  if (district === null) {
+  // My Achievements needs neither location nor a district fetch — it's a
+  // personal record, not a place-scoped board (see achievements-view.tsx) —
+  // so none of the three gates below apply to it. They only run for
+  // Municipio/Local Leaders, which both need `district`/`data`.
+  if (activeBoard !== 'mine' && district === null) {
     // Three different states, not one message. Before this branched, the
     // "we need your location" copy showed during the ordinary permission
     // probe and first fix — on every cold open of the tab — where it reads as
@@ -257,7 +278,7 @@ export default function LeaderboardScreen() {
     // ask with.
     if (locationStatus === 'idle' || locationStatus === 'locating') {
       return (
-        <Shell c={c} title={t('leaderboard.title')}>
+        <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
           <View style={styles.centre}>
             <ActivityIndicator color={c.textSecondary} />
             <Text style={[styles.emptyText, { color: c.textSecondary }]}>
@@ -268,7 +289,7 @@ export default function LeaderboardScreen() {
       );
     }
     return (
-      <Shell c={c} title={t('leaderboard.title')}>
+      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
         <Empty
           icon="location.fill"
           android="my_location"
@@ -291,9 +312,9 @@ export default function LeaderboardScreen() {
     );
   }
 
-  if (data === null) {
+  if (activeBoard !== 'mine' && data === null) {
     return (
-      <Shell c={c} title={t('leaderboard.title')}>
+      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
         <View style={styles.centre}>
           <ActivityIndicator color={c.textSecondary} />
         </View>
@@ -301,17 +322,31 @@ export default function LeaderboardScreen() {
     );
   }
 
-  if (data.failed) {
+  if (activeBoard !== 'mine' && data?.failed) {
     return (
-      <Shell c={c} title={t('leaderboard.title')}>
+      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
         <Empty icon="exclamationmark.triangle" android="warning" text={t('leaderboard.error')} c={c} />
       </Shell>
     );
   }
 
+  if (activeBoard === 'mine') {
+    return (
+      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
+        <AchievementsView locale={locale} scheme={scheme} />
+      </Shell>
+    );
+  }
+
+  // From here on activeBoard is 'municipio' or 'local', and the three gates
+  // above already guarantee district/data are ready for that case — but
+  // they're compound conditions (`activeBoard !== 'mine' && …`), which
+  // TypeScript can't narrow across. This makes the same guarantee explicit
+  // so `district`/`data` type as non-null below instead of needing `!`.
+  if (district === null || data === null || data.failed) return null;
 
   return (
-    <Shell c={c} title={t('leaderboard.title')}>
+    <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={
@@ -331,6 +366,8 @@ export default function LeaderboardScreen() {
           </Text>
         </Animated.View>
 
+        {activeBoard === 'municipio' && (
+        <>
         {/* THE HERO — your own standing, as the biggest thing on screen. */}
         <Animated.View
           entering={FadeInDown.duration(340)}
@@ -400,7 +437,7 @@ export default function LeaderboardScreen() {
                 score={pct(entry.share)}
                 detail={t('leaderboard.cellsDetail', { count: entry.cellsHeld })}
                 tint={tintOf(entry.userId)}
-                isMe={entry.userId === data.meUserId}
+                isMe={entry.userId === data?.meUserId}
                 flaggedLabel={
                   entry.flaggedCellsHeld > 0
                     ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })
@@ -415,8 +452,11 @@ export default function LeaderboardScreen() {
             </Text>
           )}
         </Section>
+        </>
+        )}
 
         {/* BOARD 2 */}
+        {activeBoard === 'local' && (
         <Section
           title={t('leaderboard.leadersTitle', { days: MAYORSHIP_WINDOW_DAYS })}
           note={t('leaderboard.leadersNote')}
@@ -430,7 +470,7 @@ export default function LeaderboardScreen() {
                 score={String(entry.cellsHeld)}
                 detail={t('leaderboard.bestDays', { count: entry.bestDays })}
                 tint={tintOf(entry.userId)}
-                isMe={entry.userId === data.meUserId}
+                isMe={entry.userId === data?.meUserId}
                 c={c}
               />
             ))
@@ -440,6 +480,7 @@ export default function LeaderboardScreen() {
             </Text>
           )}
         </Section>
+        )}
       </ScrollView>
     </Shell>
   );
@@ -448,17 +489,74 @@ export default function LeaderboardScreen() {
 function Shell({
   c,
   title,
+  activeBoard,
+  onChangeBoard,
   children,
 }: {
   c: Record<ThemeColor, string>;
   title: string;
+  activeBoard: 'mine' | 'municipio' | 'local';
+  onChangeBoard: (b: 'mine' | 'municipio' | 'local') => void;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
+    <View style={styles.root}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }} edges={['top']}>
       <Text style={[styles.title, { color: c.text }]}>{title}</Text>
+      <BoardTabs active={activeBoard} onChange={onChangeBoard} c={c} t={t} />
       {children}
     </SafeAreaView>
+    <ProfilePill />
+    </View>
+  );
+}
+
+/** The three sub-tabs (2026-09-17 nav restructure): My Achievements,
+ *  Municipio and Local Leaders, one screen. Plain segmented row, not a
+ *  floating glass capsule — unlike the old Saved tab's map-overlay switch,
+ *  every one of these three bodies is (or starts as) a ScrollView with its
+ *  own solid background, so the switch can sit in normal flow. */
+function BoardTabs({
+  active,
+  onChange,
+  c,
+  t,
+}: {
+  active: 'mine' | 'municipio' | 'local';
+  onChange: (b: 'mine' | 'municipio' | 'local') => void;
+  c: Record<ThemeColor, string>;
+  t: ReturnType<typeof useI18n>['t'];
+}) {
+  const tabs: { key: 'mine' | 'municipio' | 'local'; label: string }[] = [
+    { key: 'mine', label: t('leaderboard.tabMine') },
+    { key: 'municipio', label: t('leaderboard.tabMunicipio') },
+    { key: 'local', label: t('leaderboard.tabLocal') },
+  ];
+  return (
+    <View style={styles.tabsRow}>
+      {tabs.map((tab) => {
+        const selected = active === tab.key;
+        return (
+          <Pressable
+            key={tab.key}
+            onPress={() => onChange(tab.key)}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            style={styles.tabItem}>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.tabLabel,
+                { color: selected ? c.text : c.textSecondary },
+                selected && { borderBottomColor: c.accent, borderBottomWidth: 2 },
+              ]}>
+              {tab.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -591,13 +689,23 @@ function assignTints(userIds: string[]): Map<string, string> {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  root: { flex: 1 },
   title: {
     fontSize: 28,
     fontWeight: '700',
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
+  tabsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.four,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(128,128,128,0.25)',
+  },
+  tabItem: { paddingBottom: Spacing.two },
+  tabLabel: { fontSize: 15, fontWeight: '700', paddingBottom: 2 },
   scroll: { padding: Spacing.three, gap: Spacing.four, paddingBottom: BottomTabInset },
   arena: { gap: 2 },
   arenaKicker: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8 },

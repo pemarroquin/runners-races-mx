@@ -1,5 +1,11 @@
-// Settings — the list screen. Every row pushes a sub-page in this tab's
-// stack (see ./_layout.tsx); nothing is configured from here.
+// Profile — the list screen. Every row pushes a sub-page in this stack
+// (see ./_layout.tsx); nothing is configured from here.
+//
+// Reached via the floating avatar pill on Run/Leaderboard/Races, not a tab
+// anymore (2026-09-17) — so unlike a tab screen, there IS somewhere to go
+// back to, and react-navigation gives no automatic header here (this is the
+// stack's own first screen; see _layout.tsx). The back chevron in the title
+// row below is what makes that possible.
 //
 // The Account group is hidden wholesale when Territory Mode has no server
 // configured. That preserves exactly what the old single-file screen did:
@@ -16,22 +22,23 @@
 // rather than each being a rounded card. No dividers between rows inside a
 // group — the band and the group labels carry the structure, so the list
 // reads as one column instead of a stack of floating panels.
-import { Link, type Href } from 'expo-router';
+import { Link, useRouter, type Href } from 'expo-router';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
-import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
+import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { TERRITORY_ENABLED } from '@/lib/supabase';
 import { fetchMyProfile } from '@/lib/territory-sync';
 
-export default function SettingsIndexScreen() {
+export default function ProfileIndexScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
+  const router = useRouter();
 
   // Warm the Profile page's data while the runner is still reading this list.
   // The result is written to the local cache by fetchMyProfile itself, so the
@@ -42,8 +49,9 @@ export default function SettingsIndexScreen() {
   // its own, it reads the email off the session, so what both pages actually
   // wait on is ensureSession() — and this warms that.
   //
-  // Mount-only, and that is once per app run in practice: expo-router keeps
-  // tab screens mounted, so returning to Settings does not re-fire it.
+  // Mount-only. Unlike when this lived in the tab bar, a Stack push does NOT
+  // keep the screen mounted between visits, so this now re-fires every time
+  // the profile pill is tapped — harmless, since it's just a cache warm-up.
   // Deliberately unawaited and unhandled — every outcome is already recorded
   // in the cache or ignored, and a failure here must not surface as anything
   // on a screen the runner didn't ask a question on.
@@ -54,13 +62,31 @@ export default function SettingsIndexScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
-      <Text style={[styles.title, { color: c.text }]}>{t('settings.title')}</Text>
+      <View style={styles.titleRow}>
+        <Pressable
+          onPress={() => {
+            // A reload of /profile, or a bookmark/shared link straight to
+            // it, arrives with no history to go back to — router.back()
+            // would silently no-op and strand the runner here with no
+            // bottom tab bar (this stack is a root push, outside (tabs)).
+            // Land on Run instead, same as a cold app open.
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          hitSlop={12}
+          style={styles.backButton}>
+          <Icon ios="chevron.left" android="arrow_back" size={22} weight="semibold" color={c.text} />
+        </Pressable>
+        <Text style={[styles.title, { color: c.text }]}>{t('settings.title')}</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
         {TERRITORY_ENABLED && (
           <>
             <GroupLabel c={c}>{t('settings.groupAccount')}</GroupLabel>
             <NavRow
-              href="/settings/profile"
+              href="/profile/account"
               ios="person.crop.circle"
               android="account_circle"
               label={t('settings.sectionProfile')}
@@ -72,7 +98,7 @@ export default function SettingsIndexScreen() {
                 RIGHT NOW and can fall while you sleep, so "everywhere I have
                 been" needed a surface nobody can take from you. */}
             <NavRow
-              href="/settings/history"
+              href="/profile/history"
               ios="map"
               android="map"
               label={t('settings.historyTitle')}
@@ -83,7 +109,7 @@ export default function SettingsIndexScreen() {
                 "personal record, not a contest" reasoning as History above
                 it, so the two sit together. */}
             <NavRow
-              href="/settings/progress"
+              href="/profile/progress"
               ios="figure.run"
               android="directions_run"
               label={t('settings.sectionProgress')}
@@ -96,7 +122,7 @@ export default function SettingsIndexScreen() {
 
         <GroupLabel c={c}>{t('settings.groupApp')}</GroupLabel>
         <NavRow
-          href="/settings/preferences"
+          href="/profile/preferences"
           ios="slider.horizontal.3"
           android="tune"
           label={t('settings.sectionPreferences')}
@@ -104,7 +130,7 @@ export default function SettingsIndexScreen() {
           c={c}
         />
         <NavRow
-          href="/settings/location"
+          href="/profile/location"
           ios="location"
           android="location_on"
           label={t('settings.sectionLocation')}
@@ -115,7 +141,7 @@ export default function SettingsIndexScreen() {
             above it — the two hints are what tell them apart, which is
             exactly what the hints are for. */}
         <NavRow
-          href="/settings/privacy"
+          href="/profile/privacy"
           ios="lock"
           android="lock"
           label={t('privacy.title')}
@@ -123,7 +149,7 @@ export default function SettingsIndexScreen() {
           c={c}
         />
         <NavRow
-          href="/settings/about"
+          href="/profile/about"
           ios="info.circle"
           android="info"
           label={t('settings.sectionAbout')}
@@ -217,16 +243,21 @@ function NavRow({
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.two,
   },
+  backButton: { marginLeft: -Spacing.one },
+  title: { fontSize: 28, fontWeight: '700' },
   // No horizontal padding: the rows and the group band are full-bleed, and
-  // each pads its own contents instead.
-  container: { paddingBottom: BottomTabInset },
+  // each pads its own contents instead. A root push (not a tab anymore, see
+  // this file's header), so there is no floating pill below to clear —
+  // plain bottom padding, same as every other pushed sub-page here.
+  container: { paddingBottom: Spacing.five },
   groupLabel: {
     fontSize: 15,
     fontWeight: '600',

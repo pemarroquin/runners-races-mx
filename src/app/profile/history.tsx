@@ -1,4 +1,4 @@
-// Settings › the permanent personal record of ground taken.
+// Settings › Sessions archive — the permanent personal record of ground taken.
 //
 // The counterpart to the live map, and deliberately a different surface.
 // Under CONQUEST the map and the leaderboard show ground you hold RIGHT NOW,

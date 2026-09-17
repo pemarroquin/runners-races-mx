@@ -495,6 +495,11 @@ export interface MyFence {
   route: LatLng[] | null;
   areaM2: number;
   distanceM: number;
+  /** Wall-clock seconds from start to finish (`duration_s`, stored on every
+   *  run since Territory Mode's first migration — see
+   *  20260826222037_territory_mode.sql). Feeds My Achievements' Pace/Time
+   *  stats; never used for scoring, so it carries no anti-cheat weight. */
+  durationS: number;
   /** m² other runners have carved out of this run since it was saved. */
   lostM2: number;
   /** Set by the server-side speed trigger. A flagged run still counts and
@@ -586,7 +591,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
   return withSession<{ fences: MyFence[]; skipped: number }>(async (session) => {
     const { data, error } = await supabase
       .from('runs')
-      .select('id, started_at, distance_m, area_m2, fence, raw_path, flagged, flag_reason')
+      .select('id, started_at, distance_m, area_m2, duration_s, fence, raw_path, flagged, flag_reason')
       .eq('user_id', session.user.id)
       .order('started_at', { ascending: false });
 
@@ -616,6 +621,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
         route,
         areaM2: Number(row.area_m2) || 0,
         distanceM: Number(row.distance_m) || 0,
+        durationS: Number(row.duration_s) || 0,
         lostM2: 0, // filled in below
         flagged: row.flagged === true,
         flagReason: row.flag_reason ?? null,

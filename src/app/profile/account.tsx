@@ -1,5 +1,8 @@
-// Settings › Profile — everything about WHO the runner is, on one page:
+// Profile › Account — everything about WHO the runner is, on one page:
 // their account, the diagnostics for it, and the name they appear under.
+// Filename/route renamed from `profile.tsx`/`/settings/profile` 2026-09-17
+// when the whole stack moved to `/profile` — see this directory's
+// `_layout.tsx` — so the outer hub and this inner row don't share a name.
 //
 // The account controls used to be a sibling page (/settings/account) reached
 // by its own row. Pedro's call, 2026-09-09: fold them in here, in that order.
@@ -17,7 +20,7 @@
 // The name field itself moved out of the old single-file settings screen
 // unchanged: same refetch-on-focus effect, same lastSyncedName dirty check,
 // same save-on-blur. `useIsFocused` now means "this sub-page is on top of
-// the settings stack" rather than "the settings tab is selected", which is
+// the profile stack" rather than "the settings tab is selected", which is
 // if anything a tighter fit for the reason the effect exists — NamePrompt
 // (the run-summary flow) can write display_name from off-screen while this
 // screen stays mounted.
@@ -319,7 +322,7 @@ export default function ProfileSettingsScreen() {
   const { t } = useI18n();
   // The row leading here is already hidden on a build with no server (see
   // ./index.tsx's TERRITORY_ENABLED gate); this is the belt-and-braces for a
-  // direct /settings/profile URL on web, carried over from the version of
+  // direct /profile/account URL on web, carried over from the version of
   // this screen that held only the name field. Both components below hide
   // themselves under the same condition, but their HEADINGS would not.
   if (!TERRITORY_ENABLED) return <SettingsPage>{null}</SettingsPage>;

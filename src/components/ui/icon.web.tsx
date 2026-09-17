@@ -239,6 +239,27 @@ const GLYPHS: Record<string, Glyph> = {
   chevron_right: (c) => (
     <path d="M9.5 5.5l6.2 6.5-6.2 6.5" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
   ),
+  // Added 2026-09-17 with the Profile stack's back button (profile/index.tsx,
+  // a root push now — see that file's header) — chevron_right mirrored.
+  arrow_back: (c) => (
+    <path d="M14.5 5.5l-6.2 6.5 6.2 6.5" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  ),
+  // Added 2026-09-17 with My Achievements' tiles-conquered legend
+  // (achievements-view.tsx) — a plain 3x3 grid, matching iOS'
+  // "square.grid.3x3.fill".
+  grid_view: (c) => (
+    <>
+      <rect x="3" y="3" width="5" height="5" rx="1" fill={c} />
+      <rect x="9.5" y="3" width="5" height="5" rx="1" fill={c} />
+      <rect x="16" y="3" width="5" height="5" rx="1" fill={c} />
+      <rect x="3" y="9.5" width="5" height="5" rx="1" fill={c} />
+      <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill={c} />
+      <rect x="16" y="9.5" width="5" height="5" rx="1" fill={c} />
+      <rect x="3" y="16" width="5" height="5" rx="1" fill={c} />
+      <rect x="9.5" y="16" width="5" height="5" rx="1" fill={c} />
+      <rect x="16" y="16" width="5" height="5" rx="1" fill={c} />
+    </>
+  ),
   mail: (c) => (
     <>
       <rect x="2.8" y="5.2" width="18.4" height="13.6" rx="2.2" stroke={c} strokeWidth={1.8} fill="none" />
@@ -276,6 +297,28 @@ const GLYPHS: Record<string, Glyph> = {
         strokeWidth={1.7}
         fill="none"
         strokeLinecap="round"
+      />
+    </>
+  ),
+  // Added 2026-09-16 with the share-card sheet (share-card.tsx) — the
+  // sheet's own trigger button and, on Android, its per-card Copy buttons.
+  share: (c) => (
+    <>
+      <circle cx="18" cy="5" r="2.6" stroke={c} strokeWidth={1.8} fill="none" />
+      <circle cx="6" cy="12" r="2.6" stroke={c} strokeWidth={1.8} fill="none" />
+      <circle cx="18" cy="19" r="2.6" stroke={c} strokeWidth={1.8} fill="none" />
+      <path d="M8.3 10.7l7.4-4.2M8.3 13.3l7.4 4.2" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+    </>
+  ),
+  content_copy: (c) => (
+    <>
+      <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" stroke={c} strokeWidth={1.8} fill="none" />
+      <path
+        d="M15.5 8.5V5.5A2 2 0 0 0 13.5 3.5h-9A2 2 0 0 0 2.5 5.5v9a2 2 0 0 0 2 2h3"
+        stroke={c}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
       />
     </>
   ),

@@ -1,4 +1,4 @@
-// The Territories tab's map — NATIVE. See territories-map.web.tsx's header
+// My Achievements' map — NATIVE. See territories-map.web.tsx's header
 // for the full spec (both visual states, the fit-to-all-bounds behaviour,
 // the scaling caveat); this file mirrors it with react-native-maps instead
 // of Mapbox GL.
@@ -44,6 +44,12 @@ interface TerritoriesMapProps {
   /** See territories-map.web.tsx's matching prop doc for why this has to be
    *  the caller's call rather than a hard-coded constant. */
   controlsBottomOffset?: number;
+  /** See territories-map.web.tsx's matching prop doc — accepted here only so
+   *  the one call site (achievements-view.tsx) typechecks on both platforms.
+   *  A no-op on native: this file has no continuous animation timer to gate
+   *  (no fill-extrusion, no gradient flow — see this file's own header for
+   *  why), so there is nothing for it to pause. */
+  active?: boolean;
 }
 
 function boundsCoordsOf(features: TerritoryFeature[]): MapCoord[] {

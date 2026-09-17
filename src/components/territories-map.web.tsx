@@ -1,6 +1,8 @@
-// The Territories tab's map — WEB. Every saved territory at once, fit to
-// bounds around all of them (Pedro's call, 2026-09-02: "a single map view",
-// however far the spread — no per-city scoping). Replaces myraces.tsx's old
+// My Achievements' map — WEB (Leaderboard's personal tab, achievements-view.tsx
+// — formerly the Saved tab's Territories map, myraces.tsx, before the
+// 2026-09-17 nav restructure). Every saved territory at once, fit to bounds
+// around all of them (Pedro's call, 2026-09-02: "a single map view", however
+// far the spread — no per-city scoping). Replaces the original screen's old
 // FlatList of fence-card rows.
 //
 // Two visual states, matching Pedro's explicit spec:
@@ -92,7 +94,7 @@ interface TerritoriesMapProps {
    *  Defaults to a small inset (Spacing.three) for a caller that embeds this
    *  in a fixed-height box with nothing else floating below it (Settings'
    *  History screen). A caller that fills the WHOLE screen behind this app's
-   *  own floating tab bar (myraces.tsx's Conquested Areas) must pass
+   *  own floating tab bar (My Achievements, achievements-view.tsx) must pass
    *  `BottomTabInset + Spacing.three` instead, or the bottom button lands
    *  inside the tab bar's own band and reads as simply missing — exactly the
    *  bug fence-map.web.tsx's mapControls comment already documents for its
@@ -100,6 +102,26 @@ interface TerritoriesMapProps {
    *  different layouts, so the offset has to be the caller's call, not a
    *  hard-coded constant here. */
   controlsBottomOffset?: number;
+  /**
+   * Whether this map's own screen is the one currently on top. Gates the two
+   * continuous animation timers below (the gradient flow + the shimmer) —
+   * NOT the map itself, which stays mounted and interactive either way.
+   *
+   * Defaults to `true` for a caller (Settings' History screen) that mounts
+   * this inside a Stack push and so naturally unmounts on back — it never
+   * needs to say so. My Achievements is different: it lives inside a Tabs
+   * screen, and expo-router NEVER unmounts a tab screen on switching away
+   * from it (this codebase's own established behaviour, see e.g.
+   * (tabs)/_layout.tsx's comments) — so without this, tapping Run or Races
+   * after visiting Leaderboard left this map's WebGL context repainting on
+   * two independent timers (startGradientFlow below, and the shimmer
+   * setInterval) indefinitely in the background. Reported as the phone
+   * heating up during ordinary browsing, 2026-09-17 — that combination (an
+   * animated Mapbox surface + a tab framework that never unmounts) had no
+   * name for "actually visible" until this prop. achievements-view.tsx
+   * passes its own `useIsFocused()` result here for exactly that reason.
+   */
+  active?: boolean;
 }
 
 function ensureMapboxCss() {
@@ -140,6 +162,7 @@ export function TerritoriesMap({
   onSelect,
   controls,
   controlsBottomOffset,
+  active = true,
 }: TerritoriesMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -331,9 +354,15 @@ export function TerritoriesMap({
   // to avoid. `hasSaved` (a boolean), not `features`, is the dependency —
   // re-running this on every refetch would restart the loop mid-cycle and
   // make the colours visibly jump back.
+  //
+  // ALSO gated on `active` (2026-09-17, see that prop's own doc) — this is
+  // the actual fix for "phone gets warm just browsing," not `hasSaved`
+  // alone: `startGradientFlow` already pauses on a HIDDEN BROWSER TAB, but
+  // this app's own Run/Leaderboard/Races switch never touches that, so
+  // without `active` the loop kept running full-speed on an off-screen tab.
   const hasSaved = features.some((f) => f.kind === 'saved');
   useEffect(() => {
-    if (!hasSaved) return;
+    if (!hasSaved || !active) return;
     return startGradientFlow((gradient) => {
       const map = mapRef.current;
       if (!map || !readyRef.current) return;
@@ -345,7 +374,7 @@ export function TerritoriesMap({
         if (map.getLayer(id)) map.setPaintProperty(id, 'line-gradient', gradient);
       }
     });
-  }, [hasSaved]);
+  }, [hasSaved, active]);
 
   // The fill shimmer. ONE timer for the screen, same as the gradient flow
   // above and gated the same way — only saved territories have an extrusion,
@@ -356,8 +385,13 @@ export function TerritoriesMap({
   // no positional gradient for fills (only lines take `line-gradient`, which
   // is why the OUTLINE carries the gradient across space), so the fill sweeps
   // the same wheel through time instead and the two read as one surface.
+  //
+  // Also gated on `active`, same reasoning as the gradient-flow effect above
+  // — this one is a plain setInterval with no visibility handling of its
+  // own at all (unlike startGradientFlow), so before this it kept ticking
+  // even on a fully hidden browser tab, not just an off-screen app tab.
   useEffect(() => {
-    if (!hasSaved) return;
+    if (!hasSaved || !active) return;
     let step = 0;
     const id = setInterval(() => {
       const map = mapRef.current;
@@ -374,7 +408,7 @@ export function TerritoriesMap({
       });
     }, FENCE_SHIMMER_STEP_MS);
     return () => clearInterval(id);
-  }, [hasSaved]);
+  }, [hasSaved, active]);
 
   if (!TOKEN) return null;
 

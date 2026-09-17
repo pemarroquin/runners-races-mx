@@ -29,7 +29,10 @@ import { useI18n } from '@/lib/i18n';
 // Labelled now, not icon-only: at five tabs the glyphs alone stopped being
 // self-explanatory (a runner and a trophy read as almost anything). The icon
 // circle shrank to make room for the label rather than the pill growing
-// taller than a thumb's reach.
+// taller than a thumb's reach. Back down to three tabs since (Saved folded
+// into Races and Conquered Areas into Leaderboard, Profile moved to the
+// floating avatar pill — profile-pill.tsx — 2026-09-17), but the labels stay:
+// nothing about three tabs makes bare glyphs self-explanatory again.
 const BAR_HEIGHT = 64;
 const BAR_BOTTOM_MARGIN = 16;
 const ICON_SIZE = 21;
@@ -102,30 +105,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="myraces"
-        options={{
-          title: t('tabs.myRaces'),
-          // Heart, not a generic explore/compass glyph — this tab is
-          // literally "the races you hearted" (see the save toggle on
-          // race/[id].tsx, same icon pair), so the tab bar should say that.
-          tabBarIcon: ({ focused, color }) => (
-            <TabGlyph focused={focused} color={color} ios="heart.fill" iosInactive="heart" android="favorite" androidInactive="favorite_border" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: t('tabs.settings'),
-          // A person, not a gear: this tab is the account/profile surface now
-          // (it carries the privacy statement and will carry the runner's own
-          // territory), and a gear reads as "app preferences" only.
-          tabBarIcon: ({ focused, color }) => (
-            <TabGlyph focused={focused} color={color} ios="person.crop.circle.fill" iosInactive="person.crop.circle" android="person" androidInactive="account_circle" />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
@@ -138,21 +117,6 @@ function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBar
   const { width: windowWidth } = useWindowDimensions();
   const barWidth = state.routes.length * ITEM_WIDTH + BAR_PADDING_H * 2;
   const sideMargin = Math.max((windowWidth - barWidth) / 2, MIN_SIDE_MARGIN);
-
-  // Settings is the one tab whose own content is a nested Stack (see
-  // (tabs)/settings/_layout.tsx) — pushing a sub-page there never changes
-  // which TOP-LEVEL tab is focused, so without this check the pill kept
-  // floating over a sub-page's back button and content, reading as chrome
-  // that belongs to a screen it isn't part of. React Navigation already
-  // reports the focused tab's own nested navigator state on `route.state`
-  // once it has mounted; a Stack's `index` is 0 on its initial route
-  // (settings/index.tsx) and >0 once anything is pushed on top of it —
-  // exactly "a sub-page is open". No new navigation machinery: this reads
-  // state the tab bar is already handed every render.
-  const focusedRoute = state.routes[state.index];
-  const onSettingsSubpage =
-    focusedRoute.name === 'settings' && (focusedRoute.state?.index ?? 0) > 0;
-  if (onSettingsSubpage) return null;
 
   return (
     <View

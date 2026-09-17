@@ -846,3 +846,16 @@ export function formatArea(squareMeters: number): string {
   if (squareMeters >= 1_000_000) return `${(squareMeters / 1_000_000).toFixed(2)} km²`;
   return `${Math.round(squareMeters).toLocaleString('en-US')} m²`;
 }
+
+/** distance + duration → "5:42 /km", locale-agnostic. `null` for anything
+ *  that can't produce a real pace (no distance, or a run so short/GPS-noisy
+ *  it rounds to 0 m) — a divide-by-near-zero would otherwise print a pace
+ *  faster than any human, which is worse than showing nothing. */
+export function formatPace(meters: number, totalSeconds: number): string | null {
+  if (!(meters > 0) || !(totalSeconds > 0)) return null;
+  const secPerKm = totalSeconds / (meters / 1000);
+  if (!Number.isFinite(secPerKm)) return null;
+  const minutes = Math.floor(secPerKm / 60);
+  const seconds = Math.round(secPerKm % 60);
+  return `${minutes}:${String(seconds).padStart(2, '0')} /km`;
+}
