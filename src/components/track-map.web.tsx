@@ -115,6 +115,7 @@ import {
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
+import { deferToIdle } from '@/lib/idle';
 import { useRegion } from '@/lib/region-context';
 import { type LatLng } from '@/lib/territory';
 
@@ -672,81 +673,97 @@ export function TrackMap({
 
   // Built once. Re-creating the map when points change would tear down and
   // re-instantiate a WebGL context on every GPS fix.
+  //
+  // The whole boot sequence — CSS/style injection, the mapbox-gl dynamic
+  // import, and `new mapboxgl.Map()` itself — is deferred to idle (see
+  // idle.ts's own header), not fired the instant this component mounts.
+  // Measured 2026-09-17: mapbox-gl's chunk alone costs ~1.9s of main-thread
+  // CPU (755ms script eval, 187ms parse) the moment it runs, and since this
+  // IS the Track tab — the app's landing screen on web — that cost landed
+  // squarely inside PageSpeed Insights' Total Blocking Time window (1,460ms
+  // measured, on a page whose FCP/LCP were already a fast 0.8s). Pushing it
+  // to requestIdleCallback doesn't change what loads, only when: the Track
+  // screen's own UI (buttons, "New session" text) still paints immediately,
+  // the live map now fades in a beat later than before. Pedro's call,
+  // confirmed explicitly (a real, felt delay, not just a scoring artifact).
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
     let cancelled = false;
 
-    (async () => {
-      ensureMapboxCss();
-      ensurePulseStyle();
-      const { default: mapboxgl } = await import('mapbox-gl');
-      if (cancelled || !containerRef.current) return;
+    const cancelIdle = deferToIdle(() => {
+      void (async () => {
+        ensureMapboxCss();
+        ensurePulseStyle();
+        const { default: mapboxgl } = await import('mapbox-gl');
+        if (cancelled || !containerRef.current) return;
 
-      mapboxgl.accessToken = TOKEN;
-      const map = new mapboxgl.Map({
-        container: containerRef.current,
-        // Bundled, label-stripped snapshot, not MAP_STYLE_GL — see
-        // IDLE_MAP_STYLE's own header. The upgrade-on-Start effect further
-        // down swaps this for the full Standard style once a session
-        // actually needs it.
-        style: IDLE_MAP_STYLE,
-        center: [initialLng, initialLat],
-        zoom: MAP_DEFAULT_ZOOM,
-        attributionControl: false,
-      });
-      mapRef.current = map;
-
-      map.on('load', () => {
-        if (cancelled) return;
-
-        // Rotate/pitch gestures, gone entirely — not just during a session.
-        // SESSION_PITCH is set once for the 3D look and a runner has no
-        // reason to change it via gesture; on the idle (pre-session) map
-        // pitch is already flat, so there is nothing legitimate to disable
-        // FROM either way. This is the fix for the actual bug: one stray
-        // pinch or two-finger drag used to permanently change the framing,
-        // with no interaction detection and no way back (Pedro hit this
-        // mid-run: "normal at first, then weird").
-        map.dragRotate.disable();
-        map.touchPitch.disable();
-        map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
-
-        // Custom sources/layers (route, wall, tile fill, enclosed shimmer)
-        // are NOT added here — see setupSessionLayers's own header. The idle
-        // style loaded above has nothing to show in them yet (index.tsx's
-        // liveTiles/liveEnclosed both start empty), and setStyle() wipes any
-        // sources/layers a style had regardless, so whichever style is
-        // active when a session actually starts is what adds them (the
-        // style-upgrade effect further down, on the very first Start).
-
-        const el = document.createElement('div');
-        el.className = 'track-dot';
-        el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
-        // Double-tap the pin to re-center (Pedro's original idea) —
-        // stopPropagation so a near-miss tap can't fall through to the
-        // canvas underneath and trigger Mapbox's OWN built-in
-        // double-click-to-zoom, which would zoom IN: the opposite of what
-        // tapping the pin means here.
-        el.addEventListener('dblclick', (e) => {
-          e.stopPropagation();
-          applyCameraForMode(900);
+        mapboxgl.accessToken = TOKEN;
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          // Bundled, label-stripped snapshot, not MAP_STYLE_GL — see
+          // IDLE_MAP_STYLE's own header. The upgrade-on-Start effect further
+          // down swaps this for the full Standard style once a session
+          // actually needs it.
+          style: IDLE_MAP_STYLE,
+          center: [initialLng, initialLat],
+          zoom: MAP_DEFAULT_ZOOM,
+          attributionControl: false,
         });
-        markerRef.current = new mapboxgl.Marker({ element: el });
+        mapRef.current = map;
 
-        const startEl = document.createElement('div');
-        startEl.className = 'track-start-dot';
-        startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
+        map.on('load', () => {
+          if (cancelled) return;
 
-        readyRef.current = true;
-        // Ref first, then state: the ref is what the imperative call sites
-        // read (the marker's dblclick, applyCameraForMode's callers), and it
-        // must be true before any effect this wakes can run.
-        setMapReady(true);
-      });
-    })();
+          // Rotate/pitch gestures, gone entirely — not just during a session.
+          // SESSION_PITCH is set once for the 3D look and a runner has no
+          // reason to change it via gesture; on the idle (pre-session) map
+          // pitch is already flat, so there is nothing legitimate to disable
+          // FROM either way. This is the fix for the actual bug: one stray
+          // pinch or two-finger drag used to permanently change the framing,
+          // with no interaction detection and no way back (Pedro hit this
+          // mid-run: "normal at first, then weird").
+          map.dragRotate.disable();
+          map.touchPitch.disable();
+          map.touchZoomRotate.disableRotation(); // pinch-zoom itself stays on
+
+          // Custom sources/layers (route, wall, tile fill, enclosed shimmer)
+          // are NOT added here — see setupSessionLayers's own header. The idle
+          // style loaded above has nothing to show in them yet (index.tsx's
+          // liveTiles/liveEnclosed both start empty), and setStyle() wipes any
+          // sources/layers a style had regardless, so whichever style is
+          // active when a session actually starts is what adds them (the
+          // style-upgrade effect further down, on the very first Start).
+
+          const el = document.createElement('div');
+          el.className = 'track-dot';
+          el.innerHTML = '<div class="track-dot__halo"></div><div class="track-dot__core"></div>';
+          // Double-tap the pin to re-center (Pedro's original idea) —
+          // stopPropagation so a near-miss tap can't fall through to the
+          // canvas underneath and trigger Mapbox's OWN built-in
+          // double-click-to-zoom, which would zoom IN: the opposite of what
+          // tapping the pin means here.
+          el.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            applyCameraForMode(900);
+          });
+          markerRef.current = new mapboxgl.Marker({ element: el });
+
+          const startEl = document.createElement('div');
+          startEl.className = 'track-start-dot';
+          startMarkerRef.current = new mapboxgl.Marker({ element: startEl });
+
+          readyRef.current = true;
+          // Ref first, then state: the ref is what the imperative call sites
+          // read (the marker's dblclick, applyCameraForMode's callers), and it
+          // must be true before any effect this wakes can run.
+          setMapReady(true);
+        });
+      })();
+    });
 
     return () => {
       cancelled = true;
+      cancelIdle();
       readyRef.current = false;
       flownRef.current = false;
       markerRef.current?.remove();
