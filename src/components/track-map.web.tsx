@@ -64,7 +64,7 @@
 // comment below.
 import { cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl';
+import type { GeoJSONSource, Map as MapboxMap, Marker, StyleSpecification } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
@@ -87,6 +87,7 @@ import {
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
   MAP_STYLE_GL_IDLE,
+  MAP_STYLE_STATIC,
   MAX_BEARING_STEP_DEG,
   MIN_BEARING_SEPARATION_M,
   OVERVIEW_FIT_PADDING_PX,
@@ -162,6 +163,47 @@ function tileFeatureCollection(cells: string[]): FeatureCollection {
       }),
     ),
   };
+}
+
+/**
+ * The idle map's style, with every label layer's visibility forced off
+ * before Mapbox GL ever sees it — Pedro's call, 2026-09-17, after measuring
+ * that rendering road/place labels on the idle screen fetches several
+ * separate font/glyph files concurrently (Arial Unicode MS + DIN Pro, three
+ * weights each) purely to draw text nobody's using yet on a screen that's
+ * just "New session" + a Start button. Labels come back automatically the
+ * moment a session starts and the style-upgrade effect replaces this whole
+ * style with MAP_STYLE_GL — no code needed to "turn them back on", since
+ * that's a fresh style load with its own symbol layers at their own default
+ * visibility.
+ *
+ * Doing this by hiding layers via setLayoutProperty AFTER the map loads is
+ * too late to matter: both `load` and `style.load` are documented to fire
+ * only once "all style resources have been downloaded" — i.e. after the
+ * glyph requests this exists to prevent have already gone out. Fetching the
+ * style JSON here and stripping label visibility before it's ever handed to
+ * `new mapboxgl.Map()` is the only point early enough; MAP_STYLE_STATIC is a
+ * classic (non-Standard) style, so its layers are plain flat objects with no
+ * Standard-only concepts (slot, emissive-strength) to preserve.
+ *
+ * Falls back to the plain style URL (Mapbox's own default rendering, labels
+ * and all) on any fetch/parse failure — a runner should never be stuck on a
+ * blank map because this specific optimization couldn't complete.
+ */
+async function loadIdleStyleWithoutLabels(token: string): Promise<StyleSpecification | string> {
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/styles/v1/${MAP_STYLE_STATIC}?access_token=${token}`,
+    );
+    if (!res.ok) return MAP_STYLE_GL_IDLE;
+    const style = (await res.json()) as StyleSpecification;
+    style.layers = style.layers?.map((layer) =>
+      layer.type === 'symbol' ? { ...layer, layout: { ...layer.layout, visibility: 'none' } } : layer,
+    );
+    return style;
+  } catch {
+    return MAP_STYLE_GL_IDLE;
+  }
 }
 
 /**
@@ -642,7 +684,14 @@ export function TrackMap({
     (async () => {
       ensureMapboxCss();
       ensurePulseStyle();
-      const { default: mapboxgl } = await import('mapbox-gl');
+      // Run together, not sequentially: neither depends on the other, and
+      // the style fetch is a plain JSON request (no mapbox-gl needed to
+      // issue it) — see loadIdleStyleWithoutLabels's own header for why it
+      // has to happen before the map is constructed at all.
+      const [{ default: mapboxgl }, idleStyle] = await Promise.all([
+        import('mapbox-gl'),
+        loadIdleStyleWithoutLabels(TOKEN),
+      ]);
       if (cancelled || !containerRef.current) return;
 
       mapboxgl.accessToken = TOKEN;
@@ -651,7 +700,7 @@ export function TrackMap({
         // Idle style, not MAP_STYLE_GL — see MAP_STYLE_GL_IDLE's own header.
         // The upgrade-on-Start effect further down swaps this for the full
         // Standard style once a session actually needs it.
-        style: MAP_STYLE_GL_IDLE,
+        style: idleStyle,
         center: [initialLng, initialLat],
         zoom: MAP_DEFAULT_ZOOM,
         attributionControl: false,
