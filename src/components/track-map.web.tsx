@@ -71,6 +71,7 @@ import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native
 import type { Feature, FeatureCollection } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
+import idleMapStyleJson from '@/constants/idle-map-style.json';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
   AUTO_RETURN_IDLE_MS,
@@ -86,8 +87,6 @@ import {
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
-  MAP_STYLE_GL_IDLE,
-  MAP_STYLE_STATIC,
   MAX_BEARING_STEP_DEG,
   MIN_BEARING_SEPARATION_M,
   OVERVIEW_FIT_PADDING_PX,
@@ -166,45 +165,41 @@ function tileFeatureCollection(cells: string[]): FeatureCollection {
 }
 
 /**
- * The idle map's style, with every label layer's visibility forced off
- * before Mapbox GL ever sees it — Pedro's call, 2026-09-17, after measuring
- * that rendering road/place labels on the idle screen fetches several
- * separate font/glyph files concurrently (Arial Unicode MS + DIN Pro, three
- * weights each) purely to draw text nobody's using yet on a screen that's
- * just "New session" + a Start button. Labels come back automatically the
- * moment a session starts and the style-upgrade effect replaces this whole
- * style with MAP_STYLE_GL — no code needed to "turn them back on", since
- * that's a fresh style load with its own symbol layers at their own default
- * visibility.
+ * The idle map's style, with every label layer's visibility already forced
+ * off — Pedro's call, 2026-09-17, after measuring that rendering road/place
+ * labels on the idle screen fetches several separate font/glyph files
+ * concurrently (Arial Unicode MS + DIN Pro, three weights each) purely to
+ * draw text nobody's using yet on a screen that's just "New session" + a
+ * Start button. Labels come back automatically the moment a session starts
+ * and the style-upgrade effect replaces this whole style with MAP_STYLE_GL —
+ * no code needed to "turn them back on", since that's a fresh style load
+ * with its own symbol layers at their own default visibility.
  *
- * Doing this by hiding layers via setLayoutProperty AFTER the map loads is
- * too late to matter: both `load` and `style.load` are documented to fire
- * only once "all style resources have been downloaded" — i.e. after the
- * glyph requests this exists to prevent have already gone out. Fetching the
- * style JSON here and stripping label visibility before it's ever handed to
- * `new mapboxgl.Map()` is the only point early enough; MAP_STYLE_STATIC is a
- * classic (non-Standard) style, so its layers are plain flat objects with no
- * Standard-only concepts (slot, emissive-strength) to preserve.
+ * A bundled JSON snapshot of MAP_STYLE_GL_IDLE (mapbox/dark-v11), not a
+ * runtime fetch of it: hiding layers via setLayoutProperty AFTER the map
+ * loads is too late to matter (both `load` and `style.load` are documented
+ * to fire only once "all style resources have been downloaded", i.e. after
+ * the glyph requests this exists to prevent have already gone out), so the
+ * visibility strip has to happen before `new mapboxgl.Map()` ever sees the
+ * style — and a first version of this fetched the style from Mapbox's own
+ * API at runtime to do that, which added a full extra network round trip
+ * (DNS+TLS+request+37KB response) to the map's own critical path, on a
+ * cross-origin host, right alongside its dozen-plus tile/sprite requests.
+ * Bundling the already-stripped result removes that round trip entirely:
+ * it ships same-origin with everything else, over the same connection,
+ * with zero dependency on Mapbox's style API being fast (or reachable) at
+ * that exact moment.
  *
- * Falls back to the plain style URL (Mapbox's own default rendering, labels
- * and all) on any fetch/parse failure — a runner should never be stuck on a
- * blank map because this specific optimization couldn't complete.
+ * Trade-off worth knowing: this is a frozen snapshot of dark-v11 as of
+ * 2026-09-17, not a live reflection of it. If Mapbox ever revises that
+ * style's colours/layers, this won't pick it up automatically — regenerate
+ * it by re-running the fetch-and-strip script this file was built from
+ * (fetch `https://api.mapbox.com/styles/v1/mapbox/dark-v11`, set every
+ * `type: 'symbol'` layer's `layout.visibility` to `'none'`, save as
+ * idle-map-style.json). Acceptable here: it's a stock Mapbox style Pedro
+ * doesn't customize, used only for the few seconds before a session starts.
  */
-async function loadIdleStyleWithoutLabels(token: string): Promise<StyleSpecification | string> {
-  try {
-    const res = await fetch(
-      `https://api.mapbox.com/styles/v1/${MAP_STYLE_STATIC}?access_token=${token}`,
-    );
-    if (!res.ok) return MAP_STYLE_GL_IDLE;
-    const style = (await res.json()) as StyleSpecification;
-    style.layers = style.layers?.map((layer) =>
-      layer.type === 'symbol' ? { ...layer, layout: { ...layer.layout, visibility: 'none' } } : layer,
-    );
-    return style;
-  } catch {
-    return MAP_STYLE_GL_IDLE;
-  }
-}
+const IDLE_MAP_STYLE = idleMapStyleJson as unknown as StyleSpecification;
 
 /**
  * Adds every custom source/layer a session needs (route, wall, tile fill,
@@ -684,23 +679,17 @@ export function TrackMap({
     (async () => {
       ensureMapboxCss();
       ensurePulseStyle();
-      // Run together, not sequentially: neither depends on the other, and
-      // the style fetch is a plain JSON request (no mapbox-gl needed to
-      // issue it) — see loadIdleStyleWithoutLabels's own header for why it
-      // has to happen before the map is constructed at all.
-      const [{ default: mapboxgl }, idleStyle] = await Promise.all([
-        import('mapbox-gl'),
-        loadIdleStyleWithoutLabels(TOKEN),
-      ]);
+      const { default: mapboxgl } = await import('mapbox-gl');
       if (cancelled || !containerRef.current) return;
 
       mapboxgl.accessToken = TOKEN;
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        // Idle style, not MAP_STYLE_GL — see MAP_STYLE_GL_IDLE's own header.
-        // The upgrade-on-Start effect further down swaps this for the full
-        // Standard style once a session actually needs it.
-        style: idleStyle,
+        // Bundled, label-stripped snapshot, not MAP_STYLE_GL — see
+        // IDLE_MAP_STYLE's own header. The upgrade-on-Start effect further
+        // down swaps this for the full Standard style once a session
+        // actually needs it.
+        style: IDLE_MAP_STYLE,
         center: [initialLng, initialLat],
         zoom: MAP_DEFAULT_ZOOM,
         attributionControl: false,
