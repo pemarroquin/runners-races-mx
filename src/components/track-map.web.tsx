@@ -1233,7 +1233,19 @@ function MapButton({
 }
 
 const styles = StyleSheet.create({
-  wrap: { overflow: 'hidden' },
+  // Dark, not transparent/default-white: MAP_ALWAYS_DARK means the map
+  // itself is always a dark night-style basemap regardless of the app's own
+  // theme, but before mapbox-gl has even loaded (or while its tiles are
+  // still streaming in over a throttled connection) this container was
+  // showing through to whatever light background sat behind it — a stark
+  // light-to-dark flash as tiles filled in, which is exactly what
+  // Lighthouse's Speed Index penalizes (it measures how far each frame is
+  // from the FINAL one; a light "still loading" frame reads as far less
+  // "done" than it visually is once tiles are progressively filling a dark
+  // ground). Matches the splash screen's own backgroundColor (app.json) for
+  // the same "dark app, dark loading state" consistency. Pure CSS, no
+  // network request — doesn't touch load timing or interactivity at all.
+  wrap: { overflow: 'hidden', backgroundColor: '#000000' },
   centre: { alignItems: 'center', justifyContent: 'center', padding: 16 },
   waiting: {
     position: 'absolute',
