@@ -1,20 +1,22 @@
 // Tiny pub/sub for "a run just landed on the server" — exists to close a
 // confirmed race, not as general-purpose infrastructure. See
-// myraces.tsx's Territories fetch effect for the consumer, and index.tsx's
-// save() / the queue-drain effect for the two producers.
+// achievements-view.tsx's fetch effect for the consumer (formerly
+// myraces.tsx's Territories fetch effect, before the 2026-09-17 nav
+// restructure moved that view into Leaderboard's My Achievements tab), and
+// index.tsx's save() / the queue-drain effect for the two producers.
 //
-// THE RACE THIS CLOSES. myraces.tsx already refetches on tab focus AND on
-// view change, which is more than leaderboard.tsx does — but a runner can
-// reach the Territories tab before the autosave that index.tsx kicks off
-// the instant a run finishes (before the summary screen's checkmark is even
-// tapped) has finished its network round trip. Focus/view haven't changed
-// again by the time the upload actually lands, so nothing re-triggers a
-// fetch and the runner is left on a stale empty map with no signal anything
-// is wrong. Same mechanism a second way: a run that failed and got queued
-// (upload-queue.ts) can be promoted to saved by a later background flush
-// while the runner is already sitting on the Territories screen, and that
-// flush's own component may by then be stale (the runner left the Track
-// tab) — the upload still genuinely happened, so it still has to notify.
+// THE RACE THIS CLOSES. achievements-view.tsx already refetches on focus —
+// but a runner can reach My Achievements before the autosave that index.tsx
+// kicks off the instant a run finishes (before the summary screen's
+// checkmark is even tapped) has finished its network round trip. Focus
+// hasn't changed again by the time the upload actually lands, so nothing
+// re-triggers a fetch and the runner is left on a stale empty map with no
+// signal anything is wrong. Same mechanism a second way: a run that failed
+// and got queued (upload-queue.ts) can be promoted to saved by a later
+// background flush while the runner is already sitting on My Achievements,
+// and that flush's own component may by then be stale (the runner left the
+// Track tab) — the upload still genuinely happened, so it still has to
+// notify.
 //
 // A module-level counter + listener list, not useSyncExternalStore or an
 // event-emitter dependency: this codebase favours small pure modules over

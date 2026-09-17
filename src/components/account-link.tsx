@@ -1,5 +1,5 @@
 // Settings' account-linking form — the "Your account" section of
-// Settings › Profile (src/app/(tabs)/settings/profile.tsx). It had a page to
+// Profile › Account (src/app/profile/account.tsx). It had a page to
 // itself until 2026-09-09; that page is gone and the three identity
 // surfaces sit on one screen. See src/lib/account.ts's header for why this
 // exists and what LINK vs SIGN IN mean; this component only owns the

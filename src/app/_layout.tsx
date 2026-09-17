@@ -44,6 +44,12 @@ export default function RootLayout() {
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="race/[id]" options={{ title: '' }} />
+              {/* Profile — a root push (2026-09-17 nav restructure), same
+                  level as race/[id], reached from the floating avatar pill
+                  on the three tabs rather than from the tab bar itself. Its
+                  own nested Stack (profile/_layout.tsx) owns every header
+                  inside it, so this outer screen stays chromeless. */}
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
             </Stack>
             {/* Rendered after the Stack so it overlays the app during launch */}
             <CinematicSplash />

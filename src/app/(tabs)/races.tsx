@@ -5,6 +5,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -14,11 +15,12 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CityPicker } from '@/components/city-picker';
 import { FilterPopover, type FilterFacet } from '@/components/filter-popover';
+import { ProfilePill } from '@/components/profile-pill';
 import { RaceCard } from '@/components/race-card';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -40,7 +42,18 @@ import { useRaces, useRacesStatus } from '@/lib/races-provider';
 import { pickRegionArt } from '@/lib/region-art';
 import { useRegion } from '@/lib/region-context';
 import { raceInRegion } from '@/lib/regions';
+import { useSaved } from '@/lib/saved';
 import { useToday } from '@/lib/today';
+
+/** A Saved-view section — same shape myraces.tsx used before its "races"
+ *  segment moved here (2026-09-17 nav restructure). */
+interface SavedSection {
+  key: 'upcoming' | 'past';
+  title: string;
+  data: Race[];
+}
+
+type FeedView = 'discover' | 'saved';
 
 // Feed layout row: a periodic full-width "hero" card with a larger image,
 // or a 2-up "grid" row of compact cards — instead of every race rendering
@@ -131,6 +144,14 @@ export default function FeedScreen() {
   const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
 
+  // Discover/Saved (2026-09-17 nav restructure): the bottom nav dropped to
+  // three tabs, so the old standalone Saved tab's races list moved in here
+  // rather than under Profile — same object, same RaceCard, same screen a
+  // runner already goes to for races. Conquered Areas (that tab's OTHER
+  // segment) went to Leaderboard instead; see achievements-view.tsx.
+  const [feedView, setFeedView] = useState<FeedView>('discover');
+  const { savedIds, dropMissing, storageError } = useSaved();
+
   const [query, setQuery] = useState('');
   const [distances, setDistances] = useState<Set<DistanceTag>>(new Set());
   const [months, setMonths] = useState<Set<string>>(new Set());
@@ -170,9 +191,10 @@ export default function FeedScreen() {
     setHeroIndex(0);
   }
 
-  // Home is for discovering what's coming up — past races only matter once
-  // you've saved one, which is what My Races' own "Anteriores" section is
-  // for. No toggle here, and no way to see a past race from this screen.
+  // Discover is for finding what's coming up — past races only matter once
+  // you've saved one, which is what the Saved segment's own "Anteriores"
+  // section below is for. This list stays upcoming-only regardless of what
+  // the runner has saved.
   const races = useMemo(() => {
     // Accent-folded on both sides — see foldForSearch. Comparing raw strings
     // meant `maraton` found no "Maratón" and `queretaro` found no "Querétaro".
@@ -220,6 +242,33 @@ export default function FeedScreen() {
   }, [races.length, query, distances, months, allRaces, region, today]);
 
   const layoutRows = useMemo(() => buildLayoutRows(races), [races]);
+
+  // Saved view's own data — unscoped by region/search/filters on purpose,
+  // same as the old Saved tab: what you bookmarked is what you bookmarked,
+  // regardless of which city Discover currently has selected.
+  const savedRaces = useMemo(() => allRaces.filter((r) => savedIds.has(r.id)), [allRaces, savedIds]);
+  const missingSavedCount = useMemo(() => {
+    const present = new Set(savedRaces.map((r) => r.id));
+    return Array.from(savedIds).filter((id) => !present.has(id)).length;
+  }, [savedIds, savedRaces]);
+  const clearMissingSaved = useCallback(
+    () => dropMissing(new Set(allRaces.map((r) => r.id))),
+    [dropMissing, allRaces],
+  );
+  const savedSections = useMemo<SavedSection[]>(() => {
+    const upcoming: Race[] = [];
+    const past: Race[] = [];
+    for (const r of savedRaces) {
+      const days = daysUntil(r.date, today);
+      if (days !== null && days < 0) past.push(r);
+      else upcoming.push(r);
+    }
+    past.reverse();
+    const result: SavedSection[] = [];
+    if (upcoming.length > 0) result.push({ key: 'upcoming', title: t('myraces.upcomingSection'), data: upcoming });
+    if (past.length > 0) result.push({ key: 'past', title: t('myraces.pastSection'), data: past });
+    return result;
+  }, [savedRaces, t, today]);
 
   // Idle-state (no active filters) data. `races` above is already: region-
   // scoped, upcoming-only (past races excluded by the same rule as the
@@ -342,7 +391,8 @@ export default function FeedScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.background }]} edges={['top']}>
+    <View style={styles.safe}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }} edges={['top']}>
       <View
         style={[
           styles.header,
@@ -366,6 +416,37 @@ export default function FeedScreen() {
         </View>
       </View>
 
+      {/* Discover/Saved — the whole reason this file gained a SectionList
+          branch below. Two segments, not a filter chip: unlike distance/month
+          they aren't refinements of the same list, they're two different
+          collections (see this file's own feedView comment above). */}
+      <View style={styles.viewSwitchRow}>
+        {(['discover', 'saved'] as const).map((key) => {
+          const selected = feedView === key;
+          const label = key === 'discover' ? t('tabs.feed') : t('tabs.myRaces');
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setFeedView(key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={styles.viewSwitchItem}>
+              <GlassSurface
+                scheme={scheme}
+                radius={GlassRadii.pill}
+                style={selected && { borderWidth: 1.5, borderColor: c.accent }}
+                contentStyle={styles.viewSwitchContent}>
+                <Text style={[styles.viewSwitchLabel, { color: c.text }]} numberOfLines={1}>
+                  {label}
+                </Text>
+              </GlassSurface>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {feedView === 'discover' && (
+      <>
       <View style={styles.searchRow}>
         <GlassSurface scheme={scheme} radius={GlassRadii.pill} style={styles.searchGlass} contentStyle={styles.searchContent}>
           <TextInput
@@ -496,9 +577,56 @@ export default function FeedScreen() {
           </Pressable>
         </View>
       )}
+      </>
+      )}
       </View>
 
-      {races.length === 0 ? (
+      {feedView === 'saved' ? (
+        <SectionList
+          sections={savedSections}
+          keyExtractor={(r) => r.id}
+          contentContainerStyle={styles.list}
+          stickySectionHeadersEnabled={false}
+          ListHeaderComponent={
+            storageError !== null || missingSavedCount > 0 ? (
+              <View style={styles.savedNotices}>
+                {storageError !== null && (
+                  <View style={[styles.savedNotice, { backgroundColor: c.backgroundElement }]}>
+                    <Text style={[styles.savedNoticeText, { color: c.textSecondary }]}>
+                      {t('myraces.storageBlocked')}
+                    </Text>
+                  </View>
+                )}
+                {missingSavedCount > 0 && (
+                  <View style={[styles.savedNotice, { backgroundColor: c.backgroundElement }]}>
+                    <Text style={[styles.savedNoticeText, { color: c.textSecondary }]}>
+                      {t('myraces.missing', { count: missingSavedCount })}
+                    </Text>
+                    <Pressable onPress={clearMissingSaved} accessibilityRole="button" hitSlop={10}>
+                      <Text style={[styles.savedNoticeAction, { color: c.accent }]}>
+                        {t('myraces.clearMissing')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            ) : null
+          }
+          renderSectionHeader={({ section }) => (
+            <Text style={[styles.sectionTitle, { color: c.text }]}>{section.title}</Text>
+          )}
+          renderItem={({ item, index }) => (
+            <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 45)}>
+              <RaceCard race={item} onPress={() => goToRace(item.id)} />
+            </Animated.View>
+          )}
+          ListEmptyComponent={
+            <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+              <Text style={[styles.empty, { color: c.textSecondary }]}>{t('myraces.empty')}</Text>
+            </Animated.View>
+          }
+        />
+      ) : races.length === 0 ? (
         // Total emptiness (no races at all in the region, or filters pruned
         // everything) — same content either way `regionHasData` decides the
         // message, `otherRegionsCount` decides whether the city-picker link
@@ -723,6 +851,8 @@ export default function FeedScreen() {
         availableMonths={availableMonths}
       />
     </SafeAreaView>
+    <ProfilePill />
+    </View>
   );
 }
 
@@ -744,6 +874,20 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700' },
   subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   subtitle: { fontSize: 14 },
+  viewSwitchRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+  },
+  viewSwitchItem: { flex: 1 },
+  viewSwitchContent: { paddingVertical: Spacing.two, alignItems: 'center' },
+  viewSwitchLabel: { fontSize: 14, fontWeight: '700' },
+  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: Spacing.six },
+  savedNotices: { gap: Spacing.two, marginBottom: Spacing.two },
+  savedNotice: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.one },
+  savedNoticeText: { fontSize: 13, lineHeight: 19 },
+  savedNoticeAction: { fontSize: 13, fontWeight: '700' },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',

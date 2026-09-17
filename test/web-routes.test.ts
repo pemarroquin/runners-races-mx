@@ -56,16 +56,19 @@ describe('the real app', () => {
   const routes: string[] = staticRoutesFrom(routeFilesIn('src/app'));
 
   it('covers every screen that had no file before this fix', () => {
-    // The exact URLs reported as 404ing on reload.
+    // The exact URLs reported as 404ing on reload. `settings*`/`myraces`
+    // became `profile*` in the 2026-09-17 nav restructure — Profile moved
+    // out of (tabs) to a root push, and Saved's races segment folded into
+    // races.tsx (see races.tsx/achievements-view.tsx) — so this list moved
+    // with the real files rather than pinning routes that no longer exist.
     expect(routes).toEqual(
       expect.arrayContaining([
         'races',
         'leaderboard',
-        'myraces',
-        'settings',
-        'settings/location',
-        'settings/privacy',
-        'settings/profile',
+        'profile',
+        'profile/location',
+        'profile/privacy',
+        'profile/account',
       ]),
     );
   });

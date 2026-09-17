@@ -25,6 +25,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FenceMap } from '@/components/fence-map';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { NamePrompt } from '@/components/name-prompt';
+import { ProfilePill } from '@/components/profile-pill';
+import { ShareSheet, type ShareSessionData } from '@/components/share-card';
 import { TrackMap } from '@/components/track-map';
 import { Icon } from '@/components/ui/icon';
 import { fenceColorForRun, LIVE_FILL_RECOMPUTE_MS, LIVE_FILL_RECOMPUTE_POINTS } from '@/constants/map';
@@ -121,6 +123,9 @@ export default function TrackScreen() {
     });
   }, []);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  // The route/stats share sheet — closed by default even once a run
+  // finishes; opening it is an explicit tap, never automatic.
+  const [shareOpen, setShareOpen] = useState(false);
   // Tile Coverage brief §6 step 5. `tileClaim` is null until claimTiles()
   // resolves (uploadRun does both in one call — see territory-sync.ts).
   // `tilesFailure` disambiguates "still waiting" (both null)
@@ -202,7 +207,8 @@ export default function TrackScreen() {
 
   // Deleting a saved run is no longer an action on THIS screen (2026-09-02
   // redesign) — it moved to the Territories map's per-fence bubble, which
-  // keeps its own independent delete state. See myraces.tsx.
+  // keeps its own independent delete state. See achievements-view.tsx
+  // (My Achievements — this used to be myraces.tsx's Territories map).
 
   // An in-progress run recovered from run-checkpoint.ts after a reload —
   // see that file's header. Read once on mount, not on every focus: a
@@ -287,8 +293,8 @@ export default function TrackScreen() {
         // currently displaying" — so if the run on screen is the one that
         // just resolved, local state (saveState/savedRunId/queuedId) would
         // otherwise go stale. The session-end screen no longer has any
-        // Delete/Retry UI to defend (that moved to the Territories map —
-        // see myraces.tsx), but `saveState === 'saved'` still gates the
+        // Delete/Retry UI to defend (that moved to Leaderboard's My Achievements
+        // tab — see achievements-view.tsx), but `saveState === 'saved'` still gates the
         // first-save name prompt (NamePrompt, below) — without this, a
         // save that completes in the background while this screen is still
         // open would never trigger it.
@@ -356,6 +362,20 @@ export default function TrackScreen() {
   // paths — see the effect below — and because only sessionTiles may be
   // logged as visited.
   const [sessionEnclosed, setSessionEnclosed] = useState<string[]>([]);
+
+  // The share sheet's input — the MASKED path (same privacy-trimmed route
+  // FenceMap draws below, never tracker.points), so a shared route sticker
+  // never exposes home. Null until masking has actually run, which is also
+  // exactly when there's a fence to show.
+  const shareData: ShareSessionData | null = useMemo(() => {
+    if (!masked || masked.points.length < 2) return null;
+    return {
+      route: masked.points,
+      distanceM: tracker.distanceM,
+      durationS: tracker.elapsedS,
+      tiles: sessionTiles.length + sessionEnclosed.length,
+    };
+  }, [masked, tracker.distanceM, tracker.elapsedS, sessionTiles, sessionEnclosed]);
 
   useEffect(() => {
     if (tracker.status !== 'finished') return;
@@ -727,7 +747,8 @@ export default function TrackScreen() {
   // only shows what happened and gets out of the way. No Save/Retry/Delete
   // UI: a failed or still-queued upload stays invisible here (it resolves
   // itself via the background flush effect, or is visible with Retry/Delete
-  // once the runner reaches the Territories map — see myraces.tsx) and is
+  // once the runner reaches Leaderboard's My Achievements tab — see
+  // achievements-view.tsx) and is
   // never surfaced with copy on this screen. The only control is ✓, top
   // right, which tears the screen down and readies the app for a new run —
   // same resetLocal() the old X button called.
@@ -763,7 +784,8 @@ export default function TrackScreen() {
       <View style={styles.stage}>
         {/* Top-down (bearing 0, pitch 0), fit to just this fence — only the
             territory THIS session captured, no other saved territories (see
-            the Territories map, myraces.tsx, for "all of them at once"). */}
+            Leaderboard's My Achievements tab, achievements-view.tsx, for
+            "all of them at once"). */}
         <MapErrorBoundary
           message={t('track.mapUnavailable')}
           color={c.textSecondary}
@@ -821,6 +843,15 @@ export default function TrackScreen() {
               />
             </View>
             <RoundButton
+              label={t('share.title')}
+              onPress={() => setShareOpen(true)}
+              background="rgba(20,20,20,0.65)"
+              foreground="#ffffff"
+              ios="square.and.arrow.up"
+              android="share"
+              disabled={!shareData}
+            />
+            <RoundButton
               label={t('track.done')}
               onPress={resetLocal}
               background="rgba(20,20,20,0.65)"
@@ -830,6 +861,8 @@ export default function TrackScreen() {
             />
           </View>
         </SafeAreaView>
+
+        <ShareSheet visible={shareOpen} onClose={() => setShareOpen(false)} data={shareData} />
 
         {/* Informational-only notices — none of these are actionable here,
             they just explain the number/shape above. Bottom of the screen,
@@ -963,6 +996,16 @@ export default function TrackScreen() {
           pointerEvents="none"
         />
       )}
+
+      {/* The floating profile pill only makes sense on the idle landing
+          screen — same reasoning as Amazon's own avatar never showing mid-
+          playback: `controls` (below) and this occupy the same corner, and
+          a runner mid-session has somewhere more urgent to look. Also
+          hidden while the pace guard's dismiss-to-continue card is up
+          (below): that card is full-width and sits in the exact same top
+          strip, and it is deliberately the one thing on screen a runner
+          must read after a discarded session — the pill can wait a tap. */}
+      {!inSession && !paceGuardTripped && <ProfilePill />}
 
       {/* Session controls, top-right. Pause is yellow and Stop is red, so
           the destructive one is never the one you hit by muscle memory. */}

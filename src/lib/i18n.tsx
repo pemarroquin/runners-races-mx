@@ -295,6 +295,18 @@ const translations = {
       } as PluralForm,
       error: 'No pudimos cargar la tabla. Revisa tu conexión.',
       disabled: 'El guardado en línea no está configurado en esta versión.',
+      // Los tres sub-tabs (2026-09-17, restructuración de navegación): la
+      // tabla ahora es una sola pantalla con tres pestañas en vez de dos
+      // tablas apiladas en un scroll — ver leaderboard.tsx.
+      tabMine: 'Mis logros',
+      tabMunicipio: 'Municipio',
+      tabLocal: 'Líderes locales',
+      // Legend bajo los sub-tabs de "Mis logros" — total de casillas
+      // conquistadas hasta ahora, sin filtrar por distrito ni municipio.
+      totalTiles: {
+        one: '1 casilla conquistada en total',
+        other: '%{count} casillas conquistadas en total',
+      } as PluralForm,
     },
     feed: {
       title: 'Carreras',
@@ -358,6 +370,16 @@ const translations = {
       share: 'Compartir',
       shareMessage: '%{name} — %{date}',
     },
+    share: {
+      title: 'Compartir sesión',
+      routeLabel: 'Ruta',
+      statsLabel: 'Estadísticas',
+      copy: 'Copiar',
+      copied: 'Copiada',
+      copyFailed: 'No pudimos copiarla. Intenta de nuevo.',
+      hint: 'Pégala en una historia de Instagram.',
+      emptyRoute: 'Esta sesión no tiene una ruta que compartir.',
+    },
     myraces: {
       empty: 'Aún no has guardado carreras.\nExplora y guarda las que te interesen.',
       pastSection: 'Anteriores',
@@ -414,7 +436,7 @@ const translations = {
       locationOn: 'usando tu ubicación',
     },
     settings: {
-      title: 'Ajustes',
+      title: 'Ajustes de perfil',
       version: 'Versión',
       // Long-press on the version row — see last-run-debug.ts. Not surfaced
       // anywhere a runner would find it by browsing.
@@ -500,7 +522,7 @@ const translations = {
       // Settings › Dónde has corrido. El registro personal permanente — el
       // contrapeso a un mapa que bajo conquista muestra solo lo que tienes
       // AHORA. Aquí no te lo puede quitar nadie.
-      historyTitle: 'Terreno que has tomado',
+      historyTitle: 'Archivo de sesiones',
       historyNavHint: 'Todo lo que has corrido y todo lo que has cerrado. Nadie te lo quita.',
       historyHint: {
         one: '1 casilla, contada como la cuenta una sesión: el terreno que pisaste más lo que rodeaste al cerrar una vuelta. Nadie te la quita de este mapa.',
@@ -548,7 +570,7 @@ const translations = {
       // and privacy.title — the only new copy is the two list-group headers
       // and the one-line description under each row.
       groupAccount: 'Cuenta',
-      groupApp: 'Aplicación',
+      groupApp: 'Ajustes de la app',
       navProfileHint: 'Tu cuenta, tu diagnóstico y tu nombre en la tabla',
       navPreferencesHint: 'Apariencia, idioma y recordatorios',
       navLocationHint: 'Permiso de ubicación y tu zona privada',
@@ -829,6 +851,13 @@ const translations = {
       } as PluralForm,
       error: "We couldn't load the board. Check your connection.",
       disabled: 'Online saving is not configured in this build.',
+      tabMine: 'My Achievements',
+      tabMunicipio: 'Municipio',
+      tabLocal: 'Local Leaders',
+      totalTiles: {
+        one: '1 tile conquered overall',
+        other: '%{count} tiles conquered overall',
+      } as PluralForm,
     },
     feed: {
       title: 'Races',
@@ -892,6 +921,16 @@ const translations = {
       share: 'Share',
       shareMessage: '%{name} — %{date}',
     },
+    share: {
+      title: 'Share session',
+      routeLabel: 'Route',
+      statsLabel: 'Stats',
+      copy: 'Copy',
+      copied: 'Copied',
+      copyFailed: "Couldn't copy. Try again.",
+      hint: 'Paste it into an Instagram Story.',
+      emptyRoute: 'This session has no route to share.',
+    },
     myraces: {
       empty: "You haven't saved any races yet.\nBrowse and save the ones you like.",
       pastSection: 'Past',
@@ -937,7 +976,7 @@ const translations = {
       locationOn: 'using your location',
     },
     settings: {
-      title: 'Settings',
+      title: 'Profile settings',
       version: 'Version',
       debugCopied: 'Copied %{count} points to clipboard.',
       debugCopiedCountersOnly: 'Copied pilot counters to clipboard.',
@@ -1006,7 +1045,7 @@ const translations = {
       zoneOffHint:
         'Without a privacy zone, the exact start and end of your sessions are uploaded and visible to anyone using the app. Set it where you live.',
       zoneFailed: "We couldn\u2019t save your zone. Check location permission and try again.",
-      historyTitle: 'Ground you have taken',
+      historyTitle: 'Sessions archive',
       historyNavHint: "Everywhere you've run and everything you've closed. Nobody can take it.",
       historyHint: {
         one: '1 tile, counted the same way a run counts it — ground you crossed plus anything you ran a loop around. Nobody can take it off this map.',
@@ -1039,7 +1078,7 @@ const translations = {
       // See the Spanish block for what these are and why the row labels
       // themselves have no new keys.
       groupAccount: 'Account',
-      groupApp: 'App',
+      groupApp: 'App settings',
       navProfileHint: 'Your account, its diagnostics, and your leaderboard name',
       navPreferencesHint: 'Appearance, language and reminders',
       navLocationHint: 'Location permission and your privacy zone',
