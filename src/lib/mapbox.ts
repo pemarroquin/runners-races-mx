@@ -4,7 +4,6 @@
 
 import {
   MAP_ALWAYS_DARK,
-  MAP_DEFAULT_ZOOM,
   MAP_STYLE_STATIC,
   ROUTE_LINE_COLOR_URL,
 } from '@/constants/map';
@@ -13,13 +12,28 @@ import type { Race } from '@/lib/races';
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const ROUTE_COLOR = ROUTE_LINE_COLOR_URL; // shared with GL JS — see constants/map.ts
 const IMG = { w: 800, h: 300, retina: '@2x' };
-// Taller frame, used by the pin map. No @2x suffix — this is a blurred
-// background placeholder, not a sharp detail view, and 800x500 at 1x is
-// ~4x fewer pixels than 800x500@2x (which generates a 1600x1000 pixel
-// image). The size difference (222 KiB → ~55 KiB) is the LCP bottleneck
-// on the Track tab's initial paint.
-const FENCE_IMG = { w: 800, h: 500, retina: '' };
+// Used by the pin map — track-map.web.tsx's full-bleed Track-tab
+// placeholder, shown with objectFit:'cover' over a PORTRAIT container. A
+// landscape 800x500 frame (1.6 aspect) forced cover to scale the image up
+// ~1.4x in CSS terms just to fill a ~0.46-aspect phone screen, on top of
+// the device's own 2-3x pixel ratio — compounding into ~4x upscale past
+// the source resolution, which is what read as pixelated (reported
+// 2026-09-17). Shaped to a portrait ratio instead so cover barely has to
+// scale it at all; kept at roughly the same total pixel count (384,000 vs
+// 400,000) so this doesn't reopen the LCP bottleneck @2x caused (222 KiB —
+// see git history) — that tradeoff stays as-is, this fixes the same
+// pixel budget's aspect ratio instead of its resolution. Still no @2x
+// suffix: this is a blurred background placeholder, not a sharp detail
+// view.
+const FENCE_IMG = { w: 480, h: 800, retina: '' };
 const MARKER_ZOOM = 14;
+// One step further out than MAP_DEFAULT_ZOOM (15), for this static
+// placeholder ONLY — deliberately not sharing that constant, which the
+// live interactive map also boots at (track-map.web.tsx). Less fine
+// road/label detail in the source image means any remaining softness from
+// the upscale above reads as a smooth basemap rather than blocky edges;
+// the live map keeps its own zoom untouched.
+const STATIC_PLACEHOLDER_ZOOM = 13;
 
 
 // Google/Mapbox polyline encoding (precision 5).
@@ -88,7 +102,7 @@ export function buildPinMapUrl(
   const styleId = pinMapStyleId(dark);
   const size = `${FENCE_IMG.w}x${FENCE_IMG.h}${FENCE_IMG.retina}`;
   const path = hasRealFix ? `pin-s+${ROUTE_COLOR}(${lng},${lat})/` : '';
-  return `https://api.mapbox.com/styles/v1/${styleId}/static/${path}${lng},${lat},${MAP_DEFAULT_ZOOM}/${size}?access_token=${TOKEN}`;
+  return `https://api.mapbox.com/styles/v1/${styleId}/static/${path}${lng},${lat},${STATIC_PLACEHOLDER_ZOOM}/${size}?access_token=${TOKEN}`;
 }
 
 /** Territory Mode's map is always dark — see MAP_ALWAYS_DARK — so the

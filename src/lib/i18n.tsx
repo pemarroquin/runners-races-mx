@@ -310,7 +310,7 @@ const translations = {
     },
     feed: {
       title: 'Carreras',
-      search: 'Buscar carrera o ciudad…',
+      search: 'Buscar carrera…',
       empty: 'No se encontraron carreras.',
       otherCities: {
         one: '1 carrera en otra ciudad',
@@ -861,7 +861,7 @@ const translations = {
     },
     feed: {
       title: 'Races',
-      search: 'Search race or city…',
+      search: 'Search race…',
       empty: 'No races found.',
       otherCities: {
         one: '1 race in another city',
