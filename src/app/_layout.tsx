@@ -16,6 +16,7 @@ import { useColorScheme } from 'react-native';
 import GestureHandlerRootView from 'react-native-gesture-handler/lib/module/components/GestureHandlerRootView';
 
 import { EmailLinkBanner } from '@/components/email-link-banner';
+import { PageZoomLock } from '@/components/page-zoom-lock';
 import { PortraitGate } from '@/components/portrait-gate';
 import { CinematicSplash } from '@/components/splash';
 import { LocaleProvider } from '@/lib/i18n';
@@ -107,6 +108,12 @@ export default function RootLayout() {
                 unmount anything behind it — a session recording on the
                 Track tab keeps recording while the phone is sideways. */}
             <PortraitGate />
+            {/* Renders nothing — it only installs document-level listeners,
+                and only on web (no-op on native). Mounted here because page
+                zoom is a property of the whole document, not of a screen:
+                zooming on the race feed leaves the Track tab's overlays
+                misplaced too. See page-zoom-lock.web.tsx. */}
+            <PageZoomLock />
           </ThemeProvider>
         </RemindersProvider>
         </SavedProvider>

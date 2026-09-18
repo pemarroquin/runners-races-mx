@@ -319,6 +319,40 @@ indistinguishable from one reading 0% because nobody ran.
   and don't assume a repo's working tree reflects only your own session's
   changes.
 
+- **A browser page zoom silently corrupts `useWindowDimensions()`, and the
+  Track tab invites one.** Reported 2026-09-18 with screenshots: the bottom
+  tab pill rendered at its designed ~246pt on one screenshot and stretched
+  edge-to-edge on the next, same three tabs, same text size, same phone.
+  Cause is two coordinate systems mixed in one calculation — the old
+  `FloatingTabBar` sized itself with
+  `sideMargin = max((windowWidth - barWidth) / 2, 16)` applied as
+  `left`/`right`, where `windowWidth` came from `useWindowDimensions()` but
+  `left`/`right` resolve against the real parent. react-native-web computes
+  that width as `Math.round(visualViewport.width * visualViewport.scale)`
+  (`node_modules/react-native-web/dist/exports/Dimensions/index.js`), a
+  product that only equals the layout viewport while Safari's pinch-zoom
+  state is settled. Once it under-reports, the `max()` clamps to its 16pt
+  floor and the pill snaps to `screenWidth - 32` and STAYS there — no further
+  resize event corrects it.
+  The page zoom itself is not exotic on this app: mapbox-gl's stylesheet
+  already sets `touch-action: none` on `.mapboxgl-canvas-container`, so a
+  pinch on the MAP never page-zooms — but every RNW view layered on top of it
+  (pause/stop, the timer, the tab bar) inherits no `touch-action`, so a pinch
+  there is a plain document zoom. And it is near-impossible to undo by
+  pinching back, because the fingers land on a canvas that consumes the
+  gesture for its own zoom.
+  Fixed on both ends, deliberately: `page-zoom-lock.web.tsx` removes the
+  cause (`touch-action: manipulation` for double-tap, plus `preventDefault`
+  on WebKit's `gesturestart`/`gesturechange`/`gestureend` — safe because
+  mapbox-gl registers zero `gesture*` handlers, grepped across
+  `dist/mapbox-gl.js` and `dist/mapbox-gl-dev.js`), and `FloatingTabBar` no
+  longer measures anything at all (a full-width `dock` with
+  `alignItems: 'center'` and `paddingHorizontal: 16`, holding a pill at
+  `width: barWidth, maxWidth: '100%'` — Yoga resolves both against the same
+  box). Rule: if a layout can be expressed in flex, do not compute it from a
+  measured viewport. `races.tsx`, `filter-popover.tsx` and `buy-sheet.tsx`
+  still read `useWindowDimensions()` and carry the same latent exposure.
+
 ## Project shape
 
 React Native + Expo (SDK 57, expo-router, TypeScript). `npx expo start`, then

@@ -5,7 +5,7 @@ import { Tabs } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -48,6 +48,9 @@ const ITEM_WIDTH = 74;
 // clipped — the row is a flex container, so the padding has to be counted
 // into the pill's own width or it just squeezes the items instead.
 const BAR_PADDING_H = 12;
+// The pill never touches the screen edges. This is the *dock's* horizontal
+// padding, not a number the pill's own width is derived from — see
+// FloatingTabBar's header for why that distinction is the whole bug fix.
 const MIN_SIDE_MARGIN = 16;
 
 export default function TabsLayout() {
@@ -113,58 +116,77 @@ export default function TabsLayout() {
 // per route. Mirrors the tabPress event contract the default bottom-tab bar
 // uses, so `<Link>`/programmatic navigation and the (unused here) label/href
 // behavior of screens stay standard.
+//
+// The pill is CENTRED BY LAYOUT, never by arithmetic on a measured viewport
+// width — that arithmetic is what made the bar "randomly resize" on the web
+// build (Pedro, 2026-09-18, screenshots from iOS Safari mid-run: the same
+// three tabs rendered at the designed 246pt on one screenshot and stretched
+// edge-to-edge on the next, identical text size in both).
+//
+// The old version did `sideMargin = max((windowWidth - barWidth) / 2, 16)`
+// and applied it as `left`/`right`. That mixes two different coordinate
+// systems: `windowWidth` came from `useWindowDimensions()`, while `left`/
+// `right` resolve against the REAL parent. react-native-web derives the
+// former from `Math.round(visualViewport.width * visualViewport.scale)`
+// (node_modules/react-native-web/dist/exports/Dimensions/index.js) — a
+// product that only cancels out to the layout width while iOS Safari's
+// pinch-zoom state is settled. The Track tab is a full-screen Mapbox canvas,
+// so stray pinch gestures land on the page itself constantly; every one of
+// them republishes a `visualViewport` resize whose rounded product can come
+// back materially smaller than the layout viewport, and nothing fires again
+// to correct it. Once `windowWidth` under-reports by enough, the `max()`
+// clamps to the 16pt floor and the pill snaps from `barWidth` to
+// `screenWidth - 32` — and stays there until the next resize event.
+//
+// So: no measurement at all. `dock` spans the screen and centres its child;
+// the pill asks for `barWidth` and takes `maxWidth: '100%'` of the dock's
+// padded content box. Yoga resolves both against the same box, so the pill
+// is exactly `barWidth` on anything at least `barWidth + 32` wide and
+// shrinks gracefully below that — the same two outcomes the arithmetic was
+// reaching for, minus the coordinate-system mismatch that made it flap.
 function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
-  const { width: windowWidth } = useWindowDimensions();
   const barWidth = state.routes.length * ITEM_WIDTH + BAR_PADDING_H * 2;
-  const sideMargin = Math.max((windowWidth - barWidth) / 2, MIN_SIDE_MARGIN);
 
   return (
     <View
       pointerEvents="box-none"
-      style={[
-        styles.wrap,
-        {
-          left: sideMargin,
-          right: sideMargin,
-          bottom: insets.bottom + BAR_BOTTOM_MARGIN,
-          height: BAR_HEIGHT,
-          borderRadius: BAR_HEIGHT / 2,
-        },
-      ]}>
-      <TabBarBackground />
-      <View style={styles.row}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const focused = state.index === index;
-          const color: ColorValue = focused ? '#ffffff' : 'rgba(255,255,255,0.55)';
+      style={[styles.dock, { bottom: insets.bottom + BAR_BOTTOM_MARGIN }]}>
+      <View style={[styles.pill, { width: barWidth, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2 }]}>
+        <TabBarBackground />
+        <View style={styles.row}>
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const focused = state.index === index;
+            const color: ColorValue = focused ? '#ffffff' : 'rgba(255,255,255,0.55)';
 
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-          };
+            const onPress = () => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+            };
 
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              accessibilityRole="button"
-              accessibilityState={focused ? { selected: true } : {}}
-              accessibilityLabel={options.title}
-              style={styles.item}>
-              {options.tabBarIcon?.({ focused, color, size: ICON_SIZE })}
-              <Text
-                numberOfLines={1}
-                // The label is decoration for screen readers — the Pressable
-                // already carries the same string as its accessibilityLabel,
-                // so exposing it twice would make VoiceOver read it twice.
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                style={[styles.label, { color }]}>
-                {options.title}
-              </Text>
-            </Pressable>
-          );
-        })}
+            return (
+              <Pressable
+                key={route.key}
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityState={focused ? { selected: true } : {}}
+                accessibilityLabel={options.title}
+                style={styles.item}>
+                {options.tabBarIcon?.({ focused, color, size: ICON_SIZE })}
+                <Text
+                  numberOfLines={1}
+                  // The label is decoration for screen readers — the Pressable
+                  // already carries the same string as its accessibilityLabel,
+                  // so exposing it twice would make VoiceOver read it twice.
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  style={[styles.label, { color }]}>
+                  {options.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -227,8 +249,21 @@ function TabGlyph({
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  // Full-width, centres the pill, and guarantees the 16pt gutter by padding
+  // rather than by positioning. `bottom` is the only value the component
+  // supplies, and it comes from the safe-area insets, not from a measurement.
+  dock: {
     position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: MIN_SIDE_MARGIN,
+  },
+  pill: {
+    // Asks for `barWidth` (passed inline) and yields to the dock's padded
+    // content box when the screen is too narrow for it. Both resolve against
+    // the same box, which is the point — see FloatingTabBar's header.
+    maxWidth: '100%',
     overflow: 'hidden',
     backgroundColor: 'transparent',
     elevation: 8,
