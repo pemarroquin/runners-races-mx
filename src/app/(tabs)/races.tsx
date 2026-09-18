@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
   useColorScheme,
-  useWindowDimensions,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
@@ -121,6 +121,11 @@ const THIS_WEEK_MAX_DAYS = 6; // today (0) through 6 days out, not calendar-week
 // page rather than a scrollable carousel; a half-width card (the old 2-up
 // shelf) undersells each card and buries the peek's purpose.
 const CAROUSEL_CARD_WIDTH_RATIO = 0.84;
+// The idle ScrollView's own horizontal padding. Named rather than inlined
+// because `contentWidth` below has to subtract exactly this to get from the
+// scroller's measured OUTER width to the content box the cards sit in — two
+// places that must not drift apart. Consumed by `styles.list`.
+const LIST_PADDING_H = Spacing.three;
 const CAROUSEL_GAP = Spacing.two;
 // Every horizontal carousel steps one card at a time on release, rather than
 // free-scrolling to wherever momentum happens to land — snapToInterval
@@ -170,7 +175,29 @@ export default function FeedScreen() {
   const { region, method } = useRegion();
   const today = useToday();
   const locationInUse = method === 'gps' || method === 'ip';
-  const { width } = useWindowDimensions();
+  // Measured from the idle scroller's own `onLayout`, NOT from
+  // `useWindowDimensions()`. Those are different coordinate systems: the
+  // window reading is react-native-web's
+  // `Math.round(visualViewport.width * visualViewport.scale)`, which stops
+  // matching the layout viewport as soon as a browser pinch-zoom is in play
+  // and then STAYS wrong, because nothing fires to correct it. That exact
+  // mismatch is what made the tab bar resize at random (see
+  // (tabs)/_layout.tsx's FloatingTabBar header). `onLayout` reports the real
+  // laid-out box from Yoga — the same coordinate system the cards live in —
+  // so it cannot disagree with them. A visual pinch-zoom doesn't change the
+  // layout viewport, doesn't fire onLayout, and correctly doesn't need to.
+  //
+  // Starts at 0 and is filled on the first layout pass. That frame is not
+  // visible: every carousel below mounts inside `FadeInDown`, which starts
+  // at opacity 0, so the cards have already been measured and re-rendered
+  // by the time anything is painted.
+  const [scrollerWidth, setScrollerWidth] = useState(0);
+  const onScrollerLayout = useCallback((e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    // Guarded so a layout pass that reports an unchanged width can't queue a
+    // pointless re-render of every shelf on the screen.
+    setScrollerWidth((prev) => (prev === w ? prev : w));
+  }, []);
 
   // A month picked in one region rarely exists in another — drop the
   // selection on region change so a stray key can never survive into a
@@ -305,11 +332,12 @@ export default function FeedScreen() {
     [races],
   );
 
-  // contentWidth matches the body's own horizontal padding (see
-  // `styles.list`) — every horizontal carousel's card width is a fraction of
-  // this, not of the raw screen width, so the peek lines up with that same
+  // The content box the cards actually sit in: the scroller's measured width
+  // less its own horizontal padding (`LIST_PADDING_H`, shared with
+  // `styles.list`). Every horizontal carousel's card width is a fraction of
+  // THIS, not of the raw screen width, so the peek lines up with that same
   // padding. See `CAROUSEL_CARD_WIDTH_RATIO` above for why.
-  const contentWidth = width - Spacing.three * 2;
+  const contentWidth = Math.max(scrollerWidth - LIST_PADDING_H * 2, 0);
   const carouselCardWidth = Math.round(contentWidth * CAROUSEL_CARD_WIDTH_RATIO);
   const carouselStep = carouselCardWidth + CAROUSEL_GAP;
 
@@ -737,6 +765,11 @@ export default function FeedScreen() {
         // the flat hero/grid list above — see the module comment near
         // `THIS_WEEK_MAX_DAYS` for the reasoning.
         <ScrollView
+          // The carousels' card width is a fraction of THIS view's measured
+          // width (see `contentWidth`), so the measurement is taken here
+          // rather than from the window. The padding lives on the content
+          // container, so this reports the full outer box.
+          onLayout={onScrollerLayout}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -954,7 +987,7 @@ const styles = StyleSheet.create({
   staleRetry: { fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   clearAllText: { fontSize: 13, fontWeight: '600' },
-  list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: BottomTabInset },
+  list: { padding: LIST_PADDING_H, gap: Spacing.two, paddingBottom: BottomTabInset },
   gridRow: { flexDirection: 'row', gap: Spacing.two },
   gridItem: { flex: 1 },
   empty: { textAlign: 'center', marginTop: Spacing.six, fontSize: 15 },
