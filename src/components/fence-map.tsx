@@ -22,7 +22,7 @@
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
@@ -356,7 +356,9 @@ export function FenceMap({
             coordinate={{ latitude: path[path.length - 1].lat, longitude: path[path.length - 1].lng }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}>
-            <Text style={styles.finishFlag}>🏁</Text>
+            <View style={styles.finishIcon}>
+              <Icon ios="flag.checkered" android="sports_score" size={22} color="#fff" />
+            </View>
           </Marker>
         )}
         {/* Per-area "+N" conquest bubbles (clusterCells, tiles.ts) — replaces
@@ -465,7 +467,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 3,
   },
-  finishFlag: { fontSize: 18 },
+  finishIcon: {
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
+  },
   mapControls: {
     position: 'absolute',
     right: Spacing.three,

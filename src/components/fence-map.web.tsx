@@ -468,10 +468,18 @@ export function FenceMap({
         }
         if (p.length > 1) {
           const finishEl = document.createElement('div');
-          finishEl.style.cssText =
-            'font-size:18px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55));';
-          finishEl.textContent = '🏁';
-          finishMarkerRef.current = new mapboxgl.Marker({ element: finishEl })
+          finishEl.style.cssText = 'filter:drop-shadow(0 1px 4px rgba(0,0,0,0.5));line-height:0;';
+          finishEl.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width="22" height="22">' +
+            '<rect x="2" y="1" width="2" height="20" rx="1" fill="white"/>' +
+            '<rect x="4" y="1" width="6" height="5" fill="white"/>' +
+            '<rect x="10" y="1" width="6" height="5" fill="rgba(255,255,255,0.25)"/>' +
+            '<rect x="16" y="1" width="4" height="5" fill="white"/>' +
+            '<rect x="4" y="6" width="6" height="5" fill="rgba(255,255,255,0.25)"/>' +
+            '<rect x="10" y="6" width="6" height="5" fill="white"/>' +
+            '<rect x="16" y="6" width="4" height="5" fill="rgba(255,255,255,0.25)"/>' +
+            '</svg>';
+          finishMarkerRef.current = new mapboxgl.Marker({ element: finishEl, anchor: 'center' })
             .setLngLat([p[p.length - 1].lng, p[p.length - 1].lat])
             .addTo(map);
         }
