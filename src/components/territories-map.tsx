@@ -15,7 +15,7 @@ import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
-import { fenceColorForRun, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
+import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import { outerRings, type LatLng } from '@/lib/territory';
 
@@ -70,6 +70,16 @@ export function TerritoriesMap({
 }: TerritoriesMapProps) {
   const mapRef = useRef<MapView | null>(null);
 
+  const colorMap = useMemo(
+    () =>
+      assignFenceColors(
+        features
+          .filter((f) => f.kind === 'saved')
+          .map((f) => ({ id: f.id, startedAtMs: f.startedAtMs })),
+      ),
+    [features],
+  );
+
   const fitCoords = useMemo(() => boundsCoordsOf(features), [features]);
   useEffect(() => {
     if (fitCoords.length === 0) return;
@@ -111,7 +121,12 @@ export function TerritoriesMap({
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
         {features.map((f) => (
-          <Feature key={`${f.kind}:${f.id}`} feature={f} onSelect={onSelect} />
+          <Feature
+            key={`${f.kind}:${f.id}`}
+            feature={f}
+            color={colorMap.get(f.id)}
+            onSelect={onSelect}
+          />
         ))}
       </MapView>
       {controls && (
@@ -164,13 +179,15 @@ function MapButton({
 
 function Feature({
   feature,
+  color: colorProp,
   onSelect,
 }: {
   feature: TerritoryFeature;
+  color?: string;
   onSelect: (id: string, kind: 'saved' | 'pending') => void;
 }) {
   const rings = useMemo(() => polygonRings(feature.geometry), [feature.geometry]);
-  const color = feature.kind === 'saved' ? fenceColorForRun(feature.startedAtMs).color : PENDING_COLOR;
+  const color = feature.kind === 'saved' ? (colorProp ?? PENDING_COLOR) : PENDING_COLOR;
   const routeCoords = useMemo(
     (): MapCoord[] => (feature.route ?? []).map((p) => ({ latitude: p.lat, longitude: p.lng })),
     [feature.route],

@@ -350,6 +350,36 @@ export function fenceColorForRun(startedAtMs: number): FenceColorSet {
   return FENCE_COLOR_SETS[seconds % FENCE_COLOR_SETS.length];
 }
 
+/**
+ * De-collided fence colours for a set of runs shown together.
+ *
+ * `fenceColorForRun` hashes on start-second mod 6, so two runs starting a
+ * multiple of 6 s apart ALWAYS get the same colour — for 11 real runs, lime
+ * appeared 4×, with two adjacent limes reading as one territory on the map.
+ *
+ * This assigns the same preferred slot as `fenceColorForRun` but walks to the
+ * next free slot if the preferred is taken, processing runs in the supplied
+ * order (which callers should make stable — newest-last is fine). Past six
+ * runs colours wrap deterministically rather than arbitrarily.
+ */
+export function assignFenceColors(
+  runs: Array<{ id: string; startedAtMs: number }>,
+): Map<string, string> {
+  const palette = FENCE_COLOR_SETS.length;
+  const taken = new Set<number>();
+  const out = new Map<string, string>();
+  for (const { id, startedAtMs } of runs) {
+    const wanted = Math.abs(Math.floor(startedAtMs / 1000)) % palette;
+    let slot = wanted;
+    for (let step = 0; step < palette && taken.has(slot); step++) {
+      slot = (wanted + step + 1) % palette;
+    }
+    taken.add(slot);
+    out.set(id, FENCE_COLOR_SETS[slot].color);
+  }
+  return out;
+}
+
 /** '#rrggbb' + alpha → 'rgba(...)', for react-native-maps fill/stroke props. */
 export function withAlpha(hex: string, alpha: number): string {
   const v = parseInt(hex.slice(1), 16);

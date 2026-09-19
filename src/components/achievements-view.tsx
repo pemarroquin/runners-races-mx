@@ -58,6 +58,11 @@ import { DEFAULT_TILE_RES, pathToTiles, tilesAreaM2 } from '@/lib/tiles';
 import { formatArea, formatDistance, formatDuration, formatPace } from '@/lib/tracking';
 import { listQueued, removeQueued, type QueuedRun } from '@/lib/upload-queue';
 
+// Enough vertical space to clear the compact detail card when open, so the
+// map controls are always reachable. The card (header + stats + actions +
+// padding + gaps) is ~145 px at its smallest; 180 adds a comfortable margin.
+const DETAIL_BUBBLE_LIFT = 180;
+
 /** Same three sync-failure keys myraces.tsx's DetailCard used — the
  *  `track.*` namespace is inherited from where this copy was first written,
  *  not from where it's read; see that file's own note before this moved. */
@@ -92,6 +97,7 @@ export function AchievementsView({
 
   const [fences, setFences] = useState<FencesOutcome | null>(null);
   const [runCells, setRunCells] = useState<RunCells[] | null>(null);
+  const [runCellsReady, setRunCellsReady] = useState(false);
   const [queued, setQueued] = useState<QueuedRun[]>([]);
   const refreshQueued = useCallback(() => setQueued(listQueued()), []);
 
@@ -110,12 +116,16 @@ export function AchievementsView({
     let stale = false;
     const id = setTimeout(() => {
       setFences(null);
+      setRunCellsReady(false);
       refreshQueued();
       fetchMyFences().then((outcome) => {
         if (!stale) setFences(outcome);
       });
       fetchMyVisitedCells().then((outcome) => {
-        if (!stale) setRunCells(outcome.ok ? outcome.runs : null);
+        if (!stale) {
+          setRunCells(outcome.ok ? outcome.runs : null);
+          setRunCellsReady(true);
+        }
       });
     }, 0);
     return () => {
@@ -127,16 +137,18 @@ export function AchievementsView({
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setRunCellsReady(false);
     refreshQueued();
     const [outcome, cells] = await Promise.all([fetchMyFences(), fetchMyVisitedCells()]);
     setFences(outcome);
     setRunCells(cells.ok ? cells.runs : null);
+    setRunCellsReady(true);
     setRefreshing(false);
   }, [refreshQueued]);
 
   const [selection, setSelection] = useState<Selection | null>(null);
 
-  if (fences === null) {
+  if (fences === null || !runCellsReady) {
     return (
       <View style={styles.emptyWrap}>
         <ActivityIndicator color={c.textSecondary} />
@@ -247,7 +259,11 @@ export function AchievementsView({
               zoomOutLabel: t('track.zoomOut'),
               refitLabel: t('myraces.fencesRefit'),
             }}
-            controlsBottomOffset={BottomTabInset + Spacing.three}
+            controlsBottomOffset={
+              selection
+                ? BottomTabInset + Spacing.three + DETAIL_BUBBLE_LIFT
+                : BottomTabInset + Spacing.three
+            }
             // This screen lives inside a Tabs navigator, which never
             // unmounts a tab on switching away from it — without this, the
             // map's two animation timers (gradient flow + shimmer) kept

@@ -45,11 +45,11 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import {
+  assignFenceColors,
   EMISSIVE_STRENGTH_FULL,
   FENCE_SHIMMER_STEP_MS,
   FENCE_WALL_HEIGHT_M,
   FENCE_WALL_OPACITY,
-  fenceColorForRun,
   LIVE_FILL_OUTLINE_WIDTH,
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
@@ -238,13 +238,23 @@ export function TerritoriesMap({
     // this component doesn't support editing a feature in place, only
     // add/remove, which matches every real change (a fetch/refetch always
     // hands back a fresh list; nothing mutates a fence's own geometry).
+    //
+    // De-collided colours: computed across ALL features so that a new run
+    // doesn't get the same colour as one already mounted (see assignFenceColors).
+    const colorMap = assignFenceColors(
+      features
+        .filter((f) => f.kind === 'saved')
+        .map((f) => ({ id: f.id, startedAtMs: f.startedAtMs })),
+    );
     for (const f of features) {
       const key = `${f.kind}:${f.id}`;
       if (mountedIdsRef.current.has(key)) continue;
+      const color = f.kind === 'saved' ? (colorMap.get(f.id) ?? PENDING_COLOR) : PENDING_COLOR;
       const { flowIds, shimmerIds } = addFeatureLayers(
         map,
         f,
         key,
+        color,
         (id, kind) => onSelectRef.current(id, kind),
         isLive,
       );
@@ -473,6 +483,7 @@ function addFeatureLayers(
   map: MapboxMap,
   f: TerritoryFeature,
   key: string,
+  color: string,
   onSelect: (id: string, kind: 'saved' | 'pending') => void,
   /** Still the live map? Only stageLineData needs it — everything else here
    *  runs synchronously, while the map is by definition alive. */
@@ -481,7 +492,6 @@ function addFeatureLayers(
   const fillSrc = `terr-fill-${key}`;
   const routeSrc = `terr-route-${key}`;
   const rimSrc = `terr-rim-${key}`;
-  const color = f.kind === 'saved' ? fenceColorForRun(f.startedAtMs).color : PENDING_COLOR;
   const flowIds: string[] = [];
   // Saved territories only — a pending run has no per-run colour and must
   // keep reading as "not confirmed" rather than joining the shimmer.
