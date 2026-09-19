@@ -41,6 +41,7 @@ import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
+import { cellsToMultiPolygon } from 'h3-js';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
@@ -62,12 +63,18 @@ import {
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
 import { outerRings, type LatLng } from '@/lib/territory';
+import { clusterCells } from '@/lib/tiles';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
 const PENDING_COLOR = '#8E8E93'; // neutral grey — deliberately NOT one of FENCE_COLOR_SETS, so a pending item never reads as a confusing 7th run colour.
 const PENDING_FILL_OPACITY = 0.14;
 const PENDING_LINE_OPACITY = 0.7;
+// Single merged source for all saved territory fills — connected cells from
+// multiple runs are dissolved into one polygon via clusterCells + cellsToMultiPolygon.
+// Click handler on this layer uses the per-feature `id` property (the most-recent
+// run in each connected component) to route onSelect to the right detail card.
+const MERGED_FILLS_SRC = 'terr-merged-fills';
 
 export interface TerritoryFeature {
   id: string;
@@ -77,6 +84,10 @@ export interface TerritoryFeature {
   /** Only used for SAVED (fenceColorForRun) — ignored for pending, which is
    *  always PENDING_COLOR regardless of startedAtMs. */
   startedAtMs: number;
+  /** H3 tile IDs for this run's ground (direct path tiles + enclosed cells).
+   *  Only populated for `saved` features — used to merge adjacent territories
+   *  from different runs into a single dissolved polygon fill. Empty for pending. */
+  cells: string[];
 }
 
 interface TerritoriesMapProps {
@@ -157,6 +168,63 @@ function boundsOfAll(features: TerritoryFeature[]): [[number, number], [number, 
   ];
 }
 
+/**
+ * Groups all saved features' tiles by H3 adjacency, then dissolves each
+ * connected component into a single MultiPolygon — so adjacent territories
+ * from different runs merge visually into one shape rather than sitting as
+ * overlapping separate fills. Disconnected areas stay separate and keep their
+ * own identity colour (the most-recent contributing run's fence color).
+ */
+function buildMergedFills(
+  features: TerritoryFeature[],
+  colorMap: Map<string, string>,
+): FeatureCollection {
+  const savedFeatures = features.filter((f) => f.kind === 'saved' && f.cells.length > 0);
+  if (savedFeatures.length === 0) return { type: 'FeatureCollection', features: [] };
+
+  // Map each cell to the run that owns it — last-write wins by startedAtMs so
+  // a more-recent run's colour shows when two runs share the same tile.
+  const cellToRun = new Map<string, { id: string; startedAtMs: number; color: string }>();
+  for (const f of savedFeatures) {
+    const color = colorMap.get(f.id) ?? PENDING_COLOR;
+    for (const cell of f.cells) {
+      const existing = cellToRun.get(cell);
+      if (!existing || f.startedAtMs > existing.startedAtMs) {
+        cellToRun.set(cell, { id: f.id, startedAtMs: f.startedAtMs, color });
+      }
+    }
+  }
+
+  const allCells = [...cellToRun.keys()];
+  const clusters = clusterCells(allCells);
+
+  return {
+    type: 'FeatureCollection',
+    features: clusters.map((cluster) => {
+      // Pick the most-recent run in this component for color + click routing.
+      let latestMs = -Infinity;
+      let latestId = '';
+      let latestColor = PENDING_COLOR;
+      for (const cell of cluster.cells) {
+        const run = cellToRun.get(cell);
+        if (run && run.startedAtMs > latestMs) {
+          latestMs = run.startedAtMs;
+          latestId = run.id;
+          latestColor = run.color;
+        }
+      }
+      return {
+        type: 'Feature' as const,
+        properties: { id: latestId, kind: 'saved' as const, color: latestColor },
+        geometry: {
+          type: 'MultiPolygon' as const,
+          coordinates: cellsToMultiPolygon(cluster.cells, true),
+        },
+      };
+    }),
+  };
+}
+
 export function TerritoriesMap({
   features,
   onSelect,
@@ -197,6 +265,10 @@ export function TerritoriesMap({
   // flow ids above so both are torn down by the same code paths.
   const shimmerIdsRef = useRef<Map<string, string[]>>(new Map());
   const shimmerLayersRef = useRef<string[]>([]);
+  // Whether the merged fills source/layer have been added to the current map.
+  // Set true on first sync() after the map loads, reset in cleanup. When true,
+  // subsequent sync() calls call setData() instead of addSource/addLayer.
+  const mergedFillsMountedRef = useRef(false);
   // The freshest feature list, read by sync() below rather than closed over.
   // The map's own 'load' handler is registered once, inside a mount effect
   // that can never see a later render's props — but it is also the FIRST
@@ -265,6 +337,39 @@ export function TerritoriesMap({
 
     flowLayersRef.current = [...flowIdsRef.current.values()].flat();
     shimmerLayersRef.current = [...shimmerIdsRef.current.values()].flat();
+
+    // Rebuild the merged fills source — dissolves all connected H3 tiles
+    // from different runs into one polygon per connected component. Adjacent
+    // territories merge visually; disconnected ones stay separate with their
+    // own colors. This runs on every sync() so adding/removing any territory
+    // immediately updates the merged shape.
+    const mergedData = buildMergedFills(features, colorMap);
+    if (mergedFillsMountedRef.current) {
+      (map.getSource(MERGED_FILLS_SRC) as GeoJSONSource | undefined)?.setData(mergedData);
+    } else {
+      map.addSource(MERGED_FILLS_SRC, { type: 'geojson', data: mergedData });
+      map.addLayer({
+        id: `${MERGED_FILLS_SRC}-extrusion`,
+        type: 'fill-extrusion',
+        source: MERGED_FILLS_SRC,
+        slot: MAP_SLOT_FILL,
+        paint: {
+          // Data-driven color: each connected component uses the most-recent
+          // run's assigned fence color, encoded as a GeoJSON feature property.
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
+          'fill-extrusion-opacity': FENCE_WALL_OPACITY,
+          'fill-extrusion-emissive-strength': EMISSIVE_STRENGTH_FULL,
+        },
+      });
+      map.on('click', `${MERGED_FILLS_SRC}-extrusion`, (e: MapMouseEvent) => {
+        const feature = e.features?.[0];
+        const id = feature?.properties?.id as string | undefined;
+        const kind = feature?.properties?.kind as 'saved' | 'pending' | undefined;
+        if (id && kind) onSelectRef.current(id, kind);
+      });
+      mergedFillsMountedRef.current = true;
+    }
 
     const bounds = boundsOfAll(features);
     if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
@@ -339,6 +444,7 @@ export function TerritoriesMap({
       flowLayersRef.current = [];
       shimmerIdsRef.current = new Map();
       shimmerLayersRef.current = [];
+      mergedFillsMountedRef.current = false;
     };
     // Built once; `sync` is stable, and all data flows through the ref it
     // reads.
@@ -497,39 +603,15 @@ function addFeatureLayers(
   // keep reading as "not confirmed" rather than joining the shimmer.
   const shimmerIds: string[] = [];
 
-  map.addSource(fillSrc, {
-    type: 'geojson',
-    data: { type: 'Feature', properties: { id: f.id, kind: f.kind }, geometry: f.geometry },
-  });
-
-  if (f.kind === 'saved') {
-    // Vertical wall with opacity — matches the live Track map's fence
-    // (track-map.web.tsx's WALL_SRC) and the just-finished-run map (fence-
-    // map.web.tsx), per Pedro's explicit ask: a saved territory should look
-    // "exactly the same as when it shows when run session is recorded".
-    map.addLayer({
-      id: `${fillSrc}-extrusion`,
-      type: 'fill-extrusion',
-      source: fillSrc,
-      slot: MAP_SLOT_FILL,
-      paint: {
-        'fill-extrusion-color': color,
-        // The shimmer's smoothness lives HERE, not in a render loop: the
-        // timer only sets the next hue, and GL interpolates across this
-        // duration on the GPU. Same technique as the live map's opacity
-        // breathe — a rAF loop repainting a map layer 60 times a second is a
-        // battery cost, and this is a screen a runner may leave open.
-        'fill-extrusion-color-transition': { duration: FENCE_SHIMMER_STEP_MS, delay: 0 },
-        'fill-extrusion-height': FENCE_WALL_HEIGHT_M,
-        'fill-extrusion-opacity': FENCE_WALL_OPACITY,
-        'fill-extrusion-emissive-strength': EMISSIVE_STRENGTH_FULL,
-      },
-    });
-    shimmerIds.push(`${fillSrc}-extrusion`);
-  } else {
+  if (f.kind === 'pending') {
     // Pending: flat, low-opacity fill + dashed outline. No extrusion, no
     // per-run colour — deliberately reads as "not confirmed" rather than as
-    // a 7th entry in the fence-colour rotation.
+    // a 7th entry in the fence-colour rotation. Click routes directly here
+    // since pending runs are never included in the merged fills source.
+    map.addSource(fillSrc, {
+      type: 'geojson',
+      data: { type: 'Feature', properties: { id: f.id, kind: f.kind }, geometry: f.geometry },
+    });
     map.addLayer({
       id: `${fillSrc}-fill`,
       type: 'fill',
@@ -550,14 +632,15 @@ function addFeatureLayers(
         'line-dasharray': [2, 2],
       },
     });
+    map.on('click', `${fillSrc}-fill`, (e: MapMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id as string | undefined;
+      const kind = feature?.properties?.kind as 'saved' | 'pending' | undefined;
+      if (id && kind) onSelect(id, kind);
+    });
   }
-
-  map.on('click', `${fillSrc}-${f.kind === 'saved' ? 'extrusion' : 'fill'}`, (e: MapMouseEvent) => {
-    const feature = e.features?.[0];
-    const id = feature?.properties?.id as string | undefined;
-    const kind = feature?.properties?.kind as 'saved' | 'pending' | undefined;
-    if (id && kind) onSelect(id, kind);
-  });
+  // Saved features: fill + click are on the shared MERGED_FILLS_SRC layer
+  // (built in sync()). No per-feature fillSrc needed here.
 
   // The RIM — the territory's own boundary, carrying the flowing gradient
   // once around itself. This is the saved-map twin of the live Track map's

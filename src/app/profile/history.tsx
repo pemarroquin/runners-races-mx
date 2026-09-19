@@ -135,7 +135,7 @@ export default function HistoryScreen() {
     coordinates: cellsToMultiPolygon(drawn, true),
   };
   const features: TerritoryFeature[] = [
-    { id: 'history', kind: 'saved', geometry, route: null, startedAtMs: 0 },
+    { id: 'history', kind: 'saved', geometry, route: null, startedAtMs: 0, cells: drawn },
   ];
 
   return (

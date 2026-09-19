@@ -180,19 +180,24 @@ export function AchievementsView({
   const cellsByRun = new Map((runCells ?? []).map(({ runId, cells }) => [runId, cells]));
   const savedFeatures: TerritoryFeature[] = fences.fences
     .map((f) => {
-      const cells = cellsByRun.get(f.id);
-      const geometry: Polygon | MultiPolygon | null = cells?.length
-        ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(groundOfRun(cells, DEFAULT_TILE_RES), true) }
+      const rawCells = cellsByRun.get(f.id);
+      // groundOfRun gives the full tile footprint (direct path + enclosed cells)
+      // — same set used for totalTilesSet and for the geometry below, so `cells`
+      // here is exactly what cellsToMultiPolygon and buildMergedFills both see.
+      const cells = rawCells?.length ? groundOfRun(rawCells, DEFAULT_TILE_RES) : [];
+      const geometry: Polygon | MultiPolygon | null = cells.length
+        ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cells, true) }
         : f.geometry;
-      return { fence: f, geometry };
+      return { fence: f, geometry, cells };
     })
     .filter((f) => f.geometry !== null)
-    .map(({ fence, geometry }) => ({
+    .map(({ fence, geometry, cells }) => ({
       id: fence.id,
       kind: 'saved' as const,
       geometry: geometry!,
       route: fence.route,
       startedAtMs: fence.startedAtMs,
+      cells,
     }));
   const pendingFeatures: TerritoryFeature[] = queued.map((q) => {
     const cells = groundOfRun(pathToTiles(q.run.points).cells, DEFAULT_TILE_RES);
@@ -204,6 +209,7 @@ export function AchievementsView({
         : q.run.fence.geometry.geometry,
       route: q.run.points,
       startedAtMs: q.run.startedAt,
+      cells: [],
     };
   });
   const features = [...savedFeatures, ...pendingFeatures];

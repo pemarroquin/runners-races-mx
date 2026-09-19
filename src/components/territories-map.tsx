@@ -33,6 +33,9 @@ export interface TerritoryFeature {
   geometry: GeoPolygon | MultiPolygon;
   route: LatLng[] | null;
   startedAtMs: number;
+  /** H3 tile IDs — used on web only (merged dissolve fill); native renders
+   *  each feature's geometry directly so this is accepted but ignored. */
+  cells: string[];
 }
 
 interface TerritoriesMapProps {
