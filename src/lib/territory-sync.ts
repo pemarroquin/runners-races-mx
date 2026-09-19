@@ -6,6 +6,7 @@
 // screen for a manual retry.
 import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
+import { cellToLatLng } from 'h3-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { TileOwnerRow } from '@/lib/leaderboard';
@@ -132,6 +133,12 @@ export interface TileClaimResult {
    *  against which cells) that's out of scope this pass, see the executor's
    *  report. */
   rivalCells: string[];
+  /** Cycle bonus: 10 pts awarded when this run's path significantly overlaps
+   *  the runner's own existing territory (≥ CYCLE_MIN_TILES path cells are
+   *  already owned). Computed client-side in uploadRun() — not from the SQL
+   *  RPC — so it is only available on a successful sync, never on a cached or
+   *  replayed claim. Absent when no qualifying overlap was detected. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number } };
 }
 
 export type TileClaimOutcome =
@@ -402,6 +409,10 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // existed in owned territory vs 38 in visited cells; per-run enclosure
     // already covers the avenue-strip case. Re-run `npm run measure-holes`
     // before changing that conclusion.
+    // Minimum overlap (path tiles already owned) to qualify for a cycle bonus.
+    const CYCLE_MIN_TILES = 50;
+    const CYCLE_PTS = 10;
+    let cycleBonus: TileClaimResult['cycleBonus'];
     let unionNewEnclosed: string[] = [];
     try {
       const { data: ownedRows } = await supabase
@@ -414,6 +425,23 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
             .map((r) => r.h3)
             .filter((h) => isCurrentTileRes(h)),
         );
+
+        // Cycle detection: path cells the runner already owned before this run.
+        const ownedPathCells = cells.filter((c) => ownedSet.has(c));
+        if (ownedPathCells.length >= CYCLE_MIN_TILES) {
+          let latSum = 0;
+          let lngSum = 0;
+          for (const cell of ownedPathCells) {
+            const [lat, lng] = cellToLatLng(cell);
+            latSum += lat;
+            lngSum += lng;
+          }
+          cycleBonus = {
+            pts: CYCLE_PTS,
+            center: { lat: latSum / ownedPathCells.length, lng: lngSum / ownedPathCells.length },
+          };
+        }
+
         const union = [...new Set([...cells, ...ownedSet])];
         const enclosed = enclosedCells(union, DEFAULT_TILE_RES);
         // Only cells not already owned and not visited this run — owned ones
@@ -426,10 +454,12 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
     const claim = await claimTiles(data.id, cells, region, allEnclosed);
+    const claimResult = claim.ok ? claim.result : null;
+    if (claimResult && cycleBonus) claimResult.cycleBonus = cycleBonus;
     return {
       ok: true,
       runId: data.id,
-      tiles: claim.ok ? claim.result : null,
+      tiles: claimResult,
       // 'disabled'/'auth' cannot reach here — uploadRun already passed the
       // same withSession guard to insert the run above.
       tilesReason: claim.ok ? undefined : (claim.reason as 'tooOld' | 'rejected' | 'network'),

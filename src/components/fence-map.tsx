@@ -28,9 +28,10 @@ import Svg, { Rect as SvgRect } from 'react-native-svg';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { ConquestMarker } from '@/components/conquest-marker';
+import { CycleBonusMarker } from '@/components/cycle-bonus-marker';
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
-import { conquestMarkerGeometry } from '@/lib/conquest-marker';
+import { conquestMarkerGeometry, cycleBonusMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
   fenceColorForRun,
@@ -78,12 +79,14 @@ interface FenceMapProps {
    *  see index.tsx's `tileClaim` state, which is null (so this is `[]`)
    *  while a save is still in flight. */
   rivalTiles: string[];
-  /** Per-area "+N" conquest bubbles — one per contiguous patch of ground
-   *  taken off another runner (clusterCells, tiles.ts). Replaces the old
-   *  single aggregate "You took N tiles" banner. `label` is pre-translated
-   *  by the caller, same convention as `controls` below. Empty until the
-   *  upload resolves, same as rivalTiles. */
+  /** Single consolidated "+N" conquest bubble (index.tsx's takenClusters is
+   *  now one weighted-centroid item, not one per cluster). `label` is
+   *  pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
+  /** Blue cycle-bonus marker — present when this run's path significantly
+   *  re-covered the runner's own territory (≥ 50 tiles). Absent until the
+   *  upload resolves; null/undefined when no qualifying overlap. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number } } | null;
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -118,6 +121,7 @@ export function FenceMap({
   tiles,
   rivalTiles,
   takenClusters,
+  cycleBonus,
   color,
   others,
   excludeId,
@@ -396,6 +400,14 @@ export function FenceMap({
             <ConquestMarker count={cluster.count} />
           </Marker>
         ))}
+        {cycleBonus && (
+          <Marker
+            coordinate={{ latitude: cycleBonus.center.lat, longitude: cycleBonus.center.lng }}
+            anchor={{ x: 0.5, y: cycleBonusMarkerGeometry(cycleBonus.pts).anchorY }}
+            tracksViewChanges={false}>
+            <CycleBonusMarker pts={cycleBonus.pts} />
+          </Marker>
+        )}
       </MapView>
       {controls && (
         <View style={styles.mapControls} pointerEvents="box-none">

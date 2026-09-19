@@ -41,7 +41,12 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } 
 
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
-import { conquestMarkerGeometry, conquestMarkerHtml } from '@/lib/conquest-marker';
+import {
+  conquestMarkerGeometry,
+  conquestMarkerHtml,
+  cycleBonusMarkerGeometry,
+  cycleBonusMarkerHtml,
+} from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
   EMISSIVE_STRENGTH_FULL,
@@ -146,13 +151,12 @@ interface FenceMapProps {
   /** Tile Coverage brief §5 — cells this run crossed that were already
    *  someone else's by claim time. Empty until the upload resolves. */
   rivalTiles: string[];
-  /** Per-area "+N" conquest bubbles — one per contiguous patch of ground
-   *  taken off another runner (clusterCells, tiles.ts). Replaces the old
-   *  single aggregate "You took N tiles" banner, which said THAT ground was
-   *  won but never WHERE. `label` is pre-translated by the caller (same
-   *  convention as `controls` below) so this component stays i18n-dumb.
-   *  Empty until the upload resolves, same as rivalTiles. */
+  /** Single consolidated "+N" conquest bubble — one weighted-centroid item.
+   *  `label` is pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
+  /** Blue cycle-bonus marker — present when this run re-covered the runner's
+   *  own territory significantly (≥ 50 path tiles). Absent until upload. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number } } | null;
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -198,6 +202,7 @@ export function FenceMap({
   tiles,
   rivalTiles,
   takenClusters,
+  cycleBonus,
   color,
   others,
   excludeId,
@@ -228,6 +233,8 @@ export function FenceMap({
   const finishMarkerRef = useRef<Marker | null>(null);
   // "+N" conquest bubbles — one DOM marker per cluster, same technique.
   const takenMarkersRef = useRef<Marker[]>([]);
+  // Blue cycle-bonus marker — one DOM marker, present only when cycleBonus arrives.
+  const cycleMarkerRef = useRef<Marker | null>(null);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
@@ -521,6 +528,8 @@ export function FenceMap({
       finishMarkerRef.current = null;
       for (const marker of takenMarkersRef.current) marker.remove();
       takenMarkersRef.current = [];
+      cycleMarkerRef.current?.remove();
+      cycleMarkerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -600,6 +609,34 @@ export function FenceMap({
       cancelled = true;
     };
   }, [takenClusters, mapReady]);
+
+  // Blue cycle-bonus marker — same lifecycle as the conquest markers above.
+  useEffect(() => {
+    if (!readyRef.current) return;
+    let cancelled = false;
+    (async () => {
+      const { default: mapboxgl } = await import('mapbox-gl');
+      const map = mapRef.current;
+      if (cancelled || !map) return;
+      cycleMarkerRef.current?.remove();
+      cycleMarkerRef.current = null;
+      if (!cycleBonus) return;
+      const el = document.createElement('div');
+      el.style.cssText = 'position:relative;line-height:0;pointer-events:none;';
+      el.innerHTML = cycleBonusMarkerHtml(cycleBonus.pts, 'cycle');
+      const { webOffsetY } = cycleBonusMarkerGeometry(cycleBonus.pts);
+      cycleMarkerRef.current = new mapboxgl.Marker({
+        element: el,
+        anchor: 'bottom' as const,
+        offset: [0, webOffsetY],
+      })
+        .setLngLat([cycleBonus.center.lng, cycleBonus.center.lat])
+        .addTo(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cycleBonus, mapReady]);
 
   // The "recenter" control's target — re-fit to the highlighted fence,
   // shorter/snappier than the mount effect's entrance sweep (that one is a

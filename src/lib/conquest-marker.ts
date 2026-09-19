@@ -1,9 +1,12 @@
-// The "+N" conquest marker's shape and palette — ONE silhouette, shared by
-// the native map (components/conquest-marker.tsx) and the web map's DOM
-// markers (components/fence-map.web.tsx), so the two can't drift.
+// Shared marker geometry for the conquest "+N" bubble and the cycle "Xpt"
+// bonus bubble. ONE silhouette (teardrop: circle + tangent tail) shared by
+// the native maps (components/conquest-marker.tsx, cycle-bonus-marker.tsx)
+// and the web maps' DOM markers (fence-map.web.tsx), so platforms can't drift.
 //
-// Every number here is the Figma master, Atoms/Bubble/ConquestMarker (node
-// 49:6 in Races-MX, page "Organisms — Chrome over the Map").
+// ConquestMarker: Figma master Atoms/Bubble/ConquestMarker (node 49:6,
+// page "Organisms — Chrome over the Map") — purple, shows "+N taken tiles".
+// CycleBonusMarker: blue variant, shows "Xpt" bonus points for re-running
+// the same territory (10 pts per qualifying run).
 //
 // It replaces a circle + a separately drawn triangle. That composite always
 // read as two pieces, for two reasons, both fixed here:
@@ -94,55 +97,55 @@ export type ConquestMarkerGeometry = {
   shadowPath: string;
 };
 
+/** Blue palette for the cycle-bonus marker — same teardrop shape as
+ *  ConquestMarker, different colour, shows "Xpt" repeat-run bonus. */
+export const CYCLE_MARKER = {
+  baseDiameter: 28,
+  tailRatio: 5 / 14,
+  stroke: 2,
+  innerPadding: 4,
+  fontSize: 13,
+  lineHeight: 16,
+  charAdvanceEm: 0.6,
+  ring: '#93c5fd',
+  fillTop: '#60a5fa',
+  fillBottom: '#2563eb',
+  shadowBlurStdDeviation: 4,
+  shadowOffsetY: 2,
+  shadowOpacity: 0.5,
+  shadowColor: '#000000',
+} as const;
+
 const round = (n: number) => Math.round(n * 1000) / 1000;
 
-/** The body diameter that fits `+N` with even clearance on every side. Grows
- *  the CIRCLE, never a pill: the tail is tangent to a circle of one radius,
- *  and a stretched body has no such radius. */
-export function conquestMarkerDiameter(count: number): number {
-  const chars = String(Math.abs(Math.round(count))).length + 1; // the "+"
-  const needed =
-    chars * CONQUEST_MARKER.fontSize * CONQUEST_MARKER.charAdvanceEm +
-    CONQUEST_MARKER.innerPadding * 2 +
-    CONQUEST_MARKER.stroke;
-  // Even numbers keep the centre on a whole pixel.
-  return Math.max(CONQUEST_MARKER.baseDiameter, Math.ceil(needed / 2) * 2);
-}
-
-export function conquestMarkerGeometry(count: number): ConquestMarkerGeometry {
-  const diameter = conquestMarkerDiameter(count);
+// Shared teardrop geometry — called by both marker types. Everything about
+// shape/size lives here; callers supply only the diameter and shadow params.
+function _teardropGeometry(
+  diameter: number,
+  tailRatio: number,
+  stroke: number,
+  shadowBlurStdDeviation: number,
+  shadowOffsetY: number,
+): ConquestMarkerGeometry {
   const r = diameter / 2;
-  const tail = Math.round(diameter * CONQUEST_MARKER.tailRatio * 2) / 2;
-  // Distance from the body's centre down to the tip.
+  const tail = Math.round(diameter * tailRatio * 2) / 2;
   const d = r + tail;
-  // Angle at the centre between "straight down" and the tangent point: the
-  // tangent meets the tip at a right angle, so the centre/tangent/tip
-  // triangle has hypotenuse d and adjacent side r.
   const phi = Math.acos(r / d);
   const tx = r * Math.sin(phi);
   const ty = r * Math.cos(phi);
-  const pad = CONQUEST_MARKER.stroke / 2;
+  const pad = stroke / 2;
   const cx = pad + r;
   const cy = pad + r;
-
-  // Left tangent point → the long way round the circle (large-arc, drawn
-  // clockwise in SVG's y-down space) → right tangent point → tip → close.
   const at = (dy: number) =>
     `M ${round(cx - tx)} ${round(cy + ty + dy)} ` +
     `A ${r} ${r} 0 1 1 ${round(cx + tx)} ${round(cy + ty + dy)} ` +
     `L ${cx} ${round(cy + d + dy)} Z`;
-
-  const width = diameter + CONQUEST_MARKER.stroke;
-  const height = diameter + tail + CONQUEST_MARKER.stroke;
-  // A blurred shadow spreads about three standard deviations past the shape,
-  // and the SVG viewport clips anything outside it — on Android there is no
-  // CSS filter to escape into, so the room has to be in the drawing surface.
-  const bleed =
-    Math.ceil(CONQUEST_MARKER.shadowBlurStdDeviation * 3) + CONQUEST_MARKER.shadowOffsetY;
+  const width = diameter + stroke;
+  const height = diameter + tail + stroke;
+  const bleed = Math.ceil(shadowBlurStdDeviation * 3) + shadowOffsetY;
   const boxWidth = width + bleed * 2;
   const boxHeight = height + bleed * 2;
   const tipFromTop = bleed + cy + d;
-
   return {
     width,
     height,
@@ -158,8 +161,48 @@ export function conquestMarkerGeometry(count: number): ConquestMarkerGeometry {
     anchorY: tipFromTop / boxHeight,
     webOffsetY: boxHeight - tipFromTop,
     path: at(0),
-    shadowPath: at(CONQUEST_MARKER.shadowOffsetY),
+    shadowPath: at(shadowOffsetY),
   };
+}
+
+/** The body diameter that fits `+N` with even clearance on every side. */
+export function conquestMarkerDiameter(count: number): number {
+  const chars = String(Math.abs(Math.round(count))).length + 1; // the "+"
+  const needed =
+    chars * CONQUEST_MARKER.fontSize * CONQUEST_MARKER.charAdvanceEm +
+    CONQUEST_MARKER.innerPadding * 2 +
+    CONQUEST_MARKER.stroke;
+  return Math.max(CONQUEST_MARKER.baseDiameter, Math.ceil(needed / 2) * 2);
+}
+
+export function conquestMarkerGeometry(count: number): ConquestMarkerGeometry {
+  return _teardropGeometry(
+    conquestMarkerDiameter(count),
+    CONQUEST_MARKER.tailRatio,
+    CONQUEST_MARKER.stroke,
+    CONQUEST_MARKER.shadowBlurStdDeviation,
+    CONQUEST_MARKER.shadowOffsetY,
+  );
+}
+
+/** The body diameter that fits "Xpt" (e.g. "10pt") with even clearance. */
+export function cycleBonusMarkerDiameter(pts: number): number {
+  const chars = String(Math.abs(Math.round(pts))).length + 2; // the "pt"
+  const needed =
+    chars * CYCLE_MARKER.fontSize * CYCLE_MARKER.charAdvanceEm +
+    CYCLE_MARKER.innerPadding * 2 +
+    CYCLE_MARKER.stroke;
+  return Math.max(CYCLE_MARKER.baseDiameter, Math.ceil(needed / 2) * 2);
+}
+
+export function cycleBonusMarkerGeometry(pts: number): ConquestMarkerGeometry {
+  return _teardropGeometry(
+    cycleBonusMarkerDiameter(pts),
+    CYCLE_MARKER.tailRatio,
+    CYCLE_MARKER.stroke,
+    CYCLE_MARKER.shadowBlurStdDeviation,
+    CYCLE_MARKER.shadowOffsetY,
+  );
 }
 
 /** The same marker as an HTML string, for the web map's DOM markers.
@@ -197,5 +240,36 @@ export function conquestMarkerHtml(count: number, uid: string | number): string 
     `color:#fff;font-weight:700;font-size:${CONQUEST_MARKER.fontSize}px;` +
     `line-height:${CONQUEST_MARKER.lineHeight}px;font-variant-numeric:tabular-nums;` +
     `pointer-events:none;">+${count}</div>`
+  );
+}
+
+/** Blue cycle-bonus marker as an HTML string for the web map's DOM markers. */
+export function cycleBonusMarkerHtml(pts: number, uid: string | number): string {
+  const g = cycleBonusMarkerGeometry(pts);
+  const fillId = `cycle-fill-${uid}`;
+  const shadowId = `cycle-shadow-${uid}`;
+  return (
+    `<svg width="${g.boxWidth}" height="${g.boxHeight}" viewBox="${g.viewBox}" ` +
+    `style="display:block;pointer-events:none;">` +
+    `<defs>` +
+    `<linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0" stop-color="${CYCLE_MARKER.fillTop}"/>` +
+    `<stop offset="1" stop-color="${CYCLE_MARKER.fillBottom}"/>` +
+    `</linearGradient>` +
+    `<filter id="${shadowId}" x="-50%" y="-50%" width="200%" height="200%">` +
+    `<feGaussianBlur stdDeviation="${CYCLE_MARKER.shadowBlurStdDeviation}"/>` +
+    `</filter>` +
+    `</defs>` +
+    `<g filter="url(#${shadowId})" opacity="${CYCLE_MARKER.shadowOpacity}">` +
+    `<path d="${g.shadowPath}" fill="${CYCLE_MARKER.shadowColor}"/>` +
+    `</g>` +
+    `<path d="${g.path}" fill="url(#${fillId})" stroke="${CYCLE_MARKER.ring}" ` +
+    `stroke-width="${CYCLE_MARKER.stroke}" stroke-linejoin="round"/>` +
+    `</svg>` +
+    `<div style="position:absolute;left:0;top:${g.bleed}px;width:${g.boxWidth}px;` +
+    `height:${g.centerY * 2}px;display:flex;align-items:center;justify-content:center;` +
+    `color:#fff;font-weight:700;font-size:${CYCLE_MARKER.fontSize}px;` +
+    `line-height:${CYCLE_MARKER.lineHeight}px;font-variant-numeric:tabular-nums;` +
+    `pointer-events:none;">${pts}pt</div>`
   );
 }
