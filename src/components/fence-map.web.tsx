@@ -469,15 +469,20 @@ export function FenceMap({
         if (p.length > 1) {
           const finishEl = document.createElement('div');
           finishEl.style.cssText = 'filter:drop-shadow(0 1px 4px rgba(0,0,0,0.5));line-height:0;';
+          // Exact geometry from Atoms/Marker/Finish in the Figma design system
           finishEl.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width="22" height="22">' +
-            '<rect x="2" y="1" width="2" height="20" rx="1" fill="white"/>' +
-            '<rect x="4" y="1" width="6" height="5" fill="white"/>' +
-            '<rect x="10" y="1" width="6" height="5" fill="rgba(255,255,255,0.25)"/>' +
-            '<rect x="16" y="1" width="4" height="5" fill="white"/>' +
-            '<rect x="4" y="6" width="6" height="5" fill="rgba(255,255,255,0.25)"/>' +
-            '<rect x="10" y="6" width="6" height="5" fill="white"/>' +
-            '<rect x="16" y="6" width="4" height="5" fill="rgba(255,255,255,0.25)"/>' +
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20">' +
+            '<rect x="4.1" y="2" width="1.8" height="16" rx="0.9" fill="#fff"/>' +
+            '<rect x="5.5" y="2.5" width="4" height="3.5" fill="#1a1a1a"/>' +
+            '<rect x="9.5" y="2.5" width="4" height="3.5" fill="#fff"/>' +
+            '<rect x="13.5" y="2.5" width="4" height="3.5" fill="#1a1a1a"/>' +
+            '<rect x="5.5" y="6" width="4" height="3.5" fill="#fff"/>' +
+            '<rect x="9.5" y="6" width="4" height="3.5" fill="#1a1a1a"/>' +
+            '<rect x="13.5" y="6" width="4" height="3.5" fill="#fff"/>' +
+            '<rect x="5.5" y="9.5" width="4" height="3.5" fill="#1a1a1a"/>' +
+            '<rect x="9.5" y="9.5" width="4" height="3.5" fill="#fff"/>' +
+            '<rect x="13.5" y="9.5" width="4" height="3.5" fill="#1a1a1a"/>' +
+            '<rect x="5.5" y="2.5" width="12" height="10.5" fill="none" stroke="#fff" stroke-width="1"/>' +
             '</svg>';
           finishMarkerRef.current = new mapboxgl.Marker({ element: finishEl, anchor: 'center' })
             .setLngLat([p[p.length - 1].lng, p[p.length - 1].lat])

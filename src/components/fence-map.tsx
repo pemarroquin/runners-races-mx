@@ -24,6 +24,7 @@ import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
+import Svg, { Rect as SvgRect } from 'react-native-svg';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { ConquestMarker } from '@/components/conquest-marker';
@@ -357,7 +358,24 @@ export function FenceMap({
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}>
             <View style={styles.finishIcon}>
-              <Icon ios="flag.checkered" android="sports_score" size={22} color="#fff" />
+              <Svg width={20} height={20} viewBox="0 0 20 20">
+                {/* pole */}
+                <SvgRect x={4.1} y={2} width={1.8} height={16} rx={0.9} fill="#fff" />
+                {/* 3×3 checker grid — row 1 */}
+                <SvgRect x={5.5} y={2.5} width={4} height={3.5} fill="#1a1a1a" />
+                <SvgRect x={9.5} y={2.5} width={4} height={3.5} fill="#fff" />
+                <SvgRect x={13.5} y={2.5} width={4} height={3.5} fill="#1a1a1a" />
+                {/* row 2 */}
+                <SvgRect x={5.5} y={6} width={4} height={3.5} fill="#fff" />
+                <SvgRect x={9.5} y={6} width={4} height={3.5} fill="#1a1a1a" />
+                <SvgRect x={13.5} y={6} width={4} height={3.5} fill="#fff" />
+                {/* row 3 */}
+                <SvgRect x={5.5} y={9.5} width={4} height={3.5} fill="#1a1a1a" />
+                <SvgRect x={9.5} y={9.5} width={4} height={3.5} fill="#fff" />
+                <SvgRect x={13.5} y={9.5} width={4} height={3.5} fill="#1a1a1a" />
+                {/* flag border */}
+                <SvgRect x={5.5} y={2.5} width={12} height={10.5} fill="none" stroke="#fff" strokeWidth={1} />
+              </Svg>
             </View>
           </Marker>
         )}
