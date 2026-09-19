@@ -6,6 +6,7 @@
 // screen for a manual retry.
 import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
+import { cellToLatLng } from 'h3-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { TileOwnerRow } from '@/lib/leaderboard';
@@ -14,7 +15,8 @@ import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtCellPattern } from '@/lib/district';
-import { isCurrentTileRes, pathToTiles } from '@/lib/tiles';
+import { enclosedCells } from '@/lib/enclosure';
+import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
@@ -131,6 +133,12 @@ export interface TileClaimResult {
    *  against which cells) that's out of scope this pass, see the executor's
    *  report. */
   rivalCells: string[];
+  /** Cycle bonus: 10 pts awarded when this run's path significantly overlaps
+   *  the runner's own existing territory (≥ CYCLE_MIN_TILES path cells are
+   *  already owned). Computed client-side in uploadRun() — not from the SQL
+   *  RPC — so it is only available on a successful sync, never on a cached or
+   *  replayed claim. Absent when no qualifying overlap was detected. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number } };
 }
 
 export type TileClaimOutcome =
@@ -386,25 +394,72 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // ground claimed exactly as it applies to ground enclosed. See tiles.ts
     // §3 for why this isn't a naive per-fix conversion.
     const cells = pathToTiles(run.points).cells;
-    // Enclosure comes in already computed and already zone-filtered — see
-    // RunUpload.enclosedCells for why it cannot be derived here.
+    const cellSet = new Set(cells);
+
+    // Union-based enclosure: a runner who completes the 4th side of a block
+    // already bounded on 3 sides by their own past territory earns the
+    // interior — same Qix/Paper.io mechanic as per-run enclosure, just
+    // across sessions. This reads territory_tiles once per upload (not per
+    // tick), so the cost is one extra round-trip at save time. Non-fatal:
+    // any failure falls back to run.enclosedCells (per-run, already computed
+    // at session end in index.tsx from the unmasked path — the case that
+    // matters for home loops where masking would cut the ring open).
     //
-    // Sampling holes are NOT filled here, and that was measured rather than
-    // assumed. A first pass added them at claim time on the theory that the
-    // union of many runs leaves holes no single run enclosed. It does — in
-    // `tile_visits`. It does NOT in territory: measured 2026-09-09, the
-    // heaviest runner had 38 holes across 919 visited cells and ZERO across
-    // 1 057 owned ones. Per-run enclosure already covers it, because one
-    // out-and-back down an avenue encloses the strip between its two passes.
-    // Filling here would have bought nothing and charged a full paged read of
-    // tile_visits before every upload. The fill lives at render on the
-    // history map, which is the only surface that applies no enclosure at
-    // all. Re-run `npm run measure-holes` before reviving this.
-    const claim = await claimTiles(data.id, cells, region, run.enclosedCells ?? []);
+    // Sampling holes are NOT filled here — measured 2026-09-09: zero holes
+    // existed in owned territory vs 38 in visited cells; per-run enclosure
+    // already covers the avenue-strip case. Re-run `npm run measure-holes`
+    // before changing that conclusion.
+    // Minimum overlap (path tiles already owned) to qualify for a cycle bonus.
+    const CYCLE_MIN_TILES = 50;
+    const CYCLE_PTS = 10;
+    let cycleBonus: TileClaimResult['cycleBonus'];
+    let unionNewEnclosed: string[] = [];
+    try {
+      const { data: ownedRows } = await supabase
+        .from('territory_tiles')
+        .select('h3')
+        .eq('owner_id', session.user.id);
+      if (ownedRows && ownedRows.length > 0) {
+        const ownedSet = new Set(
+          (ownedRows as { h3: string }[])
+            .map((r) => r.h3)
+            .filter((h) => isCurrentTileRes(h)),
+        );
+
+        // Cycle detection: path cells the runner already owned before this run.
+        const ownedPathCells = cells.filter((c) => ownedSet.has(c));
+        if (ownedPathCells.length >= CYCLE_MIN_TILES) {
+          let latSum = 0;
+          let lngSum = 0;
+          for (const cell of ownedPathCells) {
+            const [lat, lng] = cellToLatLng(cell);
+            latSum += lat;
+            lngSum += lng;
+          }
+          cycleBonus = {
+            pts: CYCLE_PTS,
+            center: { lat: latSum / ownedPathCells.length, lng: lngSum / ownedPathCells.length },
+          };
+        }
+
+        const union = [...new Set([...cells, ...ownedSet])];
+        const enclosed = enclosedCells(union, DEFAULT_TILE_RES);
+        // Only cells not already owned and not visited this run — owned ones
+        // the SQL upsert skips anyway, visited ones are handled via cells.
+        unionNewEnclosed = enclosed.filter((c) => !ownedSet.has(c) && !cellSet.has(c));
+      }
+    } catch {
+      // Non-fatal — fall through to per-run enclosure only.
+    }
+
+    const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
+    const claim = await claimTiles(data.id, cells, region, allEnclosed);
+    const claimResult = claim.ok ? claim.result : null;
+    if (claimResult && cycleBonus) claimResult.cycleBonus = cycleBonus;
     return {
       ok: true,
       runId: data.id,
-      tiles: claim.ok ? claim.result : null,
+      tiles: claimResult,
       // 'disabled'/'auth' cannot reach here — uploadRun already passed the
       // same withSession guard to insert the run above.
       tilesReason: claim.ok ? undefined : (claim.reason as 'tooOld' | 'rejected' | 'network'),

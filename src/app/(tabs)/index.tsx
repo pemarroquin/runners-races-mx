@@ -146,15 +146,29 @@ export default function TrackScreen() {
   // map. `label` is computed here, not inside FenceMap, so the map
   // components (both platforms) stay dumb about i18n, same convention as
   // `controls.zoomInLabel` etc.
-  const takenClusters = useMemo(
-    () =>
-      clusterCells(tileClaim?.takenCells ?? []).map((cluster) => ({
-        center: cluster.center,
-        count: cluster.count,
-        label: t('track.tookTiles', { count: cluster.count }),
-      })),
-    [tileClaim, t],
-  );
+  // Single consolidated "+N" bubble at the weighted centroid of ALL taken
+  // cells — one marker instead of one per contiguous patch. A scattered
+  // conquest (e.g. two disconnected streets) still reads clearly because
+  // the count is the total and the pin lands roughly at the run's midpoint.
+  const takenClusters = useMemo(() => {
+    const cells = tileClaim?.takenCells ?? [];
+    if (cells.length === 0) return [];
+    const clusters = clusterCells(cells);
+    const total = cells.length;
+    let latSum = 0;
+    let lngSum = 0;
+    for (const c of clusters) {
+      latSum += c.center.lat * c.count;
+      lngSum += c.center.lng * c.count;
+    }
+    return [
+      {
+        center: { lat: latSum / total, lng: lngSum / total },
+        count: total,
+        label: t('track.tookTiles', { count: total }),
+      },
+    ];
+  }, [tileClaim, t]);
   // The conquered-tiles bubble's place name — districtLabel's real municipio
   // by majority vote over this run's district's park cells (best-effort,
   // fetched once the run lands), falling back to the metro region computed
@@ -813,6 +827,9 @@ export default function TrackScreen() {
             // The "+N" conquest bubbles — see takenClusters' own comment
             // above. Empty until claimTiles() resolves, same as rivalTiles.
             takenClusters={takenClusters}
+            // Blue cycle-bonus marker — non-null once the claim resolves and
+            // enough of the run's path overlapped existing owned territory.
+            cycleBonus={tileClaim?.cycleBonus}
             color={fenceColor}
             others={[]}
             excludeId={savedRunId}

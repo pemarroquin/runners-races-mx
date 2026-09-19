@@ -58,6 +58,11 @@ import { DEFAULT_TILE_RES, pathToTiles, tilesAreaM2 } from '@/lib/tiles';
 import { formatArea, formatDistance, formatDuration, formatPace } from '@/lib/tracking';
 import { listQueued, removeQueued, type QueuedRun } from '@/lib/upload-queue';
 
+// Enough vertical space to clear the compact detail card when open, so the
+// map controls are always reachable. The card (header + stats + actions +
+// padding + gaps) is ~145 px at its smallest; 180 adds a comfortable margin.
+const DETAIL_BUBBLE_LIFT = 180;
+
 /** Same three sync-failure keys myraces.tsx's DetailCard used — the
  *  `track.*` namespace is inherited from where this copy was first written,
  *  not from where it's read; see that file's own note before this moved. */
@@ -92,6 +97,7 @@ export function AchievementsView({
 
   const [fences, setFences] = useState<FencesOutcome | null>(null);
   const [runCells, setRunCells] = useState<RunCells[] | null>(null);
+  const [runCellsReady, setRunCellsReady] = useState(false);
   const [queued, setQueued] = useState<QueuedRun[]>([]);
   const refreshQueued = useCallback(() => setQueued(listQueued()), []);
 
@@ -110,12 +116,16 @@ export function AchievementsView({
     let stale = false;
     const id = setTimeout(() => {
       setFences(null);
+      setRunCellsReady(false);
       refreshQueued();
       fetchMyFences().then((outcome) => {
         if (!stale) setFences(outcome);
       });
       fetchMyVisitedCells().then((outcome) => {
-        if (!stale) setRunCells(outcome.ok ? outcome.runs : null);
+        if (!stale) {
+          setRunCells(outcome.ok ? outcome.runs : null);
+          setRunCellsReady(true);
+        }
       });
     }, 0);
     return () => {
@@ -127,16 +137,18 @@ export function AchievementsView({
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setRunCellsReady(false);
     refreshQueued();
     const [outcome, cells] = await Promise.all([fetchMyFences(), fetchMyVisitedCells()]);
     setFences(outcome);
     setRunCells(cells.ok ? cells.runs : null);
+    setRunCellsReady(true);
     setRefreshing(false);
   }, [refreshQueued]);
 
   const [selection, setSelection] = useState<Selection | null>(null);
 
-  if (fences === null) {
+  if (fences === null || !runCellsReady) {
     return (
       <View style={styles.emptyWrap}>
         <ActivityIndicator color={c.textSecondary} />
@@ -168,19 +180,24 @@ export function AchievementsView({
   const cellsByRun = new Map((runCells ?? []).map(({ runId, cells }) => [runId, cells]));
   const savedFeatures: TerritoryFeature[] = fences.fences
     .map((f) => {
-      const cells = cellsByRun.get(f.id);
-      const geometry: Polygon | MultiPolygon | null = cells?.length
-        ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(groundOfRun(cells, DEFAULT_TILE_RES), true) }
+      const rawCells = cellsByRun.get(f.id);
+      // groundOfRun gives the full tile footprint (direct path + enclosed cells)
+      // — same set used for totalTilesSet and for the geometry below, so `cells`
+      // here is exactly what cellsToMultiPolygon and buildMergedFills both see.
+      const cells = rawCells?.length ? groundOfRun(rawCells, DEFAULT_TILE_RES) : [];
+      const geometry: Polygon | MultiPolygon | null = cells.length
+        ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cells, true) }
         : f.geometry;
-      return { fence: f, geometry };
+      return { fence: f, geometry, cells };
     })
     .filter((f) => f.geometry !== null)
-    .map(({ fence, geometry }) => ({
+    .map(({ fence, geometry, cells }) => ({
       id: fence.id,
       kind: 'saved' as const,
       geometry: geometry!,
       route: fence.route,
       startedAtMs: fence.startedAtMs,
+      cells,
     }));
   const pendingFeatures: TerritoryFeature[] = queued.map((q) => {
     const cells = groundOfRun(pathToTiles(q.run.points).cells, DEFAULT_TILE_RES);
@@ -192,6 +209,7 @@ export function AchievementsView({
         : q.run.fence.geometry.geometry,
       route: q.run.points,
       startedAtMs: q.run.startedAt,
+      cells: [],
     };
   });
   const features = [...savedFeatures, ...pendingFeatures];
@@ -247,7 +265,11 @@ export function AchievementsView({
               zoomOutLabel: t('track.zoomOut'),
               refitLabel: t('myraces.fencesRefit'),
             }}
-            controlsBottomOffset={BottomTabInset + Spacing.three}
+            controlsBottomOffset={
+              selection
+                ? BottomTabInset + Spacing.three + DETAIL_BUBBLE_LIFT
+                : BottomTabInset + Spacing.three
+            }
             // This screen lives inside a Tabs navigator, which never
             // unmounts a tab on switching away from it — without this, the
             // map's two animation timers (gradient flow + shimmer) kept

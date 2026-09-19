@@ -350,8 +350,19 @@ indistinguishable from one reading 0% because nobody ran.
   `alignItems: 'center'` and `paddingHorizontal: 16`, holding a pill at
   `width: barWidth, maxWidth: '100%'` — Yoga resolves both against the same
   box). Rule: if a layout can be expressed in flex, do not compute it from a
-  measured viewport. `races.tsx`, `filter-popover.tsx` and `buy-sheet.tsx`
-  still read `useWindowDimensions()` and carry the same latent exposure.
+  measured viewport.
+  Where a NUMBER is genuinely unavoidable — `races.tsx`'s carousel card width
+  feeds `snapToInterval`, which flex cannot express — measure the container
+  with `onLayout` instead of reading the window. `onLayout` reports the real
+  Yoga box, the same coordinate system the children lay out in, so it cannot
+  disagree with them; a visual pinch-zoom leaves the layout viewport alone,
+  doesn't fire it, and correctly doesn't need to. The one cost is that the
+  measurement starts at 0 and lands on the first layout pass — fine there
+  only because every carousel mounts inside `FadeInDown` (opacity 0 on frame
+  one), so nothing is painted before the width is known. Check that a fade
+  actually covers the first frame before copying the pattern.
+  `filter-popover.tsx` and `buy-sheet.tsx` still read `useWindowDimensions()`
+  and carry the same latent exposure.
 
 ## Project shape
 
