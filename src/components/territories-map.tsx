@@ -12,14 +12,61 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
+import { cellsToMultiPolygon } from 'h3-js';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import { outerRings, type LatLng } from '@/lib/territory';
+import { clusterCells } from '@/lib/tiles';
 
 const PENDING_COLOR = '#8E8E93';
+
+interface MergedGroup {
+  id: string;
+  geometry: MultiPolygon;
+  color: string;
+}
+
+function buildMergedGroups(
+  features: TerritoryFeature[],
+  colorMap: Map<string, string>,
+): MergedGroup[] {
+  const savedFeatures = features.filter((f) => f.kind === 'saved' && f.cells.length > 0);
+  if (savedFeatures.length === 0) return [];
+
+  const cellToRun = new Map<string, { id: string; startedAtMs: number; color: string }>();
+  for (const f of savedFeatures) {
+    const color = colorMap.get(f.id) ?? PENDING_COLOR;
+    for (const cell of f.cells) {
+      const existing = cellToRun.get(cell);
+      if (!existing || f.startedAtMs > existing.startedAtMs) {
+        cellToRun.set(cell, { id: f.id, startedAtMs: f.startedAtMs, color });
+      }
+    }
+  }
+
+  const clusters = clusterCells([...cellToRun.keys()]);
+  return clusters.map((cluster) => {
+    let latestMs = -Infinity;
+    let latestId = '';
+    let latestColor = PENDING_COLOR;
+    for (const cell of cluster.cells) {
+      const run = cellToRun.get(cell);
+      if (run && run.startedAtMs > latestMs) {
+        latestMs = run.startedAtMs;
+        latestId = run.id;
+        latestColor = run.color;
+      }
+    }
+    return {
+      id: latestId,
+      geometry: { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cluster.cells, true) },
+      color: latestColor,
+    };
+  });
+}
 const PENDING_FILL_ALPHA = 0.14;
 const PENDING_STROKE_ALPHA = 0.7;
 const SAVED_FILL_ALPHA = 0.3;
@@ -83,6 +130,11 @@ export function TerritoriesMap({
     [features],
   );
 
+  const mergedGroups = useMemo(
+    () => buildMergedGroups(features, colorMap),
+    [features, colorMap],
+  );
+
   const fitCoords = useMemo(() => boundsCoordsOf(features), [features]);
   useEffect(() => {
     if (fitCoords.length === 0) return;
@@ -123,14 +175,25 @@ export function TerritoriesMap({
         userInterfaceStyle="dark"
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
-        {features.map((f) => (
-          <Feature
-            key={`${f.kind}:${f.id}`}
-            feature={f}
-            color={colorMap.get(f.id)}
-            onSelect={onSelect}
-          />
+        {/* Merged fills: adjacent tiles from different runs dissolve into one
+            polygon per connected component. Click routes to the most-recent
+            run in that component (matches web's MERGED_FILLS_SRC behaviour). */}
+        {mergedGroups.map((group, i) => (
+          <MergedFill key={`merged:${i}`} group={group} onSelect={onSelect} />
         ))}
+        {/* Per-run route polylines for saved features — kept separate so each
+            run's own GPS path still shows even when its fill merged with others. */}
+        {features
+          .filter((f) => f.kind === 'saved' && f.route && f.route.length >= 2)
+          .map((f) => (
+            <FeatureRoute key={`route:${f.id}`} feature={f} />
+          ))}
+        {/* Pending features — their own polygon fill + dashed outline. */}
+        {features
+          .filter((f) => f.kind === 'pending')
+          .map((f) => (
+            <Feature key={`pending:${f.id}`} feature={f} color={undefined} onSelect={onSelect} />
+          ))}
       </MapView>
       {controls && (
         <View
@@ -180,6 +243,51 @@ function MapButton({
   );
 }
 
+function MergedFill({
+  group,
+  onSelect,
+}: {
+  group: MergedGroup;
+  onSelect: (id: string, kind: 'saved' | 'pending') => void;
+}) {
+  const rings = useMemo(() => polygonRings(group.geometry), [group.geometry]);
+  const press = () => onSelect(group.id, 'saved');
+  return (
+    <>
+      {rings.map((ring, i) => (
+        <Polygon
+          key={i}
+          coordinates={ringToCoords(ring[0])}
+          holes={ring.slice(1).map(ringToCoords)}
+          fillColor={withAlpha(group.color, SAVED_FILL_ALPHA)}
+          strokeColor={withAlpha(group.color, SAVED_STROKE_ALPHA)}
+          strokeWidth={1.5}
+          tappable
+          onPress={press}
+        />
+      ))}
+    </>
+  );
+}
+
+function FeatureRoute({ feature }: { feature: TerritoryFeature }) {
+  const routeCoords = useMemo(
+    (): MapCoord[] => (feature.route ?? []).map((p) => ({ latitude: p.lat, longitude: p.lng })),
+    [feature.route],
+  );
+  const routeColors = useMemo(() => gradientStrokeColors(routeCoords.length), [routeCoords.length]);
+  if (routeCoords.length < 2) return null;
+  return (
+    <Polyline
+      coordinates={routeCoords}
+      strokeWidth={ROUTE_LINE_WIDTH}
+      strokeColors={routeColors}
+      lineCap="round"
+      lineJoin="round"
+    />
+  );
+}
+
 function Feature({
   feature,
   color: colorProp,
@@ -190,15 +298,7 @@ function Feature({
   onSelect: (id: string, kind: 'saved' | 'pending') => void;
 }) {
   const rings = useMemo(() => polygonRings(feature.geometry), [feature.geometry]);
-  const color = feature.kind === 'saved' ? (colorProp ?? PENDING_COLOR) : PENDING_COLOR;
-  const routeCoords = useMemo(
-    (): MapCoord[] => (feature.route ?? []).map((p) => ({ latitude: p.lat, longitude: p.lng })),
-    [feature.route],
-  );
-  const routeColors = useMemo(
-    () => gradientStrokeColors(routeCoords.length),
-    [routeCoords.length],
-  );
+  const color = PENDING_COLOR;
   const press = () => onSelect(feature.id, feature.kind);
 
   return (
@@ -208,28 +308,14 @@ function Feature({
           key={i}
           coordinates={ringToCoords(ring[0])}
           holes={ring.slice(1).map(ringToCoords)}
-          fillColor={withAlpha(color, feature.kind === 'saved' ? SAVED_FILL_ALPHA : PENDING_FILL_ALPHA)}
-          strokeColor={withAlpha(color, feature.kind === 'saved' ? SAVED_STROKE_ALPHA : PENDING_STROKE_ALPHA)}
-          strokeWidth={feature.kind === 'saved' ? 1.5 : 2}
-          // iOS-only per react-native-maps — Android pending fences fall
-          // back to a solid outline, an accepted platform difference (same
-          // posture as this codebase's other native-vs-web gaps).
-          lineDashPattern={feature.kind === 'pending' ? [4, 4] : undefined}
+          fillColor={withAlpha(color, PENDING_FILL_ALPHA)}
+          strokeColor={withAlpha(color, PENDING_STROKE_ALPHA)}
+          strokeWidth={2}
+          lineDashPattern={[4, 4]}
           tappable
           onPress={press}
         />
       ))}
-      {feature.kind === 'saved' && routeCoords.length >= 2 && (
-        // Decorative only, no onPress — the Polygon above is the real tap
-        // target, matching fence-map.tsx's own route-vs-fence split.
-        <Polyline
-          coordinates={routeCoords}
-          strokeWidth={ROUTE_LINE_WIDTH}
-          strokeColors={routeColors}
-          lineCap="round"
-          lineJoin="round"
-        />
-      )}
     </>
   );
 }
