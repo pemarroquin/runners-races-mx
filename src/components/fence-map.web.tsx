@@ -41,6 +41,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } 
 
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
+import { conquestMarkerGeometry, conquestMarkerHtml } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
   EMISSIVE_STRENGTH_FULL,
@@ -54,7 +55,6 @@ import {
   ROUTE_GRADIENT,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
-  START_MARKER_COLOR,
   TILE_DISSOLVE_THRESHOLD,
   TILE_FILL_OPACITY,
   TILE_RIVAL_COLOR,
@@ -460,9 +460,9 @@ export function FenceMap({
         if (p.length > 0) {
           const startEl = document.createElement('div');
           startEl.style.cssText =
-            `width:16px;height:16px;border-radius:50%;background:${START_MARKER_COLOR};` +
-            'border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.45);';
-          startMarkerRef.current = new mapboxgl.Marker({ element: startEl })
+            'width:3px;height:20px;border-radius:1.5px;background:#fff;' +
+            'box-shadow:0 1px 5px rgba(0,0,0,0.5);';
+          startMarkerRef.current = new mapboxgl.Marker({ element: startEl, anchor: 'center' })
             .setLngLat([p[0].lng, p[0].lat])
             .addTo(map);
         }
@@ -564,21 +564,21 @@ export function FenceMap({
       const map = mapRef.current;
       if (cancelled || !map) return;
       for (const marker of takenMarkersRef.current) marker.remove();
-      takenMarkersRef.current = takenClusters.map((cluster) => {
+      takenMarkersRef.current = takenClusters.map((cluster, i) => {
         const el = document.createElement('div');
         el.setAttribute('role', 'img');
         el.setAttribute('aria-label', cluster.label);
-        el.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
-        el.innerHTML =
-          `<div style="min-width:28px;height:28px;padding:0 7px;border-radius:14px;` +
-          `background:linear-gradient(180deg,#9166ff,#7c3aed);color:#fff;` +
-          `font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;` +
-          `display:flex;align-items:center;justify-content:center;` +
-          `box-shadow:0 2px 8px rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.55);">` +
-          `+${cluster.count}</div>` +
-          `<div style="width:0;height:0;border-left:6px solid transparent;` +
-          `border-right:6px solid transparent;border-top:7px solid #7c3aed;margin-top:-1px;"></div>`;
-        return new mapboxgl.Marker({ element: el, anchor: 'bottom' as const })
+        el.style.cssText = 'position:relative;line-height:0;pointer-events:none;';
+        el.innerHTML = conquestMarkerHtml(cluster.count, i);
+        // The element carries a margin for the blurred shadow, so its bottom
+        // edge is NOT the tip — push it down by the difference so the tip
+        // lands on the coordinate (lib/conquest-marker's webOffsetY).
+        const { webOffsetY } = conquestMarkerGeometry(cluster.count);
+        return new mapboxgl.Marker({
+          element: el,
+          anchor: 'bottom' as const,
+          offset: [0, webOffsetY],
+        })
           .setLngLat([cluster.center.lng, cluster.center.lat])
           .addTo(map);
       });

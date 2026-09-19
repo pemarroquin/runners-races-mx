@@ -21,20 +21,21 @@
 // territories stay tellable apart without a legend.
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
+import { ConquestMarker } from '@/components/conquest-marker';
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
+import { conquestMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
   fenceColorForRun,
   GOOGLE_DARK_MAP_STYLE,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
-  START_MARKER_COLOR,
   TILE_DISSOLVE_THRESHOLD,
   TILE_FILL_OPACITY,
   TILE_RIVAL_COLOR,
@@ -122,6 +123,24 @@ export function FenceMap({
   controls,
 }: FenceMapProps) {
   const mapRef = useRef<MapView | null>(null);
+  // react-native-maps snapshots a custom marker view into a bitmap once
+  // `tracksViewChanges` goes false. The old "+N" bubble was plain Views, which
+  // are laid out by the time the marker mounts; the replacement is an <Svg>,
+  // whose native view reports its content a frame or two later — snapshot it
+  // too early on Android and the marker is a blank rectangle for good. So
+  // track briefly, then stop (tracking every frame is the documented cause of
+  // map jank, which is why this isn't simply left on).
+  // Starts true and only ever goes false: `takenClusters` resolves once, on
+  // the single claimTiles() round trip after the run saved, and never changes
+  // again on this screen — so there is nothing to re-arm for, and flipping it
+  // back here would be a setState in an effect body (the cascading-render
+  // lint). The window opens when the markers actually exist, not at mount.
+  const [trackTakenMarkers, setTrackTakenMarkers] = useState(true);
+  useEffect(() => {
+    if (takenClusters.length === 0) return;
+    const id = setTimeout(() => setTrackTakenMarkers(false), 800);
+    return () => clearTimeout(id);
+  }, [takenClusters]);
 
   const highlightRings = useMemo(() => polygonRings(geometry), [geometry]);
   const highlightPolys = useMemo(
@@ -329,7 +348,7 @@ export function FenceMap({
             coordinate={{ latitude: path[0].lat, longitude: path[0].lng }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}>
-            <View style={styles.startDot} />
+            <View style={styles.startBar} />
           </Marker>
         )}
         {path.length > 1 && (
@@ -348,15 +367,13 @@ export function FenceMap({
           <Marker
             key={`taken-${i}`}
             coordinate={{ latitude: cluster.center.lat, longitude: cluster.center.lng }}
-            anchor={{ x: 0.5, y: 1 }}
+            // Not `y: 1`: the marker's drawing surface carries a margin for
+            // the blurred shadow, so the tip is above the view's bottom edge.
+            // anchorY is where the tip actually falls (lib/conquest-marker).
+            anchor={{ x: 0.5, y: conquestMarkerGeometry(cluster.count).anchorY }}
             accessibilityLabel={cluster.label}
-            tracksViewChanges={false}>
-            <View style={styles.takenBubbleWrap}>
-              <View style={styles.takenBubble}>
-                <Text style={styles.takenBubbleText}>+{cluster.count}</Text>
-              </View>
-              <View style={styles.takenBubbleTail} />
-            </View>
+            tracksViewChanges={trackTakenMarkers}>
+            <ConquestMarker count={cluster.count} />
           </Marker>
         ))}
       </MapView>
@@ -437,49 +454,18 @@ function regionAround(coords: MapCoord[]) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, overflow: 'hidden' },
-  startDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: START_MARKER_COLOR,
-    borderWidth: 2.5,
-    borderColor: '#fff',
+  startBar: {
+    width: 3,
+    height: 20,
+    borderRadius: 1.5,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   finishFlag: { fontSize: 18 },
-  takenBubbleWrap: { alignItems: 'center' },
-  takenBubble: {
-    minWidth: 28,
-    height: 28,
-    paddingHorizontal: 7,
-    borderRadius: 14,
-    backgroundColor: '#7c3aed',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
-  },
-  takenBubbleText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-  },
-  takenBubbleTail: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 7,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#7c3aed',
-    marginTop: -1,
-  },
   mapControls: {
     position: 'absolute',
     right: Spacing.three,
