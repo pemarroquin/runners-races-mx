@@ -330,6 +330,18 @@ export type SyncOutcome =
        *  only explains the claim. 'tooOld' in particular is not a failure
        *  the runner caused, and the summary must not describe it as one. */
       tilesReason?: 'tooOld' | 'rejected' | 'network';
+      /**
+       * Present only when the paged read of the runner's OWNED tiles (union
+       * enclosure's input, below) failed outright — never set on a read that
+       * completed and simply found little or nothing to enclose. Same
+       * "distinct reason, not folded into a boolean" posture as `tilesReason`:
+       * a caller that ignores this field loses nothing it had before (union
+       * enclosure still degrades to `run.enclosedCells` exactly as it did
+       * pre-paging), but one that wants to know WHY a run's enclosure looked
+       * thin now can — a swallowed failure and a real "nothing to enclose"
+       * used to be the same value on the wire.
+       */
+      unionEnclosureReason?: 'network';
     }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
 
@@ -353,7 +365,11 @@ export type SyncOutcome =
  * the executor's report.
  */
 export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
-  return withSession<{ runId: string; tiles: TileClaimResult | null }>(async (session) => {
+  return withSession<{
+    runId: string;
+    tiles: TileClaimResult | null;
+    unionEnclosureReason?: 'network';
+  }>(async (session) => {
     const first = run.points[0];
     const region = first ? nearestRegion(first.lat, first.lng)?.id ?? null : null;
 
@@ -414,17 +430,53 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     const CYCLE_PTS = 10;
     let cycleBonus: TileClaimResult['cycleBonus'];
     let unionNewEnclosed: string[] = [];
+    // Set only when the paged read below failed outright (a returned error,
+    // or a thrown exception) — never when it succeeded and simply found
+    // little or nothing to enclose. See SyncOutcome's field of the same name.
+    let unionEnclosureReason: 'network' | undefined;
     try {
-      const { data: ownedRows } = await supabase
-        .from('territory_tiles')
-        .select('h3')
-        .eq('owner_id', session.user.id);
-      if (ownedRows && ownedRows.length > 0) {
-        const ownedSet = new Set(
-          (ownedRows as { h3: string }[])
-            .map((r) => r.h3)
-            .filter((h) => isCurrentTileRes(h)),
-        );
+      // PAGED, same idiom as fetchMyVisitedCells/fetchMyClaimedCells further
+      // down this file — PostgREST caps a response at 1000 rows. This read
+      // was a single unpaged request until 2026-09-20 and never checked
+      // `error` either: a runner past 1000 owned tiles (crossed in
+      // production on 2026-09-08; 6,049 owned as of today) got `ownedSet`
+      // silently truncated to an arbitrary 1000-row slice, so union
+      // enclosure reasoned about a fraction of the runner's real territory
+      // and the cycle-bonus check below ran against the same truncated
+      // slice — both wrong in the same silent way fetchMyVisitedCells's own
+      // header describes: "a wrong answer that looks like a complete one".
+      const PAGE = 1000;
+      const ownedRows: { h3: string }[] = [];
+      let pageFailed = false;
+      for (let offset = 0; ; offset += PAGE) {
+        const { data: page, error } = await supabase
+          .from('territory_tiles')
+          .select('h3')
+          .eq('owner_id', session.user.id)
+          // h3 is the primary key, so it is unique and a total order —
+          // ordering makes paging deterministic (see fetchMyVisitedCells's
+          // comment on the same idiom for why an unordered offset page can
+          // skip a row).
+          .order('h3', { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error) {
+          pageFailed = true;
+          break;
+        }
+        if (!page || page.length === 0) break;
+        ownedRows.push(...(page as { h3: string }[]));
+        if (page.length < PAGE) break;
+      }
+
+      if (pageFailed) {
+        // Do NOT compute against whatever partial pages did arrive — that
+        // would reintroduce a truncated (now non-deterministic) ownedSet
+        // instead of a fixed 1000-row one. Degrade all the way to per-run
+        // enclosure, same as before, but say so rather than looking like a
+        // read that completed and found nothing.
+        unionEnclosureReason = 'network';
+      } else if (ownedRows.length > 0) {
+        const ownedSet = new Set(ownedRows.map((r) => r.h3).filter((h) => isCurrentTileRes(h)));
 
         // Cycle detection: path cells the runner already owned before this run.
         const ownedPathCells = cells.filter((c) => ownedSet.has(c));
@@ -449,7 +501,10 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
         unionNewEnclosed = enclosed.filter((c) => !ownedSet.has(c) && !cellSet.has(c));
       }
     } catch {
-      // Non-fatal — fall through to per-run enclosure only.
+      // A thrown (not returned) failure mid-loop — e.g. a network exception
+      // rather than a Postgres error payload. Same non-fatal degrade as a
+      // returned error: fall through to per-run enclosure only.
+      unionEnclosureReason = 'network';
     }
 
     const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
@@ -463,6 +518,7 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       // 'disabled'/'auth' cannot reach here — uploadRun already passed the
       // same withSession guard to insert the run above.
       tilesReason: claim.ok ? undefined : (claim.reason as 'tooOld' | 'rejected' | 'network'),
+      unionEnclosureReason,
     };
   });
 }
