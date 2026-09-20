@@ -40,12 +40,13 @@ import { districtLabel, districtOf } from '@/lib/district';
 import { dropCellsInsideZone, enclosedCells } from '@/lib/enclosure';
 import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
+import { pickMarkerAnchor } from '@/lib/marker-anchor';
 import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, type FenceResult } from '@/lib/territory';
 import { uploadRun, type TileClaimResult } from '@/lib/territory-sync';
-import { clusterCells, DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
+import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
@@ -146,36 +147,23 @@ export default function TrackScreen() {
   // map. `label` is computed here, not inside FenceMap, so the map
   // components (both platforms) stay dumb about i18n, same convention as
   // `controls.zoomInLabel` etc.
-  // Single consolidated "+N" bubble at the weighted centroid of ALL taken
-  // cells — one marker instead of one per contiguous patch. A scattered
-  // conquest (e.g. two disconnected streets) still reads clearly because
-  // the count is the total and the pin lands roughly at the run's midpoint.
+  // Single consolidated "+N" bubble, snapped onto the main conquered area
+  // (pickMarkerAnchor, lib/marker-anchor.ts) — one marker instead of one per
+  // contiguous patch. Was the weighted-mean centroid of ALL taken cells
+  // before (reported 2026-09-20): the arithmetic mean of a non-convex run
+  // shape (a V, an L, a horseshoe) falls outside the shape entirely, so the
+  // pin landed on ground the runner never ran. `count`/`label` still report
+  // the TOTAL across every cluster — only the marker's own coordinate is
+  // now confined to the largest cluster, snapped to one of its own cells.
   const takenClusters = useMemo(() => {
     const cells = tileClaim?.takenCells ?? [];
     if (cells.length === 0) return [];
-    const clusters = clusterCells(cells);
+    const anchor = pickMarkerAnchor(cells);
+    if (!anchor) return [];
     const total = cells.length;
-    let latSum = 0;
-    let lngSum = 0;
-    // Denominator for the weighted mean is Σ clusters[].count, NOT
-    // cells.length. clusterCells (tiles.ts) starts from `new Set(cells)`, so
-    // it deduplicates — Σ clusters[].count is the number of DISTINCT cells,
-    // which can be smaller than cells.length if the input carries
-    // duplicates. Dividing the lat/lng sum by the larger, un-deduplicated
-    // `total` would scale the centroid toward (0, 0), throwing the marker
-    // tens of km from Monterrey for even a small duplicate rate. `count:`
-    // below is deliberately left as `total` — the number shown to the
-    // runner is the taken-cell count (duplicates and all), only the
-    // centroid divisor needs to match what was actually summed.
-    let clusteredTotal = 0;
-    for (const c of clusters) {
-      latSum += c.center.lat * c.count;
-      lngSum += c.center.lng * c.count;
-      clusteredTotal += c.count;
-    }
     return [
       {
-        center: { lat: latSum / clusteredTotal, lng: lngSum / clusteredTotal },
+        center: anchor,
         count: total,
         label: t('track.tookTiles', { count: total }),
       },
