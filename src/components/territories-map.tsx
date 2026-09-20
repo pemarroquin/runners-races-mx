@@ -10,14 +10,14 @@
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import MapView, { Polygon, Polyline } from 'react-native-maps';
+import MapView, { Polygon } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 import { cellsToMultiPolygon } from 'h3-js';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
-import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
+import { polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import { outerRings, type LatLng } from '@/lib/territory';
 import { clusterCells } from '@/lib/tiles';
 
@@ -71,7 +71,6 @@ const PENDING_FILL_ALPHA = 0.14;
 const PENDING_STROKE_ALPHA = 0.7;
 const SAVED_FILL_ALPHA = 0.3;
 const SAVED_STROKE_ALPHA = 0.55;
-const ROUTE_LINE_WIDTH = 5;
 const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 
 export interface TerritoryFeature {
@@ -181,13 +180,6 @@ export function TerritoriesMap({
         {mergedGroups.map((group, i) => (
           <MergedFill key={`merged:${i}`} group={group} onSelect={onSelect} />
         ))}
-        {/* Per-run route polylines for saved features — kept separate so each
-            run's own GPS path still shows even when its fill merged with others. */}
-        {features
-          .filter((f) => f.kind === 'saved' && f.route && f.route.length >= 2)
-          .map((f) => (
-            <FeatureRoute key={`route:${f.id}`} feature={f} />
-          ))}
         {/* Pending features — their own polygon fill + dashed outline. */}
         {features
           .filter((f) => f.kind === 'pending')
@@ -267,24 +259,6 @@ function MergedFill({
         />
       ))}
     </>
-  );
-}
-
-function FeatureRoute({ feature }: { feature: TerritoryFeature }) {
-  const routeCoords = useMemo(
-    (): MapCoord[] => (feature.route ?? []).map((p) => ({ latitude: p.lat, longitude: p.lng })),
-    [feature.route],
-  );
-  const routeColors = useMemo(() => gradientStrokeColors(routeCoords.length), [routeCoords.length]);
-  if (routeCoords.length < 2) return null;
-  return (
-    <Polyline
-      coordinates={routeCoords}
-      strokeWidth={ROUTE_LINE_WIDTH}
-      strokeColors={routeColors}
-      lineCap="round"
-      lineJoin="round"
-    />
   );
 }
 
