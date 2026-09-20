@@ -74,6 +74,12 @@ const PENDING_LINE_OPACITY = 0.7;
 // Click handler on this layer uses the per-feature `id` property (the most-recent
 // run in each connected component) to route onSelect to the right detail card.
 const MERGED_FILLS_SRC = 'terr-merged-fills';
+// Separate source for the territory rim — one continuous gradient line tracing
+// the OUTER boundary of the merged fills. Using the merged fills' outer rings
+// (not per-feature rings) means internal edges between adjacent runs' territories
+// never appear: only the true exterior boundary of the whole claimed area shows.
+const MERGED_RIM_SRC = 'terr-merged-rim';
+const MERGED_RIM_LAYER = `${MERGED_RIM_SRC}-line`;
 
 export interface TerritoryFeature {
   id: string;
@@ -224,6 +230,26 @@ function buildMergedFills(
   };
 }
 
+/** Extracts the outer rings of every polygon in a merged fills FeatureCollection
+ *  as LineStrings. These are the true exterior boundaries of claimed territory —
+ *  no internal edges between adjacent runs. */
+function buildMergedRimData(mergedData: FeatureCollection): FeatureCollection {
+  const lineFeatures: Feature[] = [];
+  for (const f of mergedData.features) {
+    if (f.geometry.type !== 'MultiPolygon') continue;
+    for (const polygon of f.geometry.coordinates) {
+      if (polygon[0] && polygon[0].length >= 2) {
+        lineFeatures.push({
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'LineString', coordinates: polygon[0] },
+        });
+      }
+    }
+  }
+  return { type: 'FeatureCollection', features: lineFeatures };
+}
+
 export function TerritoriesMap({
   features,
   onSelect,
@@ -268,6 +294,9 @@ export function TerritoriesMap({
   // Set true on first sync() after the map loads, reset in cleanup. When true,
   // subsequent sync() calls call setData() instead of addSource/addLayer.
   const mergedFillsMountedRef = useRef(false);
+  // Same flag for the merged rim — the single outer-boundary line layer that
+  // replaced all per-feature rimSrc layers.
+  const mergedRimMountedRef = useRef(false);
   // The freshest feature list, read by sync() below rather than closed over.
   // The map's own 'load' handler is registered once, inside a mount effect
   // that can never see a later render's props — but it is also the FIRST
@@ -335,6 +364,8 @@ export function TerritoriesMap({
     }
 
     flowLayersRef.current = [...flowIdsRef.current.values()].flat();
+    // Merged rim is appended after the per-feature flow ids; done below after
+    // the source is confirmed mounted.
     shimmerLayersRef.current = [...shimmerIdsRef.current.values()].flat();
 
     // Rebuild the merged fills source — dissolves all connected H3 tiles
@@ -368,6 +399,40 @@ export function TerritoriesMap({
         if (id && kind) onSelectRef.current(id, kind);
       });
       mergedFillsMountedRef.current = true;
+    }
+
+    // Merged rim — single gradient line tracing only the outer boundary of all
+    // claimed territory. Replaces per-feature rimSrc layers, which drew internal
+    // edges between adjacent runs and appeared as crisscrossing lines inside the fill.
+    const mergedRimData = buildMergedRimData(mergedData);
+    if (mergedRimMountedRef.current) {
+      stageLineData(map, MERGED_RIM_SRC, mergedRimData, isLive);
+    } else {
+      map.addSource(MERGED_RIM_SRC, {
+        type: 'geojson',
+        lineMetrics: true,
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: MERGED_RIM_LAYER,
+        type: 'line',
+        source: MERGED_RIM_SRC,
+        slot: MAP_SLOT_ROUTE,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-width': LIVE_FILL_OUTLINE_WIDTH,
+          'line-color': ROUTE_GRADIENT[0][1],
+          'line-gradient': lineGradientExpression(),
+          'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
+        },
+      });
+      stageLineData(map, MERGED_RIM_SRC, mergedRimData, isLive);
+      mergedRimMountedRef.current = true;
+    }
+    // Always keep the merged rim in the flow list — re-append after every sync
+    // so even if flowLayersRef was rebuilt from scratch above it still includes it.
+    if (!flowLayersRef.current.includes(MERGED_RIM_LAYER)) {
+      flowLayersRef.current = [...flowLayersRef.current, MERGED_RIM_LAYER];
     }
 
     const bounds = boundsOfAll(features);
@@ -444,6 +509,7 @@ export function TerritoriesMap({
       shimmerIdsRef.current = new Map();
       shimmerLayersRef.current = [];
       mergedFillsMountedRef.current = false;
+      mergedRimMountedRef.current = false;
     };
     // Built once; `sync` is stable, and all data flows through the ref it
     // reads.
@@ -595,8 +661,6 @@ function addFeatureLayers(
   isLive: () => boolean,
 ): { flowIds: string[]; shimmerIds: string[] } {
   const fillSrc = `terr-fill-${key}`;
-  const routeSrc = `terr-route-${key}`;
-  const rimSrc = `terr-rim-${key}`;
   const flowIds: string[] = [];
   // Saved territories only — a pending run has no per-run colour and must
   // keep reading as "not confirmed" rather than joining the shimmer.
@@ -641,54 +705,9 @@ function addFeatureLayers(
   // Saved features: fill + click are on the shared MERGED_FILLS_SRC layer
   // (built in sync()). No per-feature fillSrc needed here.
 
-  // The RIM — the territory's own boundary, carrying the flowing gradient
-  // once around itself. This is the saved-map twin of the live Track map's
-  // FILL_OUTLINE_SRC (constants/map.ts's LIVE_FILL_OUTLINE_WIDTH), and it is
-  // what makes "loops around each saved territory" literal: the fill keeps
-  // the run's own identity colour (needed to tell territories apart when
-  // several are on screen at once), so only the edge carries the shared
-  // iridescent ramp.
-  //
-  // One Feature per outer ring in one source, rather than a MultiLineString:
-  // `line-progress` is computed per feature, so each lobe of a MultiPolygon
-  // territory gets its own complete loop instead of sharing one ramp
-  // stretched across all of them.
-  if (f.kind === 'saved') {
-    map.addSource(rimSrc, {
-      type: 'geojson',
-      lineMetrics: true,
-      data: { type: 'FeatureCollection', features: [] },
-    });
-    map.addLayer({
-      id: rimSrc,
-      type: 'line',
-      source: rimSrc,
-      slot: MAP_SLOT_ROUTE,
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: {
-        'line-width': LIVE_FILL_OUTLINE_WIDTH,
-        'line-color': ROUTE_GRADIENT[0][1], // fallback — see the route layer below
-        'line-gradient': lineGradientExpression(),
-        'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
-      },
-    });
-    flowIds.push(rimSrc);
-    stageLineData(
-      map,
-      rimSrc,
-      {
-        type: 'FeatureCollection',
-        features: outerRings(f.geometry).map(
-          (ring): Feature => ({
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'LineString', coordinates: ring },
-          }),
-        ),
-      },
-      isLive,
-    );
-  }
+  // Saved features: rim is now a single MERGED_RIM_SRC layer added in sync()
+  // that traces only the outer boundary of ALL claimed territory — no internal
+  // edges between adjacent runs. Per-feature rimSrc layers are gone.
 
   return { flowIds, shimmerIds };
 }
@@ -727,14 +746,10 @@ function stageLineData(
 
 function removeFeatureLayers(map: MapboxMap, key: string) {
   const fillSrc = `terr-fill-${key}`;
-  const routeSrc = `terr-route-${key}`;
-  const rimSrc = `terr-rim-${key}`;
-  for (const id of [`${fillSrc}-extrusion`, `${fillSrc}-fill`, `${fillSrc}-dash`, routeSrc, rimSrc]) {
+  for (const id of [`${fillSrc}-extrusion`, `${fillSrc}-fill`, `${fillSrc}-dash`]) {
     if (map.getLayer(id)) map.removeLayer(id);
   }
-  for (const src of [fillSrc, routeSrc, rimSrc]) {
-    if (map.getSource(src)) map.removeSource(src);
-  }
+  if (map.getSource(fillSrc)) map.removeSource(fillSrc);
 }
 
 const styles = StyleSheet.create({
