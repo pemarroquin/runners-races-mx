@@ -102,23 +102,48 @@ Run `supabase/backfills/20260920_claim_run_id_provenance.sql` section by
 section — §1 (save the output), §2 (one paste), §3 (compare). Every query in
 it states its own PASS and STOP conditions.
 
-Two things to watch for specifically:
+**Know what a success looks like before you run it.** Measured on production
+2026-09-20, whole table:
 
+| | rows |
+|---|---|
+| total | 6,244 |
+| resolvable — get honest provenance | **4,807 (77%)** |
+| unresolvable — left exactly as they are | 1,437 (23%) |
+| …of which four hand-inserted batches | 1,389 |
+| …of which genuine conquest | 48 |
+
+So this repairs 77% of the table, not all of it. The ~1,389 hand-inserted
+rows stay pooled under a handful of runs because **no run exists that could
+own them** — they were written by hand-run SQL (earlier retro-enclosure
+passes, `convert-tile-res.ts`) that never recorded a winning run. My
+Achievements will break up substantially but not completely. **That is the
+correct outcome, not a partial failure.** Query 3.4 reports that population
+in full so it cannot be mistaken for damage.
+
+Three things to watch for specifically:
+
+- **§3 query 3.3 must return `0`.** That single number is the success
+  condition. 3.2, 3.5 and 3.6 are the other stop conditions.
+- **A few large rows surviving in query 3.1, and 1,437 in query 3.4, are
+  expected.** Neither is grounds for a rollback.
 - §2 is one transaction that **disables the immutability trigger** and
   re-enables it. A failure anywhere rolls the disable back with everything
-  else, and §2.6 asserts the trigger is on before committing. Run §3 query
-  3.6 afterwards anyway. If it ever reads `D`, run
-  `alter table territory_tiles enable trigger territory_tiles_immutable;`
-  immediately — until you do, anyone holding the anon key can reassign any
-  tile to themselves.
-- §3 query 3.3 must return **0**. That single number is the success
-  condition.
+  else, `alter table … disable trigger` takes SHARE ROW EXCLUSIVE so
+  concurrent uploads block rather than slip through unguarded, and §2.6
+  asserts the trigger is on before committing. Run §3 query 3.6 afterwards
+  anyway — a trigger left disabled is silent, and it is the only thing
+  standing between a permissive RLS update policy and anyone reassigning any
+  tile. If it ever reads `D`, run
+  `alter table territory_tiles enable trigger territory_tiles_immutable;`.
 
 ### 5. Check the app
 
-Open My Achievements. Expect distinct territory components in **different
-colours** instead of one blob, and per-run tile counts in the detail bubble
-that match the run that actually won the ground.
+Open My Achievements. Expect the single blob to break into **many distinct
+territory components** with per-run tile counts in the detail bubble that
+match the run that actually won the ground. Expect some large components to
+remain — those are the 1,389 hand-inserted cells, which genuinely have no
+better home.
 
-If a territory the map used to draw has disappeared, that is the one
+If a territory the map used to draw has **disappeared**, that is the one
 regression shape worth reverting for: run §4's rollback and report it.
