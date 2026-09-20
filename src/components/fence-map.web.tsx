@@ -196,6 +196,14 @@ function boundsOf(geometry: GeoPolygon | MultiPolygon): [[number, number], [numb
   ];
 }
 
+/** Midpoint of `boundsOf`'s box — the fixed pivot every zoom step uses, so
+ *  the conquered area's own center stays put instead of the map's current
+ *  (possibly panned-away, off-center) viewport center. */
+function centerOf(geometry: GeoPolygon | MultiPolygon): [number, number] {
+  const [[minLng, minLat], [maxLng, maxLat]] = boundsOf(geometry);
+  return [(minLng + maxLng) / 2, (minLat + maxLat) / 2];
+}
+
 export function FenceMap({
   geometry,
   path,
@@ -648,10 +656,17 @@ export function FenceMap({
     map.fitBounds(boundsOf(dataRef.current.geometry), { padding: 80, duration: 900 });
   }, []);
 
+  // Pivots on the conquered area's own center (centerOf), not Mapbox's
+  // default (the current viewport center) — that default is whatever the
+  // last pan/fitBounds left it at, which drifts away from the fence's own
+  // center after any manual pan, and made the "+N" conquest bubble visibly
+  // walk across the screen on every zoom press since it isn't necessarily
+  // AT that arbitrary center itself (reported by Pedro, 2026-09-20: "as I
+  // zoom in and out the bubble moves").
   const zoomBy = useCallback((delta: number) => {
     const map = mapRef.current;
     if (!map) return;
-    map.easeTo({ zoom: map.getZoom() + delta, duration: 300 });
+    map.easeTo({ zoom: map.getZoom() + delta, around: centerOf(dataRef.current.geometry), duration: 300 });
   }, []);
 
   if (!TOKEN) return null;
