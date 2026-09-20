@@ -46,7 +46,6 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
-  START_MARKER_COLOR,
   TILE_FILL_OPACITY,
   withAlpha,
   ZOOM_STEP,
@@ -469,13 +468,17 @@ export function TrackMap({
         {/* Start pin — live, the runner IS the privacy zone's owner (see
             index.tsx's `tiles` prop doc), so unlike fence-map's masked start
             this is the real first fix. `points[0]` is stable once a session
-            has recorded anything; it only actually moves on a new session. */}
+            has recorded anything; it only actually moves on a new session.
+            Same white bar as fence-map.tsx's post-run `startBar` — this used
+            to be a plain colored dot, a leftover from before that marker was
+            redesigned, so a run's start pin changed appearance the moment
+            the session ended. */}
         {points.length > 0 && (
           <Marker
             coordinate={{ latitude: points[0].lat, longitude: points[0].lng }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}>
-            <View style={styles.startDot} />
+            <View style={styles.startBar} />
           </Marker>
         )}
       </MapView>
@@ -534,13 +537,16 @@ function MapButton({
 
 const styles = StyleSheet.create({
   wrap: { overflow: 'hidden' },
-  startDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: START_MARKER_COLOR,
-    borderWidth: 2.5,
-    borderColor: '#fff',
+  startBar: {
+    width: 3,
+    height: 20,
+    borderRadius: 1.5,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
   },
   waiting: {
     position: 'absolute',

@@ -229,6 +229,24 @@ export function FenceMap({
     () => highlightPolys.flatMap((p) => p.outer),
     [highlightPolys],
   );
+
+  // The fixed pivot every zoom step uses, so the conquered area's own
+  // center stays put instead of the camera's current (possibly panned-away,
+  // off-center) center. Same fix as fence-map.web.tsx's `centerOf`.
+  const highlightCenter = useMemo(() => {
+    if (allHighlightCoords.length === 0) return null;
+    let minLat = Infinity;
+    let minLng = Infinity;
+    let maxLat = -Infinity;
+    let maxLng = -Infinity;
+    for (const { latitude, longitude } of allHighlightCoords) {
+      minLat = Math.min(minLat, latitude);
+      minLng = Math.min(minLng, longitude);
+      maxLat = Math.max(maxLat, latitude);
+      maxLng = Math.max(maxLng, longitude);
+    }
+    return { latitude: (minLat + maxLat) / 2, longitude: (minLng + maxLng) / 2 };
+  }, [allHighlightCoords]);
   useEffect(() => {
     // Deferred a tick: fitToCoordinates before the MapView has real layout
     // silently no-ops on Android.
@@ -250,13 +268,25 @@ export function FenceMap({
     });
   }, [allHighlightCoords]);
 
-  const zoomBy = useCallback((delta: number) => {
-    const map = mapRef.current;
-    if (!map) return;
-    void map.getCamera().then((camera) => {
-      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
-    });
-  }, []);
+  // Pivots on the conquered area's own center (highlightCenter), not
+  // whatever `camera.center` currently is — that drifts away from the
+  // fence's own center after any manual pan, and made the "+N" conquest
+  // bubble visibly walk across the screen on every zoom press since it
+  // isn't necessarily AT that arbitrary center itself (reported by Pedro,
+  // 2026-09-20: "as I zoom in and out the bubble moves").
+  const zoomBy = useCallback(
+    (delta: number) => {
+      const map = mapRef.current;
+      if (!map) return;
+      void map.getCamera().then((camera) => {
+        map.animateCamera(
+          { ...camera, center: highlightCenter ?? camera.center, zoom: (camera.zoom ?? 15) + delta },
+          { duration: 300 },
+        );
+      });
+    },
+    [highlightCenter],
+  );
 
   const initialRegion = useMemo(() => regionAround(allHighlightCoords), [allHighlightCoords]);
 

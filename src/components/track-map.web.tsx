@@ -101,7 +101,6 @@ import {
   SESSION_FLY_MS,
   SESSION_PITCH,
   SESSION_ZOOM,
-  START_MARKER_COLOR,
   TILE_FILL_OPACITY,
   ZOOM_STEP,
 } from '@/constants/map';
@@ -409,10 +408,9 @@ function ensurePulseStyle() {
   .track-dot__halo { animation: none; opacity: 0; }
 }
 .track-start-dot {
-  width: 16px; height: 16px; border-radius: 50%;
-  background: ${START_MARKER_COLOR};
-  border: 2.5px solid #fff;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.45);
+  width: 3px; height: 20px; border-radius: 1.5px;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.5);
 }`;
   document.head.appendChild(style);
 }
@@ -439,8 +437,10 @@ export function TrackMap({
   const markerRef = useRef<Marker | null>(null);
   // The start pin — dropped once a session has a first point and left there
   // for the rest of the run, unlike markerRef's "you are here" dot which
-  // tracks the runner. See fence-map.web.tsx's own start marker for the
-  // post-run equivalent (same colour, START_MARKER_COLOR).
+  // tracks the runner. Same white 3x20 bar as fence-map.web.tsx's post-run
+  // start marker — this used to be a plain colored dot, a leftover from
+  // before that marker was redesigned to the Figma bar, so a run's start
+  // pin visibly changed the instant the session ended.
   const startMarkerRef = useRef<Marker | null>(null);
   const readyRef = useRef(false);
   // The same fact as readyRef, as STATE — because a ref cannot wake an

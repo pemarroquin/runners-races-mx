@@ -68,10 +68,6 @@ export const MAP_DEFAULT_ZOOM = 15;
 export const ROUTE_LINE_COLOR = '#E4572E';
 /** Same colour without '#', for Static Images URL overlays. */
 export const ROUTE_LINE_COLOR_URL = 'e4572e';
-/** Start-point pin, both platforms and both the live map and the
- *  post-run summary — one constant so "start" reads as the same colour
- *  everywhere it appears, same reasoning as ROUTE_LINE_WIDTH below. */
-export const START_MARKER_COLOR = '#22c55e';
 /**
  * Halved 2026-09-08 (5 -> 2.5), Pedro's call: the gradient line read as too
  * heavy on every surface that draws it. The glow below is halved with it so
