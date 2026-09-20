@@ -1,0 +1,52 @@
+-- Territory Mode — restrict `runs` SELECT to the owning user
+--
+-- Apply BY HAND against the linked project (ref hkqwvzhoopoxocdtzgik) —
+-- nothing in CI or the app build runs `supabase db push` automatically.
+-- Check with `supabase migration list --linked` afterwards, and then
+-- VERIFY AGAINST THE LIVE API, not the migration list — applying is not
+-- verifying (see BACKLOG.md's 🔴 SECURITY entry and MEMORY.md's
+-- "A Migration That Applies Isn't Verified"):
+--
+--   curl "$EXPO_PUBLIC_SUPABASE_URL/rest/v1/runs?select=id,user_id,raw_path&limit=1" \
+--     -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY"
+--
+-- must return `[]` (no session) after this lands.
+--
+-- WHY THIS EXISTS. The Phase 1 migration
+-- (20260826222037_territory_mode.sql) gave `runs` a "read all" SELECT
+-- policy — `for select using (true)` — needed at the time because the
+-- pre-tile leaderboard read `runs.fence`/`area_m2` directly across every
+-- user. That leaderboard was retired (PR #42, prune-leftovers,
+-- 2026-09-10) in favor of `territory_tiles`/`tile_visits`, but the "read
+-- all" policy on `runs` itself was never revisited. Found 2026-09-18:
+-- anyone holding the public anon key (it ships in the JS bundle and is
+-- readable in the live web build — no login needed) can read EVERY row of
+-- `runs` for EVERY user, including `raw_path`: the full 2s-cadence GPS
+-- trace of every run ever uploaded. `privacy-zone.ts` trims endpoints
+-- before a path is stored, which does nothing for the rest of the trace.
+--
+-- SAFE TO SHIP — verified against every current reader before writing this:
+--   - `src/lib/territory-sync.ts` is the ONLY client code that selects from
+--     `runs` (`fetchMyFences`, `uploadRun`'s `.select('id')` after its own
+--     insert, `deleteRun`'s `.select('id')` after its own delete) — every
+--     read already filters `.eq('user_id', session.user.id)`, so none of
+--     it needs any other user's row.
+--   - The leaderboard, achievements map, and every district/municipio
+--     board read `territory_tiles` / `tile_visits` / the conquest RPCs —
+--     never `runs` directly — and none of those tables carry `raw_path`.
+--   - Every Postgres function that reads `runs` server-side
+--     (`apply_territory_overlap`, the anti-cheat plausibility triggers,
+--     `claim_run_tiles`, etc.) is `security definer`, so it runs as the
+--     function owner and bypasses RLS entirely — this policy change is
+--     invisible to them.
+--   - `scripts/verify-claims.ts` and `scripts/measure-holes.ts` are
+--     dev-only audit tools that currently rely on the "read all" policy to
+--     inspect every user's runs with the anon key from a laptop. Both
+--     break (return nothing) after this lands — by design, since that's
+--     exactly the access being revoked. Re-run either with the project's
+--     `service_role` key instead (never ship that key to the app or the
+--     bundle) if an audit needs cross-user visibility again.
+create policy "runs: select own" on runs
+  for select using (auth.uid() = user_id);
+
+drop policy "runs: read all" on runs;
