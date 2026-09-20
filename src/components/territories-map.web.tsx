@@ -57,7 +57,6 @@ import {
   MAP_STYLE_GL,
   ROUTE_GRADIENT,
   ROUTE_GRADIENT_COLORS,
-  ROUTE_LINE_WIDTH,
   ZOOM_STEP,
 } from '@/constants/map';
 import { lineGradientExpression } from '@/lib/fence-draw';
@@ -686,46 +685,6 @@ function addFeatureLayers(
             geometry: { type: 'LineString', coordinates: ring },
           }),
         ),
-      },
-      isLive,
-    );
-  }
-
-  // The route — saved gets the full vibrant gradient (fence-map.web.tsx's
-  // technique, one feature per source so line-progress is well-defined);
-  // pending gets nothing extra beyond the dashed outline above, since a
-  // route that hasn't even finished uploading reads as more confirmed than
-  // it should if it were drawn with the same vibrant treatment as a real one.
-  if (f.kind === 'saved' && f.route && f.route.length >= 2) {
-    map.addSource(routeSrc, {
-      type: 'geojson',
-      lineMetrics: true,
-      data: { type: 'FeatureCollection', features: [] },
-    });
-    map.addLayer({
-      id: routeSrc,
-      type: 'line',
-      source: routeSrc,
-      slot: MAP_SLOT_ROUTE,
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: {
-        'line-width': ROUTE_LINE_WIDTH,
-        // Fallback for if line-gradient is ever rejected — Mapbox's default
-        // line-color is #000000, so without this a rejected gradient renders
-        // as a deliberate-looking black line instead of failing loudly.
-        'line-color': ROUTE_GRADIENT[0][1],
-        'line-gradient': lineGradientExpression(),
-        'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
-      },
-    });
-    flowIds.push(routeSrc);
-    stageLineData(
-      map,
-      routeSrc,
-      {
-        type: 'Feature',
-        properties: {},
-        geometry: { type: 'LineString', coordinates: f.route.map(({ lng, lat }) => [lng, lat]) },
       },
       isLive,
     );
