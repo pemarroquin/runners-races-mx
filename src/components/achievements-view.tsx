@@ -45,8 +45,8 @@ import { groundOfRun } from '@/lib/enclosure';
 import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import {
   deleteRun,
+  fetchMyClaimedCells,
   fetchMyFences,
-  fetchMyVisitedCells,
   type RunCells,
   uploadRun,
   type DeleteOutcome,
@@ -121,7 +121,7 @@ export function AchievementsView({
       fetchMyFences().then((outcome) => {
         if (!stale) setFences(outcome);
       });
-      fetchMyVisitedCells().then((outcome) => {
+      fetchMyClaimedCells().then((outcome) => {
         if (!stale) {
           setRunCells(outcome.ok ? outcome.runs : null);
           setRunCellsReady(true);
@@ -139,7 +139,7 @@ export function AchievementsView({
     setRefreshing(true);
     setRunCellsReady(false);
     refreshQueued();
-    const [outcome, cells] = await Promise.all([fetchMyFences(), fetchMyVisitedCells()]);
+    const [outcome, cells] = await Promise.all([fetchMyFences(), fetchMyClaimedCells()]);
     setFences(outcome);
     setRunCells(cells.ok ? cells.runs : null);
     setRunCellsReady(true);
@@ -181,10 +181,11 @@ export function AchievementsView({
   const savedFeatures: TerritoryFeature[] = fences.fences
     .map((f) => {
       const rawCells = cellsByRun.get(f.id);
-      // groundOfRun gives the full tile footprint (direct path + enclosed cells)
-      // — same set used for totalTilesSet and for the geometry below, so `cells`
-      // here is exactly what cellsToMultiPolygon and buildMergedFills both see.
-      const cells = rawCells?.length ? groundOfRun(rawCells, DEFAULT_TILE_RES) : [];
+      // Claimed cells come from territory_tiles (via fetchMyClaimedCells), which
+      // already includes both visited tiles AND union-enclosed tiles. No need to
+      // run groundOfRun — the server already computed the full footprint at claim
+      // time. Dedup with Set guards against any edge case from paging.
+      const cells = rawCells?.length ? [...new Set(rawCells)] : [];
       const geometry: Polygon | MultiPolygon | null = cells.length
         ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cells, true) }
         : f.geometry;
@@ -225,9 +226,14 @@ export function AchievementsView({
   // Plain computation, not useMemo — this runs after two early returns
   // above, and a hook here would violate the rules of hooks the moment
   // `fences` is null or failed.
+  // territory_tiles has a unique constraint on h3, so claimed cells are already
+  // deduplicated globally — each cell belongs to exactly one owner. The Set here
+  // is still the right shape (union across runs) because a cell won by conquest
+  // moves from one run's claim_run_id to another's, so the same cell can appear
+  // under different runs over time but only once per fetch.
   const totalTilesSet = new Set<string>();
   for (const cells of cellsByRun.values()) {
-    for (const cell of groundOfRun(cells, DEFAULT_TILE_RES)) totalTilesSet.add(cell);
+    for (const cell of cells) totalTilesSet.add(cell);
   }
   const totalTiles = totalTilesSet.size;
 

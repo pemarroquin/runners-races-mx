@@ -969,6 +969,70 @@ export function groupVisitsByRun(rows: VisitRow[]): RunCells[] {
 }
 
 /**
+ * Every tile this runner currently OWNS, grouped by the run that claimed it
+ * (`territory_tiles.claim_run_id`).
+ *
+ * This is the right source for My Achievements' map — NOT `tile_visits`. The
+ * difference is union-based enclosure: when a new run's path closes a boundary
+ * together with prior owned territory, the enclosed interior is written to
+ * `territory_tiles` (as claimed tiles) but never to `tile_visits` (which is a
+ * log of ground actually run over). For runs that triggered large union
+ * enclosures, `tile_visits` undercounts the actual territory by 3–5x.
+ *
+ * Trade-off vs `fetchMyVisitedCells`: this shows CURRENT ownership. Tiles
+ * taken by a later runner disappear from the original run's set. That is
+ * acceptable for "My Achievements" because conquest is the game mechanic — a
+ * run's conquest count is what it achieved at the moment it uploaded, and the
+ * tile model tracks that through the leaderboard, not through permanent
+ * history. Permanent history of VISITS (where you physically ran) is
+ * `tile_visits`'s job; this function answers "what does each run hold right
+ * now", which is what the map needs to be accurate.
+ *
+ * Paged for the same reason as `fetchMyVisitedCells`.
+ */
+export async function fetchMyClaimedCells(): Promise<VisitedOutcome> {
+  return withSession<{ runs: RunCells[] }>(async (session) => {
+    const PAGE = 1000;
+    const rows: { h3: string; claim_run_id: string }[] = [];
+
+    for (let offset = 0; ; offset += PAGE) {
+      const { data, error } = await supabase
+        .from('territory_tiles')
+        .select('h3,claim_run_id')
+        .eq('owner_id', session.user.id)
+        .order('h3', { ascending: true })
+        .order('claim_run_id', { ascending: true })
+        .range(offset, offset + PAGE - 1);
+
+      if (error) return { ok: false, reason: 'network' };
+      if (!data || data.length === 0) break;
+
+      rows.push(...(data as { h3: string; claim_run_id: string }[]));
+      if (data.length < PAGE) break;
+    }
+
+    // Group by claim_run_id, filtered to current resolution. territory_tiles
+    // has a unique constraint on h3, so no deduplication is needed across runs
+    // — each cell belongs to exactly one owner and one claim_run_id.
+    const byRun = new Map<string, Set<string>>();
+    for (const row of rows) {
+      if (!isCurrentTileRes(row.h3)) continue;
+      let set = byRun.get(row.claim_run_id);
+      if (!set) {
+        set = new Set();
+        byRun.set(row.claim_run_id, set);
+      }
+      set.add(row.h3);
+    }
+
+    return {
+      ok: true,
+      runs: [...byRun].map(([runId, set]) => ({ runId, cells: [...set] })),
+    };
+  });
+}
+
+/**
  * Every cell this runner has ever covered, GROUPED BY RUN.
  *
  * Reads `tile_visits`, and that choice is the whole feature. `tile_visits`
