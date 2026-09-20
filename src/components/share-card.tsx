@@ -22,11 +22,14 @@
 // (react-native-svg is in Expo's bundledNativeModules.json at this exact
 // pinned version).
 import * as Clipboard from 'expo-clipboard';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
+import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { routeToSvgPath } from '@/lib/route-shape';
@@ -194,95 +197,108 @@ export function ShareSheet({
   if (!data) return null;
 
   return (
-    <Modal transparent visible={visible} onRequestClose={close} animationType="fade">
+    <Modal transparent visible={visible} onRequestClose={close} animationType="slide">
       <View style={styles.root}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" />
-        <View style={[styles.sheet, { backgroundColor: c.background }]}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: c.text }]}>{t('share.title')}</Text>
-            <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} hitSlop={10}>
-              <Icon ios="xmark" android="close" size={18} color={c.textSecondary} />
-            </Pressable>
-          </View>
-
-          {routeShape.empty ? (
-            <Text style={[styles.emptyNotice, { color: c.textSecondary }]}>{t('share.emptyRoute')}</Text>
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.backdrop]}
+          onPress={close}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+        />
+        <View style={styles.sheet}>
+          {isLiquidGlassAvailable() ? (
+            <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" colorScheme={scheme} />
           ) : (
-            <Card label={t('share.routeLabel')} c={c}>
+            <GlassSurface scheme={scheme} radius={GlassRadii.sheet} noShadow style={StyleSheet.absoluteFill} />
+          )}
+          <View style={styles.content}>
+            <View style={[styles.grabber, { backgroundColor: c.backgroundSelected }]} />
+            <View style={styles.header}>
+              <Text style={[styles.title, { color: c.text }]}>{t('share.title')}</Text>
+              <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} hitSlop={10}>
+                <Icon ios="xmark" android="close" size={18} color={c.textSecondary} />
+              </Pressable>
+            </View>
+
+            {routeShape.empty ? (
+              <Text style={[styles.emptyNotice, { color: c.textSecondary }]}>{t('share.emptyRoute')}</Text>
+            ) : (
+              <Card label={t('share.routeLabel')} c={c}>
+                <View style={styles.checker}>
+                  <Svg ref={routeRef} width={PREVIEW_SIZE} height={PREVIEW_SIZE} viewBox={`0 0 ${ROUTE_VB} ${ROUTE_VB}`}>
+                    <Defs>
+                      {/* objectBoundingBox (the default) so the diagonal runs
+                          corner-to-corner of the PATH's own drawn bounds,
+                          whatever shape the route happens to be — not the
+                          square canvas, which would leave a straight-line
+                          route (spanning only one axis) with a gradient that
+                          never reaches its second or third stop. */}
+                      <LinearGradient id={ROUTE_GRADIENT_ID} x1="0" y1="0" x2="1" y2="1">
+                        {STOP_POSITIONS.map((offset, i) => (
+                          <Stop key={offset} offset={offset} stopColor={routeStopColors[i]} />
+                        ))}
+                      </LinearGradient>
+                    </Defs>
+                    {/* Outline only — no start/end markers. This PNG is meant
+                        to drop onto an arbitrary Instagram photo as a sticker;
+                        a pin fixed at the route's own start/end would usually
+                        land somewhere meaningless on whatever photo it's
+                        dropped onto, unlike on the app's own maps where the
+                        pin sits on real ground. */}
+                    <Path
+                      d={routeShape.d}
+                      stroke={`url(#${ROUTE_GRADIENT_ID})`}
+                      strokeWidth={8}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </Svg>
+                </View>
+                <CopyButton
+                  copied={copied === 'route'}
+                  failed={failed === 'route'}
+                  onPress={() => copy('route')}
+                  c={c}
+                  t={t}
+                />
+              </Card>
+            )}
+
+            <Card label={t('share.statsLabel')} c={c}>
               <View style={styles.checker}>
-                <Svg ref={routeRef} width={PREVIEW_SIZE} height={PREVIEW_SIZE} viewBox={`0 0 ${ROUTE_VB} ${ROUTE_VB}`}>
-                  <Defs>
-                    {/* objectBoundingBox (the default) so the diagonal runs
-                        corner-to-corner of the PATH's own drawn bounds,
-                        whatever shape the route happens to be — not the
-                        square canvas, which would leave a straight-line
-                        route (spanning only one axis) with a gradient that
-                        never reaches its second or third stop. */}
-                    <LinearGradient id={ROUTE_GRADIENT_ID} x1="0" y1="0" x2="1" y2="1">
-                      {STOP_POSITIONS.map((offset, i) => (
-                        <Stop key={offset} offset={offset} stopColor={routeStopColors[i]} />
-                      ))}
-                    </LinearGradient>
-                  </Defs>
-                  {/* Outline only — no start/end markers. This PNG is meant
-                      to drop onto an arbitrary Instagram photo as a sticker;
-                      a pin fixed at the route's own start/end would usually
-                      land somewhere meaningless on whatever photo it's
-                      dropped onto, unlike on the app's own maps where the
-                      pin sits on real ground. */}
-                  <Path
-                    d={routeShape.d}
-                    stroke={`url(#${ROUTE_GRADIENT_ID})`}
-                    strokeWidth={8}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
+                <Svg
+                  ref={statsRef}
+                  width={STATS_PREVIEW_W}
+                  height={STATS_PREVIEW_H}
+                  viewBox={`0 0 ${STATS_VB_W} ${STATS_VB_H}`}>
+                  <Rect x={0} y={0} width={STATS_VB_W} height={STATS_VB_H} rx={14} fill="rgba(20,20,20,0.65)" />
+                  <SvgText
+                    x={STATS_VB_W / 2}
+                    y={20}
+                    fontSize={12}
+                    fontWeight="700"
+                    fill="#FFFFFF"
+                    textAnchor="middle">
+                    Runners&apos; Races MX
+                  </SvgText>
+                  <StatColumn x={37.5} label={t('track.distance')} value={distance} />
+                  <StatColumn x={112.5} label={t('track.pace')} value={pace} />
+                  <StatColumn x={187.5} label={t('track.time')} value={time} />
+                  <StatColumn x={262.5} label={t('track.tiles')} value={tiles} />
                 </Svg>
               </View>
               <CopyButton
-                copied={copied === 'route'}
-                failed={failed === 'route'}
-                onPress={() => copy('route')}
+                copied={copied === 'stats'}
+                failed={failed === 'stats'}
+                onPress={() => copy('stats')}
                 c={c}
                 t={t}
               />
             </Card>
-          )}
 
-          <Card label={t('share.statsLabel')} c={c}>
-            <View style={styles.checker}>
-              <Svg
-                ref={statsRef}
-                width={STATS_PREVIEW_W}
-                height={STATS_PREVIEW_H}
-                viewBox={`0 0 ${STATS_VB_W} ${STATS_VB_H}`}>
-                <Rect x={0} y={0} width={STATS_VB_W} height={STATS_VB_H} rx={14} fill="rgba(20,20,20,0.65)" />
-                <SvgText
-                  x={STATS_VB_W / 2}
-                  y={20}
-                  fontSize={12}
-                  fontWeight="700"
-                  fill="#FFFFFF"
-                  textAnchor="middle">
-                  Runners&apos; Races MX
-                </SvgText>
-                <StatColumn x={37.5} label={t('track.distance')} value={distance} />
-                <StatColumn x={112.5} label={t('track.pace')} value={pace} />
-                <StatColumn x={187.5} label={t('track.time')} value={time} />
-                <StatColumn x={262.5} label={t('track.tiles')} value={tiles} />
-              </Svg>
-            </View>
-            <CopyButton
-              copied={copied === 'stats'}
-              failed={failed === 'stats'}
-              onPress={() => copy('stats')}
-              c={c}
-              t={t}
-            />
-          </Card>
-
-          <Text style={[styles.hint, { color: c.textSecondary }]}>{t('share.hint')}</Text>
+            <Text style={[styles.hint, { color: c.textSecondary }]}>{t('share.hint')}</Text>
+          </View>
         </View>
       </View>
     </Modal>
@@ -348,23 +364,49 @@ function CopyButton({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
+  // Same dim scrim as buy-sheet.tsx — without it the glass sheet had nothing
+  // to contrast against and read as flat.
+  backdrop: { backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
-    borderTopLeftRadius: Spacing.four,
-    borderTopRightRadius: Spacing.four,
+    borderTopLeftRadius: GlassRadii.sheet,
+    borderTopRightRadius: GlassRadii.sheet,
+    overflow: 'hidden',
+  },
+  content: {
     padding: Spacing.four,
     gap: Spacing.three,
+  },
+  // Bottom-sheet drag affordance — same treatment as buy-sheet.tsx's grabber,
+  // even though this sheet only dismisses via tap-outside or the close icon.
+  grabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: Spacing.one,
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 18, fontWeight: '700' },
   card: { alignItems: 'center', gap: Spacing.two },
-  cardLabel: { fontSize: 13, fontWeight: '600', alignSelf: 'flex-start' },
+  cardLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    alignSelf: 'flex-start',
+  },
   // A checkerboard-free transparent preview would be invisible against the
   // sheet's own background — a mid-grey backdrop here (display only, never
   // exported) is what lets a transparent PNG's edges actually read as
-  // transparent, same reason Strava's own share sheet shows one.
+  // transparent, same reason Strava's own share sheet shows one. Bordered
+  // and rounded to GlassRadii.card so it reads as a photo tile sitting on
+  // the glass, not a flat rectangle — same fixed border regardless of theme
+  // since the grey backdrop itself never changes with light/dark mode.
   checker: {
     backgroundColor: '#8A8A8A',
-    borderRadius: Spacing.two,
+    borderRadius: GlassRadii.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.15)',
     overflow: 'hidden',
   },
   copyWrap: { alignItems: 'center', gap: Spacing.one },
@@ -374,7 +416,8 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.four,
-    borderRadius: 999,
+    borderRadius: GlassRadii.pill,
+    boxShadow: '0px 4px 12px rgba(0,0,0,0.25)',
   },
   copyLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   copyFailed: { fontSize: 12 },
