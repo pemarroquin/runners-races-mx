@@ -154,9 +154,11 @@ interface FenceMapProps {
   /** Single consolidated "+N" conquest bubble — one weighted-centroid item.
    *  `label` is pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
-  /** Blue cycle-bonus marker — present when this run re-covered the runner's
-   *  own territory significantly (≥ 50 path tiles). Absent until upload. */
-  cycleBonus?: { pts: number; center: { lat: number; lng: number } } | null;
+  /** Blue cycle-bonus marker — present when this run's OWN path was
+   *  detected as a genuine loop (src/lib/laps.ts). Absent until upload
+   *  resolves. `label` is pre-translated, same convention as
+   *  `takenClusters` above. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number }; label: string } | null;
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -630,6 +632,8 @@ export function FenceMap({
       cycleMarkerRef.current = null;
       if (!cycleBonus) return;
       const el = document.createElement('div');
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', cycleBonus.label);
       el.style.cssText = 'position:relative;line-height:0;pointer-events:none;';
       el.innerHTML = cycleBonusMarkerHtml(cycleBonus.pts, 'cycle');
       const { webOffsetY } = cycleBonusMarkerGeometry(cycleBonus.pts);

@@ -6,7 +6,6 @@
 // screen for a manual retry.
 import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
-import { cellToLatLng } from 'h3-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { TileOwnerRow } from '@/lib/leaderboard';
@@ -83,6 +82,27 @@ export interface RunUpload {
    * without its enclosure.
    */
   enclosedCells?: string[];
+  /**
+   * Lap/loop-bonus result, computed by the caller (index.tsx) from the
+   * UNMASKED path — same reasoning as `enclosedCells` above: masking trims
+   * exactly the section where a home loop closes, so `detectLaps` (laps.ts)
+   * has to run before that section is removed, and the unmasked path never
+   * leaves the device.
+   *
+   * Unlike `enclosedCells`, no raw cells or coordinates cross here beyond
+   * one point: `qualifies` is a plain boolean, and `markerCenter` is
+   * ALREADY constrained by the caller to a cell that survives masking (see
+   * laps.ts's `pickSafeLapMarkerCenter`) — never the unmasked centroid over
+   * every repeated cell, which could point at the runner's home.
+   * `markerCenter` is null when `qualifies` is true but every repeated cell
+   * fell inside the privacy zone (a loop run entirely within it): the bonus
+   * still applies, it just has nowhere safe to render, and this function
+   * must not fall back to an unmasked centre.
+   *
+   * Optional for the same "an old queued entry has no such field" reason as
+   * `enclosedCells` above.
+   */
+  lap?: { qualifies: boolean; markerCenter: { lat: number; lng: number } | null };
 }
 
 /**
@@ -133,11 +153,15 @@ export interface TileClaimResult {
    *  against which cells) that's out of scope this pass, see the executor's
    *  report. */
   rivalCells: string[];
-  /** Cycle bonus: 10 pts awarded when this run's path significantly overlaps
-   *  the runner's own existing territory (≥ CYCLE_MIN_TILES path cells are
-   *  already owned). Computed client-side in uploadRun() — not from the SQL
-   *  RPC — so it is only available on a successful sync, never on a cached or
-   *  replayed claim. Absent when no qualifying overlap was detected. */
+  /** Lap/loop bonus: 10 pts awarded when THIS run's own path genuinely loops
+   *  back on itself — see src/lib/laps.ts's `detectLaps`/`qualifies` for the
+   *  actual definition. Replaces a prior check (pre-2026-09-20) that
+   *  compared this run's cells against the runner's existing territory
+   *  instead of against itself, which rewarded "you ran through your own
+   *  neighbourhood" rather than any real loop (see laps.ts's header for the
+   *  full story). Computed client-side in uploadRun() — not from the SQL
+   *  RPC — so it is only available on a successful sync, never on a cached
+   *  or replayed claim. Absent when no qualifying loop was detected. */
   cycleBonus?: { pts: number; center: { lat: number; lng: number } };
 }
 
@@ -330,6 +354,18 @@ export type SyncOutcome =
        *  only explains the claim. 'tooOld' in particular is not a failure
        *  the runner caused, and the summary must not describe it as one. */
       tilesReason?: 'tooOld' | 'rejected' | 'network';
+      /**
+       * Present only when the paged read of the runner's OWNED tiles (union
+       * enclosure's input, below) failed outright — never set on a read that
+       * completed and simply found little or nothing to enclose. Same
+       * "distinct reason, not folded into a boolean" posture as `tilesReason`:
+       * a caller that ignores this field loses nothing it had before (union
+       * enclosure still degrades to `run.enclosedCells` exactly as it did
+       * pre-paging), but one that wants to know WHY a run's enclosure looked
+       * thin now can — a swallowed failure and a real "nothing to enclose"
+       * used to be the same value on the wire.
+       */
+      unionEnclosureReason?: 'network';
     }
   | { ok: false; reason: 'disabled' | 'auth' | 'network' };
 
@@ -353,7 +389,11 @@ export type SyncOutcome =
  * the executor's report.
  */
 export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
-  return withSession<{ runId: string; tiles: TileClaimResult | null }>(async (session) => {
+  return withSession<{
+    runId: string;
+    tiles: TileClaimResult | null;
+    unionEnclosureReason?: 'network';
+  }>(async (session) => {
     const first = run.points[0];
     const region = first ? nearestRegion(first.lat, first.lng)?.id ?? null : null;
 
@@ -409,38 +449,75 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // existed in owned territory vs 38 in visited cells; per-run enclosure
     // already covers the avenue-strip case. Re-run `npm run measure-holes`
     // before changing that conclusion.
-    // Minimum overlap (path tiles already owned) to qualify for a cycle bonus.
-    const CYCLE_MIN_TILES = 50;
+
+    // Lap/loop bonus — see laps.ts's header for why the old ownedSet-overlap
+    // check never detected a cycle at all. Consumed here as a DERIVED
+    // result (`run.lap`), not computed from run.points: `run.points` is the
+    // masked path, and masking trims exactly the section where a home loop
+    // closes, so detection has to run on the unmasked path before that
+    // section is removed — the same reasoning as `run.enclosedCells` above.
+    // index.tsx computes `run.lap` at session end from the unmasked path
+    // (`detectLaps`) and constrains the marker centre to cells that survive
+    // masking (`pickSafeLapMarkerCenter`) before it ever reaches here — see
+    // RunUpload.lap's own doc comment. This has no dependency on
+    // ownedSet/territory_tiles either way, so it needs neither the paged
+    // read below to have succeeded nor even to run.
     const CYCLE_PTS = 10;
     let cycleBonus: TileClaimResult['cycleBonus'];
-    let unionNewEnclosed: string[] = [];
-    try {
-      const { data: ownedRows } = await supabase
-        .from('territory_tiles')
-        .select('h3')
-        .eq('owner_id', session.user.id);
-      if (ownedRows && ownedRows.length > 0) {
-        const ownedSet = new Set(
-          (ownedRows as { h3: string }[])
-            .map((r) => r.h3)
-            .filter((h) => isCurrentTileRes(h)),
-        );
+    if (run.lap?.qualifies && run.lap.markerCenter) {
+      cycleBonus = { pts: CYCLE_PTS, center: run.lap.markerCenter };
+    }
 
-        // Cycle detection: path cells the runner already owned before this run.
-        const ownedPathCells = cells.filter((c) => ownedSet.has(c));
-        if (ownedPathCells.length >= CYCLE_MIN_TILES) {
-          let latSum = 0;
-          let lngSum = 0;
-          for (const cell of ownedPathCells) {
-            const [lat, lng] = cellToLatLng(cell);
-            latSum += lat;
-            lngSum += lng;
-          }
-          cycleBonus = {
-            pts: CYCLE_PTS,
-            center: { lat: latSum / ownedPathCells.length, lng: lngSum / ownedPathCells.length },
-          };
+    let unionNewEnclosed: string[] = [];
+    // Set only when the paged read below failed outright (a returned error,
+    // or a thrown exception) — never when it succeeded and simply found
+    // little or nothing to enclose. See SyncOutcome's field of the same name.
+    let unionEnclosureReason: 'network' | undefined;
+    try {
+      // PAGED, same idiom as fetchMyVisitedCells/fetchMyClaimedCells further
+      // down this file — PostgREST caps a response at 1000 rows. This read
+      // was a single unpaged request until 2026-09-20 and never checked
+      // `error` either: a runner past 1000 owned tiles (crossed in
+      // production on 2026-09-08; 6,049 owned as of today) got `ownedSet`
+      // silently truncated to an arbitrary 1000-row slice, so union
+      // enclosure reasoned about a fraction of the runner's real territory —
+      // wrong in the same silent way fetchMyVisitedCells's own header
+      // describes: "a wrong answer that looks like a complete one". (At the
+      // time of that incident this same truncated slice also fed the old
+      // ownedSet-overlap cycle-bonus check; that check is gone — see
+      // laps.ts — and the lap bonus above no longer reads `ownedSet` at all.)
+      const PAGE = 1000;
+      const ownedRows: { h3: string }[] = [];
+      let pageFailed = false;
+      for (let offset = 0; ; offset += PAGE) {
+        const { data: page, error } = await supabase
+          .from('territory_tiles')
+          .select('h3')
+          .eq('owner_id', session.user.id)
+          // h3 is the primary key, so it is unique and a total order —
+          // ordering makes paging deterministic (see fetchMyVisitedCells's
+          // comment on the same idiom for why an unordered offset page can
+          // skip a row).
+          .order('h3', { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error) {
+          pageFailed = true;
+          break;
         }
+        if (!page || page.length === 0) break;
+        ownedRows.push(...(page as { h3: string }[]));
+        if (page.length < PAGE) break;
+      }
+
+      if (pageFailed) {
+        // Do NOT compute against whatever partial pages did arrive — that
+        // would reintroduce a truncated (now non-deterministic) ownedSet
+        // instead of a fixed 1000-row one. Degrade all the way to per-run
+        // enclosure, same as before, but say so rather than looking like a
+        // read that completed and found nothing.
+        unionEnclosureReason = 'network';
+      } else if (ownedRows.length > 0) {
+        const ownedSet = new Set(ownedRows.map((r) => r.h3).filter((h) => isCurrentTileRes(h)));
 
         const union = [...new Set([...cells, ...ownedSet])];
         const enclosed = enclosedCells(union, DEFAULT_TILE_RES);
@@ -449,7 +526,10 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
         unionNewEnclosed = enclosed.filter((c) => !ownedSet.has(c) && !cellSet.has(c));
       }
     } catch {
-      // Non-fatal — fall through to per-run enclosure only.
+      // A thrown (not returned) failure mid-loop — e.g. a network exception
+      // rather than a Postgres error payload. Same non-fatal degrade as a
+      // returned error: fall through to per-run enclosure only.
+      unionEnclosureReason = 'network';
     }
 
     const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
@@ -463,6 +543,7 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       // 'disabled'/'auth' cannot reach here — uploadRun already passed the
       // same withSession guard to insert the run above.
       tilesReason: claim.ok ? undefined : (claim.reason as 'tooOld' | 'rejected' | 'network'),
+      unionEnclosureReason,
     };
   });
 }

@@ -219,6 +219,12 @@ const translations = {
       // comment. Never silently shows "0 casillas" as if that were the true
       // result — see this repo's standing rule against unverified success.
       tilesUnavailable: 'No pudimos confirmar tus casillas esta vez — tu recorrido sigue guardado.',
+      // Accessibility label for the blue cycle-bonus marker (map/
+      // cycle-bonus-marker.tsx and conquest-marker.ts's cycleBonusMarkerHtml
+      // on web), which otherwise renders only a bare "%{pts}pt" with nothing
+      // saying what was earned. Short by design — it's read alongside a
+      // small map pin, not a banner.
+      cycleBonusLabel: 'Bono por repetir el recorrido: %{pts} pts',
       // The "joining" half of the brief §6 step 5 transition: the enclosure
       // area still gets computed and stored every upload (buildFence isn't
       // deleted — brief §4), shown here small and explicitly labelled as
@@ -798,6 +804,9 @@ const translations = {
       tiles: 'Tiles',
       tilesHeld: 'You conquered %{count} tiles in %{region} this run.',
       tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
+      // See the ES entry's comment: accessibility label for the blue
+      // cycle-bonus marker, which otherwise renders only a bare "%{pts}pt".
+      cycleBonusLabel: 'Bonus for repeating the route: %{pts} pts',
     },
     leaderboard: {
       title: 'Leaderboard',
