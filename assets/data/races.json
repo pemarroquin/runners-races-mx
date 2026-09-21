@@ -285,6 +285,9 @@
       "confidence": "medium",
       "notes": "Global corporate race, Monterrey a recurring host. Distances vary by source (5K/10K vs 3K/5K/10K); MTY-specific venue/registration not fully published.",
       "notesEs": "Carrera corporativa global; Monterrey es sede recurrente. Las distancias varían según la fuente (5K/10K vs. 3K/5K/10K); la sede y el registro específicos de MTY aún no están publicados por completo.",
+      "sourceNotes": "Race-watch 2026-09-21: idemsport.com and bimboglobalrace.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against laregiontam.com.mx, Yahoo Noticias and asdeporte's own Bimbo Global Race Monterrey listing (marked AGOTADA/sold out, not cancelled) — all agree on Sep 27, 2026, Parque Fundidora, 3K/5K/10K. No 'pospuesto'/'cancelado'/'aviso' signal found. One search-engine AI summary briefly showed a garbled 'Jan 17, 2027' date with no underlying source quoting it; discarded as a summarizer artifact, not written to date.",
+      "status": "ok",
+      "lastVerified": "2026-09-21",
       "start": {
         "lat": 25.6785,
         "lng": -100.2847,
@@ -631,7 +634,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-monterrey",
       "confidence": "high",
       "notes": "Date confirmed 2026-09-27 (was TBD) via runera.mx; registration open. Same day as Bimbo Global Race.",
-      "notesEs": "Fecha confirmada el 2026-09-27 (antes por definir) vía runera.mx; registro abierto. Coincide con Bimbo Global Race."
+      "notesEs": "Fecha confirmada el 2026-09-27 (antes por definir) vía runera.mx; registro abierto. Coincide con Bimbo Global Race.",
+      "sourceNotes": "Race-watch 2026-09-21: tritour.org and trotime.com.mx WebFetch blocked by this session's egress policy; verified instead via WebSearch against mx-race.com and runera.mx, both agreeing on Sep 27, 2026, 07:00, Estadio Banorte, 5K/10K. No 'pospuesto'/'cancelado'/'aviso' signal found for the 2026 Monterrey edition. Search noise surfaced Sep 10 and Sep 29 dates, but those trace to a 2023 Tec-anniversary agenda and a 2024-dated page respectively, and a separate Sep 13 date belongs to the Ciudad Juárez campus edition — none apply here.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "trote-jaguar-2026",
@@ -2245,7 +2251,10 @@
       "sourceUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion",
       "confidence": "high",
       "notes": "10K 06:50 / 5K 07:00 / 3K walk 07:10. From $260 MXN. Cap 3,000 + 400 walk.",
-      "notesEs": "10K 06:50 / 5K 07:00 / caminata 3K 07:10. Desde $260 MXN. Cupo de 3,000 + 400 en caminata."
+      "notesEs": "10K 06:50 / 5K 07:00 / caminata 3K 07:10. Desde $260 MXN. Cupo de 3,000 + 400 en caminata.",
+      "sourceNotes": "Race-watch 2026-09-21: asdeporte.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against poblanerias.com and Yahoo Noticias, agreeing on Sep 27, 2026, Jardín del Arte / Reserva Territorial Atlixcáyotl. Asdeporte's own listing shows AGOTADA (sold out), a normal registration state, not a cancellation. No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "carrera-vertical-inxignia-2026-2",
@@ -2267,7 +2276,9 @@
       "confidence": "medium",
       "notes": "Stair-climb up the tallest tower in Puebla; capped at 500 runners plus a 'Heroes' category.",
       "notesEs": "Subida de escaleras en la torre más alta de Puebla; cupo de 500 corredores más una categoría 'Héroes'.",
-      "sourceNotes": "Guessed Asdeporte URL for this event 404'd; signup link not independently confirmed."
+      "sourceNotes": "Guessed Asdeporte URL for this event 404'd; signup link not independently confirmed. Race-watch 2026-09-21: running.life WebFetch blocked by this session's egress policy; verified instead via WebSearch against municipiospuebla.mx, carlosmartinhuerta.com.mx and towerrunningmx.com, all agreeing on Sun Sep 27, 2026, 7:30 AM, Torre Inxignia JV — matches stored date/venue. A Nov 23 vs Nov 30 date discrepancy found in search belongs to the 2025 1st edition, not this one. No 'pospuesto'/'cancelado'/'aviso' signal found for the 2026 2nd edition.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "barbie-run-puebla-2026",
@@ -2614,7 +2625,10 @@
       "sourceUrl": "https://asdeporte.com/evento/bimbo-global-race-guadalajara-2026-c6u/datos-del-evento",
       "confidence": "high",
       "notes": "Reg open, from $260 MXN. 10K 06:30 / 5K 06:45 / 3K walk 07:45. Distinct from Bimbo MTY/Puebla.",
-      "notesEs": "Registro abierto, desde $260 MXN. 10K 06:30 / 5K 06:45 / caminata 3K 07:45. Es distinta de Bimbo MTY/Puebla."
+      "notesEs": "Registro abierto, desde $260 MXN. 10K 06:30 / 5K 06:45 / caminata 3K 07:45. Es distinta de Bimbo MTY/Puebla.",
+      "sourceNotes": "Race-watch 2026-09-21: asdeporte.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against eluniversal.com.mx and Yahoo Noticias coverage of the 2026 Bimbo Global Race launch, agreeing on Sep 27, 2026, Centro Comercial Andares, Zapopan. No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "adidas-splits-15k-30k-guadalajara-2026",
@@ -3151,7 +3165,9 @@
       "confidence": "high",
       "notes": "Trail-running + wine weekend, Sep 25-27 (main races Saturday Sep 26). Distances: 12K/23K/33K/50K. From $350 USD.",
       "notesEs": "Fin de semana de trail running + vino, del 25 al 27 de septiembre (carreras principales el sábado 26). Distancias: 12K/23K/33K/50K. Desde $350 USD.",
-      "sourceNotes": "Appears on both asdeporte.com/eventos and running.life (two calendars agree). Register via asdeporte; no verified current-edition slug captured, so signupUrl left null."
+      "sourceNotes": "Appears on both asdeporte.com/eventos and running.life (two calendars agree). Register via asdeporte; no verified current-edition slug captured, so signupUrl left null. Race-watch 2026-09-21: running.life, asdeporte.com, gotrail.run, trailandwine.com and ensenada.gob.mx WebFetch all blocked by this session's egress policy; verified instead via WebSearch against ensenada.gob.mx's own municipal announcement, canal66.tv, gotrail.run and active.com, all agreeing on Sep 25-27 2026 (main race Sat Sep 26), El Cielo Resort, 12K/23K/33K/50K. No 'pospuesto'/'cancelado'/'cambio sede' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "binational-race-2026",
@@ -4000,7 +4016,9 @@
       "confidence": "high",
       "notes": "Flagship university half marathon. Cost: 21K $500, 10K $450, 5K $400 MXN. Cap 10,000 runners.",
       "notesEs": "Medio maratón universitario insignia. Costo: 21K $500, 10K $450, 5K $400 MXN. Cupo de 10,000 corredores.",
-      "sourceNotes": "Official portal mediomaraton.uaslp.mx is live (SPA countdown confirmed rendered). Start time not published yet. Multiple SLP outlets (Pulso, El Expres, LiderLife, Código San Luis) agree on the Sept 27 date and pricing."
+      "sourceNotes": "Official portal mediomaraton.uaslp.mx is live (SPA countdown confirmed rendered). Start time not published yet. Multiple SLP outlets (Pulso, El Expres, LiderLife, Código San Luis) agree on the Sept 27 date and pricing. Race-watch 2026-09-21: mediomaraton.uaslp.mx and pulsoslp.com.mx WebFetch blocked by this session's egress policy; verified instead via WebSearch against El Sol de San Luis, Código San Luis, UASLP's own official news site and Quadratín SLP, all agreeing on Sep 27, 2026, Parque Tangamanga I / UDU / Unimanía registration modules. No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "medio-maraton-uaslp-2026-sede-ciudad-valles",
@@ -4023,7 +4041,10 @@
       "sourceUrl": "https://www.pulsoslp.com.mx/amp/meta/abren-inscripciones-para-el-medio-maraton-/2053391",
       "confidence": "high",
       "notes": "Second sede of the UASLP half in the Huasteca. Same date as SLP capital, but only 10K and 5K here; cupo 1,500. Costs 10K $450 / 5K $400 MXN. Venue not specified in sources.",
-      "notesEs": "Segunda sede del medio maratón UASLP, en la Huasteca. Misma fecha que la capital de SLP, pero aquí solo hay 10K y 5K; cupo de 1,500. Costos 10K $450 / 5K $400 MXN. Las fuentes no especifican la sede."
+      "notesEs": "Segunda sede del medio maratón UASLP, en la Huasteca. Misma fecha que la capital de SLP, pero aquí solo hay 10K y 5K; cupo de 1,500. Costos 10K $450 / 5K $400 MXN. Las fuentes no especifican la sede.",
+      "sourceNotes": "Race-watch 2026-09-21: mediomaraton.uaslp.mx and pulsoslp.com.mx WebFetch blocked by this session's egress policy; verified instead via WebSearch against LíderLife, El Sol de San Luis and UASLP's own official news site, all agreeing this sede runs Sep 27, 2026 alongside the SLP capital event, 10K/5K, cupo 1,500. No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-villa-de",
@@ -4332,13 +4353,16 @@
       ],
       "city": "Cozumel",
       "state": "Quintana Roo",
-      "venue": null,
+      "venue": "Parque Chankanaab, Carretera Costera Sur km 9, Zona Hotelera Sur",
       "organizer": "3kids series (via Asdeporte)",
       "signupUrl": null,
       "sourceUrl": "https://asdeporte.com/eventos",
       "confidence": "medium",
       "notes": "Children's race series, not a standard adult road race.",
-      "notesEs": "Serie de carreras infantiles, no es una carrera en ruta estándar para adultos."
+      "notesEs": "Serie de carreras infantiles, no es una carrera en ruta estándar para adultos.",
+      "sourceNotes": "Race-watch 2026-09-21: asdeporte.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against Asdeporte's own event listing (asdeporte.com/evento/3kids-cozumel-2026-qbx), the Mexican Triathlon Federation (FMTRI) and Solo Atletas, all agreeing on Sep 26, 2026, 12:30 PM, Parque Chankanaab, ages 6-13, cap ~200 — venue filled in from null since all three independently agree (not itself a change, no prior value contradicted). No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "10k-5k-aniversario-fcp-felipe-carrillo-puerto-fc",
