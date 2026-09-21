@@ -41,7 +41,6 @@ import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } from 'geojson';
-import { cellsToMultiPolygon } from 'h3-js';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
@@ -61,8 +60,8 @@ import {
 } from '@/constants/map';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
+import { buildMergedRimLines, buildMergedTerritories } from '@/lib/merged-territory';
 import { outerRings, type LatLng } from '@/lib/territory';
-import { clusterCells } from '@/lib/tiles';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
@@ -179,74 +178,50 @@ function boundsOfAll(features: TerritoryFeature[]): [[number, number], [number, 
  * from different runs merge visually into one shape rather than sitting as
  * overlapping separate fills. Disconnected areas stay separate and keep their
  * own identity colour (the most-recent contributing run's fence color).
+ *
+ * The dissolve itself lives in src/lib/merged-territory.ts, shared with
+ * territories-map.tsx (native) — see that module's header for why. This just
+ * adapts its platform-neutral output into the Feature shape this file's
+ * Mapbox source/layers expect.
  */
 function buildMergedFills(
   features: TerritoryFeature[],
   colorMap: Map<string, string>,
 ): FeatureCollection {
-  const savedFeatures = features.filter((f) => f.kind === 'saved' && f.cells.length > 0);
-  if (savedFeatures.length === 0) return { type: 'FeatureCollection', features: [] };
-
-  // Map each cell to the run that owns it — last-write wins by startedAtMs so
-  // a more-recent run's colour shows when two runs share the same tile.
-  const cellToRun = new Map<string, { id: string; startedAtMs: number; color: string }>();
-  for (const f of savedFeatures) {
-    const color = colorMap.get(f.id) ?? PENDING_COLOR;
-    for (const cell of f.cells) {
-      const existing = cellToRun.get(cell);
-      if (!existing || f.startedAtMs > existing.startedAtMs) {
-        cellToRun.set(cell, { id: f.id, startedAtMs: f.startedAtMs, color });
-      }
-    }
-  }
-
-  const allCells = [...cellToRun.keys()];
-  const clusters = clusterCells(allCells);
-
+  const territories = buildMergedTerritories(features, colorMap, PENDING_COLOR);
   return {
     type: 'FeatureCollection',
-    features: clusters.map((cluster) => {
-      // Pick the most-recent run in this component for color + click routing.
-      let latestMs = -Infinity;
-      let latestId = '';
-      let latestColor = PENDING_COLOR;
-      for (const cell of cluster.cells) {
-        const run = cellToRun.get(cell);
-        if (run && run.startedAtMs > latestMs) {
-          latestMs = run.startedAtMs;
-          latestId = run.id;
-          latestColor = run.color;
-        }
-      }
-      return {
-        type: 'Feature' as const,
-        properties: { id: latestId, kind: 'saved' as const, color: latestColor },
-        geometry: {
-          type: 'MultiPolygon' as const,
-          coordinates: cellsToMultiPolygon(cluster.cells, true),
-        },
-      };
-    }),
+    features: territories.map((t) => ({
+      type: 'Feature' as const,
+      properties: { id: t.id, kind: 'saved' as const, color: t.color },
+      geometry: { type: 'MultiPolygon' as const, coordinates: t.coordinates },
+    })),
   };
 }
 
 /** Extracts the outer rings of every polygon in a merged fills FeatureCollection
  *  as LineStrings. These are the true exterior boundaries of claimed territory —
- *  no internal edges between adjacent runs. */
+ *  no internal edges between adjacent runs.
+ *
+ * Ring extraction itself (outer ring only, holes discarded — an open product
+ * decision, not a bug, see merged-territory.ts's own doc comment) lives in
+ * buildMergedRimLines, shared with — well, nothing else needs it today, but
+ * it's colocated with buildMergedTerritories so the two stay obviously in
+ * sync rather than drifting the way the pre-extraction per-platform copies
+ * did. */
 function buildMergedRimData(mergedData: FeatureCollection): FeatureCollection {
-  const lineFeatures: Feature[] = [];
-  for (const f of mergedData.features) {
-    if (f.geometry.type !== 'MultiPolygon') continue;
-    for (const polygon of f.geometry.coordinates) {
-      if (polygon[0] && polygon[0].length >= 2) {
-        lineFeatures.push({
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: polygon[0] },
-        });
-      }
-    }
-  }
+  const territories = mergedData.features
+    .filter((f): f is Feature & { geometry: MultiPolygon } => f.geometry.type === 'MultiPolygon')
+    .map((f) => ({
+      id: (f.properties?.id as string) ?? '',
+      color: (f.properties?.color as string) ?? PENDING_COLOR,
+      coordinates: f.geometry.coordinates,
+    }));
+  const lineFeatures: Feature[] = buildMergedRimLines(territories).map((line) => ({
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'LineString', coordinates: line.coordinates },
+  }));
   return { type: 'FeatureCollection', features: lineFeatures };
 }
 
