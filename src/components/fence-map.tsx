@@ -83,10 +83,11 @@ interface FenceMapProps {
    *  now one weighted-centroid item, not one per cluster). `label` is
    *  pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
-  /** Blue cycle-bonus marker — present when this run's path significantly
-   *  re-covered the runner's own territory (≥ 50 tiles). Absent until the
-   *  upload resolves; null/undefined when no qualifying overlap. */
-  cycleBonus?: { pts: number; center: { lat: number; lng: number } } | null;
+  /** Blue cycle-bonus marker — present when this run's OWN path was
+   *  detected as a genuine loop (src/lib/laps.ts). Absent until the upload
+   *  resolves; null/undefined when no qualifying loop. `label` is
+   *  pre-translated, same convention as `takenClusters` above. */
+  cycleBonus?: { pts: number; center: { lat: number; lng: number }; label: string } | null;
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -434,6 +435,7 @@ export function FenceMap({
           <Marker
             coordinate={{ latitude: cycleBonus.center.lat, longitude: cycleBonus.center.lng }}
             anchor={{ x: 0.5, y: cycleBonusMarkerGeometry(cycleBonus.pts).anchorY }}
+            accessibilityLabel={cycleBonus.label}
             tracksViewChanges={false}>
             <CycleBonusMarker pts={cycleBonus.pts} />
           </Marker>

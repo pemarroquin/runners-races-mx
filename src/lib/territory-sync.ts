@@ -6,7 +6,6 @@
 // screen for a manual retry.
 import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
-import { cellToLatLng } from 'h3-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import type { TileOwnerRow } from '@/lib/leaderboard';
@@ -83,6 +82,27 @@ export interface RunUpload {
    * without its enclosure.
    */
   enclosedCells?: string[];
+  /**
+   * Lap/loop-bonus result, computed by the caller (index.tsx) from the
+   * UNMASKED path — same reasoning as `enclosedCells` above: masking trims
+   * exactly the section where a home loop closes, so `detectLaps` (laps.ts)
+   * has to run before that section is removed, and the unmasked path never
+   * leaves the device.
+   *
+   * Unlike `enclosedCells`, no raw cells or coordinates cross here beyond
+   * one point: `qualifies` is a plain boolean, and `markerCenter` is
+   * ALREADY constrained by the caller to a cell that survives masking (see
+   * laps.ts's `pickSafeLapMarkerCenter`) — never the unmasked centroid over
+   * every repeated cell, which could point at the runner's home.
+   * `markerCenter` is null when `qualifies` is true but every repeated cell
+   * fell inside the privacy zone (a loop run entirely within it): the bonus
+   * still applies, it just has nowhere safe to render, and this function
+   * must not fall back to an unmasked centre.
+   *
+   * Optional for the same "an old queued entry has no such field" reason as
+   * `enclosedCells` above.
+   */
+  lap?: { qualifies: boolean; markerCenter: { lat: number; lng: number } | null };
 }
 
 /**
@@ -133,11 +153,15 @@ export interface TileClaimResult {
    *  against which cells) that's out of scope this pass, see the executor's
    *  report. */
   rivalCells: string[];
-  /** Cycle bonus: 10 pts awarded when this run's path significantly overlaps
-   *  the runner's own existing territory (≥ CYCLE_MIN_TILES path cells are
-   *  already owned). Computed client-side in uploadRun() — not from the SQL
-   *  RPC — so it is only available on a successful sync, never on a cached or
-   *  replayed claim. Absent when no qualifying overlap was detected. */
+  /** Lap/loop bonus: 10 pts awarded when THIS run's own path genuinely loops
+   *  back on itself — see src/lib/laps.ts's `detectLaps`/`qualifies` for the
+   *  actual definition. Replaces a prior check (pre-2026-09-20) that
+   *  compared this run's cells against the runner's existing territory
+   *  instead of against itself, which rewarded "you ran through your own
+   *  neighbourhood" rather than any real loop (see laps.ts's header for the
+   *  full story). Computed client-side in uploadRun() — not from the SQL
+   *  RPC — so it is only available on a successful sync, never on a cached
+   *  or replayed claim. Absent when no qualifying loop was detected. */
   cycleBonus?: { pts: number; center: { lat: number; lng: number } };
 }
 
@@ -425,10 +449,25 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // existed in owned territory vs 38 in visited cells; per-run enclosure
     // already covers the avenue-strip case. Re-run `npm run measure-holes`
     // before changing that conclusion.
-    // Minimum overlap (path tiles already owned) to qualify for a cycle bonus.
-    const CYCLE_MIN_TILES = 50;
+
+    // Lap/loop bonus — see laps.ts's header for why the old ownedSet-overlap
+    // check never detected a cycle at all. Consumed here as a DERIVED
+    // result (`run.lap`), not computed from run.points: `run.points` is the
+    // masked path, and masking trims exactly the section where a home loop
+    // closes, so detection has to run on the unmasked path before that
+    // section is removed — the same reasoning as `run.enclosedCells` above.
+    // index.tsx computes `run.lap` at session end from the unmasked path
+    // (`detectLaps`) and constrains the marker centre to cells that survive
+    // masking (`pickSafeLapMarkerCenter`) before it ever reaches here — see
+    // RunUpload.lap's own doc comment. This has no dependency on
+    // ownedSet/territory_tiles either way, so it needs neither the paged
+    // read below to have succeeded nor even to run.
     const CYCLE_PTS = 10;
     let cycleBonus: TileClaimResult['cycleBonus'];
+    if (run.lap?.qualifies && run.lap.markerCenter) {
+      cycleBonus = { pts: CYCLE_PTS, center: run.lap.markerCenter };
+    }
+
     let unionNewEnclosed: string[] = [];
     // Set only when the paged read below failed outright (a returned error,
     // or a thrown exception) — never when it succeeded and simply found
@@ -441,10 +480,12 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       // `error` either: a runner past 1000 owned tiles (crossed in
       // production on 2026-09-08; 6,049 owned as of today) got `ownedSet`
       // silently truncated to an arbitrary 1000-row slice, so union
-      // enclosure reasoned about a fraction of the runner's real territory
-      // and the cycle-bonus check below ran against the same truncated
-      // slice — both wrong in the same silent way fetchMyVisitedCells's own
-      // header describes: "a wrong answer that looks like a complete one".
+      // enclosure reasoned about a fraction of the runner's real territory —
+      // wrong in the same silent way fetchMyVisitedCells's own header
+      // describes: "a wrong answer that looks like a complete one". (At the
+      // time of that incident this same truncated slice also fed the old
+      // ownedSet-overlap cycle-bonus check; that check is gone — see
+      // laps.ts — and the lap bonus above no longer reads `ownedSet` at all.)
       const PAGE = 1000;
       const ownedRows: { h3: string }[] = [];
       let pageFailed = false;
@@ -477,22 +518,6 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
         unionEnclosureReason = 'network';
       } else if (ownedRows.length > 0) {
         const ownedSet = new Set(ownedRows.map((r) => r.h3).filter((h) => isCurrentTileRes(h)));
-
-        // Cycle detection: path cells the runner already owned before this run.
-        const ownedPathCells = cells.filter((c) => ownedSet.has(c));
-        if (ownedPathCells.length >= CYCLE_MIN_TILES) {
-          let latSum = 0;
-          let lngSum = 0;
-          for (const cell of ownedPathCells) {
-            const [lat, lng] = cellToLatLng(cell);
-            latSum += lat;
-            lngSum += lng;
-          }
-          cycleBonus = {
-            pts: CYCLE_PTS,
-            center: { lat: latSum / ownedPathCells.length, lng: lngSum / ownedPathCells.length },
-          };
-        }
 
         const union = [...new Set([...cells, ...ownedSet])];
         const enclosed = enclosedCells(union, DEFAULT_TILE_RES);
