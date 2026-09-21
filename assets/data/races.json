@@ -4801,7 +4801,9 @@
       "confidence": "high",
       "notes": "Multi-day event, Oct 1-3, 2026, with staggered distance start days. Distance names per official site: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
       "notesEs": "Evento de varios días, del 1 al 3 de octubre de 2026, con días de salida escalonados por distancia. Nombres de las distancias según el sitio oficial: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
-      "sourceNotes": "Venue conflict: official UTMB site describes the location broadly as 'Copper Canyons region'; finishers.com specifies Batopilas as the base town — kept the more specific, independently-sourced value."
+      "sourceNotes": "Venue conflict: official UTMB site describes the location broadly as 'Copper Canyons region'; finishers.com specifies Batopilas as the base town — kept the more specific, independently-sourced value. Race-watch 2026-09-21: chihuahua.utmb.world and finishers.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against chihuahua.gob.mx's own state government press release, RunMX and roguexpeditions.com, all agreeing on Oct 1-3, 2026, Batopilas. No 'pospuesto'/'cancelado'/'aviso' signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-21"
     },
     {
       "id": "ultra-x-mexico-2026",
