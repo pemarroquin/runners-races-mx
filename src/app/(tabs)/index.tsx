@@ -169,6 +169,16 @@ export default function TrackScreen() {
       },
     ];
   }, [tileClaim, t]);
+  // The blue cycle-bonus marker's accessible label — same convention as
+  // takenClusters' `label` just above: computed here (not inside FenceMap)
+  // so the map components stay dumb about i18n. Without this the marker
+  // rendered only a bare "%{pts}pt" glyph with nothing on screen or to a
+  // screen reader saying what was earned (reported 2026-09-20).
+  const cycleBonusMarker = useMemo(() => {
+    const bonus = tileClaim?.cycleBonus;
+    if (!bonus) return undefined;
+    return { ...bonus, label: t('track.cycleBonusLabel', { pts: bonus.pts }) };
+  }, [tileClaim, t]);
   // The conquered-tiles bubble's place name — districtLabel's real municipio
   // by majority vote over this run's district's park cells (best-effort,
   // fetched once the run lands), falling back to the metro region computed
@@ -828,8 +838,8 @@ export default function TrackScreen() {
             // above. Empty until claimTiles() resolves, same as rivalTiles.
             takenClusters={takenClusters}
             // Blue cycle-bonus marker — non-null once the claim resolves and
-            // enough of the run's path overlapped existing owned territory.
-            cycleBonus={tileClaim?.cycleBonus}
+            // this run's own path was detected as a genuine loop (laps.ts).
+            cycleBonus={cycleBonusMarker}
             color={fenceColor}
             others={[]}
             excludeId={savedRunId}
