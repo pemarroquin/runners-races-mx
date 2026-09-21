@@ -33,6 +33,7 @@ import { fenceColorForRun, LIVE_FILL_RECOMPUTE_MS, LIVE_FILL_RECOMPUTE_POINTS } 
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
+import { detectLaps, pickSafeLapMarkerCenter } from '@/lib/laps';
 import { saveLastRunDebug } from '@/lib/last-run-debug';
 import { isImpossiblePace } from '@/lib/pace-guard';
 import { fetchDistrictParkCells } from '@/lib/boards';
@@ -44,7 +45,7 @@ import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, type FenceResult } from '@/lib/territory';
-import { uploadRun, type TileClaimResult } from '@/lib/territory-sync';
+import { uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
 import { clusterCells, DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
@@ -386,6 +387,13 @@ export default function TrackScreen() {
   // paths — see the effect below — and because only sessionTiles may be
   // logged as visited.
   const [sessionEnclosed, setSessionEnclosed] = useState<string[]>([]);
+  // Lap/loop-bonus result for THIS run, computed at session end from the
+  // UNMASKED path (tracker.points) — see territory-sync.ts's RunUpload.lap
+  // for why: masking trims exactly the section where a home loop closes.
+  // `markerCenter` is already constrained to a cell that survives masking
+  // (see the effect below and laps.ts's pickSafeLapMarkerCenter) before it
+  // ever reaches state, so nothing here can point at the runner's home.
+  const [sessionLap, setSessionLap] = useState<NonNullable<RunUpload['lap']> | null>(null);
 
   // The share sheet's input — the MASKED path (same privacy-trimmed route
   // FenceMap draws below, never tracker.points), so a shared route sticker
@@ -414,7 +422,12 @@ export default function TrackScreen() {
       // stat bar render as this run's territory.
       const builtFence = result.points.length > 0 ? buildFence(result.points) : null;
       setFence(builtFence);
-      setSessionTiles(pathToTiles(result.points).cells);
+      // This run's masked-path cells — the same set the upload actually
+      // claims. Kept as a local rather than read back from sessionTiles
+      // state below: the lap-marker safety check further down needs it in
+      // the same tick it's computed, not on the next render.
+      const maskedCells = pathToTiles(result.points).cells;
+      setSessionTiles(maskedCells);
       // Enclosure comes off the UNMASKED path, unlike everything above it.
       // It has to: masking trims 200-350 m from each end, which for a
       // runner who starts and finishes at home is precisely the section
@@ -442,6 +455,28 @@ export default function TrackScreen() {
         );
       } catch {
         setSessionEnclosed([]);
+      }
+      // Lap/loop bonus — detected on the UNMASKED path, same reasoning as
+      // the enclosure above: masking trims exactly the section where a home
+      // loop closes, so detection has to run before that section is gone.
+      // The marker centre is the one thing that DOES have to respect
+      // masking: it renders on the session-summary map, so a centre picked
+      // over every repeated cell could point at the runner's home.
+      // pickSafeLapMarkerCenter intersects the repeated ground against
+      // `maskedCells` (this run's own masked-path cells, computed above)
+      // before choosing where to render it, and returns null rather than
+      // falling back to an unmasked centre when that intersection is empty
+      // (a loop run entirely inside the privacy zone) — see laps.ts and
+      // territory-sync.ts's RunUpload.lap.
+      try {
+        const lapResult = detectLaps(tracker.points);
+        setSessionLap(
+          lapResult.qualifies
+            ? { qualifies: true, markerCenter: pickSafeLapMarkerCenter(lapResult.repeatedCells, maskedCells) }
+            : { qualifies: false, markerCenter: null },
+        );
+      } catch {
+        setSessionLap(null);
       }
       // Diagnostic escape hatch (last-run-debug.ts) — the RAW, pre-mask
       // points, so a suspicious area report can be re-run through
@@ -585,6 +620,12 @@ export default function TrackScreen() {
       // Already zone-filtered above; uploadRun claims these without logging
       // them as visits. See RunUpload.enclosedCells.
       enclosedCells: sessionEnclosed,
+      // Already computed from the UNMASKED path with its marker centre
+      // already constrained to cells that survive masking — see the effect
+      // above and RunUpload.lap. `undefined`, not `sessionLap` directly,
+      // when the effect hasn't set it (or threw): an old queued entry with
+      // no `lap` field at all uploads exactly like one explicitly opted out.
+      lap: sessionLap ?? undefined,
     };
 
     const outcome = await uploadRun(payload);
@@ -674,7 +715,7 @@ export default function TrackScreen() {
         if (id) clearCheckpoint();
       }
     }
-  }, [fence, masked, sessionEnclosed, queuedId, runDistrict, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, masked, sessionEnclosed, sessionLap, queuedId, runDistrict, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
 
   // Task 1 — fire save() itself, exactly once, the moment the finished run
   // has everything save() needs (fence + masked path). Gated on the REF, not

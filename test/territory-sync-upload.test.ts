@@ -319,13 +319,13 @@ describe('uploadRun — owned-tiles paging (union enclosure)', () => {
     expect(outcome.tiles?.cycleBonus).toBeUndefined();
   });
 
-  it('awards the cycle bonus from a genuine loop in run.points, independent of ownedSet', async () => {
+  it('awards the cycle bonus from run.lap, independent of ownedSet', async () => {
     // A real closed loop (see test/laps.test.ts for detectLaps' own direct
-    // coverage) run TWICE, built from real H3 geometry so it clears
-    // MIN_REPEATED_CELLS/MIN_REPEAT_FRACTION — this is the wiring test: the
-    // bonus must fire from run.points alone with an EMPTY owned set (no
-    // territory_tiles rows at all), proving it no longer depends on
-    // ownedSet/paging in any way.
+    // coverage) run TWICE, built from real H3 geometry — used here only to
+    // produce a realistic marker cell. This is the wiring test: the bonus
+    // must fire from the DERIVED `run.lap` with an EMPTY owned set (no
+    // territory_tiles rows at all), proving it depends on neither
+    // ownedSet/paging nor on uploadRun re-deriving anything itself.
     const MTY = { lat: 25.6714, lng: -100.369 };
     const corners = [
       latLngToCell(MTY.lat, MTY.lng, DEFAULT_TILE_RES),
@@ -367,20 +367,74 @@ describe('uploadRun — owned-tiles paging (union enclosure)', () => {
     });
     vi.doMock('@/lib/enclosure', () => ({ enclosedCells: enclosedSpy }));
 
+    // The caller (index.tsx) has already run detectLaps on the UNMASKED
+    // path and already constrained the marker to a cell that survives
+    // masking — see RunUpload.lap. uploadRun only consumes that result.
+    const [markerLat, markerLng] = cellToLatLng(ring[Math.floor(ring.length / 2)]);
+    const lap = { qualifies: true, markerCenter: { lat: markerLat, lng: markerLng } };
+
     const { uploadRun } = await import('@/lib/territory-sync');
-    const outcome = await uploadRun({ ...makeRun({ pathCells }), points } as never);
+    const outcome = await uploadRun({ ...makeRun({ pathCells }), points, lap } as never);
 
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) throw new Error('unreachable');
     expect(outcome.tiles?.cycleBonus).toBeDefined();
     expect(outcome.tiles?.cycleBonus?.pts).toBe(10);
-    // The marker must land on one of the actually-repeated cells (the snap
-    // guarantee — see laps.ts's pickLapMarkerCenter), not an arbitrary mean.
+    // The centre must be passed through untouched — uploadRun must not
+    // recompute or re-snap it, because only the caller knows which cells
+    // survived masking.
     const center = outcome.tiles?.cycleBonus?.center;
-    expect(center).toBeDefined();
-    if (center) {
-      const landedCell = latLngToCell(center.lat, center.lng, DEFAULT_TILE_RES);
-      expect(ring).toContain(landedCell);
+    expect(center).toEqual(lap.markerCenter);
+    expect(ring).toContain(latLngToCell(center!.lat, center!.lng, DEFAULT_TILE_RES));
+  });
+
+  it('does NOT derive the bonus from run.points — a real loop with no run.lap earns nothing', async () => {
+    // The privacy contract, locked in. `run.points` is the MASKED path
+    // (index.tsx's save() sends `points: masked.points`), so detection must
+    // happen upstream on the unmasked track and arrive as `run.lap`. If
+    // uploadRun ever starts deriving laps from run.points again, this fails
+    // — and the regression it would reintroduce is a silent false-negative
+    // on exactly the home loops the feature exists for.
+    const MTY = { lat: 25.6714, lng: -100.369 };
+    const corners = [
+      latLngToCell(MTY.lat, MTY.lng, DEFAULT_TILE_RES),
+      latLngToCell(MTY.lat + 0.01, MTY.lng, DEFAULT_TILE_RES),
+      latLngToCell(MTY.lat + 0.01, MTY.lng + 0.01, DEFAULT_TILE_RES),
+      latLngToCell(MTY.lat, MTY.lng + 0.01, DEFAULT_TILE_RES),
+    ];
+    const ring: string[] = [];
+    for (let i = 0; i < corners.length; i++) {
+      for (const c of gridPathCells(corners[i], corners[(i + 1) % corners.length])) {
+        if (ring[ring.length - 1] !== c) ring.push(c);
+      }
     }
+    let ts = 0;
+    const points = [...ring, ...ring].map((cell) => {
+      const [lat, lng] = cellToLatLng(cell);
+      ts += 2000;
+      return { lat, lng, ts };
+    });
+    const pathCells = POOL.slice(0, 5);
+
+    vi.resetModules();
+    const mock = makeSupabaseMock({ ownedPages: [], pathCells });
+    vi.doMock('@/lib/supabase', () => ({
+      supabase: mock.supabase,
+      ensureSession: async () => ({ user: { id: 'user-1' } }),
+      TERRITORY_ENABLED: true,
+    }));
+    vi.doMock('@/lib/tiles', async () => {
+      const actual = await vi.importActual<typeof import('@/lib/tiles')>('@/lib/tiles');
+      return { ...actual, pathToTiles: () => ({ cells: pathCells, directCount: pathCells.length, gapFilledCount: 0 }) };
+    });
+    vi.doMock('@/lib/enclosure', () => ({ enclosedCells: () => [] }));
+
+    const { uploadRun } = await import('@/lib/territory-sync');
+    // Same unmistakable two-lap path as above, but NO `lap` field.
+    const outcome = await uploadRun({ ...makeRun({ pathCells }), points } as never);
+
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) throw new Error('unreachable');
+    expect(outcome.tiles?.cycleBonus).toBeUndefined();
   });
 });

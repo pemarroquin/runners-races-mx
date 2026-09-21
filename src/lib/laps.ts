@@ -249,3 +249,37 @@ export function pickLapMarkerCenter(repeatedCells: string[]): { lat: number; lng
   }
   return { lat: best.lat, lng: best.lng };
 }
+
+/**
+ * The lap-bonus marker centre, constrained so it can never land inside the
+ * runner's privacy zone.
+ *
+ * `detectLaps` runs on the UNMASKED path (see this file's header and
+ * territory-sync.ts's `RunUpload.lap`) precisely because masking trims the
+ * section where a home loop closes — but that means `repeatedCells` can
+ * itself include cells that sit inside the zone. Rendering a marker at the
+ * raw centroid of ALL repeated cells would reintroduce, via the marker,
+ * exactly what masking removed: a coordinate pointing at the runner's home.
+ *
+ * The fix is the same shape as enclosure.ts's `dropCellsInsideZone` —
+ * intersect against ground that survived masking BEFORE computing anything
+ * that gets rendered. Here that ground is `maskedPathCells`: this run's own
+ * masked-path cells (`pathToTiles(masked.points).cells` in index.tsx — the
+ * same set the upload actually claims), passed in by the caller rather than
+ * recomputed here, so this stays a pure function of two cell lists like
+ * `pickLapMarkerCenter` itself.
+ *
+ * Returns null when the intersection is empty — a loop run entirely inside
+ * the privacy zone. The run still qualifies for the bonus (that's decided by
+ * `detectLaps` on the unmasked path, not by this function), it just has no
+ * cell left that's safe to point at. Callers must not fall back to the
+ * unmasked centroid in that case.
+ */
+export function pickSafeLapMarkerCenter(
+  repeatedCells: string[],
+  maskedPathCells: string[],
+): { lat: number; lng: number } | null {
+  const masked = new Set(maskedPathCells);
+  const safeCells = repeatedCells.filter((c) => masked.has(c));
+  return pickLapMarkerCenter(safeCells);
+}
