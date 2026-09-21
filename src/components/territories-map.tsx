@@ -12,14 +12,13 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
-import { cellsToMultiPolygon } from 'h3-js';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
+import { buildMergedTerritories } from '@/lib/merged-territory';
 import { outerRings, type LatLng } from '@/lib/territory';
-import { clusterCells } from '@/lib/tiles';
 
 const PENDING_COLOR = '#8E8E93';
 
@@ -29,43 +28,20 @@ interface MergedGroup {
   color: string;
 }
 
+// The dissolve itself (cell -> owning run by last-write-wins, cluster by H3
+// adjacency, most-recent-run-per-cluster for colour + click routing) now
+// lives in src/lib/merged-territory.ts, shared with territories-map.web.tsx
+// — see that module's header for why. This just adapts its platform-neutral
+// output into this file's own MergedGroup shape for react-native-maps.
 function buildMergedGroups(
   features: TerritoryFeature[],
   colorMap: Map<string, string>,
 ): MergedGroup[] {
-  const savedFeatures = features.filter((f) => f.kind === 'saved' && f.cells.length > 0);
-  if (savedFeatures.length === 0) return [];
-
-  const cellToRun = new Map<string, { id: string; startedAtMs: number; color: string }>();
-  for (const f of savedFeatures) {
-    const color = colorMap.get(f.id) ?? PENDING_COLOR;
-    for (const cell of f.cells) {
-      const existing = cellToRun.get(cell);
-      if (!existing || f.startedAtMs > existing.startedAtMs) {
-        cellToRun.set(cell, { id: f.id, startedAtMs: f.startedAtMs, color });
-      }
-    }
-  }
-
-  const clusters = clusterCells([...cellToRun.keys()]);
-  return clusters.map((cluster) => {
-    let latestMs = -Infinity;
-    let latestId = '';
-    let latestColor = PENDING_COLOR;
-    for (const cell of cluster.cells) {
-      const run = cellToRun.get(cell);
-      if (run && run.startedAtMs > latestMs) {
-        latestMs = run.startedAtMs;
-        latestId = run.id;
-        latestColor = run.color;
-      }
-    }
-    return {
-      id: latestId,
-      geometry: { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cluster.cells, true) },
-      color: latestColor,
-    };
-  });
+  return buildMergedTerritories(features, colorMap, PENDING_COLOR).map((t) => ({
+    id: t.id,
+    geometry: { type: 'MultiPolygon', coordinates: t.coordinates },
+    color: t.color,
+  }));
 }
 const PENDING_FILL_ALPHA = 0.14;
 const PENDING_STROKE_ALPHA = 0.7;

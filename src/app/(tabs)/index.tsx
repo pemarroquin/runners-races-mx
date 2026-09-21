@@ -157,13 +157,25 @@ export default function TrackScreen() {
     const total = cells.length;
     let latSum = 0;
     let lngSum = 0;
+    // Denominator for the weighted mean is Σ clusters[].count, NOT
+    // cells.length. clusterCells (tiles.ts) starts from `new Set(cells)`, so
+    // it deduplicates — Σ clusters[].count is the number of DISTINCT cells,
+    // which can be smaller than cells.length if the input carries
+    // duplicates. Dividing the lat/lng sum by the larger, un-deduplicated
+    // `total` would scale the centroid toward (0, 0), throwing the marker
+    // tens of km from Monterrey for even a small duplicate rate. `count:`
+    // below is deliberately left as `total` — the number shown to the
+    // runner is the taken-cell count (duplicates and all), only the
+    // centroid divisor needs to match what was actually summed.
+    let clusteredTotal = 0;
     for (const c of clusters) {
       latSum += c.center.lat * c.count;
       lngSum += c.center.lng * c.count;
+      clusteredTotal += c.count;
     }
     return [
       {
-        center: { lat: latSum / total, lng: lngSum / total },
+        center: { lat: latSum / clusteredTotal, lng: lngSum / clusteredTotal },
         count: total,
         label: t('track.tookTiles', { count: total }),
       },
@@ -867,6 +879,11 @@ export default function TrackScreen() {
               ios="square.and.arrow.up"
               android="share"
               disabled={!shareData}
+              // Smaller than the default 52 — this row is the one place a
+              // RoundButton sits directly beside the Stat columns, and the
+              // clipped-text fix needs the width back more than these two
+              // need the full circle (see the size prop's own comment).
+              size={44}
             />
             <RoundButton
               label={t('track.done')}
@@ -875,6 +892,7 @@ export default function TrackScreen() {
               foreground="#ffffff"
               ios="checkmark"
               android="check"
+              size={44}
             />
           </View>
         </SafeAreaView>
@@ -1214,6 +1232,7 @@ function RoundButton({
   ios,
   android,
   disabled,
+  size = 52,
 }: {
   label: string;
   onPress: () => void;
@@ -1222,6 +1241,14 @@ function RoundButton({
   ios: SFSymbol;
   android: AndroidSymbol;
   disabled?: boolean;
+  // Default (52) is what pause/stop and the fenceless-run done button use —
+  // those keep the full HIG-minimum touch target since they're the only
+  // controls on their screen. The session-end row's two buttons pass a
+  // smaller size (below) purely to give the three Stat columns beside them
+  // more width; hitSlop={8} below already extends every RoundButton's tap
+  // area past its visual size, so shrinking the visual circle alone doesn't
+  // shrink the real tap target as much as it looks.
+  size?: number;
 }) {
   return (
     <Pressable
@@ -1233,9 +1260,15 @@ function RoundButton({
       hitSlop={8}
       style={({ pressed }) => [
         styles.round,
-        { backgroundColor: background, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: background,
+          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
+        },
       ]}>
-      <Icon ios={ios} android={android} size={20} color={foreground} />
+      <Icon ios={ios} android={android} size={size >= 52 ? 20 : 18} color={foreground} />
     </Pressable>
   );
 }
@@ -1259,9 +1292,15 @@ function Stat({
           than clipped — applied by LENGTH, so "10.66 km" takes it too. That
           is deliberate: distance would otherwise wrap at its space and the
           two stats beside each other would sit on different numbers of
-          lines. */}
+          lines.
+          Threshold is >= 5, not > 6: a real iPhone screenshot (2026-09-20)
+          showed "53:52" (5 chars, once a run passes ten minutes) and
+          "5.87 km" (7 chars) BOTH clipped at the 24pt size — the old > 6
+          cutoff let every M:SS time under an hour through uncompacted. The
+          column-width side of that same fix lives in sessionEndStatsBar/
+          sessionEndTopBar's spacing and RoundButton's size prop below. */}
       <Text
-        style={[styles.statValue, { color: c.text }, value.length > 6 && styles.statValueCompact]}
+        style={[styles.statValue, { color: c.text }, value.length >= 5 && styles.statValueCompact]}
         numberOfLines={1}>
         {value}
       </Text>
@@ -1356,19 +1395,28 @@ const styles = StyleSheet.create({
   // FenceMap, not a scrolling card. Fixed dark tint regardless of the app's
   // own theme, same reasoning as STATS_ON_DARK above: this always sits over
   // a dark map, never over the app's own background.
+  // Padding/gap here were originally Spacing.three throughout (16pt each),
+  // which on a real iPhone left the three Stat columns too narrow for their
+  // content — "TIME 53:…" and "DISTANCE 5.87…" both ellipsized (screenshot,
+  // 2026-09-20). Tightened on both this bar and sessionEndStatsBar, plus
+  // RoundButton's smaller `size` above, to give the columns the room back
+  // without sizing anything from a measured viewport — every value here is
+  // still a fixed token, just a smaller one. Vertical padding is untouched;
+  // only what eats into the row's WIDTH shrank.
   sessionEndTopBar: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: Spacing.two,
-    padding: Spacing.three,
+    gap: Spacing.one,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.two,
   },
   sessionEndStatsBar: {
     flex: 1,
     flexDirection: 'row',
-    gap: Spacing.three,
+    gap: Spacing.two,
     borderRadius: Spacing.three,
-    padding: Spacing.three,
+    padding: Spacing.two,
   },
   sessionEndBottomOverlay: {
     position: 'absolute',
