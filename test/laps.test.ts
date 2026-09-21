@@ -25,8 +25,10 @@ import {
   MIN_REPEATED_CELLS,
   MIN_SEPARATION_CELLS,
   pickLapMarkerCenter,
+  pickSafeLapMarkerCenter,
 } from '@/lib/laps';
-import { DEFAULT_TILE_RES } from '@/lib/tiles';
+import { DEFAULT_ZONE_RADIUS_M, maskPath, type PrivacyZone } from '@/lib/privacy-zone';
+import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 
 const MTY = { lat: 25.6714, lng: -100.369 };
 const M_PER_DEG_LAT = 111_320;
@@ -95,6 +97,59 @@ function laps(waypoints: [number, number][], count: number): [number, number][] 
   for (let i = 1; i < count; i++) out.push(...waypoints.slice(1));
   return out;
 }
+
+/**
+ * A square loop, run twice, starting and finishing at the origin — sized
+ * (empirically, via the fixture itself, not guessed) so that it clears
+ * `qualifies` on the FULL path but drops under MIN_REPEATED_CELLS once
+ * trimmed by `maskPath` at `DEFAULT_ZONE_RADIUS_M` with zero jitter (cut ===
+ * radius exactly). This is the shape of the actual reported bug: a runner
+ * who starts and finishes a real loop at home. Smaller than BIG_LOOP
+ * (which is too large a fraction of a km for the default 200m cut to make
+ * a dent) and bigger than TINY_LOOP (which never clears MIN_REPEATED_CELLS
+ * even unmasked).
+ */
+const HOME_LOOP_SIDE_M = 250;
+const HOME_LOOP: [number, number][] = [
+  [0, 0],
+  [0, HOME_LOOP_SIDE_M],
+  [HOME_LOOP_SIDE_M, HOME_LOOP_SIDE_M],
+  [HOME_LOOP_SIDE_M, 0],
+  [0, 0],
+];
+
+/** Privacy zone centred exactly on HOME_LOOP's own start/finish point, at
+ *  the app's real default radius (privacy-zone.ts) — not a value picked to
+ *  make the test pass, the value runners actually ship with. */
+const HOME_ZONE: PrivacyZone = { home: MTY, radiusM: DEFAULT_ZONE_RADIUS_M };
+
+/** Zero jitter — the cut distance is exactly `radiusM`, so the fixture's
+ *  behaviour doesn't depend on Math.random(). Real runs get a jittered cut
+ *  in [radiusM, radiusM * 1.75] (privacy-zone.ts); using the minimum here is
+ *  the conservative case for "masking is real" — a larger real-world cut
+ *  would only trim more of the loop, never less. */
+const NO_JITTER = () => 0;
+
+/**
+ * An out-and-back starting and finishing at home, long enough (same 1100m
+ * as the "an out-and-back qualifies" case above) to clear both `qualifies`
+ * thresholds. Used specifically for the "never returns a masked-out cell"
+ * test below, not HOME_LOOP: in a there-and-back, the cells nearest home are
+ * visited once heading OUT (near the very START of the recorded path) and
+ * once heading BACK (near the very END) — the two positions `maskPath`
+ * actually trims from. So near-home cells here are the ones genuinely,
+ * completely absent from the masked path's own cell set, which is exactly
+ * the case the safety check has to prove itself against. HOME_LOOP (two
+ * laps of a closed loop) doesn't give that: its own near-home cells always
+ * get a surviving visit from the OTHER lap's pass through the same
+ * location, which happens mid-path rather than at either extremity — proven
+ * empirically while building this fixture, not assumed.
+ */
+const HOME_OUT_AND_BACK: [number, number][] = [
+  [0, 0],
+  [1100, 0],
+  [0, 0],
+];
 
 describe('detectLaps', () => {
   it('returns laps: 0 for an empty path', () => {
@@ -311,5 +366,81 @@ describe('pickLapMarkerCenter', () => {
     if (!center) return;
     const landedCell = latLngToCell(center.lat, center.lng, DEFAULT_TILE_RES);
     expect(cells).toContain(landedCell);
+  });
+});
+
+describe('detectLaps vs privacy masking (2026-09-20 fix)', () => {
+  it('a home loop that qualifies on the UNMASKED path can fail to qualify once masked', () => {
+    // This is the precondition for the reported bug, proven against the
+    // real maskPath rather than asserted: masking trims 200-350m off each
+    // end (privacy-zone.ts), which for a runner who starts and finishes at
+    // home is exactly the section that closes the loop. Two clean laps
+    // qualify on the full path; the same path masked at the app's real
+    // default radius does not. This is why detectLaps must run on the
+    // UNMASKED path — see laps.ts's header and territory-sync.ts's
+    // RunUpload.lap. (The wiring regression that this actually broke —
+    // uploadRun calling detectLaps on the MASKED path — is covered
+    // separately in test/territory-sync-upload.test.ts, since that's the
+    // production code path that had the bug; detectLaps/maskPath
+    // themselves were never wrong.)
+    const points = chain(laps(HOME_LOOP, 2));
+    const full = detectLaps(points);
+    expect(full.qualifies).toBe(true);
+    expect(full.repeatedCells.length).toBeGreaterThanOrEqual(MIN_REPEATED_CELLS);
+
+    const masked = maskPath(points, HOME_ZONE, NO_JITTER);
+    expect(masked.masked).toBe(true);
+    expect(masked.fullyInsideZone).toBe(false);
+    const maskedResult = detectLaps(masked.points);
+    expect(maskedResult.qualifies).toBe(false);
+  });
+});
+
+describe('pickSafeLapMarkerCenter', () => {
+  it('returns null for empty repeatedCells regardless of maskedPathCells', () => {
+    expect(pickSafeLapMarkerCenter([], ['8c48a2062d835ff'])).toBeNull();
+  });
+
+  it('never returns a cell that privacy masking removed', () => {
+    const points = chain(HOME_OUT_AND_BACK);
+    const full = detectLaps(points);
+    const masked = maskPath(points, HOME_ZONE, NO_JITTER);
+    const maskedCells = pathToTiles(masked.points).cells;
+
+    // Sanity: masking must have actually removed some of the repeated
+    // ground ENTIRELY (not merely broken its repeat-count — see
+    // HOME_OUT_AND_BACK's own comment for why this fixture, specifically,
+    // guarantees that), or this test proves nothing.
+    const removedFromRepeated = full.repeatedCells.filter((c) => !maskedCells.includes(c));
+    expect(removedFromRepeated.length).toBeGreaterThan(0);
+
+    const center = pickSafeLapMarkerCenter(full.repeatedCells, maskedCells);
+    expect(center).not.toBeNull();
+    if (!center) return;
+    const landedCell = latLngToCell(center.lat, center.lng, DEFAULT_TILE_RES);
+    // Must be a cell that survived masking...
+    expect(maskedCells).toContain(landedCell);
+    // ...and specifically never one of the ones masking removed.
+    expect(removedFromRepeated).not.toContain(landedCell);
+  });
+
+  it('returns null for a loop run entirely inside the privacy zone — qualifies, but nowhere safe to point', () => {
+    const points = chain(laps(HOME_LOOP, 2));
+    const full = detectLaps(points);
+    expect(full.qualifies).toBe(true);
+
+    // A zone radius bigger than the whole loop: the entire run happened
+    // "at home".
+    const wholeRunInsideZone: PrivacyZone = { home: MTY, radiusM: 5000 };
+    const masked = maskPath(points, wholeRunInsideZone, NO_JITTER);
+    expect(masked.fullyInsideZone).toBe(true);
+    expect(masked.points).toHaveLength(0);
+
+    const maskedCells = pathToTiles(masked.points).cells;
+    expect(maskedCells).toHaveLength(0);
+    // The bonus itself is a separate decision (qualifies is still true —
+    // detected on the unmasked path); this function only ever answers
+    // "where is it safe to point", and here the answer is nowhere.
+    expect(pickSafeLapMarkerCenter(full.repeatedCells, maskedCells)).toBeNull();
   });
 });

@@ -8,7 +8,6 @@ import type { MultiPolygon, Polygon } from 'geojson';
 import type { Session } from '@supabase/supabase-js';
 
 import { ensureSession, supabase, TERRITORY_ENABLED } from '@/lib/supabase';
-import { detectLaps, pickLapMarkerCenter } from '@/lib/laps';
 import type { TileOwnerRow } from '@/lib/leaderboard';
 import { isReservedNickname } from '@/lib/nickname';
 import { setCachedDisplayName } from '@/lib/profile-cache';
@@ -83,6 +82,27 @@ export interface RunUpload {
    * without its enclosure.
    */
   enclosedCells?: string[];
+  /**
+   * Lap/loop-bonus result, computed by the caller (index.tsx) from the
+   * UNMASKED path — same reasoning as `enclosedCells` above: masking trims
+   * exactly the section where a home loop closes, so `detectLaps` (laps.ts)
+   * has to run before that section is removed, and the unmasked path never
+   * leaves the device.
+   *
+   * Unlike `enclosedCells`, no raw cells or coordinates cross here beyond
+   * one point: `qualifies` is a plain boolean, and `markerCenter` is
+   * ALREADY constrained by the caller to a cell that survives masking (see
+   * laps.ts's `pickSafeLapMarkerCenter`) — never the unmasked centroid over
+   * every repeated cell, which could point at the runner's home.
+   * `markerCenter` is null when `qualifies` is true but every repeated cell
+   * fell inside the privacy zone (a loop run entirely within it): the bonus
+   * still applies, it just has nowhere safe to render, and this function
+   * must not fall back to an unmasked centre.
+   *
+   * Optional for the same "an old queued entry has no such field" reason as
+   * `enclosedCells` above.
+   */
+  lap?: { qualifies: boolean; markerCenter: { lat: number; lng: number } | null };
 }
 
 /**
@@ -431,39 +451,21 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // before changing that conclusion.
 
     // Lap/loop bonus — see laps.ts's header for why the old ownedSet-overlap
-    // check never detected a cycle at all. Computed from run.points ALONE,
-    // with no dependency on ownedSet/territory_tiles — unlike the check it
-    // replaces, this no longer needs the paged read below to have succeeded,
-    // or even to run.
-    //
-    // KNOWN LIMITATION, left as found rather than silently worked around:
-    // `run.points` here is `masked.points` from index.tsx's save() — the
-    // privacy-trimmed path (privacy-zone.ts), not the unmasked one. Masking
-    // trims ~200-350 m off each end, which for a runner who starts and
-    // finishes at home is precisely the section where an out-and-back or a
-    // home-loop closes — the exact concern `RunUpload.enclosedCells`
-    // exists to route around for enclosure (that field is computed by the
-    // caller from the UNMASKED path). Lap detection has no equivalent field
-    // and was not given one here: the brief for this change instructed
-    // wiring `detectLaps(run.points)` directly and said to confirm and
-    // report what `run.points` actually is at this call site, not to
-    // redesign RunUpload — see the executor's report on this brief. Net
-    // effect: a real loop can under-count or miss `qualifies` if enough of
-    // its closing section falls inside the runner's privacy zone; it never
-    // over-counts, so this is a false-negative risk, not a false-positive
-    // one. Threading an unmasked-points field through RunUpload, mirroring
-    // `enclosedCells`, is the fix if this needs to change.
+    // check never detected a cycle at all. Consumed here as a DERIVED
+    // result (`run.lap`), not computed from run.points: `run.points` is the
+    // masked path, and masking trims exactly the section where a home loop
+    // closes, so detection has to run on the unmasked path before that
+    // section is removed — the same reasoning as `run.enclosedCells` above.
+    // index.tsx computes `run.lap` at session end from the unmasked path
+    // (`detectLaps`) and constrains the marker centre to cells that survive
+    // masking (`pickSafeLapMarkerCenter`) before it ever reaches here — see
+    // RunUpload.lap's own doc comment. This has no dependency on
+    // ownedSet/territory_tiles either way, so it needs neither the paged
+    // read below to have succeeded nor even to run.
     const CYCLE_PTS = 10;
     let cycleBonus: TileClaimResult['cycleBonus'];
-    const lapResult = detectLaps(run.points);
-    if (lapResult.qualifies) {
-      const center = pickLapMarkerCenter(lapResult.repeatedCells);
-      // pickLapMarkerCenter only returns null for empty input, which cannot
-      // happen when `qualifies` is true (qualifies requires
-      // repeatedCells.length >= MIN_REPEATED_CELLS > 0) — guarded anyway
-      // rather than asserted, so a future change to either function fails
-      // safe (no bonus) instead of throwing mid-upload.
-      if (center) cycleBonus = { pts: CYCLE_PTS, center };
+    if (run.lap?.qualifies && run.lap.markerCenter) {
+      cycleBonus = { pts: CYCLE_PTS, center: run.lap.markerCenter };
     }
 
     let unionNewEnclosed: string[] = [];
