@@ -310,6 +310,14 @@ const GLYPHS: Record<string, Glyph> = {
       <path d="M8.3 10.7l7.4-4.2M8.3 13.3l7.4 4.2" stroke={c} strokeWidth={1.8} strokeLinecap="round" />
     </>
   ),
+  // Added with the territory agent suggest button (achievements-view.tsx).
+  auto_awesome: (c) => (
+    <>
+      <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" fill={c} />
+      <path d="M5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14z" fill={c} />
+      <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z" fill={c} />
+    </>
+  ),
   content_copy: (c) => (
     <>
       <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" stroke={c} strokeWidth={1.8} fill="none" />

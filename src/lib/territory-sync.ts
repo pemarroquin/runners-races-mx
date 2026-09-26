@@ -429,6 +429,12 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     if (error || !data) return { ok: false, reason: 'network' };
 
+    // Runs under 300 m save to history but do not claim tiles — too short to
+    // produce connected territory and the main source of isolated scatter cells.
+    if (run.distanceM < 300) {
+      return { ok: true, runId: data.id, tiles: null };
+    }
+
     // Tiles: computed from the SAME masked path buildFence used for the
     // (still-written) fence column above — privacy-zone trimming applies to
     // ground claimed exactly as it applies to ground enclosed. See tiles.ts

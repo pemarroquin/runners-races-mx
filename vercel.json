@@ -1,4 +1,7 @@
 {
+  "crons": [
+    { "path": "/api/territory-analysis", "schedule": "30 10 * * 1" }
+  ],
   "buildCommand": "node scripts/check-web-env.mjs && npx expo export -p web && cp 'dist/race/[id].html' dist/race/_detail.html",
   "outputDirectory": "dist",
   "cleanUrls": true,
