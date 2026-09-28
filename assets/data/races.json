@@ -321,7 +321,9 @@
         "lng": -100.3446,
         "approx": true
       },
-      "sourceNotes": "Facebook (carreraduendes) announced first registration phase open via Trotime. Trotime GUID could not be 100% tied to the 2026 edition (SPA) — verify on open."
+      "sourceNotes": "Facebook (carreraduendes) announced first registration phase open via Trotime. Trotime GUID could not be 100% tied to the 2026 edition (SPA) — verify on open. Race-watch 2026-09-28: trotime.com.mx WebFetch blocked by network egress policy; verified instead via WebSearch against Tri Tour México, Tudu.app, Facebook (Trotime) and visionmty.tv, all agreeing on Oct 4, 2026, Calzada del Valle, San Pedro Garza García, 10K 07:00 / 5K 09:00, ~7,000 runners. No cancellation/postponement/aviso signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "adidas-splits-6k-12k-2026",
@@ -1311,8 +1313,8 @@
         "Half"
       ],
       "status": "ok",
-      "sourceNotes": "First race-watch verification 2026-09-25: WebFetch to afterdarktour.nike.com blocked by network egress policy; verified via WebSearch against RunMX (runmx.com/nike-after-dark-tour-cdmx-2026-ya-tiene-fecha/), ruptura360.mx, merca20.com and endondecorrer.com, all agreeing on Oct 3, 2026, 21.1K, Monumento a la Revolución / Paseo de la Reforma. Could not independently reconfirm sold-out status from the source page itself, but nothing contradicts it. No cancellation/postponement/aviso signal found.",
-      "lastVerified": "2026-09-25"
+      "sourceNotes": "First race-watch verification 2026-09-25: WebFetch to afterdarktour.nike.com blocked by network egress policy; verified via WebSearch against RunMX (runmx.com/nike-after-dark-tour-cdmx-2026-ya-tiene-fecha/), ruptura360.mx, merca20.com and endondecorrer.com, all agreeing on Oct 3, 2026, 21.1K, Monumento a la Revolución / Paseo de la Reforma. Could not independently reconfirm sold-out status from the source page itself, but nothing contradicts it. No cancellation/postponement/aviso signal found. Reconfirmed 2026-09-28 (afterdarktour.nike.com WebFetch still egress-blocked): same date/venue still corroborated via WebSearch (ejecentral.com.mx, dondeir.com, runmx.com). No cancellation/postponement/aviso signal found.",
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "barbie-run-cdmx-2026",
@@ -2654,7 +2656,10 @@
       "sourceUrl": "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-gdl-2026",
       "confidence": "high",
       "notes": "Inscripciones abiertas; cap 4,500. Staggered to 06:46. $690-$980 MXN.",
-      "notesEs": "Inscripciones abiertas; cupo de 4,500. Escalonada hasta las 06:46. $690-$980 MXN."
+      "notesEs": "Inscripciones abiertas; cupo de 4,500. Escalonada hasta las 06:46. $690-$980 MXN.",
+      "sourceNotes": "Race-watch 2026-09-28: hubsports.mx WebFetch blocked by network egress policy; verified instead via WebSearch against Olympics.com, Players of Life, RunMX and Tri Tour México, all agreeing on Oct 4, 2026, 06:30, Av. San Ignacio esq. Av. Vallarta, Zapopan, cap 4,500. No cancellation/postponement/aviso signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "medio-marat-n-tlajo-2026",
@@ -2917,7 +2922,10 @@
       "sourceUrl": "https://queretaromaraton.com/",
       "confidence": "high",
       "notes": "Flagship. Confirmed on official site + Finishers. Half cap 7,250; ~19,500 expected. Registration closed ~Sep 28.",
-      "notesEs": "Insignia. Confirmado en el sitio oficial + Finishers. Cupo del medio maratón 7,250; se esperan ~19,500 participantes. El registro cerró ~28 de septiembre."
+      "notesEs": "Insignia. Confirmado en el sitio oficial + Finishers. Cupo del medio maratón 7,250; se esperan ~19,500 participantes. El registro cerró ~28 de septiembre.",
+      "sourceNotes": "Race-watch 2026-09-28: queretaromaraton.com WebFetch blocked by network egress policy; verified instead via WebSearch against Rotativo.com.mx (Kuri anuncia 16ª edición el 4 de octubre), confirming Oct 4, 2026, 42K/21K/10K/5K. No cancellation/postponement/aviso signal found.",
+      "status": "ok",
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "barbie-run-quer-taro-2026",
@@ -4078,8 +4086,8 @@
       "status": "changed",
       "statusNote": "Date and start/finish point changed: now Sunday, October 4, 2026 (not Oct 3), starting at Eje 128 y Carretera 57 and finishing at the Plaza Principal of Villa de Pozos (not Jardín Hidalgo). Distances (3K/5K/10K/21K) unchanged. Per multiple local San Luis Potosí news outlets published Sep 14-17, 2026, including a Potosinoticias headline explicitly titled \"nueva fecha\" (new date).",
       "statusNoteEs": "Cambiaron la fecha y el punto de salida/meta: ahora es el domingo 4 de octubre de 2026 (no el 3 de octubre), con salida en Eje 128 y Carretera 57 y meta en la Plaza Principal de Villa de Pozos (ya no en el Jardín Hidalgo). Las distancias (3K/5K/10K/21K) no cambiaron. Según varios medios locales de San Luis Potosí publicados del 14 al 17 de septiembre de 2026, incluyendo un titular de Potosinoticias que dice explícitamente \"nueva fecha\".",
-      "lastVerified": "2026-09-25",
-      "sourceNotes": "Official INPODE event page. Villa de Pozos has been a municipality since 2024. Distances are the serial's overall set; per-leg split not published. No online registration link found. First race-watch verification 2026-09-25: WebFetch to inpode.slp.gob.mx blocked by network egress policy; verified via WebSearch. At least 10 independent SLP local news outlets published 2026-09-14 through 2026-09-17 (El Sol de San Luis/OEM, El Heraldo de San Luis Potosí, Quadratín SLP, Potosinoticias x2, La Jornada San Luis, Código San Luis, Horizonte Tunero, La Orquesta, Metropolisanluis, Condenoticias, Frontal Noticias, Plano Informativo, RadioXHCV) all agree on the Oct 4 date and the new Eje 128/Carretera 57 → Plaza Principal start/finish; one (Potosinoticias) explicitly frames it as a date change (\"nueva fecha\"). One source says \"Eje 118\" rather than \"Eje 128\" — kept 128 as the majority reading. No source supports the previously-recorded 19:00 Saturday-evening start for this leg; the event is now framed as a daytime Sunday event tied to the FEREPO fair, so time was set to null rather than guessed. One outlier, San Luis Way's event listing, still shows Oct 3 — not treated as counter-evidence given 10+ concordant, more-recently-dated local news reports. Direct fetch of villadepozos.gob.mx and all news sources was blocked by network egress policy; this rests on WebSearch result snippets, not live page loads — recommend a direct-fetch confirmation next cycle once network access allows it."
+      "lastVerified": "2026-09-28",
+      "sourceNotes": "Official INPODE event page. Villa de Pozos has been a municipality since 2024. Distances are the serial's overall set; per-leg split not published. No online registration link found. First race-watch verification 2026-09-25: WebFetch to inpode.slp.gob.mx blocked by network egress policy; verified via WebSearch. At least 10 independent SLP local news outlets published 2026-09-14 through 2026-09-17 (El Sol de San Luis/OEM, El Heraldo de San Luis Potosí, Quadratín SLP, Potosinoticias x2, La Jornada San Luis, Código San Luis, Horizonte Tunero, La Orquesta, Metropolisanluis, Condenoticias, Frontal Noticias, Plano Informativo, RadioXHCV) all agree on the Oct 4 date and the new Eje 128/Carretera 57 → Plaza Principal start/finish; one (Potosinoticias) explicitly frames it as a date change (\"nueva fecha\"). One source says \"Eje 118\" rather than \"Eje 128\" — kept 128 as the majority reading. No source supports the previously-recorded 19:00 Saturday-evening start for this leg; the event is now framed as a daytime Sunday event tied to the FEREPO fair, so time was set to null rather than guessed. One outlier, San Luis Way's event listing, still shows Oct 3 — not treated as counter-evidence given 10+ concordant, more-recently-dated local news reports. Direct fetch of villadepozos.gob.mx and all news sources was blocked by network egress policy; this rests on WebSearch result snippets, not live page loads — recommend a direct-fetch confirmation next cycle once network access allows it. Reconfirmed 2026-09-28 (villadepozos.gob.mx and news sources still egress-blocked): villadepozos.gob.mx, El Sol de San Luis, Plano Informativo, Quadratín SLP and Horizonte Tunero still agree on Oct 4, 2026, Villa de Pozos, tied to FEREPO. San Luis Way's listing still shows the stale Oct 3 date — same outlier as before, not treated as counter-evidence. No further cancellation/postponement/aviso signal found."
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-rioverde",
@@ -4669,10 +4677,11 @@
       "confidence": "medium",
       "notes": "Yucatán's oldest continuously-run race, since 1973. No entry fee found; ~$60,000 MXN prize pool across age categories.",
       "notesEs": "La carrera más antigua de Yucatán que se sigue corriendo sin interrupción, desde 1973. No se encontró cuota de inscripción; bolsa de premios de ~$60,000 MXN repartida entre categorías de edad.",
-      "sourceNotes": "53rd edition held 2025-10-05, before this research window — next (54th) edition date was unconfirmed, date set to null. Resolved via web search 2026-09-14: multiple independent outlets (yucatanahora.com.mx, furiadeportivayucatan.com, lajornadamaya.mx, desdeelbalcon.com) agree the 54th edition runs Sunday Oct 4, 2026, 06:30, confirming this is now the 54th not 53rd edition — name field updated accordingly. Registration reportedly via dashport.run (a URL of the form dashport.run/evento_1287 surfaced in two searches) but could not be confirmed by direct WebFetch (blocked by network egress policy this run), so signupUrl is left null rather than recorded unverified. Uxmal/Muna are ~80km outside the core Mérida-metro area but included as a genuine statewide flagship.",
+      "sourceNotes": "53rd edition held 2025-10-05, before this research window — next (54th) edition date was unconfirmed, date set to null. Resolved via web search 2026-09-14: multiple independent outlets (yucatanahora.com.mx, furiadeportivayucatan.com, lajornadamaya.mx, desdeelbalcon.com) agree the 54th edition runs Sunday Oct 4, 2026, 06:30, confirming this is now the 54th not 53rd edition — name field updated accordingly. Registration reportedly via dashport.run (a URL of the form dashport.run/evento_1287 surfaced in two searches) but could not be confirmed by direct WebFetch (blocked by network egress policy this run), so signupUrl is left null rather than recorded unverified. Uxmal/Muna are ~80km outside the core Mérida-metro area but included as a genuine statewide flagship. Reconfirmed 2026-09-28 via WebSearch (kora180.mx WebFetch still egress-blocked): yucatanahora.com.mx, lajornadamaya.mx, furiadeportivayucatan.com and informatyucatan.com still agree on Oct 4, 2026, 06:30, Uxmal-Muna. No cancellation/postponement/aviso signal found.",
       "status": "ok",
       "statusNote": "Date confirmed: Sunday, October 4, 2026, 06:30. Also now the 54th edition, not the 53rd as previously recorded.",
-      "lastVerified": "2026-09-14"
+      "lastVerified": "2026-09-28",
+      "statusNoteEs": "Fecha confirmada: domingo 4 de octubre de 2026, 06:30. Además, ahora es la 54ª edición, no la 53ª como se registró anteriormente."
     },
     {
       "id": "run-coffee-merida-2026-3-edicion",
@@ -4808,9 +4817,9 @@
       "confidence": "high",
       "notes": "Multi-day event, Oct 1-3, 2026, with staggered distance start days. Distance names per official site: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
       "notesEs": "Evento de varios días, del 1 al 3 de octubre de 2026, con días de salida escalonados por distancia. Nombres de las distancias según el sitio oficial: Rarámuri 100M=135K, Weriga 100K=94K, Akáa 59K, Komakali 38K, Napurega 20K, Norawa 8.5K.",
-      "sourceNotes": "Venue conflict: official UTMB site describes the location broadly as 'Copper Canyons region'; finishers.com specifies Batopilas as the base town — kept the more specific, independently-sourced value. Race-watch 2026-09-21: chihuahua.utmb.world and finishers.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against chihuahua.gob.mx's own state government press release, RunMX and roguexpeditions.com, all agreeing on Oct 1-3, 2026, Batopilas. No 'pospuesto'/'cancelado'/'aviso' signal found. Reconfirmed 2026-09-25 (chihuahua.utmb.world still egress-blocked): RunMX, Finishers.com, roguexpeditions.com and Solo Atletas still agree on Oct 1-3, 2026, Batopilas/Barrancas del Cobre. No cancellation/postponement/aviso signal found.",
+      "sourceNotes": "Venue conflict: official UTMB site describes the location broadly as 'Copper Canyons region'; finishers.com specifies Batopilas as the base town — kept the more specific, independently-sourced value. Race-watch 2026-09-21: chihuahua.utmb.world and finishers.com WebFetch blocked by this session's egress policy; verified instead via WebSearch against chihuahua.gob.mx's own state government press release, RunMX and roguexpeditions.com, all agreeing on Oct 1-3, 2026, Batopilas. No 'pospuesto'/'cancelado'/'aviso' signal found. Reconfirmed 2026-09-25 (chihuahua.utmb.world still egress-blocked): RunMX, Finishers.com, roguexpeditions.com and Solo Atletas still agree on Oct 1-3, 2026, Batopilas/Barrancas del Cobre. No cancellation/postponement/aviso signal found. Reconfirmed 2026-09-28 (chihuahua.utmb.world still egress-blocked): endondecorrer.com, gotrail.run, finishers.com and utmb.world still agree on Oct 1-3, 2026, Cerocahui/Copper Canyons, with a renewed 2026 route. No cancellation/postponement/aviso signal found.",
       "status": "ok",
-      "lastVerified": "2026-09-25"
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "ultra-x-mexico-2026",
@@ -5007,10 +5016,10 @@
       "confidence": "medium",
       "notes": "Campus community race — students, faculty, and staff only, not open to the general public. 3K starts 08:30, 5K starts 09:30.",
       "notesEs": "Carrera comunitaria del campus — solo para estudiantes, personal académico y administrativo, no abierta al público en general. El 3K sale a las 08:30, el 5K a las 09:30.",
-      "sourceNotes": "Most recent known edition (52° aniversario) held Oct 2, 2025. Next edition date/distances were unconfirmed and flagged as a conflict (3K-only vs. 3K+7K across sources). Resolved via web search 2026-09-14: nortedigital.mx and other 2026-dated sources agree the 53° aniversario runs Friday Oct 2, 2026, with a 3K (08:30) and a 5K (09:30) at Estadio Olímpico Universitario Benito Juárez — this supersedes the earlier 3K+7K reading, which appears to have been stale/incorrect. Direct WebFetch of uacj.mx and the news sources was blocked by network egress policy this run; confirmation rests on search-result corroboration, not a live page load. Reconfirmed 2026-09-25 (uacj.mx still egress-blocked): comunica.uacj.mx (UACJ's own communications site), nortedigital.mx and uacj.mx/aniversario/ still agree on Oct 2, 2026, same venue/times/distances. No cancellation/postponement/aviso signal found.",
+      "sourceNotes": "Most recent known edition (52° aniversario) held Oct 2, 2025. Next edition date/distances were unconfirmed and flagged as a conflict (3K-only vs. 3K+7K across sources). Resolved via web search 2026-09-14: nortedigital.mx and other 2026-dated sources agree the 53° aniversario runs Friday Oct 2, 2026, with a 3K (08:30) and a 5K (09:30) at Estadio Olímpico Universitario Benito Juárez — this supersedes the earlier 3K+7K reading, which appears to have been stale/incorrect. Direct WebFetch of uacj.mx and the news sources was blocked by network egress policy this run; confirmation rests on search-result corroboration, not a live page load. Reconfirmed 2026-09-25 (uacj.mx still egress-blocked): comunica.uacj.mx (UACJ's own communications site), nortedigital.mx and uacj.mx/aniversario/ still agree on Oct 2, 2026, same venue/times/distances. No cancellation/postponement/aviso signal found. Reconfirmed 2026-09-28 (uacj.mx WebFetch still egress-blocked): search results (uacj.mx/deportes/carrera.html, componentes.uacj.mx) still agree on Friday Oct 2, 2026, same venue/times/distances, registration through Oct 1. No cancellation/postponement/aviso signal found.",
       "status": "ok",
       "statusNote": "Date confirmed: Friday, October 2, 2026 — 3K at 08:30, 5K at 09:30, at Estadio Olímpico Universitario Benito Juárez.",
-      "lastVerified": "2026-09-25"
+      "lastVerified": "2026-09-28"
     },
     {
       "id": "menonita-trail-run-ciudad-cuauhtemoc-projected-n",
