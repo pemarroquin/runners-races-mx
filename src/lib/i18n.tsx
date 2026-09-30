@@ -294,12 +294,6 @@ const translations = {
         one: 'Lugar %{rank}, %{name}, 1 casilla, %{days} días aquí',
         other: 'Lugar %{rank}, %{name}, %{count} casillas, %{days} días aquí',
       } as PluralForm,
-      // Legend bajo los sub-tabs de "Mis logros" — total de casillas
-      // conquistadas hasta ahora, sin filtrar por distrito ni municipio.
-      totalTiles: {
-        one: '1 casilla conquistada en total',
-        other: '%{count} casillas conquistadas en total',
-      } as PluralForm,
     },
     feed: {
       title: 'Carreras',
@@ -515,14 +509,16 @@ const translations = {
       // Settings › Dónde has corrido. El registro personal permanente — el
       // contrapeso a un mapa que bajo conquista muestra solo lo que tienes
       // AHORA. Aquí no te lo puede quitar nadie.
-      historyTitle: 'Archivo de sesiones',
-      historyNavHint: 'Todo lo que has corrido y todo lo que has cerrado. Nadie te lo quita.',
-      historyHint: {
-        one: '1 casilla, contada como la cuenta una sesión: el terreno que pisaste más lo que rodeaste al cerrar una vuelta. Nadie te la quita de este mapa.',
-        other:
-          '%{count} casillas, contadas como las cuenta una sesión: el terreno que pisaste más lo que rodeaste al cerrar una vuelta. Nadie te las quita de este mapa.',
+      historyTitle: 'Lugares donde he corrido',
+      historyNavHint: 'Lo que tienes ahora sobre todo lo que has corrido. Toca una sesión para ver sus datos.',
+      placesHeld: {
+        one: 'Tuya ahora: 1 casilla',
+        other: 'Tuyas ahora: %{count} casillas',
       } as PluralForm,
-      historyEmpty: 'Todavía no has guardado ninguna sesión.',
+      placesEver: {
+        one: 'Has corrido: 1 casilla',
+        other: 'Has corrido: %{count} casillas',
+      } as PluralForm,
       historyFailed: 'No pudimos cargar tu historial. Revisa tu conexión.',
       // Settings › Progreso. Movido del tercer segmento de Guardado
       // (2026-09-16) — el contenido de MunicipioProgressList no cambió,
@@ -844,10 +840,6 @@ const translations = {
         one: 'Rank %{rank}, %{name}, 1 tile, %{days} days here',
         other: 'Rank %{rank}, %{name}, %{count} tiles, %{days} days here',
       } as PluralForm,
-      totalTiles: {
-        one: '1 tile conquered overall',
-        other: '%{count} tiles conquered overall',
-      } as PluralForm,
     },
     feed: {
       title: 'Races',
@@ -1035,14 +1027,16 @@ const translations = {
       zoneOffHint:
         'Without a privacy zone, the exact start and end of your sessions are uploaded and visible to anyone using the app. Set it where you live.',
       zoneFailed: "We couldn\u2019t save your zone. Check location permission and try again.",
-      historyTitle: 'Sessions archive',
-      historyNavHint: "Everywhere you've run and everything you've closed. Nobody can take it.",
-      historyHint: {
-        one: '1 tile, counted the same way a run counts it — ground you crossed plus anything you ran a loop around. Nobody can take it off this map.',
-        other:
-          '%{count} tiles, counted the same way a run counts them — ground you crossed plus anything you ran a loop around. Nobody can take them off this map.',
+      historyTitle: "Places I've been",
+      historyNavHint: 'What you hold now, over everywhere you have run. Tap a session for its stats.',
+      placesHeld: {
+        one: 'Yours now: 1 tile',
+        other: 'Yours now: %{count} tiles',
       } as PluralForm,
-      historyEmpty: "You haven't saved a session yet.",
+      placesEver: {
+        one: 'Ever run: 1 tile',
+        other: 'Ever run: %{count} tiles',
+      } as PluralForm,
       historyFailed: "We couldn't load your history. Check your connection.",
       sectionProgress: 'Park progress',
       navProgressHint: "How much of each municipio's park paths you've covered.",

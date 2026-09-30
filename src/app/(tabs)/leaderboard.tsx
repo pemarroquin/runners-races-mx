@@ -1,4 +1,4 @@
-// The leaderboard. ONE screen, THREE tabs (2026-09-17 nav restructure).
+// The leaderboard. ONE screen, TWO tabs.
 //
 // This file used to open with "ONE screen, ONE arena, no mode toggles" and a
 // long argument against a tab/toggle UI here, after an EARLIER toggle
@@ -9,18 +9,13 @@
 // the two side by side in git blame:
 //
 //   The old toggle crossed two unrelated, easily-confused axes on unlabelled
-//   pills. These three tabs are one axis — WHICH BOARD — and each is
-//   self-explanatory by name: My Achievements (a personal record, no
-//   location needed), Municipio (Board 1, live conquest), Local Leaders
-//   (Board 2, mayorship). Nothing here recreates "Regulars."
+//   pills. These tabs are one axis — WHICH BOARD — and each is
+//   self-explanatory by name: Leaderboard (Board 1, live conquest) and
+//   Local Leaders (Board 2, mayorship). Nothing here recreates "Regulars."
 //
-//   WHERE still collapses to the district you're standing in (district.ts)
-//   for the two boards that need a place at all — that reasoning is
-//   untouched. My Achievements needs no district: it's everything you've
-//   ever taken, not what you hold in any one place right now.
+//   WHERE still collapses to the district you're standing in (district.ts).
 //
-// 2026-09-30: TWO tabs. My Achievements left for Profile › the personal
-// record, so the screen is only the two boards now — Leaderboard (Board 1,
+// 2026-09-30: My Achievements moved to Profile › Places I've been, so the screen is only the two boards now — Leaderboard (Board 1,
 // conquest) and Local Leaders (Board 2, mayorship). Local Leaders is a
 // full-bleed map with the ranking in a floating card; both tabs share one
 // floating glass capsule so switching never moves the control.

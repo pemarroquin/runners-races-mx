@@ -233,7 +233,7 @@ export default function TrackScreen() {
   // Deleting a saved run is no longer an action on THIS screen (2026-09-02
   // redesign) — it moved to the Territories map's per-fence bubble, which
   // keeps its own independent delete state. See achievements-view.tsx
-  // (My Achievements — this used to be myraces.tsx's Territories map).
+  // (Profile › Places I've been — this used to be myraces.tsx's Territories map).
 
   // An in-progress run recovered from run-checkpoint.ts after a reload —
   // see that file's header. Read once on mount, not on every focus: a
@@ -318,8 +318,8 @@ export default function TrackScreen() {
         // currently displaying" — so if the run on screen is the one that
         // just resolved, local state (saveState/savedRunId/queuedId) would
         // otherwise go stale. The session-end screen no longer has any
-        // Delete/Retry UI to defend (that moved to Leaderboard's My Achievements
-        // tab — see achievements-view.tsx), but `saveState === 'saved'` still gates the
+        // Delete/Retry UI to defend (that lives in Profile › Places I've been —
+        // see achievements-view.tsx), but `saveState === 'saved'` still gates the
         // first-save name prompt (NamePrompt, below) — without this, a
         // save that completes in the background while this screen is still
         // open would never trigger it.
@@ -812,8 +812,7 @@ export default function TrackScreen() {
   // only shows what happened and gets out of the way. No Save/Retry/Delete
   // UI: a failed or still-queued upload stays invisible here (it resolves
   // itself via the background flush effect, or is visible with Retry/Delete
-  // once the runner reaches Leaderboard's My Achievements tab — see
-  // achievements-view.tsx) and is
+  // in Profile › Places I've been — see achievements-view.tsx) and is
   // never surfaced with copy on this screen. The only control is ✓, top
   // right, which tears the screen down and readies the app for a new run —
   // same resetLocal() the old X button called.
@@ -849,7 +848,7 @@ export default function TrackScreen() {
       <View style={styles.stage}>
         {/* Top-down (bearing 0, pitch 0), fit to just this fence — only the
             territory THIS session captured, no other saved territories (see
-            Leaderboard's My Achievements tab, achievements-view.tsx, for
+            Profile › Places I've been, achievements-view.tsx, for
             "all of them at once"). */}
         <MapErrorBoundary
           message={t('track.mapUnavailable')}

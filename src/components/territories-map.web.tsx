@@ -35,6 +35,7 @@
 // runner accumulates early on; would need revisiting if that count grows
 // into the hundreds (batch into a shared source, drop the per-run gradient
 // in favour of a single flat colour per run).
+import { cellsToMultiPolygon } from 'h3-js';
 import type { GeoJSONSource, Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
@@ -60,6 +61,7 @@ import {
 } from '@/constants/map';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
+import { cellsBounds } from '@/lib/local-leaders';
 import { buildMergedRimLines, buildMergedTerritories } from '@/lib/merged-territory';
 import { outerRings, type LatLng } from '@/lib/territory';
 
@@ -79,6 +81,10 @@ const MERGED_FILLS_SRC = 'terr-merged-fills';
 // never appear: only the true exterior boundary of the whole claimed area shows.
 const MERGED_RIM_SRC = 'terr-merged-rim';
 const MERGED_RIM_LAYER = `${MERGED_RIM_SRC}-line`;
+// The permanent record under everything: every cell ever run. Flat and faint,
+// not tappable — it is context for the ground held now, not a run to open.
+const BASE_SRC = 'terr-base';
+const BASE_FILL_OPACITY = 0.12;
 
 export interface TerritoryFeature {
   id: string;
@@ -117,6 +123,9 @@ interface TerritoriesMapProps {
    *  different layouts, so the offset has to be the caller's call, not a
    *  hard-coded constant here. */
   controlsBottomOffset?: number;
+  /** Everywhere the runner has ever been (Profile › Places I've been), drawn
+   *  faint beneath the held territory. Omitted: no base layer. */
+  baseCells?: string[];
   /**
    * Whether this map's own screen is the one currently on top. Gates the two
    * continuous animation timers below (the gradient flow + the shimmer) —
@@ -170,6 +179,32 @@ function boundsOfAll(features: TerritoryFeature[]): [[number, number], [number, 
     [minLng, minLat],
     [maxLng, maxLat],
   ];
+}
+
+function baseCollection(cells: string[]): FeatureCollection {
+  if (cells.length === 0) return { type: 'FeatureCollection', features: [] };
+  let polygons: number[][][][];
+  try {
+    polygons = cellsToMultiPolygon(cells, true);
+  } catch {
+    return { type: 'FeatureCollection', features: [] };
+  }
+  return {
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polygons } },
+    ],
+  };
+}
+
+function baseBounds(cells: string[]): [[number, number], [number, number]] | null {
+  const b = cellsBounds(cells);
+  return b
+    ? [
+        [b.minLng, b.minLat],
+        [b.maxLng, b.maxLat],
+      ]
+    : null;
 }
 
 /**
@@ -230,6 +265,7 @@ export function TerritoriesMap({
   onSelect,
   controls,
   controlsBottomOffset,
+  baseCells,
   active = true,
 }: TerritoriesMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -283,6 +319,11 @@ export function TerritoriesMap({
   useEffect(() => {
     featuresRef.current = features;
   }, [features]);
+  const baseRef = useRef<string[]>(baseCells ?? []);
+  useEffect(() => {
+    baseRef.current = baseCells ?? [];
+  }, [baseCells]);
+  const baseMountedRef = useRef(false);
 
   /**
    * Brings the map's sources/layers in line with `featuresRef.current`, then
@@ -348,6 +389,26 @@ export function TerritoriesMap({
     // territories merge visually; disconnected ones stay separate with their
     // own colors. This runs on every sync() so adding/removing any territory
     // immediately updates the merged shape.
+    // Base first, so on first mount its layer sits beneath the merged fills.
+    const baseData = baseCollection(baseRef.current);
+    if (baseMountedRef.current) {
+      (map.getSource(BASE_SRC) as GeoJSONSource | undefined)?.setData(baseData);
+    } else {
+      map.addSource(BASE_SRC, { type: 'geojson', data: baseData });
+      map.addLayer({
+        id: `${BASE_SRC}-fill`,
+        type: 'fill',
+        source: BASE_SRC,
+        slot: MAP_SLOT_FILL,
+        paint: {
+          'fill-color': '#ffffff',
+          'fill-opacity': BASE_FILL_OPACITY,
+          'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
+        },
+      });
+      baseMountedRef.current = true;
+    }
+
     const mergedData = buildMergedFills(features, colorMap);
     if (mergedFillsMountedRef.current) {
       (map.getSource(MERGED_FILLS_SRC) as GeoJSONSource | undefined)?.setData(mergedData);
@@ -410,7 +471,7 @@ export function TerritoriesMap({
       flowLayersRef.current = [...flowLayersRef.current, MERGED_RIM_LAYER];
     }
 
-    const bounds = boundsOfAll(features);
+    const bounds = boundsOfAll(features) ?? baseBounds(baseRef.current);
     if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
   }, []);
 
@@ -420,7 +481,7 @@ export function TerritoriesMap({
   const refit = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    const bounds = boundsOfAll(featuresRef.current);
+    const bounds = boundsOfAll(featuresRef.current) ?? baseBounds(baseRef.current);
     if (bounds) map.fitBounds(bounds, { padding: 64, duration: 900 });
   }, []);
 
@@ -485,6 +546,7 @@ export function TerritoriesMap({
       shimmerLayersRef.current = [];
       mergedFillsMountedRef.current = false;
       mergedRimMountedRef.current = false;
+      baseMountedRef.current = false;
     };
     // Built once; `sync` is stable, and all data flows through the ref it
     // reads.
@@ -496,7 +558,7 @@ export function TerritoriesMap({
   // ref, which by then holds this list.
   useEffect(() => {
     sync();
-  }, [features, sync]);
+  }, [features, baseCells, sync]);
 
   // The gradient flow. ONE timer for the whole screen, however many
   // territories are on it — the expression is built once per tick and handed
