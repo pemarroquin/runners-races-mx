@@ -472,8 +472,14 @@ export default function TrackScreen() {
         const lapResult = detectLaps(tracker.points);
         setSessionLap(
           lapResult.qualifies
-            ? { qualifies: true, markerCenter: pickSafeLapMarkerCenter(lapResult.repeatedCells, maskedCells) }
-            : { qualifies: false, markerCenter: null },
+            ? {
+                qualifies: true,
+                markerCenter: pickSafeLapMarkerCenter(lapResult.repeatedCells, maskedCells),
+                // A Local Leaders tiebreaker. Only counted for a real loop:
+                // an ordinary run's start/finish cell reads 2 with no repeats.
+                laps: lapResult.laps,
+              }
+            : { qualifies: false, markerCenter: null, laps: 0 },
         );
       } catch {
         setSessionLap(null);

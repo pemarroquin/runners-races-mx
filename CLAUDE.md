@@ -166,8 +166,10 @@ base cells worldwide.
   never moves. How much of the district is untouched is a separate caption.
 - **Board 2, LOCAL LEADERS** (`src/lib/mayorship.ts`) — mayorship per CELL,
   by distinct days present in a trailing 30. One point per day, so nobody
-  buys a title with one huge Sunday; ties hold with the incumbent. Cannot be
-  taken in a single visit.
+  buys a title with one huge Sunday. Ties on days go to more laps on that
+  cell, then more distance, then the incumbent (Pedro, 2026-09-30); pace is
+  shown, never ranked. Run numbers come from the `run_stats` RPC — `runs`
+  stays select-own. Cannot be taken in a single visit.
 
 **Nothing is ever named.** User-created `areas` were deleted outright — the
 prompt, the overlap-suggest, the delete window, every string. Board 2's unit

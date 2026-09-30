@@ -266,7 +266,7 @@ const translations = {
       // un domingo enorme.
       leadersTitle: 'LÍDERES LOCALES · %{days} DÍAS',
       leadersNote:
-        'Gana quien viene más días, no quien corre más lejos. Un empate se queda con quien ya lo tenía.',
+        'Gana quien viene más días, no quien corre más lejos. Con los mismos días, gana quien dio más vueltas aquí, luego quien corrió más; si siguen empatados, se queda quien ya lo tenía.',
       leadersEmpty: 'Nadie ha venido por aquí en los últimos %{days} días.',
       cellsDetail: {
         one: '1 casilla',
@@ -296,6 +296,10 @@ const translations = {
       leaderDays: {
         one: '1 día aquí',
         other: '%{count} días aquí',
+      } as PluralForm,
+      leaderLaps: {
+        one: '1 vuelta',
+        other: '%{count} vueltas',
       } as PluralForm,
       leaderRowA11y: {
         one: 'Lugar %{rank}, %{name}, 1 casilla, %{days} días aquí',
@@ -636,7 +640,7 @@ const translations = {
       collectedZone:
         'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
-        'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Cada carrera que terminas se guarda automáticamente — ya no puedes optar por no guardarla. Si prefieres no aparecer, elimínala después desde la pantalla de resumen o la pestaña Territorios (esto no revierte el terreno que ya le hayas quitado a otros corredores mientras estuvo activa).',
+        'Visible para otros: el nombre que elijas en Ajustes y el terreno que tienes aparecen en las tablas para cualquier persona que use la app; sin nombre apareces como Anónimo. En Líderes locales también se ven, por lugar y de los últimos 30 días, la distancia total, el ritmo y las vueltas de tus sesiones. Nunca se muestra tu recorrido. Cada sesión que terminas se guarda automáticamente y ya no se puede borrar, porque cuenta en ambas tablas; para borrar tu cuenta y sus sesiones, escríbenos desde soporte.',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
       notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
@@ -822,7 +826,7 @@ const translations = {
       conquestEmpty: 'Nobody holds ground around here. Be the first.',
       leadersTitle: 'LOCAL LEADERS · %{days} DAYS',
       leadersNote:
-        'This goes to whoever shows up on the most days, not whoever runs furthest. A tie stays with whoever held it first.',
+        'This goes to whoever shows up on the most days, not whoever runs furthest. On equal days, more laps here wins, then more distance; if it is still level, it stays with whoever held it first.',
       leadersEmpty: 'Nobody has run around here in the last %{days} days.',
       cellsDetail: {
         one: '1 cell',
@@ -849,6 +853,10 @@ const translations = {
       leaderDays: {
         one: '1 day here',
         other: '%{count} days here',
+      } as PluralForm,
+      leaderLaps: {
+        one: '1 lap',
+        other: '%{count} laps',
       } as PluralForm,
       leaderRowA11y: {
         one: 'Rank %{rank}, %{name}, 1 tile, %{days} days here',
@@ -1146,7 +1154,7 @@ const translations = {
       collectedZone:
         'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:
-        'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. Every run you finish saves automatically now — you can no longer opt out of saving. If you would rather not appear, delete it afterward from the summary screen or the Territories tab (this does not undo any ground it already took from other runners while it was live).',
+        'Visible to others: the name you pick in Settings and the ground you hold appear on the leaderboards to anyone using the app; with no name set you appear as Anonymous. Local Leaders also shows, per place and over the last 30 days, the total distance, pace and laps of your sessions. Your route itself is never shown. Every session you finish saves automatically and can no longer be deleted, because it counts on both boards; to delete your account and its sessions, contact us through support.',
       notTitle: "What we don't do",
       notAccounts: 'No email, password, or personal details are needed to use the app.',
       notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",

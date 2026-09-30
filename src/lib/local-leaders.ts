@@ -12,6 +12,7 @@ import {
   MAYORSHIP_WINDOW_DAYS,
   mayorByCell,
   scopeVisits,
+  type RunStats,
   type TileVisitRow,
 } from '@/lib/mayorship';
 
@@ -22,9 +23,12 @@ export function mayorHoldings(
   visits: TileVisitRow[],
   arena: string | ArenaScope | null,
   now: number = Date.now(),
+  /** Same stats rankMayors gets, or a tie broken by effort would draw one
+   *  runner's shape under another's row. */
+  stats?: Map<string, RunStats>,
 ): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  for (const [h3, { userId }] of mayorByCell(scopeVisits(visits, arena), now)) {
+  for (const [h3, { userId }] of mayorByCell(scopeVisits(visits, arena), now, stats)) {
     const cells = out.get(userId);
     if (cells) cells.push(h3);
     else out.set(userId, [h3]);
@@ -105,4 +109,53 @@ export function frameOf(
     if (held) return held;
   }
   return arena;
+}
+
+/** One runner's effort in an arena over the window: what a row shows next
+ *  to days. Pace is derived from these two totals, never ranked. */
+export interface RunnerTotals {
+  distanceM: number;
+  durationS: number;
+  laps: number;
+  runs: number;
+}
+
+/**
+ * Totals of the runs behind each runner's visits in the arena, inside the
+ * window (Pedro, 2026-09-30: 30-day totals of runs touching the place). A
+ * run counts once however many of its cells are here, and its whole
+ * distance counts — splitting a run at a boundary would need its path,
+ * which never leaves the server. A run with no stats (flagged, or the RPC
+ * unavailable) is left out rather than counted as zero.
+ */
+export function runnerTotals(
+  visits: TileVisitRow[],
+  arena: string | ArenaScope | null,
+  stats: Map<string, RunStats>,
+  now: number = Date.now(),
+): Map<string, RunnerTotals> {
+  const cutoff = now - WINDOW_MS;
+  const runsByUser = new Map<string, Set<string>>();
+  for (const visit of scopeVisits(visits, arena)) {
+    if (!visit.runId) continue;
+    const ms = new Date(visit.visitedAt).getTime();
+    if (!(ms >= cutoff) || !(ms <= now)) continue;
+    const set = runsByUser.get(visit.userId);
+    if (set) set.add(visit.runId);
+    else runsByUser.set(visit.userId, new Set([visit.runId]));
+  }
+  const out = new Map<string, RunnerTotals>();
+  for (const [userId, runs] of runsByUser) {
+    const totals: RunnerTotals = { distanceM: 0, durationS: 0, laps: 0, runs: 0 };
+    for (const id of runs) {
+      const s = stats.get(id);
+      if (!s) continue;
+      totals.distanceM += s.distanceM;
+      totals.durationS += s.durationS;
+      totals.laps += s.laps;
+      totals.runs++;
+    }
+    if (totals.runs > 0) out.set(userId, totals);
+  }
+  return out;
 }

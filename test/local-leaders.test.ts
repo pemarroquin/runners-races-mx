@@ -4,7 +4,7 @@ import { cellToBoundary, latLngToCell } from 'h3-js';
 import { describe, expect, it } from 'vitest';
 
 import { districtOf } from '../src/lib/district';
-import { cellsBounds, daysPresent, frameOf, mayorHoldings } from '../src/lib/local-leaders';
+import { cellsBounds, daysPresent, frameOf, mayorHoldings, runnerTotals } from '../src/lib/local-leaders';
 import { rankMayors, type TileVisitRow } from '../src/lib/mayorship';
 
 const MTY = { lat: 25.6866, lng: -100.3161 };
@@ -122,5 +122,110 @@ describe('frameOf', () => {
 
   it('always frames the arena in card mode', () => {
     expect(frameOf(cellsBounds([DISTRICT]), [{ cells: [A] }], false)).toEqual(cellsBounds([DISTRICT]));
+  });
+});
+
+describe('effort tiebreakers (days, then laps, then distance, then incumbent)', () => {
+  const rv = (h3: string, userId: string, visitedAt: string, runId: string): TileVisitRow => ({
+    h3,
+    userId,
+    displayName: userId,
+    visitedAt,
+    runId,
+  });
+  // Both on A for 2 days; laura arrived first (the incumbent).
+  const tied = [
+    rv(A, 'laura', daysAgo(5), 'l1'),
+    rv(A, 'laura', daysAgo(2), 'l2'),
+    rv(A, 'david', daysAgo(4), 'd1'),
+    rv(A, 'david', daysAgo(1), 'd2'),
+  ];
+  const stat = (distanceM: number, laps: number, durationS = 1800) => ({ distanceM, durationS, laps });
+
+  it('keeps the incumbent with no stats', () => {
+    expect(mayorHoldings(tied, DISTRICT, NOW).get('laura')).toEqual([A]);
+  });
+
+  it('gives an equal-days cell to more laps', () => {
+    const stats = new Map([
+      ['l1', stat(5000, 0)],
+      ['l2', stat(5000, 0)],
+      ['d1', stat(3000, 4)],
+      ['d2', stat(3000, 0)],
+    ]);
+    expect(mayorHoldings(tied, DISTRICT, NOW, stats).get('david')).toEqual([A]);
+  });
+
+  it('then to more distance when laps are equal', () => {
+    const stats = new Map([
+      ['l1', stat(4000, 2)],
+      ['l2', stat(4000, 0)],
+      ['d1', stat(9000, 1)],
+      ['d2', stat(1000, 1)],
+    ]);
+    expect(mayorHoldings(tied, DISTRICT, NOW, stats).get('david')).toEqual([A]);
+  });
+
+  it('never lets effort beat an extra day', () => {
+    const moreDays = [...tied, rv(A, 'laura', daysAgo(3), 'l3')];
+    const stats = new Map([
+      ['l1', stat(100, 0)],
+      ['l2', stat(100, 0)],
+      ['l3', stat(100, 0)],
+      ['d1', stat(40_000, 50)],
+      ['d2', stat(40_000, 50)],
+    ]);
+    expect(mayorHoldings(moreDays, DISTRICT, NOW, stats).get('laura')).toEqual([A]);
+  });
+
+  it('agrees with rankMayors under stats', () => {
+    const stats = new Map([
+      ['l1', stat(5000, 0)],
+      ['l2', stat(5000, 0)],
+      ['d1', stat(3000, 4)],
+      ['d2', stat(3000, 0)],
+    ]);
+    const held = mayorHoldings(tied, DISTRICT, NOW, stats);
+    for (const row of rankMayors(tied, DISTRICT, NOW, stats)) {
+      expect(held.get(row.userId)?.length).toBe(row.cellsHeld);
+    }
+  });
+});
+
+describe('runnerTotals', () => {
+  const rv = (h3: string, userId: string, visitedAt: string, runId?: string): TileVisitRow => ({
+    h3,
+    userId,
+    displayName: userId,
+    visitedAt,
+    runId,
+  });
+
+  it('counts each run once, however many of its cells are here', () => {
+    const visits = [rv(A, 'x', daysAgo(1), 'r1'), rv(B, 'x', daysAgo(1), 'r1'), rv(C, 'x', daysAgo(2), 'r2')];
+    const stats = new Map([
+      ['r1', { distanceM: 5000, durationS: 1500, laps: 2 }],
+      ['r2', { distanceM: 3000, durationS: 1000, laps: 0 }],
+    ]);
+    expect(runnerTotals(visits, DISTRICT, stats, NOW).get('x')).toEqual({
+      distanceM: 8000,
+      durationS: 2500,
+      laps: 2,
+      runs: 2,
+    });
+  });
+
+  it('leaves out runs with no stats, runs elsewhere, and runs outside the window', () => {
+    const visits = [
+      rv(A, 'x', daysAgo(1), 'flagged'),
+      rv(CELL_FAR, 'x', daysAgo(1), 'far'),
+      rv(A, 'x', daysAgo(40), 'old'),
+      rv(A, 'x', daysAgo(1)),
+    ];
+    const stats = new Map([
+      ['far', { distanceM: 1, durationS: 1, laps: 0 }],
+      ['old', { distanceM: 1, durationS: 1, laps: 0 }],
+    ]);
+    expect(runnerTotals(visits, DISTRICT, stats, NOW).has('x')).toBe(false);
   });
 });

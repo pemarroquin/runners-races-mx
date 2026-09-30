@@ -52,12 +52,12 @@ import { GlassRadii } from '@/constants/glass';
 import { FENCE_COLOR_SETS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { onIdentityChanged } from '@/lib/auth-events';
-import { fetchDistrictParkCells, fetchDistrictVisits, type ParkCell } from '@/lib/boards';
+import { fetchDistrictParkCells, fetchDistrictVisits, fetchRunStats, type ParkCell } from '@/lib/boards';
 import { districtLabel } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
-import { daysPresent, mayorHoldings } from '@/lib/local-leaders';
+import { daysPresent, mayorHoldings, runnerTotals, type RunnerTotals } from '@/lib/local-leaders';
 import {
   MAYORSHIP_WINDOW_DAYS,
   contestedCells,
@@ -65,7 +65,9 @@ import {
   rankMayors,
   scopeVisits,
   type MayorshipEntry,
+  type RunStats,
 } from '@/lib/mayorship';
+import { formatDistance, formatPace } from '@/lib/tracking';
 import {
   BUNDLED_SUBDIVISIONS,
   arenasFor,
@@ -88,6 +90,11 @@ interface BoardData {
    *  the arena falls back to the metro region name, never a failed board. */
   parkCells: ParkCell[];
   visits: Parameters<typeof mayorByCell>[0];
+  /** Distance/duration/laps per run, for Local Leaders' tiebreakers and row
+   *  totals. null when the run_stats read failed (e.g. before its migration
+   *  is applied): rows then show days only and ties go to the incumbent —
+   *  never everyone at zero. */
+  runStats: Map<string, RunStats> | null;
   failed: boolean;
 }
 
@@ -177,8 +184,13 @@ export default function LeaderboardScreen() {
         : Promise.resolve({ ok: true as const, parkCells: [] as ParkCell[] }),
       fetchDistrictVisits(forArena.districts),
     ]);
+    // After the visits, because it needs their run ids.
+    const runStats = visits.ok
+      ? await fetchRunStats(visits.visits.flatMap((v) => (v.runId ? [v.runId] : [])))
+      : null;
     return {
       arenaKey: forArena.key,
+      runStats: runStats?.ok ? runStats.stats : null,
       tiles: board.ok ? board.tiles : null,
       meUserId: board.ok ? board.meUserId : null,
       parkCells: parks.ok ? parks.parkCells : [],
@@ -246,11 +258,14 @@ export default function LeaderboardScreen() {
 
   // ---- Board 2: mayorship over ground people keep coming back to ----------
   const mayors = useMemo(
-    () => (board && arena ? mayorByCell(scopeVisits(board.visits, arena)) : null),
+    () =>
+      board && arena
+        ? mayorByCell(scopeVisits(board.visits, arena), undefined, board.runStats ?? undefined)
+        : null,
     [board, arena],
   );
   const leaders = useMemo(
-    () => (board && arena ? rankMayors(board.visits, arena) : null),
+    () => (board && arena ? rankMayors(board.visits, arena, undefined, board.runStats ?? undefined) : null),
     [board, arena],
   );
 
@@ -317,7 +332,7 @@ export default function LeaderboardScreen() {
   // count (test/local-leaders.test.ts).
   const leaderHoldings = useMemo<DistrictHolding[]>(() => {
     if (!board || arena === null) return [];
-    return [...mayorHoldings(board.visits, arena).entries()].map(([userId, cells]) => ({
+    return [...mayorHoldings(board.visits, arena, undefined, board.runStats ?? undefined).entries()].map(([userId, cells]) => ({
       userId,
       cells,
       color: tintOf(userId),
@@ -326,6 +341,10 @@ export default function LeaderboardScreen() {
   }, [board, arena, tintOf]);
   const leaderDays = useMemo(
     () => (board && arena ? daysPresent(board.visits, arena) : new Map<string, number>()),
+    [board, arena],
+  );
+  const leaderTotals = useMemo(
+    () => (board?.runStats && arena ? runnerTotals(board.visits, arena, board.runStats) : null),
     [board, arena],
   );
 
@@ -452,6 +471,7 @@ export default function LeaderboardScreen() {
           state={board === null ? 'loading' : board.failed ? 'failed' : 'ready'}
           leaders={leaders ?? []}
           days={leaderDays}
+          totals={leaderTotals}
           meUserId={board?.meUserId ?? null}
           tintOf={tintOf}
           focusUserId={focus}
@@ -650,6 +670,7 @@ function LeadersCard({
   state,
   leaders,
   days,
+  totals,
   meUserId,
   tintOf,
   focusUserId,
@@ -659,6 +680,8 @@ function LeadersCard({
   state: 'loading' | 'failed' | 'ready';
   leaders: MayorshipEntry[];
   days: Map<string, number>;
+  /** Null when run stats are unavailable: rows show days only. */
+  totals: Map<string, RunnerTotals> | null;
   meUserId: string | null;
   tintOf: (userId: string) => string;
   focusUserId: string | null;
@@ -707,6 +730,17 @@ function LeadersCard({
               const isMe = entry.userId === meUserId;
               const name = entry.displayName ?? t('leaderboard.anonymous');
               const focused = entry.userId === focusUserId;
+              // Days, then the 30-day effort that breaks ties on them:
+              // distance, pace (shown, never ranked) and laps.
+              const tot = totals?.get(entry.userId);
+              const detail = [
+                t('leaderboard.leaderDays', { count: days.get(entry.userId) ?? 0 }),
+                tot ? formatDistance(tot.distanceM) : null,
+                tot ? formatPace(tot.distanceM, tot.durationS) : null,
+                tot && tot.laps > 0 ? t('leaderboard.leaderLaps', { count: tot.laps }) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ');
               return (
                 <Pressable
                   key={entry.userId}
@@ -728,7 +762,7 @@ function LeadersCard({
                       {isMe ? t('leaderboard.leaderMe', { name }) : name}
                     </Text>
                     <Text style={styles.leaderDays} numberOfLines={1}>
-                      {t('leaderboard.leaderDays', { count: days.get(entry.userId) ?? 0 })}
+                      {detail}
                     </Text>
                   </View>
                   <Text style={styles.leaderScore}>{entry.cellsHeld}</Text>

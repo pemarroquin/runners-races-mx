@@ -102,7 +102,14 @@ export interface RunUpload {
    * Optional for the same "an old queued entry has no such field" reason as
    * `enclosedCells` above.
    */
-  lap?: { qualifies: boolean; markerCenter: { lat: number; lng: number } | null };
+  lap?: {
+    qualifies: boolean;
+    markerCenter: { lat: number; lng: number } | null;
+    /** Laps counted by detectLaps, 0 unless the run qualified. The number
+     *  alone leaves the device. Optional: an entry queued by an older build
+     *  has none, and uploads as 0. */
+    laps?: number;
+  };
 }
 
 /**
@@ -423,6 +430,10 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
         // tiles out.
         fence: JSON.stringify(run.fence.geometry.geometry),
         area_m2: Math.round(run.fence.areaM2),
+        // Only for a run that genuinely looped. The column defaults to 0, so
+        // an ordinary run never names it — which keeps every such upload
+        // working even before 20260930120000_runs_laps_and_stats is applied.
+        ...(run.lap?.qualifies && (run.lap.laps ?? 0) > 0 ? { laps: run.lap.laps } : {}),
       })
       .select('id')
       .single();
