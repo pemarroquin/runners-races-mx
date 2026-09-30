@@ -10,10 +10,8 @@
 // with the turf dependency they needed here and the `fetchLeaderboard` that
 // fed them. Nothing rendered them; leaderboard.tsx has been on
 // districtConquest since the tile migration.
-import { cellToChildrenSize } from 'h3-js';
 
-import { districtOfCell } from '@/lib/district';
-import { DEFAULT_TILE_RES } from '@/lib/tiles';
+import { asScope, type ArenaScope } from '@/lib/district';
 
 // ============================================================================
 // Tile Coverage Model — count-based ranking (Tile Coverage brief §6 step 6)
@@ -146,7 +144,11 @@ export interface DistrictConquest {
  * Pure, over rows already fetched. Ties broken by user id for a stable order
  * between loads, same reasoning as the rest of this file.
  */
-export function districtConquest(tiles: TileOwnerRow[], district: string): DistrictConquest {
+export function districtConquest(
+  tiles: TileOwnerRow[],
+  arena: string | ArenaScope,
+): DistrictConquest {
+  const scope = asScope(arena);
   const byUser = new Map<
     string,
     { displayName: string | null; cellsHeld: number; flaggedCellsHeld: number }
@@ -154,9 +156,9 @@ export function districtConquest(tiles: TileOwnerRow[], district: string): Distr
 
   let claimedTotal = 0;
   for (const tile of tiles) {
-    // districtOfCell also rejects any cell not at the tile resolution, so an
-    // unconverted res-11 tile is excluded rather than inflating a district.
-    if (districtOfCell(tile.h3) !== district) continue;
+    // Every scope rejects a cell not at the tile resolution, so an
+    // unconverted res-11 tile is excluded rather than inflating an arena.
+    if (!scope.contains(tile.h3)) continue;
     claimedTotal++;
     let entry = byUser.get(tile.ownerId);
     if (!entry) {
@@ -183,5 +185,5 @@ export function districtConquest(tiles: TileOwnerRow[], district: string): Distr
     }))
     .sort((a, b) => b.cellsHeld - a.cellsHeld || compareUserId(a.userId, b.userId));
 
-  return { entries, claimedTotal, districtTotal: cellToChildrenSize(district, DEFAULT_TILE_RES) };
+  return { entries, claimedTotal, districtTotal: scope.totalCells };
 }

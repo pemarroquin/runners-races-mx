@@ -18,7 +18,7 @@
 // rather than a quilt — the same call, for the same reason, as the Track
 // map's live fill and enclosure.ts's own hole detection, which is what keeps
 // all three from ever disagreeing about where a boundary is.
-import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
+import { cellsToMultiPolygon } from 'h3-js';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
@@ -28,7 +28,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
-import { frameOf } from '@/lib/local-leaders';
+import { frameOf, type CellBounds } from '@/lib/local-leaders';
 import { EMISSIVE_STRENGTH_FULL, MAP_SLOT_FILL, MAP_SLOT_ROUTE, MAP_STYLE_GL } from '@/constants/map';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -46,11 +46,19 @@ export interface DistrictHolding {
   isMe: boolean;
 }
 
+/** Where the board is: a subdivision's real outline, or a district's
+ *  hexagon (subdivisions.ts's Arena carries both shapes of it). */
+export interface DistrictMapArena {
+  /** Outline as MultiPolygon coordinates, [lng, lat]. */
+  outline: number[][][][];
+  bounds: CellBounds;
+}
+
 export interface DistrictMapProps {
-  /** The res-7 arena. Drawn as an outline so the contest has a visible edge
-   *  — without it the fills float on an unbounded map and "share of this
-   *  district" has no referent on screen. */
-  district: string;
+  /** Drawn as a dashed edge so the contest has a visible edge — without it
+   *  the fills float on an unbounded map and "share of this place" has no
+   *  referent on screen. */
+  arena: DistrictMapArena;
   holdings: DistrictHolding[];
   /** Full-bleed, pannable mode (Local Leaders). Omitted: the fixed 220 px
    *  non-interactive card Municipio uses. */
@@ -81,16 +89,15 @@ function ensureMapboxCss() {
   document.head.appendChild(link);
 }
 
-/** The district's own boundary, as a GeoJSON ring. cellToBoundary's
- *  `formatAsGeoJson` flag gives [lng, lat] and closes the ring. */
-function districtOutline(district: string): FeatureCollection {
+/** The arena's boundary, every ring of it, as lines. */
+function arenaOutline(arena: DistrictMapArena): FeatureCollection {
   return {
     type: 'FeatureCollection',
     features: [
       {
         type: 'Feature',
         properties: {},
-        geometry: { type: 'Polygon', coordinates: [cellToBoundary(district, true)] },
+        geometry: { type: 'MultiLineString', coordinates: arena.outline.flat() },
       },
     ],
   };
@@ -137,17 +144,17 @@ function lineOpacity(focus: string | null | undefined) {
   return focus ? ['case', ['==', ['get', 'userId'], focus], 1, 0.15] : 0.8;
 }
 
-export function DistrictMap({ district, holdings, full, focusUserId }: DistrictMapProps) {
+export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props for the async load callback — the map builds once, but
   // holdings usually arrive after the dynamic import has started. Written
   // from an effect rather than during render, same as fence-map.web.tsx.
-  const dataRef = useRef({ district, holdings, full, focusUserId });
+  const dataRef = useRef({ arena, holdings, full, focusUserId });
   useEffect(() => {
-    dataRef.current = { district, holdings, full, focusUserId };
-  }, [district, holdings, full, focusUserId]);
+    dataRef.current = { arena, holdings, full, focusUserId };
+  }, [arena, holdings, full, focusUserId]);
   // Full mode frames the held ground, which usually lands after the map has
   // loaded on the district alone. Refit once when it does, never again —
   // after that the camera is the runner's.
@@ -156,9 +163,9 @@ export function DistrictMap({ district, holdings, full, focusUserId }: DistrictM
   const refit = useCallback((animate: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { district: d, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const { arena: a, holdings: h, full: f, focusUserId: focus } = dataRef.current;
     const focused = focus ? h.filter((x) => x.userId === focus) : [];
-    const b = frameOf(d, focused.length > 0 ? focused : h, !!f);
+    const b = frameOf(a.bounds, focused.length > 0 ? focused : h, !!f);
     if (!b) return;
     map.fitBounds(
       [
@@ -186,7 +193,7 @@ export function DistrictMap({ district, holdings, full, focusUserId }: DistrictM
       mapboxgl.accessToken = TOKEN;
 
       const initial = dataRef.current;
-      const frame = frameOf(initial.district, initial.holdings, !!initial.full);
+      const frame = frameOf(initial.arena.bounds, initial.holdings, !!initial.full);
       if (!frame) return;
       const { minLng, minLat, maxLng, maxLat } = frame;
 
@@ -211,9 +218,9 @@ export function DistrictMap({ district, holdings, full, focusUserId }: DistrictM
 
       map.on('load', () => {
         if (cancelled) return;
-        const { district: d, holdings: h } = dataRef.current;
+        const { arena: a, holdings: h } = dataRef.current;
 
-        map.addSource(OUTLINE_SRC, { type: 'geojson', data: districtOutline(d) });
+        map.addSource(OUTLINE_SRC, { type: 'geojson', data: arenaOutline(a) });
         map.addLayer({
           id: `${OUTLINE_SRC}-line`,
           type: 'line',

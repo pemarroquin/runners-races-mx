@@ -10,18 +10,23 @@
 // plus a separate `holes` prop, and an enclosed region inside someone's
 // territory is still their ground, so there is nothing to cut out. Same
 // decision, same reasoning, as track-map.tsx's tile fill.
-import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
+import { cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 
-import type { DistrictHolding, DistrictMapFull, DistrictMapProps } from '@/components/district-map.web';
+import type {
+  DistrictHolding,
+  DistrictMapArena,
+  DistrictMapFull,
+  DistrictMapProps,
+} from '@/components/district-map.web';
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { frameOf } from '@/lib/local-leaders';
 
-export type { DistrictHolding, DistrictMapFull, DistrictMapProps };
+export type { DistrictHolding, DistrictMapArena, DistrictMapFull, DistrictMapProps };
 
 const ZOOM_STEP = 1;
 
@@ -30,21 +35,21 @@ const ZOOM_STEP = 1;
  *  of the card. */
 const FRAME_PAD = 0.12;
 
-export function DistrictMap({ district, holdings, full, focusUserId }: DistrictMapProps) {
+export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapProps) {
   const mapRef = useRef<MapView | null>(null);
   const readyRef = useRef(false);
   const framedHoldingsRef = useRef(false);
-  const dataRef = useRef({ district, holdings, full, focusUserId });
+  const dataRef = useRef({ arena, holdings, full, focusUserId });
   useEffect(() => {
-    dataRef.current = { district, holdings, full, focusUserId };
-  }, [district, holdings, full, focusUserId]);
+    dataRef.current = { arena, holdings, full, focusUserId };
+  }, [arena, holdings, full, focusUserId]);
 
   const refit = useCallback((animated: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { district: d, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const { arena: a, holdings: h, full: f, focusUserId: focus } = dataRef.current;
     const focused = focus ? h.filter((x) => x.userId === focus) : [];
-    const b = frameOf(d, focused.length > 0 ? focused : h, !!f);
+    const b = frameOf(a.bounds, focused.length > 0 ? focused : h, !!f);
     if (!b) return;
     map.fitToCoordinates(
       [
@@ -76,28 +81,22 @@ export function DistrictMap({ district, holdings, full, focusUserId }: DistrictM
     refit(false);
   }, [holdings, full, refit]);
 
-  const outline = useMemo(
-    () =>
-      // Default (non-GeoJSON) output is [lat, lng], already
-      // react-native-maps' order once mapped.
-      cellToBoundary(district).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
-    [district],
+  // Every ring of the arena's outline, [lng, lat] flipped to
+  // react-native-maps' { latitude, longitude }.
+  const outlineRings = useMemo(
+    () => arena.outline.flat().map((ring) => ring.map(([lng, lat]) => ({ latitude: lat, longitude: lng }))),
+    [arena],
   );
 
   const region = useMemo(() => {
-    const lats = outline.map((p) => p.latitude);
-    const lngs = outline.map((p) => p.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
+    const { minLat, maxLat, minLng, maxLng } = arena.bounds;
     return {
       latitude: (minLat + maxLat) / 2,
       longitude: (minLng + maxLng) / 2,
       latitudeDelta: (maxLat - minLat) * (1 + FRAME_PAD * 2),
       longitudeDelta: (maxLng - minLng) * (1 + FRAME_PAD * 2),
     };
-  }, [outline]);
+  }, [arena]);
 
   const shapes = useMemo(
     () =>
@@ -162,11 +161,9 @@ export function DistrictMap({ district, holdings, full, focusUserId }: DistrictM
             strokeWidth={1}
           />
         ))}
-        <Polyline
-          coordinates={[...outline, outline[0]]}
-          strokeColor="rgba(255,255,255,0.35)"
-          strokeWidth={1.5}
-        />
+        {outlineRings.map((ring, i) => (
+          <Polyline key={`outline:${i}`} coordinates={ring} strokeColor="rgba(255,255,255,0.35)" strokeWidth={1.5} />
+        ))}
       </MapView>
       {full && (
         <View style={[styles.mapControls, { top: full.controlsTop }]} pointerEvents="box-none">

@@ -18,7 +18,7 @@
 // loaded the same day (36,193 cells, see BACKLOG). `fetchDistrictParkCells`
 // is restored ONLY for district.ts's districtLabel — a decorative caption,
 // never a score — not for any denominator.
-import { districtCellPattern } from '@/lib/district';
+import { districtCellPattern, districtChunks, districtsOrFilter } from '@/lib/district';
 import type { TileVisitRow } from '@/lib/mayorship';
 import { supabase } from '@/lib/supabase';
 import { withSession, type Outcome } from '@/lib/territory-sync';
@@ -85,24 +85,30 @@ export async function fetchDistrictParkCells(
  * mayorship per cell, not more paging here.
  */
 export async function fetchDistrictVisits(
-  district: string,
+  /** One district, or every district covering a subdivision (subdivisions.ts
+   *  cuts the exact outline on device afterwards). */
+  districts: string | string[],
 ): Promise<Outcome<{ visits: TileVisitRow[] }>> {
   return withSession<{ visits: TileVisitRow[] }>(async () => {
-    const pattern = `${districtCellPattern(district)}%`;
     const rows: { h3: string; user_id: string; visited_at: string }[] = [];
-    for (let offset = 0; ; offset += PAGE) {
-      const { data, error } = await supabase
-        .from('tile_visits')
-        .select('h3, user_id, visited_at')
-        .like('h3', pattern)
-        // (h3, run_id) is the primary key; h3 alone is not unique, so the
-        // second key makes paging deterministic.
-        .order('h3', { ascending: true })
-        .order('run_id', { ascending: true })
-        .range(offset, offset + PAGE - 1);
-      if (error || !data) return { ok: false, reason: 'network' as const };
-      rows.push(...data);
-      if (data.length < PAGE) break;
+    // Chunked so a municipio's hundred-odd districts never build one giant
+    // URL; each chunk pages on its own. Chunks can't overlap (districts are
+    // disjoint), so concatenating them never double-counts a visit.
+    for (const chunk of districtChunks(typeof districts === 'string' ? [districts] : districts)) {
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from('tile_visits')
+          .select('h3, user_id, visited_at')
+          .or(districtsOrFilter(chunk))
+          // (h3, run_id) is the primary key; h3 alone is not unique, so the
+          // second key makes paging deterministic.
+          .order('h3', { ascending: true })
+          .order('run_id', { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error || !data) return { ok: false, reason: 'network' as const };
+        rows.push(...data);
+        if (data.length < PAGE) break;
+      }
     }
 
     // Names in one follow-up query keyed on the distinct users present,

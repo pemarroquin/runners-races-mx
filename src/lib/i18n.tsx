@@ -288,6 +288,9 @@ const translations = {
       pullRelease: 'Suelta para actualizar',
       pullRefreshing: 'Actualizando…',
       pullHint: 'Desliza hacia abajo para actualizar',
+      arenaPrev: 'Lugar anterior',
+      arenaNext: 'Siguiente lugar',
+      arenaHome: 'Vuelve a donde estás',
       leaderFocusHint: 'Muestra su terreno en el mapa. Toca otra vez para ver a todos.',
       leaderMe: '%{name} (tú)',
       leaderDays: {
@@ -838,6 +841,9 @@ const translations = {
       pullRelease: 'Release to refresh',
       pullRefreshing: 'Refreshing…',
       pullHint: 'Pull down to refresh',
+      arenaPrev: 'Previous place',
+      arenaNext: 'Next place',
+      arenaHome: 'Back to where you are',
       leaderFocusHint: 'Shows their ground on the map. Tap again to see everyone.',
       leaderMe: '%{name} (you)',
       leaderDays: {

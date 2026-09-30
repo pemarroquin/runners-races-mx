@@ -12,10 +12,31 @@ export interface Region {
   states: string[]; // race.state values that belong to this region
   lat: number; // metro center, for nearest-region matching
   lng: number;
+  /** How this city divides itself, for the leaderboard's place switcher —
+   *  municipios here, arrondissements in Paris, boroughs in London. Read only
+   *  by scripts/extract-subdivisions.ts, which keeps the TOP_SUBDIVISIONS most
+   *  populated ones. Check a new city's OSM admin levels by hand. */
+  subdivisions?: {
+    /** OSM area the subdivisions sit inside, and its admin_level. */
+    within: { name: string; adminLevel: number };
+    /** admin_level of the subdivisions themselves. */
+    adminLevel: number;
+  };
 }
 
+/** Subdivisions kept per city (Pedro, 2026-09-30): the most populated urban
+ *  ones, where running actually happens. */
+export const TOP_SUBDIVISIONS = 10;
+
 export const REGIONS: Region[] = [
-  { id: 'mty', name: 'Monterrey', states: ['Nuevo León'], lat: 25.6866, lng: -100.3161 },
+  {
+    id: 'mty',
+    name: 'Monterrey',
+    states: ['Nuevo León'],
+    lat: 25.6866,
+    lng: -100.3161,
+    subdivisions: { within: { name: 'Nuevo León', adminLevel: 4 }, adminLevel: 6 },
+  },
   { id: 'cdmx', name: 'Ciudad de México', states: ['Ciudad de México', 'Estado de México'], lat: 19.4326, lng: -99.1332 },
   { id: 'gdl', name: 'Guadalajara', states: ['Jalisco'], lat: 20.6597, lng: -103.3496 },
   { id: 'qro', name: 'Querétaro', states: ['Querétaro'], lat: 20.5888, lng: -100.3899 },

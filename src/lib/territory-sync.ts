@@ -13,7 +13,7 @@ import { isReservedNickname } from '@/lib/nickname';
 import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
-import { districtCellPattern } from '@/lib/district';
+import { districtChunks, districtsOrFilter } from '@/lib/district';
 import { enclosedCells } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
@@ -840,9 +840,10 @@ export async function fetchTileLeaderboard(
    * boards.ts); this one was not, which is the inconsistency.
    *
    * null keeps the old whole-table behaviour for any caller that really does
-   * want every tile.
+   * want every tile. A list is every district covering a subdivision
+   * (subdivisions.ts), fetched in chunks and cut to the outline on device.
    */
-  district: string | null = null,
+  district: string | string[] | null = null,
 ): Promise<TileLeaderboardOutcome> {
   return withSession<{ tiles: TileOwnerRow[]; meUserId: string; skipped: number }>(async (session) => {
     // The embedded `runs` comes from territory_tiles.claim_run_id's FK to
@@ -859,26 +860,32 @@ export async function fetchTileLeaderboard(
     // A leaderboard that under-counts looks exactly like a leaderboard, which
     // is why nobody noticed.
     const data: { h3: string; owner_id: string | null; region_id: string | null; runs: unknown }[] = [];
-    for (let offset = 0; ; offset += 1000) {
-      let query = supabase
-        .from('territory_tiles')
-        // h3 is selected purely to filter on resolution — see the loop below.
-        // A leaderboard that mixed resolutions would rank a runner with
-        // unconverted res-11 tiles against runners counted in res-12 ones,
-        // which is not one ranking at all.
-        .select('h3, owner_id, region_id, runs(flagged)')
-        // Ordered so paging is deterministic: without it Postgres may return
-        // rows in a different order per page and offset paging can skip one.
-        // h3 is the primary key, so it is unique and a total order.
-        .order('h3', { ascending: true });
-      // Every res-12 descendant of a res-7 cell shares this prefix and no
-      // neighbouring district's do — see districtCellPattern, which is
-      // asserted against h3-js across eight base cells worldwide.
-      if (district !== null) query = query.like('h3', `${districtCellPattern(district)}%`);
-      const { data: page, error } = await query.range(offset, offset + 999);
-      if (error || !page) return { ok: false, reason: 'network' };
-      data.push(...page);
-      if (page.length < 1000) break;
+    // One pass per chunk of districts; null is a single unfiltered pass.
+    // Districts are disjoint, so chunks never return the same tile twice.
+    const chunks: (string[] | null)[] =
+      district === null ? [null] : districtChunks(typeof district === 'string' ? [district] : district);
+    for (const chunk of chunks) {
+      for (let offset = 0; ; offset += 1000) {
+        let query = supabase
+          .from('territory_tiles')
+          // h3 is selected purely to filter on resolution — see the loop below.
+          // A leaderboard that mixed resolutions would rank a runner with
+          // unconverted res-11 tiles against runners counted in res-12 ones,
+          // which is not one ranking at all.
+          .select('h3, owner_id, region_id, runs(flagged)')
+          // Ordered so paging is deterministic: without it Postgres may return
+          // rows in a different order per page and offset paging can skip one.
+          // h3 is the primary key, so it is unique and a total order.
+          .order('h3', { ascending: true });
+        // Every res-12 descendant of a res-7 cell shares this prefix and no
+        // neighbouring district's do — see districtCellPattern, which is
+        // asserted against h3-js across eight base cells worldwide.
+        if (chunk !== null) query = query.or(districtsOrFilter(chunk));
+        const { data: page, error } = await query.range(offset, offset + 999);
+        if (error || !page) return { ok: false, reason: 'network' };
+        data.push(...page);
+        if (page.length < 1000) break;
+      }
     }
 
     const ownerIds = Array.from(new Set(data.map((row) => row.owner_id).filter((id): id is string => !!id)));

@@ -239,6 +239,11 @@ const GLYPHS: Record<string, Glyph> = {
   chevron_right: (c) => (
     <path d="M9.5 5.5l6.2 6.5-6.2 6.5" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
   ),
+  // Added 2026-09-30 with the leaderboard's place switcher (pull-pill.tsx),
+  // the left arrow of `‹ name ›` — chevron_right mirrored.
+  chevron_left: (c) => (
+    <path d="M14.5 5.5l-6.2 6.5 6.2 6.5" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  ),
   // Added 2026-09-17 with the Profile stack's back button (profile/index.tsx,
   // a root push now — see that file's header) — chevron_right mirrored.
   arrow_back: (c) => (

@@ -53,7 +53,7 @@ import { FENCE_COLOR_SETS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { onIdentityChanged } from '@/lib/auth-events';
 import { fetchDistrictParkCells, fetchDistrictVisits, type ParkCell } from '@/lib/boards';
-import { districtLabel, districtOf, districtOfCell } from '@/lib/district';
+import { districtLabel } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
@@ -63,8 +63,15 @@ import {
   contestedCells,
   mayorByCell,
   rankMayors,
+  scopeVisits,
   type MayorshipEntry,
 } from '@/lib/mayorship';
+import {
+  BUNDLED_SUBDIVISIONS,
+  arenasFor,
+  fetchRemoteSubdivisions,
+  type Arena,
+} from '@/lib/subdivisions';
 import { useCurrentLocation } from '@/lib/use-current-location';
 import { fetchTileLeaderboard } from '@/lib/territory-sync';
 
@@ -72,6 +79,9 @@ import { fetchTileLeaderboard } from '@/lib/territory-sync';
  *  yet"; a failed visits read keeps the rest — Local Leaders going empty
  *  must not take the conquest board with it. */
 interface BoardData {
+  /** Which arena this was loaded for. A load for the previous arena is
+   *  never shown under the next one's name. */
+  arenaKey: string;
   tiles: TileOwnerRow[] | null;
   meUserId: string | null;
   /** For districtLabel's caption only — a failed or empty read just means
@@ -100,16 +110,53 @@ export default function LeaderboardScreen() {
     autoRequest: true,
   });
 
-  const district = useMemo(() => (coords ? districtOf(coords) : null), [coords]);
-
   const [data, setData] = useState<BoardData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // The runner picked on the Local Leaders card; their ground is highlighted.
   const [focusUserId, setFocusUserId] = useState<string | null>(null);
+
+
+  // The city's subdivisions (subdivisions.ts): bundled, then the GitHub copy
+  // once per mount, like races. A failed refresh keeps the bundled list.
+  const [subdivisions, setSubdivisions] = useState(BUNDLED_SUBDIVISIONS);
+  useEffect(() => {
+    let stale = false;
+    fetchRemoteSubdivisions().then((remote) => {
+      // Only a real change: a new object rebuilds every arena and refetches
+      // the board, and the remote copy almost always matches the bundle.
+      if (!stale && remote && JSON.stringify(remote) !== JSON.stringify(BUNDLED_SUBDIVISIONS)) {
+        setSubdivisions(remote);
+      }
+    });
+    return () => {
+      stale = true;
+    };
+  }, []);
+
+  // The switcher's list: where you stand first, then the rest of the city
+  // nearest first (arenasFor). One fix, not a watch, so this is built once
+  // per location rather than per GPS tick.
+  const arenas = useMemo<Arena[] | null>(() => {
+    if (!coords) return null;
+    const region = nearestRegion(coords.lat, coords.lng);
+    return arenasFor(region ? (subdivisions[region.id] ?? []) : [], coords);
+  }, [coords, subdivisions]);
+  const [arenaKey, setArenaKey] = useState<string | null>(null);
+  const arena = useMemo(
+    () => arenas?.find((a) => a.key === arenaKey) ?? arenas?.[0] ?? null,
+    [arenas, arenaKey],
+  );
+  const stepArena = (delta: number) => {
+    if (!arenas || !arena || arenas.length < 2) return;
+    const i = arenas.indexOf(arena);
+    setArenaKey(arenas[(i + delta + arenas.length) % arenas.length].key);
+    setFocusUserId(null);
+  };
+
   const [identitySignal, setIdentitySignal] = useState(0);
   useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
 
-  const load = useCallback(async (forDistrict: string): Promise<BoardData> => {
+  const load = useCallback(async (forArena: Arena): Promise<BoardData> => {
     // Three independent reads, no ordering between them.
     //
     // The park-path read is back, `park_path_cells` having been loaded into
@@ -121,11 +168,17 @@ export default function LeaderboardScreen() {
       // Scoped to this district server-side, like the two reads beside it —
       // see fetchTileLeaderboard's own `district` param for what the
       // unscoped version cost.
-      fetchTileLeaderboard(forDistrict),
-      fetchDistrictParkCells(forDistrict),
-      fetchDistrictVisits(forDistrict),
+      // A subdivision reads every district covering it; the exact outline
+      // is cut on device by forArena.contains.
+      fetchTileLeaderboard(forArena.districts),
+      // Only a district needs a derived caption; a subdivision has a name.
+      forArena.kind === 'district'
+        ? fetchDistrictParkCells(forArena.key)
+        : Promise.resolve({ ok: true as const, parkCells: [] as ParkCell[] }),
+      fetchDistrictVisits(forArena.districts),
     ]);
     return {
+      arenaKey: forArena.key,
       tiles: board.ok ? board.tiles : null,
       meUserId: board.ok ? board.meUserId : null,
       parkCells: parks.ok ? parks.parkCells : [],
@@ -149,23 +202,23 @@ export default function LeaderboardScreen() {
   const loadTicketRef = useRef(0);
 
   const onRefresh = useCallback(async () => {
-    if (district === null) return;
+    if (arena === null) return;
     const ticket = ++loadTicketRef.current;
     setRefreshing(true);
-    const next = await load(district);
+    const next = await load(arena);
     if (loadTicketRef.current === ticket) setData(next);
     setRefreshing(false);
-  }, [district, load]);
+  }, [arena, load]);
 
   // Refetches on every focus, not just first mount: expo-router keeps tab
   // screens mounted, so a `[]`-deps effect would fetch once early in the
   // session and never again. Same reasoning — and the same identity signal —
   // as the screen this replaced.
   useEffect(() => {
-    if (!isFocused || district === null) return;
+    if (!isFocused || arena === null) return;
     const ticket = ++loadTicketRef.current;
     const id = setTimeout(() => {
-      load(district).then((next) => {
+      load(arena).then((next) => {
         // Same ticket as onRefresh, not a local `stale` flag: the two paths
         // race each other, so one shared notion of "newest" is the only thing
         // that orders them.
@@ -173,7 +226,12 @@ export default function LeaderboardScreen() {
       });
     }, 0);
     return () => clearTimeout(id);
-  }, [isFocused, district, identitySignal, load]);
+  }, [isFocused, arena, identitySignal, load]);
+
+  // Only a load for the arena on screen counts. Stepping to the next
+  // municipio shows loading until its own read lands, never the previous
+  // place's numbers under the new name.
+  const board = data && arena && data.arenaKey === arena.key ? data : null;
 
   // ---- Board 1: who holds the claimed ground in this district ------------
   //
@@ -182,41 +240,43 @@ export default function LeaderboardScreen() {
   // ConquestEntry.share for why the denominator is claimed ground rather
   // than the district.
   const conquest = useMemo(() => {
-    if (!data?.tiles || district === null) return null;
-    return districtConquest(data.tiles, district);
-  }, [data, district]);
+    if (!board?.tiles || arena === null) return null;
+    return districtConquest(board.tiles, arena);
+  }, [board, arena]);
 
   // ---- Board 2: mayorship over ground people keep coming back to ----------
-  const mayors = useMemo(() => (data ? mayorByCell(data.visits) : null), [data]);
+  const mayors = useMemo(
+    () => (board && arena ? mayorByCell(scopeVisits(board.visits, arena)) : null),
+    [board, arena],
+  );
   const leaders = useMemo(
-    () => (data && district !== null ? rankMayors(data.visits, district) : null),
-    [data, district],
+    () => (board && arena ? rankMayors(board.visits, arena) : null),
+    [board, arena],
   );
 
-  // The arena's caption. districtLabel first — the real municipio name by
-  // majority vote over this district's park cells, matching what the Saved
-  // tab's progress screen shows for the same ground — falling back to the
-  // metro region where no park data has been extracted for this district
-  // (most of the planet). Decorative either way: the district id is what
-  // scores, never this string.
+  // The arena's caption. A subdivision has its own name. A district (the
+  // fallback outside every mapped subdivision) takes districtLabel — the
+  // municipio by majority vote over its park cells — then the metro region.
+  // Decorative for a district: the district id is what scores.
   const label = useMemo(() => {
-    if (district !== null && data) {
-      const fromParks = districtLabel(district, data.parkCells);
+    if (arena?.name) return arena.name;
+    if (arena && board) {
+      const fromParks = districtLabel(arena.key, board.parkCells);
       if (fromParks) return fromParks;
     }
     return coords ? (nearestRegion(coords.lat, coords.lng)?.name ?? null) : null;
-  }, [district, data, coords]);
+  }, [arena, board, coords]);
 
   // ---- Your own standing, which is the hero ------------------------------
-  const me = conquest?.entries.find((e) => e.userId === data?.meUserId) ?? null;
+  const me = conquest?.entries.find((e) => e.userId === board?.meUserId) ?? null;
   const myRank = me ? (conquest?.entries.indexOf(me) ?? -1) + 1 : 0;
   const contested = useMemo(() => {
-    if (!data?.tiles || !mayors || !data.meUserId || district === null) return 0;
-    const mine = data.tiles
-      .filter((tile) => tile.ownerId === data.meUserId)
+    if (!board?.tiles || !mayors || !board.meUserId || arena === null) return 0;
+    const mine = board.tiles
+      .filter((tile) => tile.ownerId === board.meUserId && arena.contains(tile.h3))
       .map((tile) => tile.h3);
-    return contestedCells(mine, mayors, data.meUserId).length;
-  }, [data, mayors, district]);
+    return contestedCells(mine, mayors, board.meUserId).length;
+  }, [board, mayors, arena]);
 
   // The map's input. Same source as the share bar and the rows — one fetch,
   // three views of it, so they can never disagree about who holds what.
@@ -236,10 +296,10 @@ export default function LeaderboardScreen() {
   );
 
   const holdings = useMemo<DistrictHolding[]>(() => {
-    if (!data?.tiles || district === null) return [];
+    if (!board?.tiles || arena === null) return [];
     const byOwner = new Map<string, string[]>();
-    for (const tile of data.tiles) {
-      if (districtOfCell(tile.h3) !== district) continue;
+    for (const tile of board.tiles) {
+      if (!arena.contains(tile.h3)) continue;
       const cells = byOwner.get(tile.ownerId);
       if (cells) cells.push(tile.h3);
       else byOwner.set(tile.ownerId, [tile.h3]);
@@ -248,25 +308,25 @@ export default function LeaderboardScreen() {
       userId,
       cells,
       color: tintOf(userId),
-      isMe: userId === data.meUserId,
+      isMe: userId === board.meUserId,
     }));
-  }, [data, district, tintOf]);
+  }, [board, arena, tintOf]);
 
   // Board 2 on the map: each runner's mayor cells, scoped exactly as
   // rankMayors scopes them, so a shape and its row always hold the same
   // count (test/local-leaders.test.ts).
   const leaderHoldings = useMemo<DistrictHolding[]>(() => {
-    if (!data || district === null) return [];
-    return [...mayorHoldings(data.visits, district).entries()].map(([userId, cells]) => ({
+    if (!board || arena === null) return [];
+    return [...mayorHoldings(board.visits, arena).entries()].map(([userId, cells]) => ({
       userId,
       cells,
       color: tintOf(userId),
-      isMe: userId === data.meUserId,
+      isMe: userId === board.meUserId,
     }));
-  }, [data, district, tintOf]);
+  }, [board, arena, tintOf]);
   const leaderDays = useMemo(
-    () => (data && district !== null ? daysPresent(data.visits, district) : new Map<string, number>()),
-    [data, district],
+    () => (board && arena ? daysPresent(board.visits, arena) : new Map<string, number>()),
+    [board, arena],
   );
 
   const shareSegments = useMemo<ShareSegment[]>(() => {
@@ -276,18 +336,43 @@ export default function LeaderboardScreen() {
       share: entry.share,
       color: tintOf(entry.userId),
       label: `${entry.displayName ?? t('leaderboard.anonymous')} ${pct(entry.share)}`,
-      isMe: entry.userId === data?.meUserId,
+      isMe: entry.userId === board?.meUserId,
     }));
-  }, [conquest, data, t, tintOf]);
+  }, [conquest, board, t, tintOf]);
 
   const chromeTop = insets.top + Spacing.two;
+  const belowChrome = chromeTop + CAPSULE_H + Spacing.two;
+  // Where the board is, the switcher, and the pull-to-refresh handle — one
+  // pill, same place on both tabs. On Local Leaders' full-bleed map every
+  // drag belongs to the map, and react-native-web's RefreshControl renders
+  // nothing, so this is the refresh on both tabs on web. Arrows only when
+  // the city has somewhere else to go.
+  const canStep = (arenas?.length ?? 0) > 1;
+  const pill = arena && (
+    <PullPill
+      top={belowChrome}
+      label={label ?? t('leaderboard.arenaHere')}
+      releaseLabel={t('leaderboard.pullRelease')}
+      refreshingLabel={t('leaderboard.pullRefreshing')}
+      a11yHint={t('leaderboard.pullHint')}
+      refreshing={refreshing}
+      onRefresh={() => void onRefresh()}
+      onPrev={canStep ? () => stepArena(-1) : undefined}
+      onNext={canStep ? () => stepArena(1) : undefined}
+      prevLabel={t('leaderboard.arenaPrev')}
+      nextLabel={t('leaderboard.arenaNext')}
+      onPressLabel={arena === arenas?.[0] ? undefined : () => setArenaKey(null)}
+      pressLabelHint={t('leaderboard.arenaHome')}
+    />
+  );
   const shell = (children: React.ReactNode) => (
     <Shell c={c} top={chromeTop} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
       {children}
+      {pill}
     </Shell>
   );
 
-  if (district === null) {
+  if (arena === null) {
     // Three different states, not one message. Before this branched, the
     // "we need your location" copy showed during the ordinary permission
     // probe and first fix — on every cold open of the tab — where it reads as
@@ -333,7 +418,6 @@ export default function LeaderboardScreen() {
     const cardBottom = insets.bottom + BottomTabInset - Spacing.two;
     // A pick that fell off the board after a refresh just clears.
     const focus = focusUserId && leaders?.some((e) => e.userId === focusUserId) ? focusUserId : null;
-    const belowChrome = chromeTop + CAPSULE_H + Spacing.two;
     return shell(
       <>
         <MapErrorBoundary
@@ -342,8 +426,8 @@ export default function LeaderboardScreen() {
           background={c.background}>
           <DistrictMap
             // A new arena remounts with a new camera frame, same as Municipio.
-            key={district}
-            district={district}
+            key={arena.key}
+            arena={arena}
             holdings={leaderHoldings}
             focusUserId={focus}
             full={{
@@ -363,26 +447,12 @@ export default function LeaderboardScreen() {
             }}
           />
         </MapErrorBoundary>
-        {/* Where this board is, and the pull-to-refresh handle: on a
-            full-bleed map every drag belongs to the map, so the pull lives
-            on the one piece of chrome at the top that isn't map. The arrows
-            that step through the city's subdivisions arrive with the
-            boundary data. The name is decorative: the district id scores. */}
-        <PullPill
-          top={belowChrome}
-          label={label ?? t('leaderboard.arenaHere')}
-          releaseLabel={t('leaderboard.pullRelease')}
-          refreshingLabel={t('leaderboard.pullRefreshing')}
-          a11yHint={t('leaderboard.pullHint')}
-          refreshing={refreshing}
-          onRefresh={() => void onRefresh()}
-        />
         <LeadersCard
           bottom={cardBottom}
-          state={data === null ? 'loading' : data.failed ? 'failed' : 'ready'}
+          state={board === null ? 'loading' : board.failed ? 'failed' : 'ready'}
           leaders={leaders ?? []}
           days={leaderDays}
-          meUserId={data?.meUserId ?? null}
+          meUserId={board?.meUserId ?? null}
           tintOf={tintOf}
           focusUserId={focus}
           onFocus={(userId) => setFocusUserId((cur) => (cur === userId ? null : userId))}
@@ -391,7 +461,7 @@ export default function LeaderboardScreen() {
     );
   }
 
-  if (data === null) {
+  if (board === null) {
     return shell(
       <View style={styles.centre}>
         <ActivityIndicator color={c.textSecondary} />
@@ -399,29 +469,16 @@ export default function LeaderboardScreen() {
     );
   }
 
-  if (data.failed) {
+  if (board.failed) {
     return shell(<Empty icon="exclamationmark.triangle" android="warning" text={t('leaderboard.error')} c={c} />);
   }
 
   return shell(
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: chromeTop + CAPSULE_H + Spacing.three }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: belowChrome + PULL_PILL_H + Spacing.three }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
         }>
-        {/* THE ARENA. A caption, not a control — there is nothing to pick.
-            `label` is the real municipio where park data covers this
-            district, else the metro region, and null before the first fix —
-            the fallback says "where you are" rather than inventing a place
-            name. Decorative: the district id is what scores. */}
-        <Animated.View entering={FadeIn.duration(300)} style={styles.arena}>
-          <Text style={[styles.arenaKicker, { color: c.textSecondary }]}>
-            {t('leaderboard.arenaKicker')}
-          </Text>
-          <Text style={[styles.arenaName, { color: c.text }]} numberOfLines={1}>
-            {label ?? t('leaderboard.arenaHere')}
-          </Text>
-        </Animated.View>
 
         {/* THE HERO — your own standing, as the biggest thing on screen. */}
         <Animated.View
@@ -453,7 +510,7 @@ export default function LeaderboardScreen() {
             anything: an empty frame is not a picture of a contest. */}
         {holdings.length > 0 && (
           <Animated.View entering={FadeInDown.duration(340).delay(40)}>
-            <DistrictMap key={district} district={district} holdings={holdings} />
+            <DistrictMap key={arena.key} arena={arena} holdings={holdings} />
           </Animated.View>
         )}
 
@@ -492,7 +549,7 @@ export default function LeaderboardScreen() {
                 score={pct(entry.share)}
                 detail={t('leaderboard.cellsDetail', { count: entry.cellsHeld })}
                 tint={tintOf(entry.userId)}
-                isMe={entry.userId === data?.meUserId}
+                isMe={entry.userId === board.meUserId}
                 flaggedLabel={
                   entry.flaggedCellsHeld > 0
                     ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })

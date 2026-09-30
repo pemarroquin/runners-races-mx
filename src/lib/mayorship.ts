@@ -30,7 +30,7 @@
 // PURE, on rows already fetched — same philosophy as leaderboard.ts and
 // territory.ts, and the reason this suite (`environment: 'node'`, no
 // renderer, no Postgres) can cover the mechanic completely.
-import { districtOfCell } from '@/lib/district';
+import { asScope, type ArenaScope } from '@/lib/district';
 import { compareUserId } from '@/lib/leaderboard';
 
 /**
@@ -179,11 +179,10 @@ export function mayorByCell(
  */
 export function rankMayors(
   visits: TileVisitRow[],
-  district: string | null,
+  arena: string | ArenaScope | null,
   now: number = Date.now(),
 ): MayorshipEntry[] {
-  const scoped =
-    district === null ? visits : visits.filter((v) => districtOfCell(v.h3) === district);
+  const scoped = scopeVisits(visits, arena);
   const mayors = mayorByCell(scoped, now);
 
   const nameById = new Map<string, string | null>();
@@ -222,6 +221,18 @@ export function rankMayors(
         b.bestDays - a.bestDays ||
         compareUserId(a.userId, b.userId),
     );
+}
+
+/** Visits inside an arena (a district id or a scope; null for everywhere).
+ *  Scoping happens on the CELL, before mayorship is decided, so an arena's
+ *  board is decided entirely by ground inside it. */
+export function scopeVisits(
+  visits: TileVisitRow[],
+  arena: string | ArenaScope | null,
+): TileVisitRow[] {
+  if (arena === null) return visits;
+  const { contains } = asScope(arena);
+  return visits.filter((v) => contains(v.h3));
 }
 
 /** The cells one runner is mayor of, for drawing their turf on the map. */

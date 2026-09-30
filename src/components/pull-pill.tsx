@@ -15,12 +15,15 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Pressable,
   StyleSheet,
   Text,
   View,
   type GestureResponderEvent,
   type ViewStyle,
 } from 'react-native';
+
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -42,6 +45,12 @@ export function PullPill({
   a11yHint,
   refreshing,
   onRefresh,
+  onPrev,
+  onNext,
+  prevLabel,
+  nextLabel,
+  onPressLabel,
+  pressLabelHint,
 }: {
   top: number;
   label: string;
@@ -50,6 +59,15 @@ export function PullPill({
   a11yHint: string;
   refreshing: boolean;
   onRefresh: () => void;
+  /** The switcher's arrows, `‹ name ›`. Omitted: no arrows (a city with
+   *  nowhere else to go). */
+  onPrev?: () => void;
+  onNext?: () => void;
+  prevLabel?: string;
+  nextLabel?: string;
+  /** Tapping the name — back to where you stand. Omitted when already there. */
+  onPressLabel?: () => void;
+  pressLabelHint?: string;
 }) {
   // Lazily-initialised state, not a ref read during render (the React
   // Compiler rejects `.current` in render).
@@ -133,10 +151,22 @@ export function PullPill({
           if (!refreshing) onRefresh();
         }}
         style={NO_BROWSER_GESTURES}>
-        <GlassSurface scheme="dark" radius={GlassRadii.pill} contentStyle={styles.pill}>
-          <Text style={styles.text} numberOfLines={1}>
-            {text}
-          </Text>
+        <GlassSurface scheme="dark" radius={GlassRadii.pill} contentStyle={[styles.pill, onPrev && styles.pillWithArrows]}>
+          {/* Arrows and the name are Pressables inside the pull handle. A tap
+              lands on them; a downward drag starting on them is still stolen
+              by the pill's capture handler above, so pulling works anywhere
+              on the pill. */}
+          {onPrev && <Arrow onPress={onPrev} label={prevLabel ?? ''} ios="chevron.left" android="chevron_left" />}
+          <Pressable
+            onPress={onPressLabel}
+            disabled={!onPressLabel}
+            accessibilityRole={onPressLabel ? 'button' : 'text'}
+            accessibilityHint={onPressLabel ? pressLabelHint : undefined}
+            style={styles.labelPress}>
+            <Text style={styles.text} numberOfLines={1}>
+              {text}
+            </Text>
+          </Pressable>
           <View style={styles.glyph}>
             {refreshing ? (
               <ActivityIndicator size="small" color="#ffffff" />
@@ -146,6 +176,7 @@ export function PullPill({
               </Animated.View>
             )}
           </View>
+          {onNext && <Arrow onPress={onNext} label={nextLabel ?? ''} ios="chevron.right" android="chevron_right" />}
         </GlassSurface>
       </View>
     </View>
@@ -155,6 +186,10 @@ export function PullPill({
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   tether: { width: 2, borderRadius: 1, backgroundColor: '#ffffff' },
+  pillWithArrows: { paddingLeft: Spacing.one, paddingRight: Spacing.one },
+  labelPress: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
+  arrow: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  arrowPressed: { backgroundColor: 'rgba(255,255,255,0.18)' },
   pill: {
     height: PULL_PILL_H,
     flexDirection: 'row',
@@ -167,3 +202,26 @@ const styles = StyleSheet.create({
   text: { flexShrink: 1, color: '#ffffff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
   glyph: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center' },
 });
+
+function Arrow({
+  onPress,
+  label,
+  ios,
+  android,
+}: {
+  onPress: () => void;
+  label: string;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={10}
+      style={({ pressed }) => [styles.arrow, pressed && styles.arrowPressed]}>
+      <Icon ios={ios} android={android} size={16} color="#ffffff" />
+    </Pressable>
+  );
+}

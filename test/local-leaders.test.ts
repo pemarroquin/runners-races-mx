@@ -113,14 +113,14 @@ describe('cellsBounds', () => {
 
 describe('frameOf', () => {
   it('frames held ground in full mode', () => {
-    expect(frameOf(DISTRICT, [{ cells: [A] }], true)).toEqual(cellsBounds([A]));
+    expect(frameOf(cellsBounds([DISTRICT]), [{ cells: [A] }], true)).toEqual(cellsBounds([A]));
   });
 
   it('falls back to the arena when nobody holds anything', () => {
-    expect(frameOf(DISTRICT, [{ cells: [] }], true)).toEqual(cellsBounds([DISTRICT]));
+    expect(frameOf(cellsBounds([DISTRICT]), [{ cells: [] }], true)).toEqual(cellsBounds([DISTRICT]));
   });
 
   it('always frames the arena in card mode', () => {
-    expect(frameOf(DISTRICT, [{ cells: [A] }], false)).toEqual(cellsBounds([DISTRICT]));
+    expect(frameOf(cellsBounds([DISTRICT]), [{ cells: [A] }], false)).toEqual(cellsBounds([DISTRICT]));
   });
 });
