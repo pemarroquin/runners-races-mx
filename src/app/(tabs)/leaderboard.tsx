@@ -44,6 +44,7 @@ import { BoardRow } from '@/components/board-row';
 import { DistrictMap, type DistrictHolding } from '@/components/district-map';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { ProfilePill } from '@/components/profile-pill';
+import { PULL_PILL_H, PullPill } from '@/components/pull-pill';
 import { ShareBar, type ShareSegment } from '@/components/share-bar';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
@@ -103,6 +104,8 @@ export default function LeaderboardScreen() {
 
   const [data, setData] = useState<BoardData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // The runner picked on the Local Leaders card; their ground is highlighted.
+  const [focusUserId, setFocusUserId] = useState<string | null>(null);
   const [identitySignal, setIdentitySignal] = useState(0);
   useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
 
@@ -328,6 +331,8 @@ export default function LeaderboardScreen() {
     // Full-bleed. The district is known, so the map draws even while the
     // board loads or after it fails — loading and errors live in the card.
     const cardBottom = insets.bottom + BottomTabInset - Spacing.two;
+    // A pick that fell off the board after a refresh just clears.
+    const focus = focusUserId && leaders?.some((e) => e.userId === focusUserId) ? focusUserId : null;
     const belowChrome = chromeTop + CAPSULE_H + Spacing.two;
     return shell(
       <>
@@ -340,15 +345,16 @@ export default function LeaderboardScreen() {
             key={district}
             district={district}
             holdings={leaderHoldings}
+            focusUserId={focus}
             full={{
               padding: {
-                top: belowChrome + PLACE_H + Spacing.three,
+                top: belowChrome + PULL_PILL_H + Spacing.three,
                 bottom: cardBottom + CARD_H + Spacing.three,
                 left: Spacing.four,
                 // Clears the zoom stack on the right edge.
                 right: Spacing.three + 44 + Spacing.three,
               },
-              controlsTop: belowChrome + PLACE_H + Spacing.three,
+              controlsTop: belowChrome + PULL_PILL_H + Spacing.three,
               controls: {
                 zoomInLabel: t('track.zoomIn'),
                 zoomOutLabel: t('track.zoomOut'),
@@ -357,16 +363,20 @@ export default function LeaderboardScreen() {
             }}
           />
         </MapErrorBoundary>
-        {/* Where this board is. Phase 1 is the caption alone; the arrows
+        {/* Where this board is, and the pull-to-refresh handle: on a
+            full-bleed map every drag belongs to the map, so the pull lives
+            on the one piece of chrome at the top that isn't map. The arrows
             that step through the city's subdivisions arrive with the
-            boundary data. Decorative: the district id is what scores. */}
-        <View pointerEvents="none" style={[styles.placeWrap, { top: belowChrome }]}>
-          <GlassSurface scheme="dark" radius={GlassRadii.pill} contentStyle={styles.place}>
-            <Text style={styles.placeText} numberOfLines={1}>
-              {label ?? t('leaderboard.arenaHere')}
-            </Text>
-          </GlassSurface>
-        </View>
+            boundary data. The name is decorative: the district id scores. */}
+        <PullPill
+          top={belowChrome}
+          label={label ?? t('leaderboard.arenaHere')}
+          releaseLabel={t('leaderboard.pullRelease')}
+          refreshingLabel={t('leaderboard.pullRefreshing')}
+          a11yHint={t('leaderboard.pullHint')}
+          refreshing={refreshing}
+          onRefresh={() => void onRefresh()}
+        />
         <LeadersCard
           bottom={cardBottom}
           state={data === null ? 'loading' : data.failed ? 'failed' : 'ready'}
@@ -374,6 +384,8 @@ export default function LeaderboardScreen() {
           days={leaderDays}
           meUserId={data?.meUserId ?? null}
           tintOf={tintOf}
+          focusUserId={focus}
+          onFocus={(userId) => setFocusUserId((cur) => (cur === userId ? null : userId))}
         />
       </>,
     );
@@ -503,8 +515,6 @@ type Board = 'municipio' | 'local';
 
 /** Glass capsule height; content below it offsets by this. */
 const CAPSULE_H = 40;
-/** Place caption height under the capsule. */
-const PLACE_H = 36;
 /** Ranking card: header + about three rows, the rest scrolls inside. */
 const CARD_HEADER_H = 36;
 const ROW_H = 44;
@@ -585,6 +595,8 @@ function LeadersCard({
   days,
   meUserId,
   tintOf,
+  focusUserId,
+  onFocus,
 }: {
   bottom: number;
   state: 'loading' | 'failed' | 'ready';
@@ -592,6 +604,8 @@ function LeadersCard({
   days: Map<string, number>;
   meUserId: string | null;
   tintOf: (userId: string) => string;
+  focusUserId: string | null;
+  onFocus: (userId: string) => void;
 }) {
   const { t } = useI18n();
   const [showNote, setShowNote] = useState(false);
@@ -635,10 +649,15 @@ function LeadersCard({
             {leaders.map((entry, i) => {
               const isMe = entry.userId === meUserId;
               const name = entry.displayName ?? t('leaderboard.anonymous');
+              const focused = entry.userId === focusUserId;
               return (
-                <View
+                <Pressable
                   key={entry.userId}
-                  style={[styles.leaderRow, isMe && styles.leaderRowMe]}
+                  onPress={() => onFocus(entry.userId)}
+                  style={[styles.leaderRow, isMe && styles.leaderRowMe, focused && styles.leaderRowFocused]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: focused }}
+                  accessibilityHint={t('leaderboard.leaderFocusHint')}
                   accessibilityLabel={t('leaderboard.leaderRowA11y', {
                     rank: i + 1,
                     name,
@@ -656,7 +675,7 @@ function LeadersCard({
                     </Text>
                   </View>
                   <Text style={styles.leaderScore}>{entry.cellsHeld}</Text>
-                </View>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -813,14 +832,6 @@ const styles = StyleSheet.create({
   },
   capsuleItemOn: { backgroundColor: 'rgba(255,255,255,0.18)' },
   capsuleLabel: { fontSize: 14, fontWeight: '700' },
-  placeWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  place: {
-    height: PLACE_H,
-    paddingHorizontal: Spacing.three,
-    justifyContent: 'center',
-    maxWidth: 260,
-  },
-  placeText: { color: '#ffffff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
   cardWrap: { position: 'absolute', left: Spacing.three, right: Spacing.three },
   card: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
   cardHeader: {
@@ -848,6 +859,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   leaderRowMe: { backgroundColor: 'rgba(255,255,255,0.14)' },
+  leaderRowFocused: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)' },
   leaderRank: {
     width: 22,
     color: 'rgba(255,255,255,0.6)',

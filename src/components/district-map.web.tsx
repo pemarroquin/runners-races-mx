@@ -55,6 +55,9 @@ export interface DistrictMapProps {
   /** Full-bleed, pannable mode (Local Leaders). Omitted: the fixed 220 px
    *  non-interactive card Municipio uses. */
   full?: DistrictMapFull;
+  /** Full mode: one runner picked from the ranking card. Their ground reads
+   *  bright, everyone else's dims, and the camera flies to them. */
+  focusUserId?: string | null;
 }
 
 export interface DistrictMapFull {
@@ -114,7 +117,7 @@ function holdingsCollection(holdings: DistrictHolding[]): FeatureCollection {
           // layer. A layer per owner would mean adding and removing layers
           // every time the board refreshes, which is style churn on a live
           // map for no gain.
-          properties: { color: holding.color, isMe: holding.isMe },
+          properties: { color: holding.color, isMe: holding.isMe, userId: holding.userId },
           geometry: { type: 'Polygon', coordinates: ring as never },
         }),
       );
@@ -122,17 +125,29 @@ function holdingsCollection(holdings: DistrictHolding[]): FeatureCollection {
   };
 }
 
-export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
+/** Fill opacity with nobody focused: your own ground stronger than the rest
+ *  (the map's version of the ring on your row); with a focus, theirs bright
+ *  and everyone else's faded back. */
+function fillOpacity(focus: string | null | undefined) {
+  const base = ['case', ['get', 'isMe'], 0.55, 0.3];
+  return focus ? ['case', ['==', ['get', 'userId'], focus], 0.7, 0.08] : base;
+}
+
+function lineOpacity(focus: string | null | undefined) {
+  return focus ? ['case', ['==', ['get', 'userId'], focus], 1, 0.15] : 0.8;
+}
+
+export function DistrictMap({ district, holdings, full, focusUserId }: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props for the async load callback — the map builds once, but
   // holdings usually arrive after the dynamic import has started. Written
   // from an effect rather than during render, same as fence-map.web.tsx.
-  const dataRef = useRef({ district, holdings, full });
+  const dataRef = useRef({ district, holdings, full, focusUserId });
   useEffect(() => {
-    dataRef.current = { district, holdings, full };
-  }, [district, holdings, full]);
+    dataRef.current = { district, holdings, full, focusUserId };
+  }, [district, holdings, full, focusUserId]);
   // Full mode frames the held ground, which usually lands after the map has
   // loaded on the district alone. Refit once when it does, never again —
   // after that the camera is the runner's.
@@ -141,8 +156,9 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
   const refit = useCallback((animate: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { district: d, holdings: h, full: f } = dataRef.current;
-    const b = frameOf(d, h, !!f);
+    const { district: d, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const focused = focus ? h.filter((x) => x.userId === focus) : [];
+    const b = frameOf(d, focused.length > 0 ? focused : h, !!f);
     if (!b) return;
     map.fitBounds(
       [
@@ -223,7 +239,7 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
             // Your own ground reads stronger than everyone else's. This is
             // the map's version of the ring on your row and your slice of
             // the share bar — one runner, three places, one visual language.
-            'fill-opacity': ['case', ['get', 'isMe'], 0.55, 0.3],
+            'fill-opacity': fillOpacity(dataRef.current.focusUserId) as never,
             'fill-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
@@ -235,7 +251,7 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
           paint: {
             'line-color': ['get', 'color'],
             'line-width': 1,
-            'line-opacity': 0.8,
+            'line-opacity': lineOpacity(dataRef.current.focusUserId) as never,
             'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
           },
         });
@@ -274,6 +290,17 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
       refit(false);
     }
   }, [holdings, full, refit]);
+
+  // A focus change repaints and re-frames. Skipped until the map is ready:
+  // the load handler reads the same focus through dataRef, so nothing is
+  // lost if a row is tapped mid-load.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !map.getLayer(HOLDINGS_SRC)) return;
+    map.setPaintProperty(HOLDINGS_SRC, 'fill-opacity', fillOpacity(focusUserId) as never);
+    map.setPaintProperty(`${HOLDINGS_SRC}-line`, 'line-opacity', lineOpacity(focusUserId) as never);
+    if (full) refit(true);
+  }, [focusUserId, full, refit]);
 
   if (!TOKEN) return null;
 

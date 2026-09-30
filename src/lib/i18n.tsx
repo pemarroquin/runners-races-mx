@@ -285,6 +285,10 @@ const translations = {
       tabLocal: 'Líderes locales',
       leadersRefit: 'Ver a los líderes',
       leadersNoteToggle: 'Cómo se gana',
+      pullRelease: 'Suelta para actualizar',
+      pullRefreshing: 'Actualizando…',
+      pullHint: 'Desliza hacia abajo para actualizar',
+      leaderFocusHint: 'Muestra su terreno en el mapa. Toca otra vez para ver a todos.',
       leaderMe: '%{name} (tú)',
       leaderDays: {
         one: '1 día aquí',
@@ -831,6 +835,10 @@ const translations = {
       tabLocal: 'Local Leaders',
       leadersRefit: 'Show the leaders',
       leadersNoteToggle: 'How to win',
+      pullRelease: 'Release to refresh',
+      pullRefreshing: 'Refreshing…',
+      pullHint: 'Pull down to refresh',
+      leaderFocusHint: 'Shows their ground on the map. Tap again to see everyone.',
       leaderMe: '%{name} (you)',
       leaderDays: {
         one: '1 day here',

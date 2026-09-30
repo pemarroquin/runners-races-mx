@@ -30,20 +30,21 @@ const ZOOM_STEP = 1;
  *  of the card. */
 const FRAME_PAD = 0.12;
 
-export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
+export function DistrictMap({ district, holdings, full, focusUserId }: DistrictMapProps) {
   const mapRef = useRef<MapView | null>(null);
   const readyRef = useRef(false);
   const framedHoldingsRef = useRef(false);
-  const dataRef = useRef({ district, holdings, full });
+  const dataRef = useRef({ district, holdings, full, focusUserId });
   useEffect(() => {
-    dataRef.current = { district, holdings, full };
-  }, [district, holdings, full]);
+    dataRef.current = { district, holdings, full, focusUserId };
+  }, [district, holdings, full, focusUserId]);
 
   const refit = useCallback((animated: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { district: d, holdings: h, full: f } = dataRef.current;
-    const b = frameOf(d, h, !!f);
+    const { district: d, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const focused = focus ? h.filter((x) => x.userId === focus) : [];
+    const b = frameOf(d, focused.length > 0 ? focused : h, !!f);
     if (!b) return;
     map.fitToCoordinates(
       [
@@ -61,6 +62,10 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
       map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
     });
   }, []);
+
+  useEffect(() => {
+    if (full) refit(true);
+  }, [focusUserId, full, refit]);
 
   // Full mode frames the held ground, which usually arrives after the map is
   // ready. Refit once when it does; after that the camera is the runner's.
@@ -111,6 +116,7 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
           key: `${holding.userId}-${i}`,
           color: holding.color,
           isMe: holding.isMe,
+          userId: holding.userId,
           coords: (ring[0] as unknown as [number, number][]).map(([lat, lng]) => ({
             latitude: lat,
             longitude: lng,
@@ -151,8 +157,8 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
             coordinates={shape.coords}
             // Your own ground reads stronger than everyone else's, matching
             // the ring on your row and your slice of the share bar.
-            fillColor={`${shape.color}${shape.isMe ? '8C' : '4D'}`}
-            strokeColor={shape.color}
+            fillColor={`${shape.color}${fillAlpha(shape, focusUserId)}`}
+            strokeColor={focusUserId && shape.userId !== focusUserId ? `${shape.color}26` : shape.color}
             strokeWidth={1}
           />
         ))}
@@ -171,6 +177,13 @@ export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
       )}
     </View>
   );
+}
+
+/** Hex alpha suffix, matching the web map's opacities: yours stronger with
+ *  no focus; with a focus, theirs bright and everyone else faded back. */
+function fillAlpha(shape: { isMe: boolean; userId: string }, focus: string | null | undefined): string {
+  if (focus) return shape.userId === focus ? 'B3' : '14';
+  return shape.isMe ? '8C' : '4D';
 }
 
 // Same MapButton as territories-map.tsx — duplicated per file, matching this
