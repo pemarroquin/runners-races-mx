@@ -22,9 +22,13 @@ import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { useCallback, useEffect, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
+import { Spacing } from '@/constants/theme';
+import { frameOf } from '@/lib/local-leaders';
 import { EMISSIVE_STRENGTH_FULL, MAP_SLOT_FILL, MAP_SLOT_ROUTE, MAP_STYLE_GL } from '@/constants/map';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -48,7 +52,22 @@ export interface DistrictMapProps {
    *  district" has no referent on screen. */
   district: string;
   holdings: DistrictHolding[];
+  /** Full-bleed, pannable mode (Local Leaders). Omitted: the fixed 220 px
+   *  non-interactive card Municipio uses. */
+  full?: DistrictMapFull;
 }
+
+export interface DistrictMapFull {
+  /** Screen chrome floating over the map. The camera frames the ground
+   *  inside what is left visible, not behind the capsule or the card. */
+  padding: { top: number; right: number; bottom: number; left: number };
+  /** Where the zoom/refit stack starts, below the top chrome. */
+  controlsTop: number;
+  controls: { zoomInLabel: string; zoomOutLabel: string; refitLabel: string };
+}
+
+const ZOOM_STEP = 1;
+
 
 function ensureMapboxCss() {
   if (document.getElementById('mapbox-gl-css')) return;
@@ -103,17 +122,42 @@ function holdingsCollection(holdings: DistrictHolding[]): FeatureCollection {
   };
 }
 
-export function DistrictMap({ district, holdings }: DistrictMapProps) {
+export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props for the async load callback — the map builds once, but
   // holdings usually arrive after the dynamic import has started. Written
   // from an effect rather than during render, same as fence-map.web.tsx.
-  const dataRef = useRef({ district, holdings });
+  const dataRef = useRef({ district, holdings, full });
   useEffect(() => {
-    dataRef.current = { district, holdings };
-  }, [district, holdings]);
+    dataRef.current = { district, holdings, full };
+  }, [district, holdings, full]);
+  // Full mode frames the held ground, which usually lands after the map has
+  // loaded on the district alone. Refit once when it does, never again —
+  // after that the camera is the runner's.
+  const framedHoldingsRef = useRef(false);
+
+  const refit = useCallback((animate: boolean) => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const { district: d, holdings: h, full: f } = dataRef.current;
+    const b = frameOf(d, h, !!f);
+    if (!b) return;
+    map.fitBounds(
+      [
+        [b.minLng, b.minLat],
+        [b.maxLng, b.maxLat],
+      ],
+      { padding: f?.padding ?? 24, duration: animate ? 900 : 0, maxZoom: 16 },
+    );
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    map.easeTo({ zoom: map.getZoom() + delta, duration: 300 });
+  }, []);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
@@ -125,17 +169,10 @@ export function DistrictMap({ district, holdings }: DistrictMapProps) {
       if (cancelled || !containerRef.current) return;
       mapboxgl.accessToken = TOKEN;
 
-      const outline = cellToBoundary(dataRef.current.district, true);
-      let minLng = Infinity;
-      let minLat = Infinity;
-      let maxLng = -Infinity;
-      let maxLat = -Infinity;
-      for (const [lng, lat] of outline) {
-        minLng = Math.min(minLng, lng);
-        minLat = Math.min(minLat, lat);
-        maxLng = Math.max(maxLng, lng);
-        maxLat = Math.max(maxLat, lat);
-      }
+      const initial = dataRef.current;
+      const frame = frameOf(initial.district, initial.holdings, !!initial.full);
+      if (!frame) return;
+      const { minLng, minLat, maxLng, maxLat } = frame;
 
       const map = new mapboxgl.Map({
         container: containerRef.current,
@@ -144,13 +181,16 @@ export function DistrictMap({ district, holdings }: DistrictMapProps) {
           [minLng, minLat],
           [maxLng, maxLat],
         ],
-        fitBoundsOptions: { padding: 24 },
+        fitBoundsOptions: { padding: initial.full?.padding ?? 24, maxZoom: 16 },
         attributionControl: false,
-        // A summary, not a surface to explore: the district is the frame and
-        // panning off it would show ground this board says nothing about.
-        // The live Track map is where a runner navigates.
-        interactive: false,
+        // The card is a summary, not a surface to explore: the district is
+        // the frame and panning off it would show ground this board says
+        // nothing about. Full-bleed mode IS the board, so it pans and zooms.
+        interactive: !!initial.full,
       });
+      if (initial.full && initial.holdings.some((h) => h.cells.length > 0)) {
+        framedHoldingsRef.current = true;
+      }
       mapRef.current = map;
 
       map.on('load', () => {
@@ -229,17 +269,68 @@ export function DistrictMap({ district, holdings }: DistrictMapProps) {
         holdingsCollection(holdings),
       );
     }
-  }, [holdings]);
+    if (full && !framedHoldingsRef.current && holdings.some((h) => h.cells.length > 0)) {
+      framedHoldingsRef.current = true;
+      refit(false);
+    }
+  }, [holdings, full, refit]);
 
   if (!TOKEN) return null;
 
   return (
-    <View style={styles.wrap}>
+    <View style={full ? StyleSheet.absoluteFill : styles.wrap}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {full && (
+        <View style={[styles.mapControls, { top: full.controlsTop }]} pointerEvents="box-none">
+          <MapButton label={full.controls.refitLabel} onPress={() => refit(true)} ios="map" android="map" />
+          <MapButton label={full.controls.zoomInLabel} onPress={() => zoomBy(ZOOM_STEP)} ios="plus" android="add" />
+          <MapButton label={full.controls.zoomOutLabel} onPress={() => zoomBy(-ZOOM_STEP)} ios="minus" android="remove" />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Same MapButton as territories-map.web.tsx — duplicated per file, matching
+// this codebase's existing convention.
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { height: 220, borderRadius: 16, overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  mapButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+    boxShadow: '0px 3px 8px rgba(0,0,0,0.3)',
+  },
 });

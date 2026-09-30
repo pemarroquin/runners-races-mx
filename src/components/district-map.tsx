@@ -11,20 +11,66 @@
 // territory is still their ground, so there is nothing to cut out. Same
 // decision, same reasoning, as track-map.tsx's tile fill.
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Polygon, Polyline } from 'react-native-maps';
 
-import type { DistrictHolding, DistrictMapProps } from '@/components/district-map.web';
+import type { DistrictHolding, DistrictMapFull, DistrictMapProps } from '@/components/district-map.web';
+import { Icon } from '@/components/ui/icon';
+import { Spacing } from '@/constants/theme';
+import { frameOf } from '@/lib/local-leaders';
 
-export type { DistrictHolding, DistrictMapProps };
+export type { DistrictHolding, DistrictMapFull, DistrictMapProps };
+
+const ZOOM_STEP = 1;
 
 /** Padding on the district's own bounds, as a fraction of its span. The
  *  district IS the frame — a little air keeps its dashed edge off the corners
  *  of the card. */
 const FRAME_PAD = 0.12;
 
-export function DistrictMap({ district, holdings }: DistrictMapProps) {
+export function DistrictMap({ district, holdings, full }: DistrictMapProps) {
+  const mapRef = useRef<MapView | null>(null);
+  const readyRef = useRef(false);
+  const framedHoldingsRef = useRef(false);
+  const dataRef = useRef({ district, holdings, full });
+  useEffect(() => {
+    dataRef.current = { district, holdings, full };
+  }, [district, holdings, full]);
+
+  const refit = useCallback((animated: boolean) => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const { district: d, holdings: h, full: f } = dataRef.current;
+    const b = frameOf(d, h, !!f);
+    if (!b) return;
+    map.fitToCoordinates(
+      [
+        { latitude: b.minLat, longitude: b.minLng },
+        { latitude: b.maxLat, longitude: b.maxLng },
+      ],
+      { edgePadding: f?.padding ?? { top: 24, right: 24, bottom: 24, left: 24 }, animated },
+    );
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    void map.getCamera().then((camera) => {
+      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+    });
+  }, []);
+
+  // Full mode frames the held ground, which usually arrives after the map is
+  // ready. Refit once when it does; after that the camera is the runner's.
+  useEffect(() => {
+    if (!full || framedHoldingsRef.current || !readyRef.current) return;
+    if (!holdings.some((h) => h.cells.length > 0)) return;
+    framedHoldingsRef.current = true;
+    refit(false);
+  }, [holdings, full, refit]);
+
   const outline = useMemo(
     () =>
       // Default (non-GeoJSON) output is [lat, lng], already
@@ -75,18 +121,27 @@ export function DistrictMap({ district, holdings }: DistrictMapProps) {
   );
 
   return (
-    <View style={styles.wrap}>
+    <View style={full ? StyleSheet.absoluteFill : styles.wrap}>
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
         initialRegion={region}
+        onMapReady={() => {
+          readyRef.current = true;
+          if (!full) return;
+          // initialRegion can't account for the chrome floating over the
+          // map, so full mode re-frames with padding once ready.
+          if (holdings.some((h) => h.cells.length > 0)) framedHoldingsRef.current = true;
+          refit(false);
+        }}
         // Literal "dark", matching track-map.tsx and fence-map.tsx — the prop
         // takes a style name, not the MAP_ALWAYS_DARK boolean.
         userInterfaceStyle="dark"
-        // A summary, not a surface to explore — panning off the district
-        // would show ground this board says nothing about. The Track map is
-        // where a runner navigates.
-        scrollEnabled={false}
-        zoomEnabled={false}
+        // The card is a summary, not a surface to explore — panning off the
+        // district would show ground this board says nothing about. Full
+        // mode IS the board, so it pans and zooms.
+        scrollEnabled={!!full}
+        zoomEnabled={!!full}
         rotateEnabled={false}
         pitchEnabled={false}
         toolbarEnabled={false}>
@@ -107,10 +162,56 @@ export function DistrictMap({ district, holdings }: DistrictMapProps) {
           strokeWidth={1.5}
         />
       </MapView>
+      {full && (
+        <View style={[styles.mapControls, { top: full.controlsTop }]} pointerEvents="box-none">
+          <MapButton label={full.controls.refitLabel} onPress={() => refit(true)} ios="map" android="map" />
+          <MapButton label={full.controls.zoomInLabel} onPress={() => zoomBy(ZOOM_STEP)} ios="plus" android="add" />
+          <MapButton label={full.controls.zoomOutLabel} onPress={() => zoomBy(-ZOOM_STEP)} ios="minus" android="remove" />
+        </View>
+      )}
     </View>
+  );
+}
+
+// Same MapButton as territories-map.tsx — duplicated per file, matching this
+// codebase's existing convention.
+function MapButton({
+  label,
+  onPress,
+  ios,
+  android,
+}: {
+  label: string;
+  onPress: () => void;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={({ pressed }) => [styles.mapButton, { opacity: pressed ? 0.85 : 1 }]}>
+      <Icon ios={ios} android={android} size={20} color="#FFFFFF" />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { height: 220, borderRadius: 16, overflow: 'hidden' },
+  mapControls: {
+    position: 'absolute',
+    right: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  mapButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(20,20,20,0.65)',
+  },
 });

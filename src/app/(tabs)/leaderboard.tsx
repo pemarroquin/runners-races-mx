@@ -19,6 +19,12 @@
 //   untouched. My Achievements needs no district: it's everything you've
 //   ever taken, not what you hold in any one place right now.
 //
+// 2026-09-30: TWO tabs. My Achievements left for Profile › the personal
+// record, so the screen is only the two boards now — Leaderboard (Board 1,
+// conquest) and Local Leaders (Board 2, mayorship). Local Leaders is a
+// full-bleed map with the ranking in a floating card; both tabs share one
+// floating glass capsule so switching never moves the control.
+//
 // The share bar, not the list, is still the thing you look at first inside
 // Municipio — "having leaderboard with only cards is boring and i do not
 // like it at all". See share-bar.tsx for why a bar survives having one
@@ -37,14 +43,16 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AchievementsView } from '@/components/achievements-view';
 import { BoardRow } from '@/components/board-row';
 import { DistrictMap, type DistrictHolding } from '@/components/district-map';
+import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { ProfilePill } from '@/components/profile-pill';
 import { ShareBar, type ShareSegment } from '@/components/share-bar';
+import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
+import { GlassRadii } from '@/constants/glass';
 import { FENCE_COLOR_SETS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { onIdentityChanged } from '@/lib/auth-events';
@@ -53,11 +61,13 @@ import { districtLabel, districtOf, districtOfCell } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
+import { daysPresent, mayorHoldings } from '@/lib/local-leaders';
 import {
   MAYORSHIP_WINDOW_DAYS,
   contestedCells,
   mayorByCell,
   rankMayors,
+  type MayorshipEntry,
 } from '@/lib/mayorship';
 import { useCurrentLocation } from '@/lib/use-current-location';
 import { fetchTileLeaderboard } from '@/lib/territory-sync';
@@ -78,29 +88,20 @@ interface BoardData {
 export default function LeaderboardScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
 
-  // Three sub-tabs, one screen (2026-09-17 nav restructure, Pedro's ask,
-  // in his own A/B/C order): My Achievements (A — a personal record, needs
-  // no location or district data at all, see the branch below), Municipio
-  // (B — Board 1, the old file's "conquest" section) and Local Leaders
-  // (C — Board 2, "mayorship"). Defaults to the first tab, same as any
-  // segmented control.
-  const [activeBoard, setActiveBoard] = useState<'mine' | 'municipio' | 'local'>('mine');
+  // Two sub-tabs (2026-09-30): Leaderboard (Board 1, conquest) and Local
+  // Leaders (Board 2, mayorship). Both need a place, so location is asked
+  // for as soon as the screen opens.
+  const [activeBoard, setActiveBoard] = useState<Board>('municipio');
   // The arena follows the runner. A real fix or nothing — never a region
   // fallback, for the same reason the Track map refuses to place its pin on a
   // city centre: this decides which ground a runner is being ranked on, and
   // a guess would rank them somewhere they have never been.
-  //
-  // `autoRequest` is OFF while My Achievements is the visible tab: that
-  // board needs no location at all (see the district gate below), so a
-  // runner whose default landing tab is now 'mine' should never see a
-  // location permission prompt just for opening Leaderboard. Flips reactive
-  // — the moment they tap Municipio or Local Leaders, `autoRequest` goes
-  // true and useCurrentLocation's own effect fires the request then.
   const { coords, status: locationStatus, request: requestLocation } = useCurrentLocation({
-    autoRequest: activeBoard !== 'mine',
+    autoRequest: true,
   });
 
   const district = useMemo(() => (coords ? districtOf(coords) : null), [coords]);
@@ -253,6 +254,23 @@ export default function LeaderboardScreen() {
     }));
   }, [data, district, tintOf]);
 
+  // Board 2 on the map: each runner's mayor cells, scoped exactly as
+  // rankMayors scopes them, so a shape and its row always hold the same
+  // count (test/local-leaders.test.ts).
+  const leaderHoldings = useMemo<DistrictHolding[]>(() => {
+    if (!data || district === null) return [];
+    return [...mayorHoldings(data.visits, district).entries()].map(([userId, cells]) => ({
+      userId,
+      cells,
+      color: tintOf(userId),
+      isMe: userId === data.meUserId,
+    }));
+  }, [data, district, tintOf]);
+  const leaderDays = useMemo(
+    () => (data && district !== null ? daysPresent(data.visits, district) : new Map<string, number>()),
+    [data, district],
+  );
+
   const shareSegments = useMemo<ShareSegment[]>(() => {
     if (!conquest) return [];
     return conquest.entries.map((entry) => ({
@@ -264,11 +282,14 @@ export default function LeaderboardScreen() {
     }));
   }, [conquest, data, t, tintOf]);
 
-  // My Achievements needs neither location nor a district fetch — it's a
-  // personal record, not a place-scoped board (see achievements-view.tsx) —
-  // so none of the three gates below apply to it. They only run for
-  // Municipio/Local Leaders, which both need `district`/`data`.
-  if (activeBoard !== 'mine' && district === null) {
+  const chromeTop = insets.top + Spacing.two;
+  const shell = (children: React.ReactNode) => (
+    <Shell c={c} top={chromeTop} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
+      {children}
+    </Shell>
+  );
+
+  if (district === null) {
     // Three different states, not one message. Before this branched, the
     // "we need your location" copy showed during the ordinary permission
     // probe and first fix — on every cold open of the tab — where it reads as
@@ -277,78 +298,107 @@ export default function LeaderboardScreen() {
     // screen mounted, so nothing ever asked again and there was no control to
     // ask with.
     if (locationStatus === 'idle' || locationStatus === 'locating') {
-      return (
-        <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
-          <View style={styles.centre}>
-            <ActivityIndicator color={c.textSecondary} />
-            <Text style={[styles.emptyText, { color: c.textSecondary }]}>
-              {t('leaderboard.locating')}
-            </Text>
-          </View>
-        </Shell>
-      );
-    }
-    return (
-      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
-        <Empty
-          icon="location.fill"
-          android="my_location"
-          text={
-            locationStatus === 'unavailable'
-              ? t('leaderboard.locationUnavailable')
-              : t('leaderboard.needLocation')
-          }
-          c={c}
-          action={
-            // Only where asking again can actually help. 'unavailable' means
-            // the device has no geolocation at all, and a button that cannot
-            // work is worse than none.
-            locationStatus === 'denied'
-              ? { label: t('leaderboard.enableLocation'), onPress: () => void requestLocation() }
-              : undefined
-          }
-        />
-      </Shell>
-    );
-  }
-
-  if (activeBoard !== 'mine' && data === null) {
-    return (
-      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
+      return shell(
         <View style={styles.centre}>
           <ActivityIndicator color={c.textSecondary} />
+          <Text style={[styles.emptyText, { color: c.textSecondary }]}>
+            {t('leaderboard.locating')}
+          </Text>
+        </View>,
+      );
+    }
+    return shell(
+      <Empty
+        icon="location.fill"
+        android="my_location"
+        text={
+          locationStatus === 'unavailable'
+            ? t('leaderboard.locationUnavailable')
+            : t('leaderboard.needLocation')
+        }
+        c={c}
+        action={
+          // Only where asking again can actually help. 'unavailable' means
+          // the device has no geolocation at all, and a button that cannot
+          // work is worse than none.
+          locationStatus === 'denied'
+            ? { label: t('leaderboard.enableLocation'), onPress: () => void requestLocation() }
+            : undefined
+        }
+      />,
+    );
+  }
+
+  if (activeBoard === 'local') {
+    // Full-bleed. The district is known, so the map draws even while the
+    // board loads or after it fails — loading and errors live in the card.
+    const cardBottom = insets.bottom + BottomTabInset - Spacing.two;
+    const belowChrome = chromeTop + CAPSULE_H + Spacing.two;
+    return shell(
+      <>
+        <MapErrorBoundary
+          message={t('track.mapUnavailable')}
+          color={c.textSecondary}
+          background={c.background}>
+          <DistrictMap
+            // A new arena remounts with a new camera frame, same as Municipio.
+            key={district}
+            district={district}
+            holdings={leaderHoldings}
+            full={{
+              padding: {
+                top: belowChrome + PLACE_H + Spacing.three,
+                bottom: cardBottom + CARD_H + Spacing.three,
+                left: Spacing.four,
+                // Clears the zoom stack on the right edge.
+                right: Spacing.three + 44 + Spacing.three,
+              },
+              controlsTop: belowChrome + PLACE_H + Spacing.three,
+              controls: {
+                zoomInLabel: t('track.zoomIn'),
+                zoomOutLabel: t('track.zoomOut'),
+                refitLabel: t('leaderboard.leadersRefit'),
+              },
+            }}
+          />
+        </MapErrorBoundary>
+        {/* Where this board is. Phase 1 is the caption alone; the arrows
+            that step through the city's subdivisions arrive with the
+            boundary data. Decorative: the district id is what scores. */}
+        <View pointerEvents="none" style={[styles.placeWrap, { top: belowChrome }]}>
+          <GlassSurface scheme="dark" radius={GlassRadii.pill} contentStyle={styles.place}>
+            <Text style={styles.placeText} numberOfLines={1}>
+              {label ?? t('leaderboard.arenaHere')}
+            </Text>
+          </GlassSurface>
         </View>
-      </Shell>
+        <LeadersCard
+          bottom={cardBottom}
+          state={data === null ? 'loading' : data.failed ? 'failed' : 'ready'}
+          leaders={leaders ?? []}
+          days={leaderDays}
+          meUserId={data?.meUserId ?? null}
+          tintOf={tintOf}
+        />
+      </>,
     );
   }
 
-  if (activeBoard !== 'mine' && data?.failed) {
-    return (
-      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
-        <Empty icon="exclamationmark.triangle" android="warning" text={t('leaderboard.error')} c={c} />
-      </Shell>
+  if (data === null) {
+    return shell(
+      <View style={styles.centre}>
+        <ActivityIndicator color={c.textSecondary} />
+      </View>,
     );
   }
 
-  if (activeBoard === 'mine') {
-    return (
-      <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
-        <AchievementsView locale={locale} scheme={scheme} />
-      </Shell>
-    );
+  if (data.failed) {
+    return shell(<Empty icon="exclamationmark.triangle" android="warning" text={t('leaderboard.error')} c={c} />);
   }
 
-  // From here on activeBoard is 'municipio' or 'local', and the three gates
-  // above already guarantee district/data are ready for that case — but
-  // they're compound conditions (`activeBoard !== 'mine' && …`), which
-  // TypeScript can't narrow across. This makes the same guarantee explicit
-  // so `district`/`data` type as non-null below instead of needing `!`.
-  if (district === null || data === null || data.failed) return null;
-
-  return (
-    <Shell c={c} title={t('leaderboard.title')} activeBoard={activeBoard} onChangeBoard={setActiveBoard}>
+  return shell(
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: chromeTop + CAPSULE_H + Spacing.three }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
         }>
@@ -366,8 +416,6 @@ export default function LeaderboardScreen() {
           </Text>
         </Animated.View>
 
-        {activeBoard === 'municipio' && (
-        <>
         {/* THE HERO — your own standing, as the biggest thing on screen. */}
         <Animated.View
           entering={FadeInDown.duration(340)}
@@ -452,110 +500,173 @@ export default function LeaderboardScreen() {
             </Text>
           )}
         </Section>
-        </>
-        )}
-
-        {/* BOARD 2 */}
-        {activeBoard === 'local' && (
-        <Section
-          title={t('leaderboard.leadersTitle', { days: MAYORSHIP_WINDOW_DAYS })}
-          note={t('leaderboard.leadersNote')}
-          c={c}>
-          {leaders && leaders.length > 0 ? (
-            leaders.map((entry, i) => (
-              <BoardRow
-                key={entry.userId}
-                rank={i + 1}
-                name={entry.displayName ?? t('leaderboard.anonymous')}
-                score={String(entry.cellsHeld)}
-                detail={t('leaderboard.bestDays', { count: entry.bestDays })}
-                tint={tintOf(entry.userId)}
-                isMe={entry.userId === data?.meUserId}
-                c={c}
-              />
-            ))
-          ) : (
-            <Text style={[styles.note, { color: c.textSecondary }]}>
-              {t('leaderboard.leadersEmpty', { days: MAYORSHIP_WINDOW_DAYS })}
-            </Text>
-          )}
-        </Section>
-        )}
-      </ScrollView>
-    </Shell>
+      </ScrollView>,
   );
 }
 
+type Board = 'municipio' | 'local';
+
+/** Glass capsule height; content below it offsets by this. */
+const CAPSULE_H = 40;
+/** Place caption height under the capsule. */
+const PLACE_H = 36;
+/** Ranking card: header + about three rows, the rest scrolls inside. */
+const CARD_HEADER_H = 36;
+const ROW_H = 44;
+const CARD_H = CARD_HEADER_H + ROW_H * 3 + Spacing.two * 2;
+
 function Shell({
   c,
-  title,
+  top,
   activeBoard,
   onChangeBoard,
   children,
 }: {
   c: Record<ThemeColor, string>;
-  title: string;
-  activeBoard: 'mine' | 'municipio' | 'local';
-  onChangeBoard: (b: 'mine' | 'municipio' | 'local') => void;
+  top: number;
+  activeBoard: Board;
+  onChangeBoard: (b: Board) => void;
   children: React.ReactNode;
 }) {
-  const { t } = useI18n();
   return (
-    <View style={styles.root}>
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }} edges={['top']}>
-      <Text style={[styles.title, { color: c.text }]}>{title}</Text>
-      <BoardTabs active={activeBoard} onChange={onChangeBoard} c={c} t={t} />
+    <View style={[styles.root, { backgroundColor: c.background }]}>
       {children}
-    </SafeAreaView>
-    <ProfilePill />
+      <BoardTabs active={activeBoard} onChange={onChangeBoard} top={top} />
+      <ProfilePill />
     </View>
   );
 }
 
-/** The three sub-tabs (2026-09-17 nav restructure): My Achievements,
- *  Municipio and Local Leaders, one screen. Plain segmented row, not a
- *  floating glass capsule — unlike the old Saved tab's map-overlay switch,
- *  every one of these three bodies is (or starts as) a ScrollView with its
- *  own solid background, so the switch can sit in normal flow. */
+/** The two sub-tabs as one floating glass capsule, left of the profile
+ *  pill and level with it. Same position on both tabs, so switching never
+ *  moves the control — Local Leaders' map runs under it, Leaderboard's
+ *  scroll starts below it. Always dark glass, like the pill beside it. */
 function BoardTabs({
   active,
   onChange,
-  c,
-  t,
+  top,
 }: {
-  active: 'mine' | 'municipio' | 'local';
-  onChange: (b: 'mine' | 'municipio' | 'local') => void;
-  c: Record<ThemeColor, string>;
-  t: ReturnType<typeof useI18n>['t'];
+  active: Board;
+  onChange: (b: Board) => void;
+  top: number;
 }) {
-  const tabs: { key: 'mine' | 'municipio' | 'local'; label: string }[] = [
-    { key: 'mine', label: t('leaderboard.tabMine') },
+  const { t } = useI18n();
+  const tabs: { key: Board; label: string }[] = [
     { key: 'municipio', label: t('leaderboard.tabMunicipio') },
     { key: 'local', label: t('leaderboard.tabLocal') },
   ];
   return (
-    <View style={styles.tabsRow}>
-      {tabs.map((tab) => {
-        const selected = active === tab.key;
-        return (
-          <Pressable
-            key={tab.key}
-            onPress={() => onChange(tab.key)}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            style={styles.tabItem}>
-            <Text
-              numberOfLines={1}
-              style={[
-                styles.tabLabel,
-                { color: selected ? c.text : c.textSecondary },
-                selected && { borderBottomColor: c.accent, borderBottomWidth: 2 },
-              ]}>
-              {tab.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <View style={[styles.capsuleWrap, { top }]} pointerEvents="box-none">
+      <GlassSurface scheme="dark" radius={GlassRadii.pill} contentStyle={styles.capsule}>
+        {tabs.map((tab) => {
+          const selected = active === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => onChange(tab.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              style={[styles.capsuleItem, selected && styles.capsuleItemOn]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.capsuleLabel, { color: selected ? '#ffffff' : 'rgba(255,255,255,0.6)' }]}>
+                {tab.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </GlassSurface>
+    </View>
+  );
+}
+
+/** Board 2's ranking, floating over its own map. Rank, colour (the link to
+ *  the shape on the map), name, days present, cells held. Your row is
+ *  highlighted and scrolled into view. */
+function LeadersCard({
+  bottom,
+  state,
+  leaders,
+  days,
+  meUserId,
+  tintOf,
+}: {
+  bottom: number;
+  state: 'loading' | 'failed' | 'ready';
+  leaders: MayorshipEntry[];
+  days: Map<string, number>;
+  meUserId: string | null;
+  tintOf: (userId: string) => string;
+}) {
+  const { t } = useI18n();
+  const [showNote, setShowNote] = useState(false);
+  const listRef = useRef<ScrollView | null>(null);
+  const myIndex = leaders.findIndex((e) => e.userId === meUserId);
+
+  useEffect(() => {
+    // One row of context above your own, so you see who you're chasing.
+    if (myIndex > 0) listRef.current?.scrollTo({ y: (myIndex - 1) * ROW_H, animated: false });
+  }, [myIndex]);
+
+  return (
+    <View style={[styles.cardWrap, { bottom }]} pointerEvents="box-none">
+      <GlassSurface scheme="dark" radius={GlassRadii.card} contentStyle={styles.card}>
+        <Pressable
+          onPress={() => setShowNote((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showNote }}
+          accessibilityLabel={t('leaderboard.leadersNoteToggle')}
+          style={styles.cardHeader}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {t('leaderboard.leadersTitle', { days: MAYORSHIP_WINDOW_DAYS })}
+          </Text>
+          <View>
+            <Icon ios="info.circle" android="info" size={16} color="rgba(255,255,255,0.6)" />
+          </View>
+        </Pressable>
+        {showNote && <Text style={styles.cardNote}>{t('leaderboard.leadersNote')}</Text>}
+        {state === 'loading' ? (
+          <View style={styles.cardState}>
+            <ActivityIndicator color="rgba(255,255,255,0.7)" />
+          </View>
+        ) : state === 'failed' ? (
+          <Text style={[styles.cardNote, styles.cardState]}>{t('leaderboard.error')}</Text>
+        ) : leaders.length === 0 ? (
+          <Text style={[styles.cardNote, styles.cardState]}>
+            {t('leaderboard.leadersEmpty', { days: MAYORSHIP_WINDOW_DAYS })}
+          </Text>
+        ) : (
+          <ScrollView ref={listRef} style={{ maxHeight: ROW_H * 3 }} showsVerticalScrollIndicator>
+            {leaders.map((entry, i) => {
+              const isMe = entry.userId === meUserId;
+              const name = entry.displayName ?? t('leaderboard.anonymous');
+              return (
+                <View
+                  key={entry.userId}
+                  style={[styles.leaderRow, isMe && styles.leaderRowMe]}
+                  accessibilityLabel={t('leaderboard.leaderRowA11y', {
+                    rank: i + 1,
+                    name,
+                    count: entry.cellsHeld,
+                    days: days.get(entry.userId) ?? 0,
+                  })}>
+                  <Text style={styles.leaderRank}>{i + 1}</Text>
+                  <View style={[styles.leaderSwatch, { backgroundColor: tintOf(entry.userId) }]} />
+                  <View style={styles.leaderText}>
+                    <Text style={styles.leaderName} numberOfLines={1}>
+                      {isMe ? t('leaderboard.leaderMe', { name }) : name}
+                    </Text>
+                    <Text style={styles.leaderDays} numberOfLines={1}>
+                      {t('leaderboard.leaderDays', { count: days.get(entry.userId) ?? 0 })}
+                    </Text>
+                  </View>
+                  <Text style={styles.leaderScore}>{entry.cellsHeld}</Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        )}
+      </GlassSurface>
     </View>
   );
 }
@@ -690,22 +801,70 @@ function assignTints(userIds: string[]): Map<string, string> {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
+  // Left of the 40pt profile pill, level with it (profile-pill.tsx).
+  capsuleWrap: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three + 40 + Spacing.two,
+    zIndex: 10,
+    alignItems: 'flex-start',
   },
-  tabsRow: {
+  capsule: { flexDirection: 'row', height: CAPSULE_H, padding: 3, gap: 2 },
+  capsuleItem: {
+    flexShrink: 1,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 999,
+    justifyContent: 'center',
+  },
+  capsuleItemOn: { backgroundColor: 'rgba(255,255,255,0.18)' },
+  capsuleLabel: { fontSize: 14, fontWeight: '700' },
+  placeWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  place: {
+    height: PLACE_H,
+    paddingHorizontal: Spacing.three,
+    justifyContent: 'center',
+    maxWidth: 260,
+  },
+  placeText: { color: '#ffffff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+  cardWrap: { position: 'absolute', left: Spacing.three, right: Spacing.three },
+  card: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
+  cardHeader: {
+    height: CARD_HEADER_H,
     flexDirection: 'row',
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    gap: Spacing.four,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(128,128,128,0.25)',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
   },
-  tabItem: { paddingBottom: Spacing.two },
-  tabLabel: { fontSize: 15, fontWeight: '700', paddingBottom: 2 },
+  cardTitle: {
+    flexShrink: 1,
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  cardNote: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18, paddingBottom: Spacing.two },
+  cardState: { minHeight: ROW_H, justifyContent: 'center', paddingVertical: Spacing.two },
+  leaderRow: {
+    height: ROW_H,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    borderRadius: 12,
+  },
+  leaderRowMe: { backgroundColor: 'rgba(255,255,255,0.14)' },
+  leaderRank: {
+    width: 22,
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  leaderSwatch: { width: 10, height: 10, borderRadius: 3 },
+  leaderText: { flex: 1, minWidth: 0 },
+  leaderName: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
+  leaderDays: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
+  leaderScore: { color: '#ffffff', fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
   scroll: { padding: Spacing.three, gap: Spacing.four, paddingBottom: BottomTabInset },
   arena: { gap: 2 },
   arenaKicker: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8 },

@@ -126,35 +126,12 @@ const translations = {
       saving: 'Guardando…',
       saved: 'Territorio guardado',
       discard: 'Descartar',
-      // Task 2 — auto-save means there is usually already a server row by
-      // the time the summary renders, so "Descartar" (which never touched
-      // the server) stopped being honest. deleteRun() actually removes that
-      // row; these keys are for that flow specifically, distinct from
-      // `discard` above (still used by the unfinished-checkpoint recovery
-      // prompt, which never reaches the server at all).
-      deleteRun: 'Eliminar territorio',
-      deleting: 'Eliminando…',
-      // Shown once, inline, before the delete actually happens — see
-      // apply_territory_overlap() in 20260827020000_phase3_overlap.sql:
-      // ground this run took from other runners during the overlap was
-      // already carved out of their fences at save time, and nothing reads
-      // territory_events back to reverse that. Saying "elimina tu
-      // territorio" without this line would imply a clean undo that does
-      // not exist.
+      // Only a session still waiting to upload can be discarded: a saved
+      // run counts on the boards and runners can't delete it (2026-09-30).
+      deleteRun: 'Descartar sesión',
       deleteConfirmBody:
-        'Esto borra tu registro y este territorio. El terreno que ya le quitaste a otros corredores durante esta sesión no se les devuelve.',
-      deleteConfirmAction: 'Eliminar de todas formas',
-      deleteFailedNetwork:
-        'No pudimos eliminar tu territorio — revisa tu conexión. Sigue guardado, puedes reintentar.',
-      deleteFailedAuth: 'No pudimos confirmar tu sesión para eliminarlo. Vuelve a intentarlo.',
-      deleteFailedDisabled:
-        'El guardado en línea no está disponible en esta versión, así que no podemos eliminarlo desde aquí.',
-      // Distinct from deleteFailedNetwork on purpose: this isn't a
-      // connection problem, and "revisa tu conexión" would send the runner
-      // chasing a WiFi bar that was never the issue. Reintentar won't help
-      // here — see deleteRun()'s 'denied' reason.
-      deleteFailedDenied:
-        'Todavía no podemos eliminar territorios desde aquí — esa función está en camino. Sigue guardado.',
+        'Esta sesión todavía no se sube. Si la descartas, se borra de este teléfono y no cuenta en ningún tablero.',
+      deleteConfirmAction: 'Descartar',
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
@@ -304,9 +281,19 @@ const translations = {
       // Los tres sub-tabs (2026-09-17, restructuración de navegación): la
       // tabla ahora es una sola pantalla con tres pestañas en vez de dos
       // tablas apiladas en un scroll — ver leaderboard.tsx.
-      tabMine: 'Mis logros',
-      tabMunicipio: 'Municipio',
+      tabMunicipio: 'Leaderboard',
       tabLocal: 'Líderes locales',
+      leadersRefit: 'Ver a los líderes',
+      leadersNoteToggle: 'Cómo se gana',
+      leaderMe: '%{name} (tú)',
+      leaderDays: {
+        one: '1 día aquí',
+        other: '%{count} días aquí',
+      } as PluralForm,
+      leaderRowA11y: {
+        one: 'Lugar %{rank}, %{name}, 1 casilla, %{days} días aquí',
+        other: 'Lugar %{rank}, %{name}, %{count} casillas, %{days} días aquí',
+      } as PluralForm,
       // Legend bajo los sub-tabs de "Mis logros" — total de casillas
       // conquistadas hasta ahora, sin filtrar por distrito ni municipio.
       totalTiles: {
@@ -748,27 +735,11 @@ const translations = {
       saving: 'Saving…',
       saved: 'Territory saved',
       discard: 'Discard',
-      // Task 2 — see the Spanish keys' comment: auto-save means there is
-      // usually already a server row by the time the summary renders, so
-      // "Discard" (which never touched the server) stopped being honest.
-      // `discard` above stays as-is — it's still used by the unfinished-
-      // checkpoint recovery prompt, which never reaches the server.
-      deleteRun: 'Delete run',
-      deleting: 'Deleting…',
+      // See the ES comment: only an un-uploaded session can be discarded.
+      deleteRun: 'Discard session',
       deleteConfirmBody:
-        "This deletes your record and this territory. Ground you already took from other runners during this session won't be returned to them.",
-      deleteConfirmAction: 'Delete anyway',
-      deleteFailedNetwork:
-        "We couldn't delete your territory — check your connection. It's still saved, you can retry.",
-      deleteFailedAuth: "We couldn't confirm your session to delete it. Please try again.",
-      deleteFailedDisabled:
-        "Online saving isn't available in this build, so we can't delete it from here.",
-      // Distinct from deleteFailedNetwork on purpose — this isn't a
-      // connection problem, and "check your connection" would send the
-      // runner chasing a WiFi bar that was never the issue. Retrying won't
-      // help here — see deleteRun()'s 'denied' reason.
-      deleteFailedDenied:
-        "We can't delete territories from here yet — that's coming soon. It's still safely saved.",
+        "This session hasn't uploaded yet. Discarding it removes it from this phone, and it won't count on any board.",
+      deleteConfirmAction: 'Discard',
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
@@ -860,9 +831,19 @@ const translations = {
       } as PluralForm,
       error: "We couldn't load the board. Check your connection.",
       disabled: 'Online saving is not configured in this build.',
-      tabMine: 'My Achievements',
-      tabMunicipio: 'Municipio',
+      tabMunicipio: 'Leaderboard',
       tabLocal: 'Local Leaders',
+      leadersRefit: 'Show the leaders',
+      leadersNoteToggle: 'How to win',
+      leaderMe: '%{name} (you)',
+      leaderDays: {
+        one: '1 day here',
+        other: '%{count} days here',
+      } as PluralForm,
+      leaderRowA11y: {
+        one: 'Rank %{rank}, %{name}, 1 tile, %{days} days here',
+        other: 'Rank %{rank}, %{name}, %{count} tiles, %{days} days here',
+      } as PluralForm,
       totalTiles: {
         one: '1 tile conquered overall',
         other: '%{count} tiles conquered overall',

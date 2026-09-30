@@ -44,12 +44,10 @@ import { onIdentityChanged } from '@/lib/auth-events';
 import { groundOfRun } from '@/lib/enclosure';
 import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import {
-  deleteRun,
   fetchMyClaimedCells,
   fetchMyFences,
   type RunCells,
   uploadRun,
-  type DeleteOutcome,
   type FencesOutcome,
   type MyFence,
   type SyncOutcome,
@@ -72,12 +70,6 @@ const SYNC_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network', string> = {
   network: 'track.syncFailedNetwork',
 };
 
-const DELETE_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network' | 'denied', string> = {
-  disabled: 'track.deleteFailedDisabled',
-  auth: 'track.deleteFailedAuth',
-  denied: 'track.deleteFailedDenied',
-  network: 'track.deleteFailedNetwork',
-};
 
 interface Selection {
   id: string;
@@ -324,8 +316,6 @@ function DetailCard({
   const { t } = useI18n();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteFailure, setDeleteFailure] = useState<DeleteOutcome | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [retryFailure, setRetryFailure] = useState<SyncOutcome | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -359,20 +349,6 @@ function DetailCard({
           tiles: tiled.length,
         }
       : null;
-
-  const handleDeleteSaved = useCallback(async () => {
-    if (!fence) return;
-    setDeleting(true);
-    setDeleteFailure(null);
-    const outcome = await deleteRun(fence.id);
-    if (!outcome.ok) {
-      setDeleting(false);
-      setDeleteFailure(outcome);
-      setConfirmingDelete(false);
-      return;
-    }
-    onDeleted();
-  }, [fence, onDeleted]);
 
   const handleDeleteQueued = useCallback(() => {
     if (!queued) return;
@@ -467,9 +443,6 @@ function DetailCard({
       {retryFailure && !retryFailure.ok && (
         <Text style={[styles.detailNoticeText, { color: c.accent }]}>{t(SYNC_FAILURE_KEYS[retryFailure.reason])}</Text>
       )}
-      {deleteFailure && !deleteFailure.ok && (
-        <Text style={[styles.detailNoticeText, { color: c.accent }]}>{t(DELETE_FAILURE_KEYS[deleteFailure.reason])}</Text>
-      )}
 
       {confirmingDelete ? (
         <View style={styles.detailConfirm}>
@@ -478,14 +451,8 @@ function DetailCard({
             <Pressable onPress={() => setConfirmingDelete(false)} accessibilityRole="button" hitSlop={10}>
               <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY }]}>{t('common.cancel')}</Text>
             </Pressable>
-            <Pressable
-              onPress={() => void (queued ? handleDeleteQueued() : handleDeleteSaved())}
-              disabled={deleting}
-              accessibilityRole="button"
-              hitSlop={10}>
-              <Text style={[styles.detailAction, { color: c.accent, opacity: deleting ? 0.5 : 1 }]}>
-                {deleting ? t('track.deleting') : t('track.deleteConfirmAction')}
-              </Text>
+            <Pressable onPress={handleDeleteQueued} accessibilityRole="button" hitSlop={10}>
+              <Text style={[styles.detailAction, { color: c.accent }]}>{t('track.deleteConfirmAction')}</Text>
             </Pressable>
           </View>
         </View>
@@ -498,15 +465,21 @@ function DetailCard({
               </Text>
             </Pressable>
           )}
-          <Pressable
-            onPress={() => setConfirmingDelete(true)}
-            disabled={deleting || retrying}
-            accessibilityRole="button"
-            hitSlop={10}>
-            <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY, opacity: deleting || retrying ? 0.5 : 1 }]}>
-              {t('track.deleteRun')}
-            </Text>
-          </Pressable>
+          {/* Only a run still waiting to upload can be discarded. A saved run
+              counts on both boards, and runners can't delete what counts
+              (Pedro, 2026-09-30); a whole account is removed through
+              support, as the privacy notice says. */}
+          {queued && (
+            <Pressable
+              onPress={() => setConfirmingDelete(true)}
+              disabled={retrying}
+              accessibilityRole="button"
+              hitSlop={10}>
+              <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY, opacity: retrying ? 0.5 : 1 }]}>
+                {t('track.deleteRun')}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
     </Animated.View>
