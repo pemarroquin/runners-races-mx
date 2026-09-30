@@ -49,6 +49,10 @@ import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from 
 import type { MyFence } from '@/lib/territory-sync';
 
 interface FenceMapProps {
+  /** Whether this map's screen is on top. Gates the route's colour flow
+   *  (web), which otherwise redrew the map ~16 times a second after the
+   *  runner left the summary for another tab. Defaults to true. */
+  active?: boolean;
   /** The fence just captured — no longer filled (see the `tiles` prop
    *  below, brief §6 step 4), but still used for its outline and to frame
    *  the camera. Still required, not optional: buildFence isn't deleted

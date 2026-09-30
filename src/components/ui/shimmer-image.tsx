@@ -24,6 +24,7 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withRepeat,
+  cancelAnimation,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -68,6 +69,13 @@ export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerI
   const pulse = useSharedValue(0);
 
   useEffect(() => {
+    // Only while the placeholder is showing. The loop used to run for the
+    // life of the component, so every race card on a feed kept an infinite
+    // UI-thread animation going long after its image had arrived.
+    if (status !== 'loading') {
+      cancelAnimation(pulse);
+      return;
+    }
     if (reduced) {
       // Infinite motion is exactly what reduced-motion opts out of — hold a
       // static mid-tint instead of looping.
@@ -82,7 +90,8 @@ export function ShimmerImage({ source, accent, tint, style, priority }: ShimmerI
       -1,
       true,
     );
-  }, [reduced, pulse]);
+    return () => cancelAnimation(pulse);
+  }, [reduced, pulse, status]);
 
   const shimmerStyle = useAnimatedStyle(() => ({
     opacity: 0.1 + pulse.value * 0.22,

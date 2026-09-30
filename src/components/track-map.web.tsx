@@ -331,6 +331,12 @@ interface TrackMapProps {
   chromeInsets?: ChromeInsets;
   /** True once a session is live: drives the fly-in and the 3D framing. */
   active: boolean;
+  /** Whether the Run tab is on screen. Tabs never unmount, so without this
+   *  a run left recording while the runner checks Leaderboard kept the
+   *  camera easing on every fix (and, on web, the route flowing at ~16
+   *  redraws a second) behind a screen nobody could see. Recording is
+   *  unaffected; only drawing pauses. Defaults to true. */
+  visible?: boolean;
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
   /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
@@ -421,6 +427,7 @@ export function TrackMap({
   here,
   chromeInsets,
   active,
+  visible = true,
   fenceColor,
   tiles,
   enclosedTiles,
@@ -829,7 +836,10 @@ export function TrackMap({
   // still" means standing still MID-RUN, not idling in the app.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current || !active) return;
+    // `visible` too: tabs never unmount, and a run left recording while the
+    // runner looks at Leaderboard would otherwise keep this redrawing the
+    // whole 3D map ~16 times a second behind a screen nobody can see.
+    if (!map || !readyRef.current || !active || !visible) return;
 
     // The route flows its colours along itself. line-gradient has no
     // `-transition` support at all, so there is no GPU tween between
@@ -894,7 +904,7 @@ export function TrackMap({
         map.setPaintProperty(ENCLOSED_SRC, 'fill-color', ROUTE_GRADIENT_COLORS[0]);
       }
     };
-  }, [active, mapReady]);
+  }, [active, visible, mapReady]);
 
   // Resets the camera mode to 'follow' at the start of every session — the
   // mode is session-scoped, not a persisted user setting. Gated to fire only
@@ -1215,7 +1225,10 @@ export function TrackMap({
     // is a user gesture, and applyCameraForMode clears it on every
     // authoritative placement, including the timer's own.
     const head = here ?? points[points.length - 1];
-    if (head && running && flownRef.current && !manualPendingRef.current) {
+    // Not while the Run tab is hidden: a 900 ms ease every 1-2 s fix keeps
+    // Mapbox drawing a pitched 3D scene at full frame rate most of the time.
+    // `visible` is in the deps, so returning to the tab re-frames at once.
+    if (head && running && visible && flownRef.current && !manualPendingRef.current) {
       applyCameraForMode(900);
     }
     // `mapReady` alongside the data, like every other readiness-gated effect
@@ -1225,7 +1238,7 @@ export function TrackMap({
     // existing at all. Listing it closes that, and keeps the "every
     // readiness-gated effect lists mapReady" rule true with no exception to
     // remember.
-  }, [points, running, here, applyCameraForMode, mapReady]);
+  }, [points, running, here, visible, applyCameraForMode, mapReady]);
 
   if (!TOKEN || mapError) {
     return (

@@ -131,6 +131,10 @@ const OUTLINE_WIDTH = 1.5;
 const OUTLINE_OPACITY = 0.55;
 
 interface FenceMapProps {
+  /** Whether this map's screen is on top. Gates the route's colour flow
+   *  (web), which otherwise redrew the map ~16 times a second after the
+   *  runner left the summary for another tab. Defaults to true. */
+  active?: boolean;
   /** No longer filled directly (see `tiles` below) — still used for the
    *  outline and to frame the camera. buildFence isn't deleted this pass
    *  (brief §4), so this stays required. */
@@ -217,6 +221,7 @@ export function FenceMap({
   others,
   excludeId,
   controls,
+  active = true,
 }: FenceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -510,15 +515,6 @@ export function FenceMap({
         // out and back in. Cheaper to read than it sounds — one fitBounds
         // from a slightly wider camera.
         map.fitBounds(boundsOf(g), { padding: 80, duration: FIT_MS });
-        // Armed here, inside 'load', where the layer it paints is guaranteed
-        // to exist. Unlike the live map's flow there is no `active` gate to
-        // hang it on: this screen only ever exists just after a run, and it
-        // is dismissed rather than sat on for 40 minutes.
-        routeFlowStopRef.current = startGradientFlow((gradient) => {
-          if (map.getLayer(NEW_ROUTE_SRC)) {
-            map.setPaintProperty(NEW_ROUTE_SRC, 'line-gradient', gradient);
-          }
-        });
         readyRef.current = true;
         // Ref first, then state: the ref is what the imperative call sites
         // read (refit), and it must be true before any effect this wakes can
@@ -672,6 +668,24 @@ export function FenceMap({
     if (!map) return;
     map.easeTo({ zoom: map.getZoom() + delta, around: centerOf(dataRef.current.geometry), duration: 300 });
   }, []);
+
+  // The route's colour flow, only while this screen is on top. It used to
+  // start in 'load' with no gate, on the reasoning that the summary is
+  // dismissed rather than sat on — but tabs never unmount, and finishing a
+  // run then opening Leaderboard to see the new ground is the natural next
+  // step, which left this redrawing the map ~16 times a second off-screen.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !active) return;
+    const stop = startGradientFlow((gradient) => {
+      if (map.getLayer(NEW_ROUTE_SRC)) map.setPaintProperty(NEW_ROUTE_SRC, 'line-gradient', gradient);
+    });
+    routeFlowStopRef.current = stop;
+    return () => {
+      stop();
+      routeFlowStopRef.current = null;
+    };
+  }, [mapReady, active]);
 
   if (!TOKEN) return null;
 

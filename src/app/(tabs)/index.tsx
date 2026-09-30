@@ -855,6 +855,7 @@ export default function TrackScreen() {
           color={c.textSecondary}
           background={c.background}>
           <FenceMap
+            active={isFocused}
             geometry={fence.geometry.geometry}
             // The MASKED path, never tracker.points — privacy-zone trimming
             // exists precisely so start/end aren't exposed, and this map is a
@@ -1036,6 +1037,7 @@ export default function TrackScreen() {
           running={running}
           here={here}
           active={inSession}
+          visible={isFocused}
           fenceColor={fenceColor}
           // Tile Coverage brief §6 step 4 — this session's live covered
           // cells; see the liveTiles state's own comment above for the

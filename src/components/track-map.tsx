@@ -80,6 +80,9 @@ interface TrackMapProps {
   chromeInsets?: ChromeInsets;
   /** True once a session is live: drives the fly-in and the tilted framing. */
   active: boolean;
+  /** See track-map.web.tsx's matching prop: whether the Run tab is on
+   *  screen. Pauses the per-fix camera while it isn't. Defaults to true. */
+  visible?: boolean;
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
   /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
@@ -157,6 +160,7 @@ export function TrackMap({
   here,
   chromeInsets,
   active,
+  visible = true,
   fenceColor,
   tiles,
   enclosedTiles,
@@ -331,7 +335,7 @@ export function TrackMap({
   // their finished route would fight them. Re-applies whichever mode is
   // current on every fix, mirroring track-map.web.tsx's equivalent effect.
   useEffect(() => {
-    if (!running || !flownRef.current) return;
+    if (!running || !flownRef.current || !visible) return;
     const head = here ?? points[points.length - 1];
     if (!head) return;
     applyCamera(cameraMode, 900);
@@ -339,7 +343,7 @@ export function TrackMap({
     // render's points/here/cameraMode — including it in the deps array
     // would just restate points/here/cameraMode, which are already listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, here, running, cameraMode]);
+  }, [points, here, running, cameraMode, visible]);
 
   const toggleCameraMode = () => {
     const next: CameraMode = cameraMode === 'follow' ? 'overview' : 'follow';
