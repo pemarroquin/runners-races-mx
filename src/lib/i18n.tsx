@@ -640,7 +640,7 @@ const translations = {
       collectedZone:
         'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
-        'Visible para otros: el nombre que elijas en Ajustes y el terreno que tienes aparecen en las tablas para cualquier persona que use la app; sin nombre apareces como Anónimo. En Líderes locales también se ven, por lugar y de los últimos 30 días, la distancia total, el ritmo y las vueltas de tus sesiones. Nunca se muestra tu recorrido. Cada sesión que terminas se guarda automáticamente y ya no se puede borrar, porque cuenta en ambas tablas; para borrar tu cuenta y sus sesiones, escríbenos desde soporte.',
+        'Visible para otros: el nombre que elijas en Ajustes y el terreno que tienes aparecen en las tablas para cualquier persona que use la app; sin nombre apareces como Anónimo. En ambas tablas también se ven, por lugar y de los últimos 30 días, la distancia total y el ritmo de tus sesiones, y en Líderes locales sus vueltas. Nunca se muestra tu recorrido. Cada sesión que terminas se guarda automáticamente y ya no se puede borrar, porque cuenta en ambas tablas; para borrar tu cuenta y sus sesiones, escríbenos desde soporte.',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
       notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
@@ -1154,7 +1154,7 @@ const translations = {
       collectedZone:
         'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:
-        'Visible to others: the name you pick in Settings and the ground you hold appear on the leaderboards to anyone using the app; with no name set you appear as Anonymous. Local Leaders also shows, per place and over the last 30 days, the total distance, pace and laps of your sessions. Your route itself is never shown. Every session you finish saves automatically and can no longer be deleted, because it counts on both boards; to delete your account and its sessions, contact us through support.',
+        'Visible to others: the name you pick in Settings and the ground you hold appear on the leaderboards to anyone using the app; with no name set you appear as Anonymous. Both boards also show, per place and over the last 30 days, the total distance and pace of your sessions, and Local Leaders their laps. Your route itself is never shown. Every session you finish saves automatically and can no longer be deleted, because it counts on both boards; to delete your account and its sessions, contact us through support.',
       notTitle: "What we don't do",
       notAccounts: 'No email, password, or personal details are needed to use the app.',
       notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",

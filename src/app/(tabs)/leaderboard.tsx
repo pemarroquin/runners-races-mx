@@ -75,6 +75,7 @@ import {
   type Arena,
 } from '@/lib/subdivisions';
 import { useCurrentLocation } from '@/lib/use-current-location';
+import { useLiveTerritory } from '@/lib/use-live-territory';
 import { fetchTileLeaderboard } from '@/lib/territory-sync';
 
 /** Everything the screen needs, resolved together. `null` is "not loaded
@@ -239,6 +240,18 @@ export default function LeaderboardScreen() {
     }, 0);
     return () => clearTimeout(id);
   }, [isFocused, arena, identitySignal, load]);
+
+  // Live: someone's claim just landed in this arena (live-territory.ts), so
+  // refetch quietly — no spinner, same ticket as every other load so it can
+  // never clobber a fresher result. Subscribed only while this tab is on top.
+  const reloadSilently = useCallback(() => {
+    if (arena === null) return;
+    const ticket = ++loadTicketRef.current;
+    load(arena).then((next) => {
+      if (loadTicketRef.current === ticket) setData(next);
+    });
+  }, [arena, load]);
+  useLiveTerritory({ active: isFocused, districts: arena?.districts ?? null, onChange: reloadSilently });
 
   // Only a load for the arena on screen counts. Stepping to the next
   // municipio shows loading until its own read lands, never the previous
@@ -561,23 +574,35 @@ export default function LeaderboardScreen() {
           note={t('leaderboard.conquestNote')}
           c={c}>
           {conquest && conquest.entries.length > 0 ? (
-            conquest.entries.map((entry, i) => (
-              <BoardRow
-                key={entry.userId}
-                rank={i + 1}
-                name={entry.displayName ?? t('leaderboard.anonymous')}
-                score={pct(entry.share)}
-                detail={t('leaderboard.cellsDetail', { count: entry.cellsHeld })}
-                tint={tintOf(entry.userId)}
-                isMe={entry.userId === board.meUserId}
-                flaggedLabel={
-                  entry.flaggedCellsHeld > 0
-                    ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })
-                    : undefined
-                }
-                c={c}
-              />
-            ))
+            conquest.entries.map((entry, i) => {
+              const effort = leaderTotals?.get(entry.userId);
+              return (
+                <BoardRow
+                  key={entry.userId}
+                  rank={i + 1}
+                  name={entry.displayName ?? t('leaderboard.anonymous')}
+                  score={pct(entry.share)}
+                  // Tiles, then the runner's 30-day distance and pace here —
+                  // the same totals Local Leaders shows, so one runner reads
+                  // the same on both boards.
+                  detail={[
+                    t('leaderboard.cellsDetail', { count: entry.cellsHeld }),
+                    effort ? formatDistance(effort.distanceM) : null,
+                    effort ? formatPace(effort.distanceM, effort.durationS) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  tint={tintOf(entry.userId)}
+                  isMe={entry.userId === board.meUserId}
+                  flaggedLabel={
+                    entry.flaggedCellsHeld > 0
+                      ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })
+                      : undefined
+                  }
+                  c={c}
+                />
+              );
+            })
           ) : (
             <Text style={[styles.note, { color: c.textSecondary }]}>
               {t('leaderboard.conquestEmpty')}

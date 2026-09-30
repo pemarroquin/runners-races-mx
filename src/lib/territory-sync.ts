@@ -14,6 +14,7 @@ import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtChunks, districtsOrFilter } from '@/lib/district';
+import { announceClaim } from '@/lib/live-territory';
 import { enclosedCells } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
@@ -294,6 +295,10 @@ export async function claimTiles(
       if (message.includes(CLAIM_TOO_OLD_MARKER)) return { ok: false, reason: 'tooOld' };
       return { ok: false, reason: 'network' };
     }
+
+    // Ground changed hands: nudge anyone watching these districts to
+    // refetch (live-territory.ts). Fire-and-forget; never affects this save.
+    announceClaim([...cells, ...enclosed]);
 
     // returns table(...) comes back as an array of one row.
     const row = (Array.isArray(claimRows) ? claimRows[0] : claimRows) as

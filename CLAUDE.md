@@ -171,6 +171,15 @@ base cells worldwide.
   shown, never ranked. Run numbers come from the `run_stats` RPC — `runs`
   stays select-own. Cannot be taken in a single visit.
 
+**Live updates are a broadcast, not a table stream** (`live-territory.ts`).
+Streaming `territory_tiles` changes would push ~26,000 messages per 10 km
+loop to every open phone. Instead a successful claim sends ONE Realtime
+broadcast (`territory-claims`, district ids only, no user id) via
+`httpSend`; a board whose arena overlaps refetches, at most every 15 s, and
+subscribes only while its tab is focused. A lost or forged message costs a
+refetch at worst — the database stays the truth. `announceClaim` must never
+throw into `uploadRun` (a test holds it to that).
+
 **Nothing is ever named.** User-created `areas` were deleted outright — the
 prompt, the overlap-suggest, the delete window, every string. Board 2's unit
 is the grid, so a park and "a street block near my house" work through the
