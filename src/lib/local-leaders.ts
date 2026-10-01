@@ -7,6 +7,9 @@
 // count as their row on the card. A test holds the two together.
 import { cellToBoundary, isValidCell } from 'h3-js';
 
+import { groundOfRun } from '@/lib/enclosure';
+import { DEFAULT_TILE_RES } from '@/lib/tiles';
+
 import type { ArenaScope } from '@/lib/district';
 import {
   MAYORSHIP_WINDOW_DAYS,
@@ -156,6 +159,71 @@ export function runnerTotals(
       totals.runs++;
     }
     if (totals.runs > 0) out.set(userId, totals);
+  }
+  return out;
+}
+
+/**
+ * Each session's GROUND as visits: the tiles it crossed plus the inside of
+ * any loop that same session closed (enclosure.ts's groundOfRun, the rule
+ * Places I've been draws with), every tile stamped with the session's day.
+ *
+ * This is what makes enclosure count on Local Leaders (Pedro, 2026-09-30):
+ * both boards enclose; Leaderboard's ground changes hands to whoever ran it
+ * last, Local Leaders' to whoever keeps coming back — loop the same block on
+ * 17 days and you were there 17 days. It reverses the 2026-09-07 rule that
+ * circling a place from outside didn't count.
+ *
+ * Per SESSION, never across sessions, so six months of perimeter can't
+ * claim a city. Built from stored cells, which are privacy-trimmed: a loop
+ * that closes only inside the privacy zone encloses nothing here — a subset
+ * near home, never a leak. Pass each session's WHOLE visit list
+ * (fetchRunVisits), or a loop crossing the arena edge won't close.
+ *
+ * One day per session (its earliest visit), so an evening run that crosses
+ * UTC midnight counts once. Rows without a runId pass through unchanged.
+ */
+export function sessionGroundVisits(
+  visits: TileVisitRow[],
+  res: number = DEFAULT_TILE_RES,
+): TileVisitRow[] {
+  const runs = new Map<string, { first: TileVisitRow; cells: Set<string> }>();
+  const out: TileVisitRow[] = [];
+  for (const v of visits) {
+    if (!v.runId) {
+      out.push(v);
+      continue;
+    }
+    const run = runs.get(v.runId);
+    if (!run) runs.set(v.runId, { first: v, cells: new Set([v.h3]) });
+    else {
+      run.cells.add(v.h3);
+      if (v.visitedAt < run.first.visitedAt) run.first = v;
+    }
+  }
+  for (const [runId, { first, cells }] of runs) {
+    let ground: string[];
+    try {
+      ground = groundOfRun([...cells], res);
+    } catch {
+      // A malformed cell must not take the board down; the crossed tiles
+      // still count.
+      ground = [...cells];
+    }
+    for (const h3 of ground) {
+      out.push({ h3, userId: first.userId, displayName: first.displayName, visitedAt: first.visitedAt, runId });
+    }
+  }
+  return out;
+}
+
+/** Cells per mayor, from an already-computed mayor map. */
+export function holdingsOf(mayors: Map<string, { userId: string }>): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const [h3, { userId }] of mayors) {
+    const cells = out.get(userId);
+    if (cells) cells.push(h3);
+    else out.set(userId, [h3]);
   }
   return out;
 }

@@ -294,9 +294,35 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
     }
     if (full && !framedHoldingsRef.current && holdings.some((h) => h.cells.length > 0)) {
       framedHoldingsRef.current = true;
-      refit(false);
+      refit(true);
     }
   }, [holdings, full, refit]);
+
+  // A new place, same map: redraw the outline and fly there, instead of
+  // tearing the map down and building another (which flashed on every
+  // arrow tap). Frames the place itself first; the held ground, when its
+  // rows land, gets one more framing through the effect above. Skipped
+  // until ready — the load handler frames whatever arena is current then.
+  const arenaRef = useRef(arena);
+  useEffect(() => {
+    if (arenaRef.current === arena) return;
+    arenaRef.current = arena;
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const source = map.getSource(OUTLINE_SRC);
+    if (source && 'setData' in source) {
+      (source as { setData: (d: FeatureCollection) => void }).setData(arenaOutline(arena));
+    }
+    framedHoldingsRef.current = false;
+    const b = arena.bounds;
+    map.fitBounds(
+      [
+        [b.minLng, b.minLat],
+        [b.maxLng, b.maxLat],
+      ],
+      { padding: full?.padding ?? 24, duration: 1200, maxZoom: 16, essential: true },
+    );
+  }, [arena, full]);
 
   // A focus change repaints and re-frames. Skipped until the map is ready:
   // the load handler reads the same focus through dataRef, so nothing is

@@ -165,7 +165,13 @@ base cells worldwide.
   own 16 807 cells: that was measured at 0.02-2.39% for every real runner and
   never moves. How much of the district is untouched is a separate caption.
 - **Board 2, LOCAL LEADERS** (`src/lib/mayorship.ts`) — mayorship per CELL,
-  by distinct days present in a trailing 30. One point per day, so nobody
+  by distinct days present in a trailing 30. **Enclosure counts** (Pedro,
+  2026-09-30): each session's GROUND — tiles crossed plus the inside of loops
+  that same session closed (`sessionGroundVisits`, enclosure.ts's
+  `groundOfRun`) — is stamped with the session's day, rebuilt on device
+  from `tile_visits` (each session's whole path via `fetchRunVisits`). Both
+  boards enclose; Leaderboard's ground goes to whoever ran it last, Local
+  Leaders' to whoever keeps coming back. One day per session. One point per day, so nobody
   buys a title with one huge Sunday. Ties on days go to more laps in the
   runs through that cell (whole-run laps — per-cell laps aren't stored),
   then more distance, then the incumbent (Pedro, 2026-09-30); pace is

@@ -236,7 +236,6 @@ const translations = {
       // donde estás. `arenaHere` es el respaldo donde no hay datos de
       // parques (casi todo el planeta): la forma en el mapa es la identidad,
       // y por eso ya no se le pone nombre a nada.
-      arenaKicker: 'TU DISTRITO',
       arenaHere: 'Donde estás',
       needLocation: 'Necesitamos tu ubicación para saber en qué distrito compites.',
       locating: 'Buscando tu ubicación…',
@@ -245,16 +244,8 @@ const translations = {
       // Dos frases, no una: 0/0 no es 0%. Un distrito sin datos de parques
       // no puede decirle a alguien que acaba de cubrir su colonia que no
       // tiene nada.
-      heroClaimedShare: 'del terreno tomado en este distrito es tuyo',
-      rankOf: 'Lugar %{rank} de %{total}',
-      unranked: 'Sin territorio aquí',
       // El número que une las dos tablas: la tienes, pero alguien viene más
       // seguido. Ver contestedCells.
-      contested: {
-        one: '1 casilla en disputa',
-        other: '%{count} casillas en disputa',
-      } as PluralForm,
-      frontier: '%{pct} de este distrito ya está tomado. El resto está libre.',
       // Tabla 1. Cada sección dice qué mide — así las dos caben en una sola
       // pantalla sin que dos números que no se comparan parezcan un ranking.
       conquestTitle: 'CONQUISTA · AHORA MISMO',
@@ -268,14 +259,6 @@ const translations = {
       leadersNote:
         'Gana quien viene más días, no quien corre más lejos. Con los mismos días, gana quien dio más vueltas en sus sesiones por aquí, luego quien corrió más; si siguen empatados, se queda quien ya lo tenía.',
       leadersEmpty: 'Nadie ha venido por aquí en los últimos %{days} días.',
-      cellsDetail: {
-        one: '1 casilla',
-        other: '%{count} casillas',
-      } as PluralForm,
-      bestDays: {
-        one: 'mejor casilla: 1 día',
-        other: 'mejor casilla: %{count} días',
-      } as PluralForm,
       error: 'No pudimos cargar la tabla. Revisa tu conexión.',
       disabled: 'El guardado en línea no está configurado en esta versión.',
       // Los tres sub-tabs (2026-09-17, restructuración de navegación): la
@@ -300,10 +283,6 @@ const translations = {
       leaderLaps: {
         one: '1 vuelta',
         other: '%{count} vueltas',
-      } as PluralForm,
-      leaderRowA11y: {
-        one: 'Lugar %{rank}, %{name}, 1 casilla, %{days} días aquí',
-        other: 'Lugar %{rank}, %{name}, %{count} casillas, %{days} días aquí',
       } as PluralForm,
     },
     feed: {
@@ -372,10 +351,10 @@ const translations = {
       title: 'Compartir sesión',
       routeLabel: 'Ruta',
       statsLabel: 'Estadísticas',
+      pickStats: 'Elige qué estadísticas mostrar',
       copy: 'Copiar',
       copied: 'Copiada',
       copyFailed: 'No pudimos copiarla. Intenta de nuevo.',
-      hint: 'Pégala en una historia de Instagram.',
       emptyRoute: 'Esta sesión no tiene una ruta que compartir.',
     },
     myraces: {
@@ -806,20 +785,11 @@ const translations = {
         other: '%{count} tiles from flagged runs',
       } as PluralForm,
       // See the ES entries' comments.
-      arenaKicker: 'YOUR DISTRICT',
       arenaHere: 'Where you are',
       needLocation: 'We need your location to know which district you are competing in.',
       locating: 'Finding your location…',
       locationUnavailable: 'This device cannot give us a location.',
       enableLocation: 'Allow location',
-      heroClaimedShare: 'of the claimed ground in this district is yours',
-      rankOf: '%{rank} of %{total}',
-      unranked: 'No ground here yet',
-      contested: {
-        one: '1 cell contested',
-        other: '%{count} cells contested',
-      } as PluralForm,
-      frontier: '%{pct} of this district has been claimed. The rest is open.',
       conquestTitle: 'CONQUEST · RIGHT NOW',
       conquestNote:
         'Ground each runner holds at this moment. Anyone can take it by running there.',
@@ -828,14 +798,6 @@ const translations = {
       leadersNote:
         'This goes to whoever shows up on the most days, not whoever runs furthest. On equal days, more laps in their runs through here wins, then more distance; if it is still level, it stays with whoever held it first.',
       leadersEmpty: 'Nobody has run around here in the last %{days} days.',
-      cellsDetail: {
-        one: '1 cell',
-        other: '%{count} cells',
-      } as PluralForm,
-      bestDays: {
-        one: 'best cell: 1 day',
-        other: 'best cell: %{count} days',
-      } as PluralForm,
       error: "We couldn't load the board. Check your connection.",
       disabled: 'Online saving is not configured in this build.',
       tabMunicipio: 'Leaderboard',
@@ -857,10 +819,6 @@ const translations = {
       leaderLaps: {
         one: '1 lap',
         other: '%{count} laps',
-      } as PluralForm,
-      leaderRowA11y: {
-        one: 'Rank %{rank}, %{name}, 1 tile, %{days} days here',
-        other: 'Rank %{rank}, %{name}, %{count} tiles, %{days} days here',
       } as PluralForm,
     },
     feed: {
@@ -929,10 +887,10 @@ const translations = {
       title: 'Share session',
       routeLabel: 'Route',
       statsLabel: 'Stats',
+      pickStats: 'Choose which stats to show',
       copy: 'Copy',
       copied: 'Copied',
       copyFailed: "Couldn't copy. Try again.",
-      hint: 'Paste it into an Instagram Story.',
       emptyRoute: 'This session has no route to share.',
     },
     myraces: {

@@ -1,11 +1,19 @@
 // Local Leaders as a map. The contract that matters: a runner's shape on the
 // map holds exactly as many cells as their row on the card says.
-import { cellToBoundary, latLngToCell } from 'h3-js';
+import { cellToBoundary, gridDisk, gridRingUnsafe, latLngToCell } from 'h3-js';
 import { describe, expect, it } from 'vitest';
 
 import { districtOf } from '../src/lib/district';
-import { cellsBounds, daysPresent, frameOf, mayorHoldings, runnerTotals } from '../src/lib/local-leaders';
-import { rankMayors, type TileVisitRow } from '../src/lib/mayorship';
+import {
+  cellsBounds,
+  daysPresent,
+  frameOf,
+  holdingsOf,
+  mayorHoldings,
+  runnerTotals,
+  sessionGroundVisits,
+} from '../src/lib/local-leaders';
+import { mayorByCell, rankMayors, type TileVisitRow } from '../src/lib/mayorship';
 
 const MTY = { lat: 25.6866, lng: -100.3161 };
 const FAR = { lat: 25.6866, lng: -100.5161 };
@@ -227,5 +235,62 @@ describe('runnerTotals', () => {
       ['old', { distanceM: 1, durationS: 1, laps: 0 }],
     ]);
     expect(runnerTotals(visits, DISTRICT, stats, NOW).has('x')).toBe(false);
+  });
+});
+
+describe('sessionGroundVisits — enclosure counts on Local Leaders', () => {
+  // A closed ring of tiles around a centre: the session encloses the middle.
+  const centre = latLngToCell(25.6555, -100.372, 12);
+  const ring = gridRingUnsafe(centre, 3);
+  const inside = gridDisk(centre, 2);
+  const lap = (runId: string, userId: string, day: number): TileVisitRow[] =>
+    ring.map((h3) => ({ h3, userId, displayName: userId, visitedAt: daysAgo(day), runId }));
+
+  it("gives a looped session's interior that session's day", () => {
+    const rows = sessionGroundVisits(lap('r1', 'pedro', 1));
+    const cells = new Set(rows.map((r) => r.h3));
+    for (const h3 of inside) expect(cells.has(h3)).toBe(true);
+    expect(rows.every((r) => r.visitedAt === daysAgo(1) && r.runId === 'r1')).toBe(true);
+  });
+
+  it('makes the runner who loops a block more often its mayor, middle included', () => {
+    const visits = sessionGroundVisits([
+      ...lap('p1', 'pedro', 1),
+      ...lap('p2', 'pedro', 2),
+      ...lap('d1', 'david', 3),
+    ]);
+    const mayors = mayorByCell(visits, NOW);
+    expect(mayors.get(centre)).toEqual({ userId: 'pedro', days: 2 });
+  });
+
+  it('counts a session once even across UTC midnight', () => {
+    const rows = sessionGroundVisits([
+      { h3: ring[0], userId: 'x', displayName: 'x', visitedAt: '2026-09-07T23:50:00.000Z', runId: 'r' },
+      { h3: ring[1], userId: 'x', displayName: 'x', visitedAt: '2026-09-08T00:10:00.000Z', runId: 'r' },
+    ]);
+    expect(daysPresent(rows, null, NOW).get('x')).toBe(1);
+  });
+
+  it('passes rows without a run through unchanged', () => {
+    const row = { h3: A, userId: 'x', displayName: 'x', visitedAt: daysAgo(1) };
+    expect(sessionGroundVisits([row])).toEqual([row]);
+  });
+
+  it('never encloses across two separate sessions', () => {
+    // Each session draws half the ring; together they'd close it.
+    const half = Math.floor(ring.length / 2);
+    const rows = sessionGroundVisits([
+      ...ring.slice(0, half).map((h3) => ({ h3, userId: 'x', displayName: 'x', visitedAt: daysAgo(1), runId: 'a' })),
+      ...ring.slice(half).map((h3) => ({ h3, userId: 'x', displayName: 'x', visitedAt: daysAgo(2), runId: 'b' })),
+    ]);
+    expect(rows.some((r) => r.h3 === centre)).toBe(false);
+  });
+});
+
+describe('holdingsOf', () => {
+  it('groups a mayor map by runner', () => {
+    const mayors = mayorByCell(VISITS, NOW);
+    const held = holdingsOf(mayors);
+    expect(new Set(held.get('pedro'))).toEqual(new Set([B, C, CELL_FAR]));
   });
 });
