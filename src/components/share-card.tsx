@@ -24,7 +24,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
@@ -84,6 +84,18 @@ function hslToHex(h: number, s: number, l: number): string {
 // ~1000px export with zero duplication.
 const ROUTE_VB = 300;
 const ROUTE_PADDING = 34;
+/**
+ * The sticker's typeface. SVG text with no font falls back to the browser's
+ * default — a serif (Times) on most phones — which is what the copied
+ * sticker looked like. And the copy rasterises the SVG as a standalone
+ * image, where page fonts and CSS variables (the app's var(--font-display))
+ * don't exist, so this has to be a stack of fonts installed on the device.
+ * Native already uses the system font when none is set.
+ */
+const STICKER_FONT = Platform.OS === 'web'
+  ? "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+  : undefined;
+
 const STATS_VB_W = 300;
 const STATS_VB_H = 108;
 
@@ -166,7 +178,9 @@ export function ShareSheet({
   );
 
   const distance = data ? formatDistance(data.distanceM) : '';
-  const pace = data ? (formatPace(data.distanceM, data.durationS) ?? '—') : '';
+  // "6:02", not "6:02 /km": the column's label already says it's pace, and
+  // the unit crowded the 75-unit column.
+  const pace = data ? (formatPace(data.distanceM, data.durationS)?.replace(' /km', '') ?? '—') : '';
   const time = data && data.durationS > 0 ? formatDuration(data.durationS) : '—';
   const tiles = data ? String(data.tiles) : '';
 
@@ -278,6 +292,7 @@ export function ShareSheet({
                     y={20}
                     fontSize={12}
                     fontWeight="700"
+                    fontFamily={STICKER_FONT}
                     fill="#FFFFFF"
                     textAnchor="middle">
                     Runners&apos; Races MX
@@ -308,10 +323,25 @@ export function ShareSheet({
 function StatColumn({ x, label, value }: { x: number; label: string; value: string }) {
   return (
     <>
-      <SvgText x={x} y={50} fontSize={9} fill="rgba(255,255,255,0.75)" textAnchor="middle">
-        {label}
+      <SvgText
+        x={x}
+        y={50}
+        fontSize={9}
+        fontWeight="500"
+        letterSpacing={0.4}
+        fontFamily={STICKER_FONT}
+        fill="rgba(255,255,255,0.75)"
+        textAnchor="middle">
+        {label.toUpperCase()}
       </SvgText>
-      <SvgText x={x} y={78} fontSize={15} fontWeight="700" fill="#FFFFFF" textAnchor="middle">
+      <SvgText
+        x={x}
+        y={78}
+        fontSize={15}
+        fontWeight="700"
+        fontFamily={STICKER_FONT}
+        fill="#FFFFFF"
+        textAnchor="middle">
         {value}
       </SvgText>
     </>
