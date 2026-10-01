@@ -444,3 +444,23 @@ describe('pickSafeLapMarkerCenter', () => {
     expect(pickSafeLapMarkerCenter(full.repeatedCells, maskedCells)).toBeNull();
   });
 });
+
+describe('lapsForUpload', () => {
+  it('is 0 unless the run qualified', async () => {
+    const { lapsForUpload } = await import('../src/lib/laps');
+    expect(lapsForUpload(undefined, 5000)).toBe(0);
+    expect(lapsForUpload({ qualifies: false, laps: 4 }, 5000)).toBe(0);
+    expect(lapsForUpload({ qualifies: true, laps: 4 }, 5000)).toBe(4);
+  });
+
+  it("never exceeds the server's runs_laps_plausible bound", async () => {
+    const { lapsForUpload, maxPlausibleLaps } = await import('../src/lib/laps');
+    // SQL: laps <= 1 + floor(distance_m / 150), distance_m = round(distanceM)
+    expect(maxPlausibleLaps(449.6)).toBe(1 + Math.floor(450 / 150));
+    expect(lapsForUpload({ qualifies: true, laps: 12 }, 600)).toBe(5);
+    for (const d of [0, 149, 150, 299.5, 1234, 10_000]) {
+      const laps = lapsForUpload({ qualifies: true, laps: 999 }, d);
+      expect(laps).toBeLessThanOrEqual(1 + Math.floor(Math.round(d) / 150));
+    }
+  });
+});

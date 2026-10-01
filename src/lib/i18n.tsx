@@ -126,35 +126,12 @@ const translations = {
       saving: 'Guardando…',
       saved: 'Territorio guardado',
       discard: 'Descartar',
-      // Task 2 — auto-save means there is usually already a server row by
-      // the time the summary renders, so "Descartar" (which never touched
-      // the server) stopped being honest. deleteRun() actually removes that
-      // row; these keys are for that flow specifically, distinct from
-      // `discard` above (still used by the unfinished-checkpoint recovery
-      // prompt, which never reaches the server at all).
-      deleteRun: 'Eliminar territorio',
-      deleting: 'Eliminando…',
-      // Shown once, inline, before the delete actually happens — see
-      // apply_territory_overlap() in 20260827020000_phase3_overlap.sql:
-      // ground this run took from other runners during the overlap was
-      // already carved out of their fences at save time, and nothing reads
-      // territory_events back to reverse that. Saying "elimina tu
-      // territorio" without this line would imply a clean undo that does
-      // not exist.
+      // Only a session still waiting to upload can be discarded: a saved
+      // run counts on the boards and runners can't delete it (2026-09-30).
+      deleteRun: 'Descartar sesión',
       deleteConfirmBody:
-        'Esto borra tu registro y este territorio. El terreno que ya le quitaste a otros corredores durante esta sesión no se les devuelve.',
-      deleteConfirmAction: 'Eliminar de todas formas',
-      deleteFailedNetwork:
-        'No pudimos eliminar tu territorio — revisa tu conexión. Sigue guardado, puedes reintentar.',
-      deleteFailedAuth: 'No pudimos confirmar tu sesión para eliminarlo. Vuelve a intentarlo.',
-      deleteFailedDisabled:
-        'El guardado en línea no está disponible en esta versión, así que no podemos eliminarlo desde aquí.',
-      // Distinct from deleteFailedNetwork on purpose: this isn't a
-      // connection problem, and "revisa tu conexión" would send the runner
-      // chasing a WiFi bar that was never the issue. Reintentar won't help
-      // here — see deleteRun()'s 'denied' reason.
-      deleteFailedDenied:
-        'Todavía no podemos eliminar territorios desde aquí — esa función está en camino. Sigue guardado.',
+        'Esta sesión todavía no se sube. Si la descartas, se borra de este teléfono y no cuenta en ningún tablero.',
+      deleteConfirmAction: 'Descartar',
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
@@ -289,7 +266,7 @@ const translations = {
       // un domingo enorme.
       leadersTitle: 'LÍDERES LOCALES · %{days} DÍAS',
       leadersNote:
-        'Gana quien viene más días, no quien corre más lejos. Un empate se queda con quien ya lo tenía.',
+        'Gana quien viene más días, no quien corre más lejos. Con los mismos días, gana quien dio más vueltas en sus sesiones por aquí, luego quien corrió más; si siguen empatados, se queda quien ya lo tenía.',
       leadersEmpty: 'Nadie ha venido por aquí en los últimos %{days} días.',
       cellsDetail: {
         one: '1 casilla',
@@ -304,14 +281,29 @@ const translations = {
       // Los tres sub-tabs (2026-09-17, restructuración de navegación): la
       // tabla ahora es una sola pantalla con tres pestañas en vez de dos
       // tablas apiladas en un scroll — ver leaderboard.tsx.
-      tabMine: 'Mis logros',
-      tabMunicipio: 'Municipio',
+      tabMunicipio: 'Leaderboard',
       tabLocal: 'Líderes locales',
-      // Legend bajo los sub-tabs de "Mis logros" — total de casillas
-      // conquistadas hasta ahora, sin filtrar por distrito ni municipio.
-      totalTiles: {
-        one: '1 casilla conquistada en total',
-        other: '%{count} casillas conquistadas en total',
+      leadersRefit: 'Ver a los líderes',
+      leadersNoteToggle: 'Cómo se gana',
+      pullRelease: 'Suelta para actualizar',
+      pullRefreshing: 'Actualizando…',
+      pullHint: 'Desliza hacia abajo para actualizar',
+      arenaPrev: 'Lugar anterior',
+      arenaNext: 'Siguiente lugar',
+      arenaHome: 'Vuelve a donde estás',
+      leaderFocusHint: 'Muestra su terreno en el mapa. Toca otra vez para ver a todos.',
+      leaderMe: '%{name} (tú)',
+      leaderDays: {
+        one: '1 día aquí',
+        other: '%{count} días aquí',
+      } as PluralForm,
+      leaderLaps: {
+        one: '1 vuelta',
+        other: '%{count} vueltas',
+      } as PluralForm,
+      leaderRowA11y: {
+        one: 'Lugar %{rank}, %{name}, 1 casilla, %{days} días aquí',
+        other: 'Lugar %{rank}, %{name}, %{count} casillas, %{days} días aquí',
       } as PluralForm,
     },
     feed: {
@@ -528,14 +520,16 @@ const translations = {
       // Settings › Dónde has corrido. El registro personal permanente — el
       // contrapeso a un mapa que bajo conquista muestra solo lo que tienes
       // AHORA. Aquí no te lo puede quitar nadie.
-      historyTitle: 'Archivo de sesiones',
-      historyNavHint: 'Todo lo que has corrido y todo lo que has cerrado. Nadie te lo quita.',
-      historyHint: {
-        one: '1 casilla, contada como la cuenta una sesión: el terreno que pisaste más lo que rodeaste al cerrar una vuelta. Nadie te la quita de este mapa.',
-        other:
-          '%{count} casillas, contadas como las cuenta una sesión: el terreno que pisaste más lo que rodeaste al cerrar una vuelta. Nadie te las quita de este mapa.',
+      historyTitle: 'Lugares donde he corrido',
+      historyNavHint: 'Lo que tienes ahora sobre todo lo que has corrido. Toca una sesión para ver sus datos.',
+      placesHeld: {
+        one: 'Tuya ahora: 1 casilla',
+        other: 'Tuyas ahora: %{count} casillas',
       } as PluralForm,
-      historyEmpty: 'Todavía no has guardado ninguna sesión.',
+      placesEver: {
+        one: 'Has corrido: 1 casilla',
+        other: 'Has corrido: %{count} casillas',
+      } as PluralForm,
       historyFailed: 'No pudimos cargar tu historial. Revisa tu conexión.',
       // Settings › Progreso. Movido del tercer segmento de Guardado
       // (2026-09-16) — el contenido de MunicipioProgressList no cambió,
@@ -646,7 +640,7 @@ const translations = {
       collectedZone:
         'Zona privada: puedes marcar dónde vives en Ajustes. Recortamos el inicio y el final de cada sesión antes de subirla, con un margen aleatorio para que no se pueda deducir el centro a partir de varias sesiones. Ese punto se guarda solo en este teléfono y nunca se sube a ningún servidor.',
       collectedVisible:
-        'Visible para otros: los territorios que guardas y el nombre que elijas en Ajustes aparecen en la tabla de posiciones para cualquier persona que use la app. El área que conquistaste se ve en el mapa; si no pones un nombre, apareces como Anónimo. Cada carrera que terminas se guarda automáticamente — ya no puedes optar por no guardarla. Si prefieres no aparecer, elimínala después desde la pantalla de resumen o la pestaña Territorios (esto no revierte el terreno que ya le hayas quitado a otros corredores mientras estuvo activa).',
+        'Visible para otros: el nombre que elijas en Ajustes y el terreno que tienes aparecen en las tablas para cualquier persona que use la app; sin nombre apareces como Anónimo. En ambas tablas también se ven, por lugar y de los últimos 30 días, la distancia total y el ritmo de tus sesiones, y en Líderes locales sus vueltas. Nunca se muestra tu recorrido. Cada sesión que terminas se guarda automáticamente y ya no se puede borrar, porque cuenta en ambas tablas; para borrar tu cuenta y sus sesiones, escríbenos desde soporte.',
       notTitle: 'Qué no hacemos',
       notAccounts: 'No pedimos correo, contraseña ni datos personales para usar la app.',
       notTracking: 'No rastreamos tu actividad fuera de las carreras que tú grabas, ni usamos analítica.',
@@ -748,27 +742,11 @@ const translations = {
       saving: 'Saving…',
       saved: 'Territory saved',
       discard: 'Discard',
-      // Task 2 — see the Spanish keys' comment: auto-save means there is
-      // usually already a server row by the time the summary renders, so
-      // "Discard" (which never touched the server) stopped being honest.
-      // `discard` above stays as-is — it's still used by the unfinished-
-      // checkpoint recovery prompt, which never reaches the server.
-      deleteRun: 'Delete run',
-      deleting: 'Deleting…',
+      // See the ES comment: only an un-uploaded session can be discarded.
+      deleteRun: 'Discard session',
       deleteConfirmBody:
-        "This deletes your record and this territory. Ground you already took from other runners during this session won't be returned to them.",
-      deleteConfirmAction: 'Delete anyway',
-      deleteFailedNetwork:
-        "We couldn't delete your territory — check your connection. It's still saved, you can retry.",
-      deleteFailedAuth: "We couldn't confirm your session to delete it. Please try again.",
-      deleteFailedDisabled:
-        "Online saving isn't available in this build, so we can't delete it from here.",
-      // Distinct from deleteFailedNetwork on purpose — this isn't a
-      // connection problem, and "check your connection" would send the
-      // runner chasing a WiFi bar that was never the issue. Retrying won't
-      // help here — see deleteRun()'s 'denied' reason.
-      deleteFailedDenied:
-        "We can't delete territories from here yet — that's coming soon. It's still safely saved.",
+        "This session hasn't uploaded yet. Discarding it removes it from this phone, and it won't count on any board.",
+      deleteConfirmAction: 'Discard',
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
@@ -848,7 +826,7 @@ const translations = {
       conquestEmpty: 'Nobody holds ground around here. Be the first.',
       leadersTitle: 'LOCAL LEADERS · %{days} DAYS',
       leadersNote:
-        'This goes to whoever shows up on the most days, not whoever runs furthest. A tie stays with whoever held it first.',
+        'This goes to whoever shows up on the most days, not whoever runs furthest. On equal days, more laps in their runs through here wins, then more distance; if it is still level, it stays with whoever held it first.',
       leadersEmpty: 'Nobody has run around here in the last %{days} days.',
       cellsDetail: {
         one: '1 cell',
@@ -860,12 +838,29 @@ const translations = {
       } as PluralForm,
       error: "We couldn't load the board. Check your connection.",
       disabled: 'Online saving is not configured in this build.',
-      tabMine: 'My Achievements',
-      tabMunicipio: 'Municipio',
+      tabMunicipio: 'Leaderboard',
       tabLocal: 'Local Leaders',
-      totalTiles: {
-        one: '1 tile conquered overall',
-        other: '%{count} tiles conquered overall',
+      leadersRefit: 'Show the leaders',
+      leadersNoteToggle: 'How to win',
+      pullRelease: 'Release to refresh',
+      pullRefreshing: 'Refreshing…',
+      pullHint: 'Pull down to refresh',
+      arenaPrev: 'Previous place',
+      arenaNext: 'Next place',
+      arenaHome: 'Back to where you are',
+      leaderFocusHint: 'Shows their ground on the map. Tap again to see everyone.',
+      leaderMe: '%{name} (you)',
+      leaderDays: {
+        one: '1 day here',
+        other: '%{count} days here',
+      } as PluralForm,
+      leaderLaps: {
+        one: '1 lap',
+        other: '%{count} laps',
+      } as PluralForm,
+      leaderRowA11y: {
+        one: 'Rank %{rank}, %{name}, 1 tile, %{days} days here',
+        other: 'Rank %{rank}, %{name}, %{count} tiles, %{days} days here',
       } as PluralForm,
     },
     feed: {
@@ -1054,14 +1049,16 @@ const translations = {
       zoneOffHint:
         'Without a privacy zone, the exact start and end of your sessions are uploaded and visible to anyone using the app. Set it where you live.',
       zoneFailed: "We couldn\u2019t save your zone. Check location permission and try again.",
-      historyTitle: 'Sessions archive',
-      historyNavHint: "Everywhere you've run and everything you've closed. Nobody can take it.",
-      historyHint: {
-        one: '1 tile, counted the same way a run counts it — ground you crossed plus anything you ran a loop around. Nobody can take it off this map.',
-        other:
-          '%{count} tiles, counted the same way a run counts them — ground you crossed plus anything you ran a loop around. Nobody can take them off this map.',
+      historyTitle: "Places I've been",
+      historyNavHint: 'What you hold now, over everywhere you have run. Tap a session for its stats.',
+      placesHeld: {
+        one: 'Yours now: 1 tile',
+        other: 'Yours now: %{count} tiles',
       } as PluralForm,
-      historyEmpty: "You haven't saved a session yet.",
+      placesEver: {
+        one: 'Ever run: 1 tile',
+        other: 'Ever run: %{count} tiles',
+      } as PluralForm,
       historyFailed: "We couldn't load your history. Check your connection.",
       sectionProgress: 'Park progress',
       navProgressHint: "How much of each municipio's park paths you've covered.",
@@ -1157,7 +1154,7 @@ const translations = {
       collectedZone:
         'Privacy zone: you can mark where you live in Settings. We trim the start and end of every session before uploading it, with a random margin so the centre can\u2019t be worked out from several sessions. That point is stored only on this phone and is never uploaded to any server.',
       collectedVisible:
-        'Visible to others: the territories you save and the name you pick in Settings appear on the leaderboard to anyone using the app, and the area you captured shows on the map. With no name set you appear as Anonymous. Every run you finish saves automatically now — you can no longer opt out of saving. If you would rather not appear, delete it afterward from the summary screen or the Territories tab (this does not undo any ground it already took from other runners while it was live).',
+        'Visible to others: the name you pick in Settings and the ground you hold appear on the leaderboards to anyone using the app; with no name set you appear as Anonymous. Both boards also show, per place and over the last 30 days, the total distance and pace of your sessions, and Local Leaders their laps. Your route itself is never shown. Every session you finish saves automatically and can no longer be deleted, because it counts on both boards; to delete your account and its sessions, contact us through support.',
       notTitle: "What we don't do",
       notAccounts: 'No email, password, or personal details are needed to use the app.',
       notTracking: "No tracking your activity beyond the runs you record yourself, and no analytics.",

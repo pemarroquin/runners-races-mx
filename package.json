@@ -79,6 +79,7 @@
     "measure-holes": "vite-node --config vitest.config.ts scripts/measure-holes.ts",
     "measure-laps": "vite-node --config vitest.config.ts scripts/measure-laps.ts",
     "extract-park-paths": "vite-node --config vitest.config.ts scripts/extract-park-paths.ts",
+    "extract-subdivisions": "vite-node --config vitest.config.ts scripts/extract-subdivisions.ts",
     "verify-rls": "node scripts/verify-rls.mjs"
   },
   "private": true

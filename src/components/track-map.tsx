@@ -62,6 +62,7 @@ import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { gradientStrokeColors } from '@/lib/fence-draw';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
+import { altitudeForZoom } from '@/lib/map-camera';
 
 interface TrackMapProps {
   /** The recorded path. Timestamped, and that is load-bearing: the gap caps
@@ -80,6 +81,9 @@ interface TrackMapProps {
   chromeInsets?: ChromeInsets;
   /** True once a session is live: drives the fly-in and the tilted framing. */
   active: boolean;
+  /** See track-map.web.tsx's matching prop: whether the Run tab is on
+   *  screen. Pauses the per-fix camera while it isn't. Defaults to true. */
+  visible?: boolean;
   /** This run's fence colour ('#rrggbb') — see FENCE_COLOR_SETS. */
   fenceColor: string;
   /** Tile Coverage brief §6 step 4 — this session's live covered H3 cells,
@@ -122,14 +126,7 @@ interface TrackMapProps {
   overviewLabel: string;
 }
 
-// react-native-maps reads `zoom` on Google and `altitude` on Apple, and each
-// platform ignores the other's field — so every camera carries both. The
-// mapping is empirical, tuned to visually match the web map's zoom levels on
-// a phone viewport: z15 ≈ 960m (neighbourhood), z17.5 ≈ 170m (street).
-function altitudeForZoom(zoom: number): number {
-  return 60 * Math.pow(2, 19 - zoom);
-}
-
+// Every camera carries both zoom and altitude — see map-camera.ts.
 function cameraFor(center: LatLng, zoom: number, pitch: number, heading = 0) {
   return {
     center: { latitude: center.lat, longitude: center.lng },
@@ -157,6 +154,7 @@ export function TrackMap({
   here,
   chromeInsets,
   active,
+  visible = true,
   fenceColor,
   tiles,
   enclosedTiles,
@@ -331,7 +329,7 @@ export function TrackMap({
   // their finished route would fight them. Re-applies whichever mode is
   // current on every fix, mirroring track-map.web.tsx's equivalent effect.
   useEffect(() => {
-    if (!running || !flownRef.current) return;
+    if (!running || !flownRef.current || !visible) return;
     const head = here ?? points[points.length - 1];
     if (!head) return;
     applyCamera(cameraMode, 900);
@@ -339,7 +337,7 @@ export function TrackMap({
     // render's points/here/cameraMode — including it in the deps array
     // would just restate points/here/cameraMode, which are already listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, here, running, cameraMode]);
+  }, [points, here, running, cameraMode, visible]);
 
   const toggleCameraMode = () => {
     const next: CameraMode = cameraMode === 'follow' ? 'overview' : 'follow';

@@ -1,4 +1,4 @@
-// My Achievements' map — NATIVE. See territories-map.web.tsx's header
+// Places I've been's map (Profile) — NATIVE. See territories-map.web.tsx's header
 // for the full spec (both visual states, the fit-to-all-bounds behaviour,
 // the scaling caveat); this file mirrors it with react-native-maps instead
 // of Mapbox GL.
@@ -10,6 +10,7 @@
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { cellsToMultiPolygon } from 'h3-js';
 import MapView, { Polygon } from 'react-native-maps';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
@@ -17,6 +18,8 @@ import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
+import { cellsBounds } from '@/lib/local-leaders';
+import { zoomedCamera } from '@/lib/map-camera';
 import { buildMergedTerritories } from '@/lib/merged-territory';
 import { outerRings, type LatLng } from '@/lib/territory';
 
@@ -69,6 +72,8 @@ interface TerritoriesMapProps {
   /** See territories-map.web.tsx's matching prop doc for why this has to be
    *  the caller's call rather than a hard-coded constant. */
   controlsBottomOffset?: number;
+  /** See territories-map.web.tsx's matching prop doc. */
+  baseCells?: string[];
   /** See territories-map.web.tsx's matching prop doc — accepted here only so
    *  the one call site (achievements-view.tsx) typechecks on both platforms.
    *  A no-op on native: this file has no continuous animation timer to gate
@@ -92,8 +97,23 @@ export function TerritoriesMap({
   onSelect,
   controls,
   controlsBottomOffset,
+  baseCells,
 }: TerritoriesMapProps) {
   const mapRef = useRef<MapView | null>(null);
+
+  // Everywhere ever run, drawn faint beneath the held ground. Outer rings
+  // only, like the district map: react-native-maps takes holes separately
+  // and a hole in the permanent record is not worth the extra prop.
+  const baseRings = useMemo(() => {
+    if (!baseCells || baseCells.length === 0) return [];
+    try {
+      return cellsToMultiPolygon(baseCells).map((poly) =>
+        (poly[0] as unknown as [number, number][]).map(([lat, lng]) => ({ latitude: lat, longitude: lng })),
+      );
+    } catch {
+      return [];
+    }
+  }, [baseCells]);
 
   const colorMap = useMemo(
     () =>
@@ -110,7 +130,17 @@ export function TerritoriesMap({
     [features, colorMap],
   );
 
-  const fitCoords = useMemo(() => boundsCoordsOf(features), [features]);
+  const fitCoords = useMemo(() => {
+    const held = boundsCoordsOf(features);
+    if (held.length > 0 || !baseCells) return held;
+    const b = cellsBounds(baseCells);
+    return b
+      ? [
+          { latitude: b.minLat, longitude: b.minLng },
+          { latitude: b.maxLat, longitude: b.maxLng },
+        ]
+      : [];
+  }, [features, baseCells]);
   useEffect(() => {
     if (fitCoords.length === 0) return;
     // Deferred a tick: fitToCoordinates before real layout silently no-ops
@@ -130,8 +160,9 @@ export function TerritoriesMap({
   const zoomBy = useCallback((delta: number) => {
     const map = mapRef.current;
     if (!map) return;
+    // zoomedCamera sets altitude too: Apple Maps ignores `zoom` entirely.
     void map.getCamera().then((camera) => {
-      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+      map.animateCamera(zoomedCamera(camera, delta), { duration: 300 });
     });
   }, []);
 
@@ -150,6 +181,15 @@ export function TerritoriesMap({
         userInterfaceStyle="dark"
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
+        {baseRings.map((coords, i) => (
+          <Polygon
+            key={`base:${i}`}
+            coordinates={coords}
+            fillColor="rgba(255,255,255,0.12)"
+            strokeWidth={0}
+            tappable={false}
+          />
+        ))}
         {/* Merged fills: adjacent tiles from different runs dissolve into one
             polygon per connected component. Click routes to the most-recent
             run in that component (matches web's MERGED_FILLS_SRC behaviour). */}

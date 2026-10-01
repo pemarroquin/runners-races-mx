@@ -18,8 +18,8 @@
 // loaded the same day (36,193 cells, see BACKLOG). `fetchDistrictParkCells`
 // is restored ONLY for district.ts's districtLabel — a decorative caption,
 // never a score — not for any denominator.
-import { districtCellPattern } from '@/lib/district';
-import type { TileVisitRow } from '@/lib/mayorship';
+import { districtCellPattern, districtChunks, districtsOrFilter } from '@/lib/district';
+import type { RunStats, TileVisitRow } from '@/lib/mayorship';
 import { supabase } from '@/lib/supabase';
 import { withSession, type Outcome } from '@/lib/territory-sync';
 
@@ -85,24 +85,30 @@ export async function fetchDistrictParkCells(
  * mayorship per cell, not more paging here.
  */
 export async function fetchDistrictVisits(
-  district: string,
+  /** One district, or every district covering a subdivision (subdivisions.ts
+   *  cuts the exact outline on device afterwards). */
+  districts: string | string[],
 ): Promise<Outcome<{ visits: TileVisitRow[] }>> {
   return withSession<{ visits: TileVisitRow[] }>(async () => {
-    const pattern = `${districtCellPattern(district)}%`;
-    const rows: { h3: string; user_id: string; visited_at: string }[] = [];
-    for (let offset = 0; ; offset += PAGE) {
-      const { data, error } = await supabase
-        .from('tile_visits')
-        .select('h3, user_id, visited_at')
-        .like('h3', pattern)
-        // (h3, run_id) is the primary key; h3 alone is not unique, so the
-        // second key makes paging deterministic.
-        .order('h3', { ascending: true })
-        .order('run_id', { ascending: true })
-        .range(offset, offset + PAGE - 1);
-      if (error || !data) return { ok: false, reason: 'network' as const };
-      rows.push(...data);
-      if (data.length < PAGE) break;
+    const rows: { h3: string; user_id: string; visited_at: string; run_id: string }[] = [];
+    // Chunked so a municipio's hundred-odd districts never build one giant
+    // URL; each chunk pages on its own. Chunks can't overlap (districts are
+    // disjoint), so concatenating them never double-counts a visit.
+    for (const chunk of districtChunks(typeof districts === 'string' ? [districts] : districts)) {
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from('tile_visits')
+          .select('h3, user_id, visited_at, run_id')
+          .or(districtsOrFilter(chunk))
+          // (h3, run_id) is the primary key; h3 alone is not unique, so the
+          // second key makes paging deterministic.
+          .order('h3', { ascending: true })
+          .order('run_id', { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error || !data) return { ok: false, reason: 'network' as const };
+        rows.push(...data);
+        if (data.length < PAGE) break;
+      }
     }
 
     // Names in one follow-up query keyed on the distinct users present,
@@ -129,7 +135,46 @@ export async function fetchDistrictVisits(
         userId: r.user_id,
         displayName: nameById.get(r.user_id) ?? null,
         visitedAt: r.visited_at,
+        runId: r.run_id,
       })),
     };
+  });
+}
+
+/** Runs per `run_stats` call — the function's own cap. */
+const RUN_STATS_PER_CALL = 2000;
+
+/**
+ * Distance, duration and laps of the runs behind an arena's visits, for
+ * Local Leaders' tiebreakers and row totals. Through the `run_stats` RPC
+ * (20260930120000_runs_laps_and_stats), because `runs` itself is readable
+ * only by its owner — the RPC returns those three numbers and nothing else,
+ * and nothing for a flagged run.
+ *
+ * A failure is its own outcome, not an empty map: before the migration is
+ * applied this errors, and the board must then say it has no effort numbers
+ * rather than show everyone at zero.
+ */
+export async function fetchRunStats(
+  runIds: string[],
+): Promise<Outcome<{ stats: Map<string, RunStats> }>> {
+  return withSession<{ stats: Map<string, RunStats> }>(async () => {
+    const stats = new Map<string, RunStats>();
+    const unique = [...new Set(runIds)];
+    for (let i = 0; i < unique.length; i += RUN_STATS_PER_CALL) {
+      const { data, error } = await supabase.rpc('run_stats', {
+        p_run_ids: unique.slice(i, i + RUN_STATS_PER_CALL),
+      });
+      if (error || !Array.isArray(data)) return { ok: false, reason: 'network' as const };
+      for (const row of data as { id: string; distance_m: number | string; duration_s: number; laps: number }[]) {
+        stats.set(row.id, {
+          // numeric arrives as a string from PostgREST.
+          distanceM: Number(row.distance_m),
+          durationS: row.duration_s,
+          laps: row.laps,
+        });
+      }
+    }
+    return { ok: true, stats };
   });
 }

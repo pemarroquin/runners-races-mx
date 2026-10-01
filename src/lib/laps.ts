@@ -283,3 +283,26 @@ export function pickSafeLapMarkerCenter(
   const safeCells = repeatedCells.filter((c) => masked.has(c));
   return pickLapMarkerCenter(safeCells);
 }
+
+/**
+ * The most laps the server accepts for a run of this distance — the exact
+ * mirror of `runs_laps_plausible` (20260930120000_runs_laps_and_stats.sql):
+ * `laps <= 1 + floor(distance_m / 150)`, where distance_m is the rounded
+ * value uploadRun stores. detectLaps' separation is counted in cells, not
+ * metres, so a tight loop or GPS jitter can exceed it; clamping here keeps
+ * such a run from being refused outright.
+ */
+export function maxPlausibleLaps(distanceM: number): number {
+  return 1 + Math.floor(Math.max(0, Math.round(distanceM)) / 150);
+}
+
+/** The lap count to upload: 0 unless the run qualified, never above the
+ *  server's bound. */
+export function lapsForUpload(
+  lap: { qualifies: boolean; laps?: number } | undefined,
+  distanceM: number,
+): number {
+  if (!lap?.qualifies) return 0;
+  const laps = Math.floor(lap.laps ?? 0);
+  return Math.max(0, Math.min(laps, maxPlausibleLaps(distanceM)));
+}

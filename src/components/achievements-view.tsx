@@ -1,5 +1,7 @@
-// "My Achievements" — the Leaderboard's personal tab: every territory this
-// identity has conquered, on one full-bleed map, tap a shape for its detail.
+// "My Achievements" — every territory this identity holds, on one
+// full-bleed map, tap a shape for its detail. Lives in Profile › Places I've
+// been since 2026-09-30, over the permanent record (`baseCells`); it was a
+// Leaderboard sub-tab before that.
 //
 // Moved here 2026-09-17 (Pedro's nav restructure) from the old Saved tab's
 // "Conquested Areas" segment (myraces.tsx) — same map, same detail bubble,
@@ -44,12 +46,10 @@ import { onIdentityChanged } from '@/lib/auth-events';
 import { groundOfRun } from '@/lib/enclosure';
 import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import {
-  deleteRun,
   fetchMyClaimedCells,
   fetchMyFences,
   type RunCells,
   uploadRun,
-  type DeleteOutcome,
   type FencesOutcome,
   type MyFence,
   type SyncOutcome,
@@ -72,12 +72,6 @@ const SYNC_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network', string> = {
   network: 'track.syncFailedNetwork',
 };
 
-const DELETE_FAILURE_KEYS: Record<'disabled' | 'auth' | 'network' | 'denied', string> = {
-  disabled: 'track.deleteFailedDisabled',
-  auth: 'track.deleteFailedAuth',
-  denied: 'track.deleteFailedDenied',
-  network: 'track.deleteFailedNetwork',
-};
 
 interface Selection {
   id: string;
@@ -87,9 +81,20 @@ interface Selection {
 export function AchievementsView({
   locale,
   scheme,
+  baseCells,
+  baseFailed = false,
+  bottomInset = BottomTabInset,
 }: {
   locale: string;
   scheme: 'dark' | 'light';
+  /** Everywhere ever run, drawn faint beneath the ground held now (Profile ›
+   *  Places I've been). Undefined while it loads. */
+  baseCells?: string[];
+  /** The permanent-record read failed — said in the legend, so a missing
+   *  base layer never reads as "you've run nowhere". */
+  baseFailed?: boolean;
+  /** Clearance for whatever floats at the bottom of the screen. */
+  bottomInset?: number;
 }) {
   const c = Colors[scheme];
   const { t } = useI18n();
@@ -245,13 +250,23 @@ export function AchievementsView({
   return (
     <View style={styles.stage}>
       <View style={styles.legendRow}>
-        <Icon ios="square.grid.3x3.fill" android="grid_view" size={14} color={c.textSecondary} />
-        <Text style={[styles.legendText, { color: c.textSecondary }]}>
-          {t('leaderboard.totalTiles', { count: totalTiles })}
-        </Text>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: c.accent }]} />
+          <Text style={[styles.legendText, { color: c.textSecondary }]}>
+            {t('settings.placesHeld', { count: totalTiles })}
+          </Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, styles.legendSwatchBase, { borderColor: c.textSecondary }]} />
+          <Text style={[styles.legendText, { color: c.textSecondary }]}>
+            {baseFailed
+              ? t('settings.historyFailed')
+              : t('settings.placesEver', { count: baseCells?.length ?? 0 })}
+          </Text>
+        </View>
       </View>
 
-      {features.length === 0 ? (
+      {features.length === 0 && !baseCells?.length ? (
         <ScrollView
           contentContainerStyle={[styles.emptyWrap, styles.emptyWrapGrow]}
           refreshControl={
@@ -265,6 +280,7 @@ export function AchievementsView({
         <View style={styles.mapStage}>
           <TerritoriesMap
             features={features}
+            baseCells={baseCells}
             onSelect={(id, kind) => setSelection({ id, kind })}
             controls={{
               zoomInLabel: t('track.zoomIn'),
@@ -273,14 +289,12 @@ export function AchievementsView({
             }}
             controlsBottomOffset={
               selection
-                ? BottomTabInset + Spacing.three + DETAIL_BUBBLE_LIFT
-                : BottomTabInset + Spacing.three
+                ? bottomInset + Spacing.three + DETAIL_BUBBLE_LIFT
+                : bottomInset + Spacing.three
             }
-            // This screen lives inside a Tabs navigator, which never
-            // unmounts a tab on switching away from it — without this, the
-            // map's two animation timers (gradient flow + shimmer) kept
-            // running full-speed after leaving Leaderboard for Run or
-            // Races. See TerritoriesMap's own `active` prop doc.
+            // Gates the map's two animation timers (gradient flow +
+            // shimmer) on this screen being on top. See TerritoriesMap's own
+            // `active` prop doc for the phone-heating bug this prevents.
             active={isFocused}
           />
           {(selectedFence || selectedQueued) && (
@@ -290,6 +304,7 @@ export function AchievementsView({
               cells={selection ? cellsByRun.get(selection.id) : undefined}
               locale={locale}
               scheme={scheme}
+              bottom={bottomInset + Spacing.three}
               onClose={() => setSelection(null)}
               onDeleted={() => {
                 setDeleteSignal((v) => v + 1);
@@ -309,6 +324,7 @@ function DetailCard({
   cells,
   locale,
   scheme,
+  bottom,
   onClose,
   onDeleted,
 }: {
@@ -317,6 +333,7 @@ function DetailCard({
   cells?: string[];
   locale: string;
   scheme: 'dark' | 'light';
+  bottom: number;
   onClose: () => void;
   onDeleted: () => void;
 }) {
@@ -324,8 +341,6 @@ function DetailCard({
   const { t } = useI18n();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteFailure, setDeleteFailure] = useState<DeleteOutcome | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [retryFailure, setRetryFailure] = useState<SyncOutcome | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -360,20 +375,6 @@ function DetailCard({
         }
       : null;
 
-  const handleDeleteSaved = useCallback(async () => {
-    if (!fence) return;
-    setDeleting(true);
-    setDeleteFailure(null);
-    const outcome = await deleteRun(fence.id);
-    if (!outcome.ok) {
-      setDeleting(false);
-      setDeleteFailure(outcome);
-      setConfirmingDelete(false);
-      return;
-    }
-    onDeleted();
-  }, [fence, onDeleted]);
-
   const handleDeleteQueued = useCallback(() => {
     if (!queued) return;
     removeQueued(queued.id);
@@ -396,7 +397,7 @@ function DetailCard({
   }, [queued, onDeleted]);
 
   return (
-    <Animated.View entering={FadeInDown.duration(280)} style={styles.detailBubbleWrap}>
+    <Animated.View entering={FadeInDown.duration(280)} style={[styles.detailBubbleWrap, { bottom }]}>
       {isLiquidGlassAvailable() ? (
         <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" colorScheme="dark" />
       ) : (
@@ -467,9 +468,6 @@ function DetailCard({
       {retryFailure && !retryFailure.ok && (
         <Text style={[styles.detailNoticeText, { color: c.accent }]}>{t(SYNC_FAILURE_KEYS[retryFailure.reason])}</Text>
       )}
-      {deleteFailure && !deleteFailure.ok && (
-        <Text style={[styles.detailNoticeText, { color: c.accent }]}>{t(DELETE_FAILURE_KEYS[deleteFailure.reason])}</Text>
-      )}
 
       {confirmingDelete ? (
         <View style={styles.detailConfirm}>
@@ -478,14 +476,8 @@ function DetailCard({
             <Pressable onPress={() => setConfirmingDelete(false)} accessibilityRole="button" hitSlop={10}>
               <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY }]}>{t('common.cancel')}</Text>
             </Pressable>
-            <Pressable
-              onPress={() => void (queued ? handleDeleteQueued() : handleDeleteSaved())}
-              disabled={deleting}
-              accessibilityRole="button"
-              hitSlop={10}>
-              <Text style={[styles.detailAction, { color: c.accent, opacity: deleting ? 0.5 : 1 }]}>
-                {deleting ? t('track.deleting') : t('track.deleteConfirmAction')}
-              </Text>
+            <Pressable onPress={handleDeleteQueued} accessibilityRole="button" hitSlop={10}>
+              <Text style={[styles.detailAction, { color: c.accent }]}>{t('track.deleteConfirmAction')}</Text>
             </Pressable>
           </View>
         </View>
@@ -498,15 +490,21 @@ function DetailCard({
               </Text>
             </Pressable>
           )}
-          <Pressable
-            onPress={() => setConfirmingDelete(true)}
-            disabled={deleting || retrying}
-            accessibilityRole="button"
-            hitSlop={10}>
-            <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY, opacity: deleting || retrying ? 0.5 : 1 }]}>
-              {t('track.deleteRun')}
-            </Text>
-          </Pressable>
+          {/* Only a run still waiting to upload can be discarded. A saved run
+              counts on both boards, and runners can't delete what counts
+              (Pedro, 2026-09-30); a whole account is removed through
+              support, as the privacy notice says. */}
+          {queued && (
+            <Pressable
+              onPress={() => setConfirmingDelete(true)}
+              disabled={retrying}
+              accessibilityRole="button"
+              hitSlop={10}>
+              <Text style={[styles.detailAction, { color: ON_DARK_TEXT_SECONDARY, opacity: retrying ? 0.5 : 1 }]}>
+                {t('track.deleteRun')}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
     </Animated.View>
@@ -533,11 +531,16 @@ const styles = StyleSheet.create({
   stage: { flex: 1 },
   legendRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: Spacing.one,
+    columnGap: Spacing.three,
+    rowGap: Spacing.one,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
   },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  legendSwatch: { width: 10, height: 10, borderRadius: 3 },
+  legendSwatchBase: { backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1 },
   legendText: { fontSize: 13, fontWeight: '600' },
   mapStage: { flex: 1 },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: Spacing.six },
@@ -548,7 +551,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: Spacing.three,
     right: Spacing.three,
-    bottom: BottomTabInset + Spacing.three,
     overflow: 'hidden',
     borderRadius: GlassRadii.sheet,
     padding: Spacing.three,

@@ -34,7 +34,7 @@
 // The cost of this choice, stated plainly: a district has no human name. That
 // is what `districtLabel` is for, and the label is DECORATIVE — nothing
 // ranks, filters or scores by it. See its own comment.
-import { cellToCenterChild, cellToParent, getResolution, latLngToCell } from 'h3-js';
+import { cellToCenterChild, cellToChildrenSize, cellToParent, getResolution, latLngToCell } from 'h3-js';
 
 import type { LatLng } from '@/lib/territory';
 import { DEFAULT_TILE_RES } from '@/lib/tiles';
@@ -179,4 +179,53 @@ export function districtLabel(
  */
 export function districtCellPattern(district: string): string {
   return cellToCenterChild(district, DEFAULT_TILE_RES).slice(0, 2 + DISTRICT_RES);
+}
+
+/**
+ * What a board is scoped to. Since 2026-09-30 that is a city's real
+ * subdivision (subdivisions.ts) wherever one is mapped, and this district
+ * everywhere else. Both boards take a scope rather than a district id, so
+ * neither needs to know which kind it has.
+ */
+export interface ArenaScope {
+  /** Whether a tile-resolution cell counts in this arena. */
+  contains: (h3: string) => boolean;
+  /** Tile-resolution cells in the whole arena, buildings and all — the
+   *  denominator for "how much is left to take", never for the share. */
+  totalCells: number;
+}
+
+export function districtScope(district: string): ArenaScope {
+  return {
+    contains: (h3) => districtOfCell(h3) === district,
+    totalCells: cellToChildrenSize(district, DEFAULT_TILE_RES),
+  };
+}
+
+/** A district id or a scope, as a scope. Lets the pure boards keep accepting
+ *  a bare district id, which is what every existing test passes. */
+export function asScope(arena: string | ArenaScope): ArenaScope {
+  return typeof arena === 'string' ? districtScope(arena) : arena;
+}
+
+/** Districts per request when a read covers many (a municipio can need a
+ *  hundred). Keeps each request's `or=(...)` filter to a few KB of URL. */
+export const DISTRICTS_PER_REQUEST = 40;
+
+/**
+ * A PostgREST `or` filter matching every tile in any of the districts:
+ * `h3.like.<prefix>*,…` (`*` is PostgREST's LIKE wildcard inside `or`).
+ * Each prefix is districtCellPattern's, so it is exactly as verified.
+ */
+export function districtsOrFilter(districts: string[]): string {
+  return districts.map((d) => `h3.like.${districtCellPattern(d)}*`).join(',');
+}
+
+/** Districts in request-sized chunks, for reads scoped to many of them. */
+export function districtChunks(districts: string[]): string[][] {
+  const out: string[][] = [];
+  for (let i = 0; i < districts.length; i += DISTRICTS_PER_REQUEST) {
+    out.push(districts.slice(i, i + DISTRICTS_PER_REQUEST));
+  }
+  return out;
 }

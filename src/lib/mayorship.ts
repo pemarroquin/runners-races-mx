@@ -30,7 +30,7 @@
 // PURE, on rows already fetched — same philosophy as leaderboard.ts and
 // territory.ts, and the reason this suite (`environment: 'node'`, no
 // renderer, no Postgres) can cover the mechanic completely.
-import { districtOfCell } from '@/lib/district';
+import { asScope, type ArenaScope } from '@/lib/district';
 import { compareUserId } from '@/lib/leaderboard';
 
 /**
@@ -53,6 +53,16 @@ export interface TileVisitRow {
   displayName: string | null;
   /** ISO timestamp, as stored (`visited_at`). */
   visitedAt: string;
+  /** The run behind this visit, for the tiebreakers' run stats. Optional:
+   *  without it the visit still counts its day, just no laps or distance. */
+  runId?: string;
+}
+
+/** The numbers of one run, from the `run_stats` RPC — never its path. */
+export interface RunStats {
+  distanceM: number;
+  durationS: number;
+  laps: number;
 }
 
 export interface MayorshipEntry {
@@ -96,8 +106,26 @@ const WINDOW_MS = MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
 interface CellClaim {
   days: Set<string>;
+  /** Runs behind the visits, for the laps and distance tiebreakers. */
+  runs: Set<string>;
   /** Earliest visit in the window, for the incumbency tie-break. */
   firstMs: number;
+}
+
+/** Laps and distance of the runs a runner made through one cell (whole-run
+ *  totals — per-cell laps aren't stored). */
+function effort(runs: Set<string>, stats: Map<string, RunStats> | undefined) {
+  let laps = 0;
+  let distanceM = 0;
+  if (stats) {
+    for (const id of runs) {
+      const s = stats.get(id);
+      if (!s) continue;
+      laps += s.laps;
+      distanceM += s.distanceM;
+    }
+  }
+  return { laps, distanceM };
 }
 
 /**
@@ -116,6 +144,13 @@ interface CellClaim {
 export function mayorByCell(
   visits: TileVisitRow[],
   now: number = Date.now(),
+  /** Run numbers for the tiebreakers (Pedro, 2026-09-30): on equal days,
+   *  more laps in the runs that passed through this cell wins, then more
+   *  distance, then the incumbent. Whole-run laps: per-cell lap counts
+   *  aren't stored, so a lapped workout elsewhere that crossed this cell
+   *  counts too — a known limit of a tiebreaker, never of the title.
+   *  Pace is never ranked. Omitted: straight to the incumbent, as before. */
+  stats?: Map<string, RunStats>,
 ): Map<string, { userId: string; days: number }> {
   const cutoff = now - WINDOW_MS;
   // cell -> user -> claim
@@ -136,9 +171,14 @@ export function mayorByCell(
     const claim = byUser.get(visit.userId);
     if (claim) {
       claim.days.add(dayKey(visit.visitedAt));
+      if (visit.runId) claim.runs.add(visit.runId);
       if (ms < claim.firstMs) claim.firstMs = ms;
     } else {
-      byUser.set(visit.userId, { days: new Set([dayKey(visit.visitedAt)]), firstMs: ms });
+      byUser.set(visit.userId, {
+        days: new Set([dayKey(visit.visitedAt)]),
+        runs: new Set(visit.runId ? [visit.runId] : []),
+        firstMs: ms,
+      });
     }
   }
 
@@ -146,21 +186,33 @@ export function mayorByCell(
   for (const [h3, byUser] of cells) {
     let bestUser: string | null = null;
     let bestDays = 0;
+    let bestLaps = 0;
+    let bestDistanceM = 0;
     let bestFirstMs = Infinity;
     for (const [userId, claim] of byUser) {
       const days = claim.days.size;
+      const { laps, distanceM } = effort(claim.runs, stats);
       const wins =
         days > bestDays ||
-        // The incumbency rule. On equal days the earlier arrival keeps it;
-        // the final userId comparison is only there so the answer does not
-        // depend on Map iteration order for two runners who also arrived on
-        // the same millisecond.
         (days === bestDays &&
-          (claim.firstMs < bestFirstMs ||
-            (claim.firstMs === bestFirstMs && (bestUser === null || userId < bestUser))));
+          // Effort breaks a tie on days, never overrides one: a single
+          // enormous session still can't buy a title.
+          (laps > bestLaps ||
+            (laps === bestLaps &&
+              (distanceM > bestDistanceM ||
+                (distanceM === bestDistanceM &&
+                  // The incumbency rule. On equal everything the earlier
+                  // arrival keeps it; the final userId comparison is only
+                  // there so the answer does not depend on Map iteration
+                  // order for two runners who also arrived on the same
+                  // millisecond.
+                  (claim.firstMs < bestFirstMs ||
+                    (claim.firstMs === bestFirstMs && (bestUser === null || userId < bestUser))))))));
       if (wins) {
         bestUser = userId;
         bestDays = days;
+        bestLaps = laps;
+        bestDistanceM = distanceM;
         bestFirstMs = claim.firstMs;
       }
     }
@@ -179,12 +231,12 @@ export function mayorByCell(
  */
 export function rankMayors(
   visits: TileVisitRow[],
-  district: string | null,
+  arena: string | ArenaScope | null,
   now: number = Date.now(),
+  stats?: Map<string, RunStats>,
 ): MayorshipEntry[] {
-  const scoped =
-    district === null ? visits : visits.filter((v) => districtOfCell(v.h3) === district);
-  const mayors = mayorByCell(scoped, now);
+  const scoped = scopeVisits(visits, arena);
+  const mayors = mayorByCell(scoped, now, stats);
 
   const nameById = new Map<string, string | null>();
   for (const visit of scoped) {
@@ -222,6 +274,18 @@ export function rankMayors(
         b.bestDays - a.bestDays ||
         compareUserId(a.userId, b.userId),
     );
+}
+
+/** Visits inside an arena (a district id or a scope; null for everywhere).
+ *  Scoping happens on the CELL, before mayorship is decided, so an arena's
+ *  board is decided entirely by ground inside it. */
+export function scopeVisits(
+  visits: TileVisitRow[],
+  arena: string | ArenaScope | null,
+): TileVisitRow[] {
+  if (arena === null) return visits;
+  const { contains } = asScope(arena);
+  return visits.filter((v) => contains(v.h3));
 }
 
 /** The cells one runner is mayor of, for drawing their turf on the map. */
