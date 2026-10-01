@@ -25,6 +25,7 @@ import type {
 import { Icon } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { frameOf } from '@/lib/local-leaders';
+import { zoomedCamera } from '@/lib/map-camera';
 
 export type { DistrictHolding, DistrictMapArena, DistrictMapFull, DistrictMapProps };
 
@@ -63,8 +64,9 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
   const zoomBy = useCallback((delta: number) => {
     const map = mapRef.current;
     if (!map) return;
+    // zoomedCamera sets altitude too: Apple Maps ignores `zoom` entirely.
     void map.getCamera().then((camera) => {
-      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+      map.animateCamera(zoomedCamera(camera, delta), { duration: 300 });
     });
   }, []);
 

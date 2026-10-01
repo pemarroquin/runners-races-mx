@@ -51,6 +51,42 @@ export function refetchDelay(lastRefetchMs: number | null, now: number): number 
   return Math.max(0, lastRefetchMs + LIVE_MIN_INTERVAL_MS - now);
 }
 
+// ONE shared subscription for the app, with listeners attached to it.
+// supabase.channel(topic) hands back any existing channel with that topic,
+// and removeChannel is async — so subscribing afresh per screen let a quick
+// tab switch reuse a channel that was mid-teardown, and live updates then
+// stopped with no error. Now the channel is created once, torn down when
+// the last listener leaves, and a new listener waits out any teardown first.
+type RealtimeChannel = ReturnType<typeof supabase.channel>;
+const listeners = new Set<(payload: unknown) => void>();
+let live: RealtimeChannel | null = null;
+let removing: Promise<void> | null = null;
+
+async function ensureChannel(): Promise<void> {
+  if (removing) await removing;
+  if (live || listeners.size === 0) return;
+  live = supabase
+    .channel(TERRITORY_TOPIC)
+    .on('broadcast', { event: CLAIMED_EVENT }, (msg) => {
+      for (const listener of listeners) listener(msg.payload);
+    })
+    .subscribe();
+}
+
+function teardownChannel(): void {
+  const channel = live;
+  if (!channel) return;
+  live = null;
+  removing = supabase
+    .removeChannel(channel)
+    .then(() => undefined, () => undefined)
+    .finally(() => {
+      removing = null;
+      // Someone subscribed while this was closing.
+      if (listeners.size > 0) void ensureChannel();
+    });
+}
+
 /**
  * Tell anyone watching that ground changed hands. Best effort by design:
  * a lost nudge costs a viewer nothing but a few seconds, since every focus
@@ -64,10 +100,17 @@ export function announceClaim(cells: string[]): void {
   try {
     const districts = claimDistricts(cells);
     if (districts.length === 0) return;
-    void supabase
-      .channel(TERRITORY_TOPIC)
+    // Our own subscribed channel when one exists; otherwise a throwaway one,
+    // removed after sending so it doesn't sit registered on the client and
+    // get handed back to the next subscriber unsubscribed.
+    const channel = live ?? supabase.channel(TERRITORY_TOPIC);
+    const throwaway = channel !== live;
+    void channel
       .httpSend(CLAIMED_EVENT, { districts })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (throwaway && channel !== live) void supabase.removeChannel(channel).catch(() => undefined);
+      });
   } catch {
     // Best effort — see this function's header.
   }
@@ -75,11 +118,10 @@ export function announceClaim(cells: string[]): void {
 
 /** Listen for claims. Returns the unsubscribe. */
 export function subscribeClaims(onMessage: (payload: unknown) => void): () => void {
-  const channel = supabase
-    .channel(TERRITORY_TOPIC)
-    .on('broadcast', { event: CLAIMED_EVENT }, (msg) => onMessage(msg.payload))
-    .subscribe();
+  listeners.add(onMessage);
+  void ensureChannel();
   return () => {
-    void supabase.removeChannel(channel);
+    listeners.delete(onMessage);
+    if (listeners.size === 0) teardownChannel();
   };
 }

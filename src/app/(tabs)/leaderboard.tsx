@@ -185,10 +185,17 @@ export default function LeaderboardScreen() {
         : Promise.resolve({ ok: true as const, parkCells: [] as ParkCell[] }),
       fetchDistrictVisits(forArena.districts),
     ]);
-    // After the visits, because it needs their run ids.
-    const runStats = visits.ok
-      ? await fetchRunStats(visits.visits.flatMap((v) => (v.runId ? [v.runId] : [])))
-      : null;
+    // After the visits, because it needs their run ids — and only the runs
+    // that can matter: inside this arena's outline (the reads also return
+    // the padding ring) and inside the window mayorship reads. Visits are
+    // all-time, so passing every id would grow with history for nothing.
+    const cutoff = Date.now() - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const runIds = visits.ok
+      ? visits.visits.flatMap((v) =>
+          v.runId && Date.parse(v.visitedAt) >= cutoff && forArena.contains(v.h3) ? [v.runId] : [],
+        )
+      : [];
+    const runStats = visits.ok ? await fetchRunStats(runIds) : null;
     return {
       arenaKey: forArena.key,
       runStats: runStats?.ok ? runStats.stats : null,

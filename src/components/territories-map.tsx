@@ -19,6 +19,7 @@ import { Spacing } from '@/constants/theme';
 import { assignFenceColors, GOOGLE_DARK_MAP_STYLE, withAlpha, ZOOM_STEP } from '@/constants/map';
 import { polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
 import { cellsBounds } from '@/lib/local-leaders';
+import { zoomedCamera } from '@/lib/map-camera';
 import { buildMergedTerritories } from '@/lib/merged-territory';
 import { outerRings, type LatLng } from '@/lib/territory';
 
@@ -159,8 +160,9 @@ export function TerritoriesMap({
   const zoomBy = useCallback((delta: number) => {
     const map = mapRef.current;
     if (!map) return;
+    // zoomedCamera sets altitude too: Apple Maps ignores `zoom` entirely.
     void map.getCamera().then((camera) => {
-      map.animateCamera({ ...camera, zoom: (camera.zoom ?? 15) + delta }, { duration: 300 });
+      map.animateCamera(zoomedCamera(camera, delta), { duration: 300 });
     });
   }, []);
 

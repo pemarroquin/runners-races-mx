@@ -112,7 +112,8 @@ interface CellClaim {
   firstMs: number;
 }
 
-/** Laps and distance of a runner's runs that touched one cell. */
+/** Laps and distance of the runs a runner made through one cell (whole-run
+ *  totals — per-cell laps aren't stored). */
 function effort(runs: Set<string>, stats: Map<string, RunStats> | undefined) {
   let laps = 0;
   let distanceM = 0;
@@ -144,7 +145,10 @@ export function mayorByCell(
   visits: TileVisitRow[],
   now: number = Date.now(),
   /** Run numbers for the tiebreakers (Pedro, 2026-09-30): on equal days,
-   *  more laps on this cell wins, then more distance, then the incumbent.
+   *  more laps in the runs that passed through this cell wins, then more
+   *  distance, then the incumbent. Whole-run laps: per-cell lap counts
+   *  aren't stored, so a lapped workout elsewhere that crossed this cell
+   *  counts too — a known limit of a tiebreaker, never of the title.
    *  Pace is never ranked. Omitted: straight to the incumbent, as before. */
   stats?: Map<string, RunStats>,
 ): Map<string, { userId: string; days: number }> {

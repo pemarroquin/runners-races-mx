@@ -121,7 +121,11 @@ export function PullPill({
     <View pointerEvents="box-none" style={[styles.wrap, { top }]}>
       <Animated.View style={[styles.tether, { height: stretch, opacity: tetherOpacity }]} />
       <View
-        onStartShouldSetResponder={(e) => {
+        // CAPTURE phase, parent first: a touch that starts on an arrow or on
+        // the name is claimed by that Pressable at start, so a bubbling
+        // handler here would never hear about it and the pull would measure
+        // from the previous touch. Records only; never claims the tap.
+        onStartShouldSetResponderCapture={(e) => {
           startRef.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
           return false;
         }}

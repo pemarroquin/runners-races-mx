@@ -266,7 +266,7 @@ const translations = {
       // un domingo enorme.
       leadersTitle: 'LÍDERES LOCALES · %{days} DÍAS',
       leadersNote:
-        'Gana quien viene más días, no quien corre más lejos. Con los mismos días, gana quien dio más vueltas aquí, luego quien corrió más; si siguen empatados, se queda quien ya lo tenía.',
+        'Gana quien viene más días, no quien corre más lejos. Con los mismos días, gana quien dio más vueltas en sus sesiones por aquí, luego quien corrió más; si siguen empatados, se queda quien ya lo tenía.',
       leadersEmpty: 'Nadie ha venido por aquí en los últimos %{days} días.',
       cellsDetail: {
         one: '1 casilla',
@@ -826,7 +826,7 @@ const translations = {
       conquestEmpty: 'Nobody holds ground around here. Be the first.',
       leadersTitle: 'LOCAL LEADERS · %{days} DAYS',
       leadersNote:
-        'This goes to whoever shows up on the most days, not whoever runs furthest. On equal days, more laps here wins, then more distance; if it is still level, it stays with whoever held it first.',
+        'This goes to whoever shows up on the most days, not whoever runs furthest. On equal days, more laps in their runs through here wins, then more distance; if it is still level, it stays with whoever held it first.',
       leadersEmpty: 'Nobody has run around here in the last %{days} days.',
       cellsDetail: {
         one: '1 cell',

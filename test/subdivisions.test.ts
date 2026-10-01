@@ -9,6 +9,7 @@ import {
   BUNDLED_SUBDIVISIONS,
   arenasFor,
   coveringDistricts,
+  districtArena,
   parseSubdivisions,
   subdivisionArena,
   subdivisionAt,
@@ -154,5 +155,37 @@ describe('district read filters', () => {
     const many = Array.from({ length: DISTRICTS_PER_REQUEST * 2 + 3 }, () => a);
     const chunks = districtChunks(many);
     expect(chunks.map((c) => c.length)).toEqual([DISTRICTS_PER_REQUEST, DISTRICTS_PER_REQUEST, 3]);
+  });
+});
+
+describe('review fixes', () => {
+  // Two synthetic squares side by side with a 20 m gap between them.
+  const sq = (id: string, west: number, east: number) => ({
+    id,
+    name: id,
+    population: 1,
+    geometry: {
+      type: 'Polygon' as const,
+      coordinates: [[[west, 25.6], [east, 25.6], [east, 25.61], [west, 25.61], [west, 25.6]]],
+    },
+  });
+  const deg20m = 20 / (111_320 * Math.cos((25.605 * Math.PI) / 180));
+  const left = sq('left', -100.4, -100.39);
+  const right = sq('right', -100.39 + deg20m, -100.38);
+  const pair = [left, right];
+
+  it('gives a point in the sliver between two outlines to the nearest', () => {
+    expect(subdivisionAt(pair, 25.605, -100.39 + deg20m * 0.25)?.id).toBe('left');
+  });
+
+  it('does not pull in a point just outside a single outline (an unmapped neighbour)', () => {
+    expect(subdivisionAt(pair, 25.605, -100.4 - deg20m)).toBeNull();
+  });
+
+  it("keeps the fallback district's tiles out of any subdivision", () => {
+    const tile = latLngToCell(25.6538, -100.4033, 12); // inside San Pedro
+    const own = districtOfCell(tile)!;
+    expect(districtArena(own, MTY).contains(tile)).toBe(false);
+    expect(districtArena(own).contains(tile)).toBe(true); // a city with no subdivisions
   });
 });

@@ -62,6 +62,7 @@ import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { gradientStrokeColors } from '@/lib/fence-draw';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
+import { altitudeForZoom } from '@/lib/map-camera';
 
 interface TrackMapProps {
   /** The recorded path. Timestamped, and that is load-bearing: the gap caps
@@ -125,14 +126,7 @@ interface TrackMapProps {
   overviewLabel: string;
 }
 
-// react-native-maps reads `zoom` on Google and `altitude` on Apple, and each
-// platform ignores the other's field — so every camera carries both. The
-// mapping is empirical, tuned to visually match the web map's zoom levels on
-// a phone viewport: z15 ≈ 960m (neighbourhood), z17.5 ≈ 170m (street).
-function altitudeForZoom(zoom: number): number {
-  return 60 * Math.pow(2, 19 - zoom);
-}
-
+// Every camera carries both zoom and altitude — see map-camera.ts.
 function cameraFor(center: LatLng, zoom: number, pitch: number, heading = 0) {
   return {
     center: { latitude: center.lat, longitude: center.lng },

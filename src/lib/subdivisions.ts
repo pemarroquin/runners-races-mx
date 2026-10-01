@@ -145,23 +145,29 @@ export function subdivisionAt(subs: Subdivision[], lat: number, lng: number): Su
     if (lng < box.minLng || lng > box.maxLng || lat < box.minLat || lat > box.maxLat) continue;
     if (pointInGeometry(lng, lat, sub.geometry)) return sub;
   }
-  // A sliver between two outlines: nearest within SLIVER_M. The box check
-  // is padded by the same distance (~0.0005° is ~50 m at any latitude we
-  // serve), so this stays cheap.
+  // A sliver BETWEEN two mapped outlines: nearest within SLIVER_M. Only
+  // when at least two are that close — a point near just one outline is on
+  // its outer edge, in ground that belongs to an unmapped neighbour (or to
+  // nobody), and must not be pulled in. The box check is padded by about the
+  // same distance (~0.0005° is ~50 m at any latitude we serve), so this
+  // stays cheap.
   const pad = 0.0005;
   let best: Subdivision | null = null;
-  let bestM = SLIVER_M;
+  let bestM = Infinity;
+  let near = 0;
   for (const { sub, box } of prepared) {
     if (lng < box.minLng - pad || lng > box.maxLng + pad || lat < box.minLat - pad || lat > box.maxLat + pad) {
       continue;
     }
     const d = distanceToGeometryM(lng, lat, sub.geometry);
-    if (d <= bestM) {
+    if (d > SLIVER_M) continue;
+    near++;
+    if (d < bestM) {
       best = sub;
       bestM = d;
     }
   }
-  return best;
+  return near >= 2 ? best : null;
 }
 
 /** The subdivision a tile counts in: its centre point, tile resolution only
@@ -217,14 +223,34 @@ export function subdivisionArena(sub: Subdivision, all: Subdivision[]): Arena {
   };
 }
 
-export function districtArena(district: string): Arena {
+/**
+ * The fallback arena: the runner's district, minus any of it that belongs
+ * to a mapped subdivision — so a tile is never counted both here and on its
+ * municipio's board. `subs` is the city's list (empty for a city with none).
+ */
+export function districtArena(district: string, subs: Subdivision[] = []): Arena {
   const outline = [[cellToBoundary(district, true)]];
+  const base = districtScope(district);
+  const memo = new Map<string, boolean>();
   return {
     key: district,
     kind: 'district',
     name: null,
     districts: [district],
-    ...districtScope(district),
+    contains:
+      subs.length === 0
+        ? base.contains
+        : (h3) => {
+            let hit = memo.get(h3);
+            if (hit === undefined) {
+              hit = base.contains(h3) && subdivisionOfCell(subs, h3) === null;
+              memo.set(h3, hit);
+            }
+            return hit;
+          },
+    // The whole hexagon, even where a subdivision takes part of it: this
+    // only sizes the "left to take" caption, never a share.
+    totalCells: base.totalCells,
     outline,
     bounds: boundsOfOutline(outline),
   };
@@ -267,7 +293,7 @@ export function arenasFor(subs: Subdivision[], at: { lat: number; lng: number })
     .filter((s) => s.id !== home?.id)
     .map((s) => subdivisionArena(s, subs))
     .sort((a, b) => centreDistanceM(a.bounds, at.lat, at.lng) - centreDistanceM(b.bounds, at.lat, at.lng));
-  const first = home ? subdivisionArena(home, subs) : districtArena(districtOf(at));
+  const first = home ? subdivisionArena(home, subs) : districtArena(districtOf(at), subs);
   return [first, ...rest];
 }
 

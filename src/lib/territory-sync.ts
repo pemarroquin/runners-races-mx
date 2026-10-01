@@ -14,6 +14,7 @@ import { setCachedDisplayName } from '@/lib/profile-cache';
 import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtChunks, districtsOrFilter } from '@/lib/district';
+import { lapsForUpload } from '@/lib/laps';
 import { announceClaim } from '@/lib/live-territory';
 import { enclosedCells } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
@@ -417,31 +418,38 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       .upsert({ id: session.user.id }, { onConflict: 'id' });
     if (profileError) return { ok: false, reason: 'network' };
 
-    const { data, error } = await supabase
-      .from('runs')
-      .insert({
-        user_id: session.user.id,
-        region,
-        started_at: new Date(run.startedAt).toISOString(),
-        ended_at: new Date(run.endedAt).toISOString(),
-        distance_m: Math.round(run.distanceM),
-        duration_s: Math.round((run.endedAt - run.startedAt) / 1000),
-        raw_path: run.points.map((p) => [p.lat, p.lng, p.ts]),
-        // PostGIS accepts GeoJSON geometry as text for a geometry column.
-        // Still written every upload — buildFence/area_m2 are NOT deleted
-        // by the tile model (brief §4: "do not delete anything in this
-        // commit"), just no longer what map rendering or the leaderboard
-        // read from. Kept for audit/comparison until a real run has proven
-        // tiles out.
-        fence: JSON.stringify(run.fence.geometry.geometry),
-        area_m2: Math.round(run.fence.areaM2),
-        // Only for a run that genuinely looped. The column defaults to 0, so
-        // an ordinary run never names it — which keeps every such upload
-        // working even before 20260930120000_runs_laps_and_stats is applied.
-        ...(run.lap?.qualifies && (run.lap.laps ?? 0) > 0 ? { laps: run.lap.laps } : {}),
-      })
-      .select('id')
-      .single();
+    const row: Record<string, unknown> = {
+      user_id: session.user.id,
+      region,
+      started_at: new Date(run.startedAt).toISOString(),
+      ended_at: new Date(run.endedAt).toISOString(),
+      distance_m: Math.round(run.distanceM),
+      duration_s: Math.round((run.endedAt - run.startedAt) / 1000),
+      raw_path: run.points.map((p) => [p.lat, p.lng, p.ts]),
+      // PostGIS accepts GeoJSON geometry as text for a geometry column.
+      // Still written every upload — buildFence/area_m2 are NOT deleted
+      // by the tile model (brief §4: "do not delete anything in this
+      // commit"), just no longer what map rendering or the leaderboard
+      // read from. Kept for audit/comparison until a real run has proven
+      // tiles out.
+      fence: JSON.stringify(run.fence.geometry.geometry),
+      area_m2: Math.round(run.fence.areaM2),
+    };
+    // Only for a run that genuinely looped, clamped to the server's own
+    // bound (laps.ts, lapsForUpload). The column defaults to 0, so an
+    // ordinary run never names it.
+    const laps = lapsForUpload(run.lap, run.distanceM);
+    const insertRun = (withLaps: boolean) =>
+      supabase
+        .from('runs')
+        .insert(withLaps ? { ...row, laps } : row)
+        .select('id')
+        .single();
+    let { data, error } = await insertRun(laps > 0);
+    // Laps are a tiebreaker; the run is the only copy of a session. If the
+    // insert with laps is refused for any reason, save the run without them
+    // rather than leave it failing in the retry queue until it is abandoned.
+    if (error && laps > 0) ({ data, error } = await insertRun(false));
 
     if (error || !data) return { ok: false, reason: 'network' };
 
