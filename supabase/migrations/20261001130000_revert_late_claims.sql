@@ -1,3 +1,6 @@
+-- APPLIED by hand and VERIFIED 2026-10-01: late_cap_installed = false,
+-- visits_stamped_with_ended_at = false, twelve_hour_window = true.
+--
 -- REVERT of 20261001120000_late_claims_within_7_days (Pedro, 2026-10-01):
 -- Leaderboard territory goes back to the 12-hour claim window. Late runs are
 -- kept, without restriction, in Profile › Places I've been instead — that
