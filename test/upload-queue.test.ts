@@ -14,6 +14,7 @@ import {
   flushQueue,
   listQueued,
   MAX_ATTEMPTS,
+  SLOW_RETRY_MS,
   MAX_QUEUED,
   queuedCount,
   removeQueued,
@@ -167,22 +168,36 @@ describe('removeQueued', () => {
 });
 
 describe('flushQueue durability', () => {
-  it('abandons an entry that keeps failing instead of blocking the queue forever', async () => {
+  it('never abandons a failing run, and it never blocks the runs behind it', async () => {
     enqueueRun(makeRun(1000));
     enqueueRun(makeRun(2000));
-    // Head entry always fails; flushQueue stops at the first failure, so
-    // without an attempt cap the second run could never upload.
+    const headAlwaysFails: Uploader = async (run) =>
+      run.startedAt === 1000 ? { ok: false, reason: 'network' } : { ok: true, runId: 'r' };
+    // First flush: the head fails and the flush stops there (radio rule).
+    await flushQueue(headAlwaysFails, 0);
+    // Second flush: the failing run now has more attempts, so the fresh run
+    // goes first and lands — the failing one can't hold it hostage.
+    const second = await flushQueue(headAlwaysFails, 1);
+    expect(second.uploaded).toBe(1);
+    for (let i = 0; i < MAX_ATTEMPTS + 5; i++) await flushQueue(headAlwaysFails, 2 + i);
+    // The failing run is still there — the runner's only copy.
+    expect(listQueued().map((q) => q.run.startedAt)).toEqual([1000]);
+  });
+
+  it('drops to one retry a day after MAX_ATTEMPTS failures', async () => {
+    enqueueRun(makeRun(1000));
     let calls = 0;
-    const headAlwaysFails: Uploader = async (run) => {
+    const fails: Uploader = async () => {
       calls++;
-      return run.startedAt === 1000
-        ? { ok: false, reason: 'network' }
-        : { ok: true, runId: 'r' };
+      return { ok: false, reason: 'network' };
     };
-    for (let i = 0; i < MAX_ATTEMPTS + 1; i++) await flushQueue(headAlwaysFails);
-    expect(calls).toBeGreaterThan(0);
-    // The poison entry is gone and the good run made it up.
-    expect(queuedCount()).toBe(0);
+    for (let i = 0; i < MAX_ATTEMPTS; i++) await flushQueue(fails, 1_000 + i);
+    expect(calls).toBe(MAX_ATTEMPTS);
+    await flushQueue(fails, 1_000 + MAX_ATTEMPTS); // too soon: skipped
+    expect(calls).toBe(MAX_ATTEMPTS);
+    await flushQueue(fails, 1_000 + MAX_ATTEMPTS + SLOW_RETRY_MS); // a day later: tried
+    expect(calls).toBe(MAX_ATTEMPTS + 1);
+    expect(queuedCount()).toBe(1);
   });
 
   it('never abandons a run failing with "disabled", however many times it is flushed', async () => {
@@ -196,7 +211,6 @@ describe('flushQueue durability', () => {
     for (let i = 0; i < MAX_ATTEMPTS + 5; i++) {
       const result = await flushQueue(alwaysDisabled);
       expect(result.stoppedBecause).toBe('disabled');
-      expect(result.abandoned).toBe(0);
     }
     expect(queuedCount()).toBe(1);
   });

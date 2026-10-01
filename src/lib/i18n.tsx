@@ -138,11 +138,6 @@ const translations = {
       syncFailedNetwork:
         'No pudimos guardar tu territorio — revisa tu conexión. Tu recorrido sigue aquí, puedes reintentar.',
       syncFailedAuth: 'No pudimos crear tu sesión. Vuelve a intentarlo.',
-      // Distinct from syncFailedNetwork: this run was retried until the
-      // queue gave up on it (see upload-queue.ts's MAX_ATTEMPTS) — it is
-      // genuinely gone, not just waiting on a signal.
-      syncFailedAbandoned:
-        'No pudimos guardar tu territorio después de varios intentos y no sigue en la fila. Se perdió.',
       // NOT the same string as leaderboard.disabled below, even though it
       // used to read identically — that one genuinely has nothing to queue
       // (there's no leaderboard entry to save for later). This one now
@@ -199,6 +194,8 @@ const translations = {
       // comment. Never silently shows "0 casillas" as if that were the true
       // result — see this repo's standing rule against unverified success.
       tilesUnavailable: 'No pudimos confirmar tus casillas esta vez — tu recorrido sigue guardado.',
+      tilesRetrying:
+        'Tu sesión está guardada. Aún no pudimos reclamar sus casillas; lo seguiremos intentando cada vez que abras la app.',
       // Accessibility label for the blue cycle-bonus marker (map/
       // cycle-bonus-marker.tsx and conquest-marker.ts's cycleBonusMarkerHtml
       // on web), which otherwise renders only a bare "%{pts}pt" with nothing
@@ -735,11 +732,6 @@ const translations = {
       syncFailedNetwork:
         "We couldn't save your territory — check your connection. Your route is still here, you can retry.",
       syncFailedAuth: "We couldn't create your session. Please try again.",
-      // Distinct from syncFailedNetwork: this run was retried until the
-      // queue gave up on it (see upload-queue.ts's MAX_ATTEMPTS) — it is
-      // genuinely gone, not just waiting on a signal.
-      syncFailedAbandoned:
-        "We couldn't save your territory after several tries, and it's no longer in the queue. It's lost.",
       syncDisabled: "Online saving isn't available in this build yet.",
       retry: 'Retry',
       pastFencesFailed: "We couldn't load your previous territories.",
@@ -767,6 +759,8 @@ const translations = {
       tiles: 'Tiles',
       tilesHeld: 'You conquered %{count} tiles in %{region} this run.',
       tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
+      tilesRetrying:
+        "Your run is saved. We couldn't claim its tiles yet — we'll keep trying each time you open the app.",
       // See the ES entry's comment: accessibility label for the blue
       // cycle-bonus marker, which otherwise renders only a bare "%{pts}pt".
       cycleBonusLabel: 'Bonus for repeating the route: %{pts} pts',

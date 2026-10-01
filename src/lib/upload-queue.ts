@@ -58,25 +58,31 @@ export interface QueuedRun {
   id: string;
   queuedAt: number;
   run: RunUpload;
-  /** Failed upload attempts. Without this a single un-uploadable entry sits
-   *  at the head of the queue forever and blocks every run behind it, since
-   *  flushQueue stops at the first failure. */
+  /** Failed upload attempts — decides when it drops to slow retries. */
   attempts: number;
+  /** When it last failed, for the slow-retry spacing. Absent on entries
+   *  queued by older builds, which simply count as due. */
+  lastAttemptAt?: number;
 }
 
 /**
- * Attempts before an entry is abandoned. A run that has failed this many
- * times is not failing on the network — it is malformed, or violates a
- * constraint the server will never accept — and keeping it costs every
- * later run its upload.
- *
- * Does NOT apply to a 'disabled' failure (see flushQueue) — that means no
- * server is configured on this BUILD, not that the server rejected this
- * PAYLOAD, and unlike a malformed run it resolves itself the moment a build
- * with real credentials loads. Counting those attempts would delete a
- * safely-queued run before that fix ever gets a chance to land.
+ * Failed attempts before an entry drops to SLOW retries. It is never
+ * deleted (2026-10-01): this queue holds the runner's only copy of a run,
+ * and the old policy — abandon after 8 failures — lost exactly the runs
+ * that most needed keeping (a long offline stretch, a server-side bug that
+ * gets fixed later). Past this many failures it retries at most once per
+ * SLOW_RETRY_MS, so a run the server keeps refusing costs one request a
+ * day, not one per app open, and stays visible as pending in Profile ›
+ * Places I've been, where the runner can retry or discard it.
  */
 export const MAX_ATTEMPTS = 8;
+export const SLOW_RETRY_MS = 24 * 60 * 60 * 1000;
+
+/** Whether an entry should be tried in this flush. */
+export function isDue(item: { attempts: number; lastAttemptAt?: number }, now: number): boolean {
+  if (item.attempts < MAX_ATTEMPTS || item.lastAttemptAt === undefined) return true;
+  return now - item.lastAttemptAt >= SLOW_RETRY_MS;
+}
 
 /** Local id — only ever used to remove the right entry from this queue, so
  *  it needs to be unique on one device, not globally. */
@@ -184,166 +190,64 @@ export function queuedCount(): number {
 
 export interface FlushResult {
   uploaded: number;
+  /** Entries still queued after this flush. */
   remaining: number;
-  /** Why it stopped early, if it did. Null when the queue drained. */
+  /** The last failure this flush hit, or null when everything tried landed.
+   *  'storage' means the queue itself couldn't be written. */
   stoppedBecause: SyncFailureReason | 'storage' | null;
-  /** Entries abandoned after MAX_ATTEMPTS. Non-zero means runs were thrown
-   *  away — the caller should say so rather than reporting a clean drain. */
-  abandoned: number;
-  /** Queue ids that uploaded successfully THIS flush, paired with the
-   *  server run id each landed as. This flush runs independently of
-   *  whatever a caller has on screen (it drains the whole on-disk queue),
-   *  so a caller displaying one specific queued run needs a way to tell
-   *  "was MY run one of these" apart from "some other queued run finished"
-   *  — a bare count can't answer that. See index.tsx's flush-effect
-   *  reconciliation. */
+  /** Queue ids that reached the server this flush, with their server runId
+   *  — so a screen showing one of them can reconcile its own state. */
   resolved: { id: string; runId: string }[];
-  /** Queue ids abandoned THIS flush (a subset of `abandoned`'s count, by
-   *  id rather than just a number) — same reconciliation need as
-   *  `resolved`, for the give-up path instead of the success path. */
-  abandonedIds: string[];
 }
 
-// Module-level, deliberately: the guard has to hold across every caller and
-// every remount, not per component instance. Without it, leaving and
-// re-entering the Track tab starts a SECOND flush over the same un-drained
-// snapshot and uploads every run in it twice — React 19's double-invoked
-// effects reproduce that in development on their own.
 let flushing = false;
 
 /**
- * Tries to upload everything queued, oldest first.
+ * Upload every DUE queued run, FEWEST failed attempts first, stopping at
+ * the first failure — an offline phone makes one doomed request, not one
+ * per queued run.
  *
- * Stops at the FIRST failure rather than continuing down the list. If one
- * upload just failed on the network, the next will too — marching through
- * twenty of them would burn battery and radio to learn the same thing twenty
- * times. The queue is preserved either way; the next flush picks it up.
+ * The ordering is what lets this never abandon a run. Stopping at the first
+ * failure used to mean a run that always failed sat at the head and blocked
+ * every run behind it, so it was deleted after MAX_ATTEMPTS. Now a fresh run
+ * is always tried before one that keeps failing, and past MAX_ATTEMPTS the
+ * failing one waits SLOW_RETRY_MS between tries. 'disabled' (no server on
+ * this build) never counts as an attempt — nothing is wrong with the run.
  */
-export async function flushQueue(upload: Uploader): Promise<FlushResult> {
+export async function flushQueue(upload: Uploader, now: number = Date.now()): Promise<FlushResult> {
   if (flushing) {
-    // Already draining. Reporting the current depth is honest; starting a
-    // second pass over the same entries is not.
-    return {
-      uploaded: 0,
-      remaining: queuedCount(),
-      stoppedBecause: null,
-      abandoned: 0,
-      resolved: [],
-      abandonedIds: [],
-    };
+    return { uploaded: 0, remaining: queuedCount(), stoppedBecause: null, resolved: [] };
   }
   flushing = true;
   try {
-    const queue = listQueued();
-    if (queue.length === 0) {
-      return {
-        uploaded: 0,
-        remaining: 0,
-        stoppedBecause: null,
-        abandoned: 0,
-        resolved: [],
-        abandonedIds: [],
-      };
-    }
-
+    // Stable sort: equal attempts keep queue (oldest-first) order.
+    const queue = listQueued().sort((a, b) => a.attempts - b.attempts);
     let uploaded = 0;
-    let abandoned = 0;
+    let stoppedBecause: FlushResult['stoppedBecause'] = null;
     const resolved: { id: string; runId: string }[] = [];
-    const abandonedIds: string[] = [];
     for (const item of queue) {
+      if (!isDue(item, now)) continue;
       const outcome = await upload(item.run);
-
       if (!outcome.ok) {
-        // 'disabled' NEVER counts toward MAX_ATTEMPTS and is never
-        // abandoned. MAX_ATTEMPTS exists to stop retrying a payload the
-        // SERVER will never accept — 'disabled' means there is no server
-        // configured on THIS build at all, which is categorically
-        // different: no number of retries against a misconfigured client
-        // will ever succeed, but the run becomes uploadable the instant a
-        // build with real credentials loads (see check-web-env.mjs /
-        // deploy.yml). Counting these attempts would delete a safely-queued
-        // run before the actual fix — an env var, not a retry — ever gets a
-        // chance to land. Confirmed live 2026-08-31: a run queued under a
-        // misconfigured deploy sat through repeated flushes (every Track
-        // tab focus) with nothing to fix it except the deploy itself.
-        if (outcome.reason !== 'disabled') {
-          const attempts = item.attempts + 1;
-          if (attempts >= MAX_ATTEMPTS) {
-            // Give up on this one so it stops blocking everything behind it.
-            // Repeated failure at this point is a run the server will never
-            // accept, not a network blip.
-            //
-            // The RESULT IS CHECKED, same reasoning as the success path's
-            // removeQueued below: if the store refuses this write, the entry
-            // is still on disk while abandoned/abandonedIds tell the caller
-            // it's gone — the caller would report a run as discarded that a
-            // later flush retries, or worse, that stays stuck forever if the
-            // storage fault is why it kept failing in the first place.
-            if (!removeQueued(item.id)) {
-              return {
-                uploaded,
-                remaining: queue.length - uploaded - abandoned,
-                stoppedBecause: 'storage',
-                abandoned,
-                resolved,
-                abandonedIds,
-              };
-            }
-            abandoned++;
-            abandonedIds.push(item.id);
-            continue;
-          }
-          // Same check: a write the store refuses must stop the flush, not
-          // be reported as "attempt recorded" — otherwise MAX_ATTEMPTS is
-          // never reached and one un-uploadable, un-abandonable entry blocks
-          // every run behind it forever.
-          if (!bumpAttempts(item.id, attempts)) {
-            return {
-              uploaded,
-              remaining: queue.length - uploaded - abandoned,
-              stoppedBecause: 'storage',
-              abandoned,
-              resolved,
-              abandonedIds,
-            };
-          }
+        stoppedBecause = outcome.reason;
+        if (outcome.reason !== 'disabled' && !bumpAttempts(item.id, item.attempts + 1, now)) {
+          stoppedBecause = 'storage';
         }
-        return {
-          uploaded,
-          remaining: queue.length - uploaded - abandoned,
-          stoppedBecause: outcome.reason,
-          abandoned,
-          resolved,
-          abandonedIds,
-        };
+        break;
       }
-
-      // Removed one at a time, re-reading the queue each write, so an app kill
-      // mid-flush can at worst re-upload a run rather than lose the rest.
-      //
-      // The RESULT IS CHECKED. If the store refuses the write the run is
-      // still on disk, and reporting a clean drain would mean re-uploading
-      // it on every future launch — a duplicate row and duplicate territory
-      // theft each time, with the UI showing all-clear.
       if (!removeQueued(item.id)) {
-        return {
-          uploaded,
-          remaining: queue.length - uploaded - abandoned,
-          stoppedBecause: 'storage',
-          abandoned,
-          resolved,
-          abandonedIds,
-        };
+        stoppedBecause = 'storage';
+        break;
       }
       uploaded++;
       resolved.push({ id: item.id, runId: outcome.runId });
     }
-    return { uploaded, remaining: 0, stoppedBecause: null, abandoned, resolved, abandonedIds };
+    return { uploaded, remaining: queuedCount(), stoppedBecause, resolved };
   } finally {
     flushing = false;
   }
 }
 
-function bumpAttempts(id: string, attempts: number): boolean {
-  return writeQueue(listQueued().map((q) => (q.id === id ? { ...q, attempts } : q)));
+function bumpAttempts(id: string, attempts: number, at: number): boolean {
+  return writeQueue(listQueued().map((q) => (q.id === id ? { ...q, attempts, lastAttemptAt: at } : q)));
 }

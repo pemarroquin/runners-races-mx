@@ -15,6 +15,7 @@ import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtChunks, districtsOrFilter } from '@/lib/district';
 import { lapsForUpload } from '@/lib/laps';
+import { enqueueClaim } from '@/lib/claim-queue';
 import { announceClaim } from '@/lib/live-territory';
 import { enclosedCells } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
@@ -564,6 +565,13 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
     const claim = await claimTiles(data.id, cells, region, allEnclosed);
+    // The run is saved; a claim that failed for a reason a retry can fix
+    // waits in claim-queue.ts and is retried on every flush, instead of the
+    // run's territory being lost to one bad moment of signal. 'tooOld' and
+    // 'rejected' are the server's final word — not queued.
+    if (!claim.ok && claim.reason !== 'tooOld' && claim.reason !== 'rejected') {
+      enqueueClaim({ runId: data.id, visited: cells, enclosed: allEnclosed, region });
+    }
     const claimResult = claim.ok ? claim.result : null;
     if (claimResult && cycleBonus) claimResult.cycleBonus = cycleBonus;
     return {
@@ -1214,4 +1222,15 @@ export async function fetchMyVisitedCells(): Promise<VisitedOutcome> {
 
     return { ok: true, runs: groupVisitsByRun(rows) };
   });
+}
+
+/** Retry one queued claim (claim-queue.ts). */
+export async function retryClaim(c: {
+  runId: string;
+  visited: string[];
+  enclosed: string[];
+  region: string | null;
+}): Promise<{ ok: true } | { ok: false; reason: 'disabled' | 'auth' | 'network' | 'rejected' | 'tooOld' }> {
+  const outcome = await claimTiles(c.runId, c.visited, c.region, c.enclosed);
+  return outcome.ok ? { ok: true } : { ok: false, reason: outcome.reason };
 }
