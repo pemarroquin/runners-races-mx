@@ -1,48 +1,22 @@
--- DRAFT — NOT APPLIED. Lives in supabase/drafts/ so `supabase db push` can't
--- pick it up; move it to supabase/migrations/ when approved.
--- Late runs claim territory (weakly) instead of being
--- refused at 12 hours. Pedro's call before applying.
+-- REVERT of 20261001120000_late_claims_within_7_days (Pedro, 2026-10-01):
+-- Leaderboard territory goes back to the 12-hour claim window. Late runs are
+-- kept, without restriction, in Profile › Places I've been instead — that
+-- screen now draws every saved run from its own stored route, claimed or not
+-- (client change in the same branch), so nothing a runner ran is lost from
+-- their history.
 --
--- WHY (2026-10-01): a run that reaches the server more than 12 h after it
--- ended — no signal on a trail, a dead phone, or an app bug like the one
--- fixed in PR #69 — saved to history with NO territory and NO Local Leaders
--- days. Found when a recovered 7.9 km run was saved 16 h late and the claim
--- was refused as CLAIM_TOO_OLD.
+-- This is the function body of 20260920160000 VERBATIM — the documented
+-- rollback for 20261001120000. It also restores tile_visits.visited_at to
+-- the upload time (column default), which inside a 12 h window differs from
+-- the run's end time by hours at most.
 --
--- WHY IT IS SAFE: ordering by ended_at already does the protecting. The
--- territory upsert stamps claimed_at with the run's ended_at and overwrites
--- a tile only when that is NEWER than the tile's current claim
--- (`where excluded.claimed_at > t.claimed_at`). So a late run takes only
--- ground nobody has run since it ended; it can never beat a newer run.
--- Backdating ended_at only makes a run weaker, and a future ended_at is
--- still refused. Both claim bounds (visited vs distance; enclosed vs owned +
--- distance) and the tile_visits plausibility trigger are unchanged. The
--- backlog reached the same conclusion on 2026-09-08: with ended_at ordering
--- "the cutoff becomes a product choice, not a safety mechanism".
---
--- WHAT CHANGES (three edits to the live body, nothing else):
---   1. CLAIM_TOO_OLD fires past 7 days instead of 12 hours.
---   2. tile_visits.visited_at = the run's ended_at (was now()), so a late
---      run's Local Leaders day is the day it was run.
---   3. Nothing else — ownership check, bounds, provenance `case`, conquest
---      ordering, the four returned counts: verbatim from 20260920160000.
---
--- CLIENT: no change needed to land this. The claim retry queue
--- (claim-queue.ts) already retries until the server's final answer, and the
--- unsaved-run banner already offers runs up to 7 days old.
---
--- ROLLBACK: re-apply 20260920160000_claim_bound_split_visited_enclosed.sql
--- verbatim (create or replace, same signature, one paste).
---
--- APPLY in the SQL editor, then VERIFY (plpgsql plans lazily — installing
--- cleanly proves nothing; see the backlog's "A migration that applies isn't
--- verified"):
+-- APPLY by hand in the SQL editor, then VERIFY — both must be FALSE:
 --   select position('late_cap' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as late_cap_installed,
 --          position('select unnest(p_visited), r.user_id, r.id, r.ended_at' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as visits_stamped_with_ended_at;
---   -- expect: true, true
--- then exercise the write path on a throwaway: in a transaction that you
--- ROLL BACK, insert a test run that ended 2 days ago, call the function as
--- its owner, check the counts and visited_at, and roll back.
+-- and this must be TRUE (the 12-hour refusal is back):
+--   select position('if now() - r.ended_at > claim_window then' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as twelve_hour_window;
+-- Applied by hand: run `supabase migration repair --status applied
+-- 20261001120000 20261001130000` before any `db push`.
 
 create or replace function claim_run_tiles(
   p_run_id  uuid,
@@ -54,11 +28,7 @@ returns table (claimed integer, taken integer, skipped_older integer, taken_cell
 language plpgsql
 as $$
 declare
-  -- Full-power window, unchanged: within 12 h a run claims as it always has.
   claim_window interval := interval '12 hours';
-  -- NEW: late runs are accepted up to 7 days after they ended, instead of
-  -- refused at 12 h. See this file's header for why that is safe.
-  late_cap     interval := interval '7 days';
   tile_area_m2 constant numeric := 307.1;
   r            record;
   all_cells    text[];
@@ -85,14 +55,8 @@ begin
     raise exception 'CLAIM: run % claims to end in the future (%)', p_run_id, r.ended_at;
   end if;
 
-  -- CHANGED: refuse only past the 7-day cap. Between 12 h and 7 days the
-  -- claim proceeds; the territory upsert below already makes a late run
-  -- weak (it stamps claimed_at with the run's own ended_at and only wins a
-  -- tile whose current claim is OLDER), so it takes only ground nobody has
-  -- run since it ended. claim_window is kept, unused, as the documented
-  -- full-power boundary.
-  if now() - r.ended_at > late_cap then
-    raise exception 'CLAIM_TOO_OLD: run % ended % ago, past the % cap', p_run_id, now() - r.ended_at, late_cap;
+  if now() - r.ended_at > claim_window then
+    raise exception 'CLAIM_TOO_OLD: run % ended % ago, past the % window', p_run_id, now() - r.ended_at, claim_window;
   end if;
 
   all_cells := array(select distinct unnest(coalesce(p_visited, '{}') || coalesce(p_enclosed, '{}')));
@@ -142,13 +106,8 @@ begin
   -- ==========================================================================
 
   if coalesce(array_length(p_visited, 1), 0) > 0 then
-    -- CHANGED: stamped with the run's own end time, not the upload time
-    -- (the column default, now()). Local Leaders counts DAYS from
-    -- visited_at, so a run uploaded late must count on the day it was run,
-    -- never on the day it finally reached the server. For an on-time upload
-    -- the two differ by seconds.
-    insert into tile_visits (h3, user_id, run_id, visited_at)
-    select unnest(p_visited), r.user_id, r.id, r.ended_at
+    insert into tile_visits (h3, user_id, run_id)
+    select unnest(p_visited), r.user_id, r.id
     on conflict (h3, run_id) do nothing;
   end if;
 

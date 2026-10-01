@@ -52,7 +52,7 @@ import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
-import { fetchMyFences, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
+import { fetchMyFences, reclaimUnclaimedRuns, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
 import { flushClaims, listClaims } from '@/lib/claim-queue';
 import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
@@ -341,6 +341,11 @@ export default function TrackScreen() {
           if (r.claimed > 0) notifyRunSaved();
         });
       }
+      // Own runs from the last 7 days that saved with no territory (too
+      // late, or before the claim queue existed) — once per app session.
+      void reclaimUnclaimedRuns().then((r) => {
+        if (r.claimed > 0) notifyRunSaved();
+      });
       const before = queuedCount();
       if (before === 0) {
         setPending(0);

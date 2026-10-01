@@ -191,9 +191,17 @@ export function AchievementsView({
       // run groundOfRun — the server already computed the full footprint at claim
       // time. Dedup with Set guards against any edge case from paging.
       const cells = rawCells?.length ? [...new Set(rawCells)] : [];
+      // A run that holds no tiles (it reached the server past the claim
+      // window, or lost all its ground) draws its OWN ground — the tiles it
+      // crossed plus its loop's inside — not the legacy fence, which for a
+      // route the outline library couldn't trace is a convex hull that
+      // overstates the area by a wide margin.
+      const ground = cells.length || f.pathCells.length === 0 ? [] : groundOfRun(f.pathCells, DEFAULT_TILE_RES);
       const geometry: Polygon | MultiPolygon | null = cells.length
         ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(cells, true) }
-        : f.geometry;
+        : ground.length
+          ? { type: 'MultiPolygon', coordinates: cellsToMultiPolygon(ground, true) }
+          : f.geometry;
       return { fence: f, geometry, cells };
     })
     .filter((f) => f.geometry !== null)
