@@ -351,10 +351,10 @@ const translations = {
       title: 'Compartir sesión',
       routeLabel: 'Ruta',
       statsLabel: 'Estadísticas',
+      pickStats: 'Elige qué estadísticas mostrar',
       copy: 'Copiar',
       copied: 'Copiada',
       copyFailed: 'No pudimos copiarla. Intenta de nuevo.',
-      hint: 'Pégala en una historia de Instagram.',
       emptyRoute: 'Esta sesión no tiene una ruta que compartir.',
     },
     myraces: {
@@ -887,10 +887,10 @@ const translations = {
       title: 'Share session',
       routeLabel: 'Route',
       statsLabel: 'Stats',
+      pickStats: 'Choose which stats to show',
       copy: 'Copy',
       copied: 'Copied',
       copyFailed: "Couldn't copy. Try again.",
-      hint: 'Paste it into an Instagram Story.',
       emptyRoute: 'This session has no route to share.',
     },
     myraces: {

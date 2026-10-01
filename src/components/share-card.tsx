@@ -21,6 +21,7 @@
 // hidden duplicate view and no native module Expo Go doesn't already bundle
 // (react-native-svg is in Expo's bundledNativeModules.json at this exact
 // pinned version).
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +29,14 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View, useColorScheme } fr
 import Svg, { Defs, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { GlassSurface } from '@/components/ui/glass-surface';
+import {
+  SHARE_STATS,
+  SHARE_STATS_STORAGE_KEY,
+  columnXs,
+  parseStoredStats,
+  toggleStat,
+  type ShareStat,
+} from '@/lib/share-stats';
 import { Icon } from '@/components/ui/icon';
 import { GlassRadii } from '@/constants/glass';
 import { Colors, Spacing, type ThemeColor } from '@/constants/theme';
@@ -138,6 +147,34 @@ export function ShareSheet({
   // the unverified-success this codebase's own rule exists to catch — the
   // runner pastes into Instagram and gets nothing, with no clue why.
   const [failed, setFailed] = useState<CardKind | null>(null);
+
+  // Which stats the sticker shows — the runner picks (share-stats.ts), and
+  // the choice is remembered on this device for the next run. A storage
+  // failure just means everything shows, which is the default anyway.
+  const [stats, setStats] = useState<ShareStat[]>(() => [...SHARE_STATS]);
+  useEffect(() => {
+    if (!visible) return;
+    let stale = false;
+    AsyncStorage.getItem(SHARE_STATS_STORAGE_KEY)
+      .then((raw) => {
+        if (!stale) setStats(parseStoredStats(raw));
+      })
+      .catch(() => undefined);
+    return () => {
+      stale = true;
+    };
+  }, [visible]);
+  // Saved here, on the runner's own tap — never from an effect on `stats`,
+  // which would also fire on mount and overwrite the stored choice with the
+  // defaults before it was read. And outside the state updater: a side
+  // effect inside one can silently no-op under the React Compiler.
+  const toggle = (stat: ShareStat) => {
+    const next = toggleStat(stats, stat);
+    setStats(next);
+    AsyncStorage.setItem(SHARE_STATS_STORAGE_KEY, JSON.stringify(next)).catch(() => undefined);
+    // A changed sticker hasn't been copied yet.
+    setCopied((prev) => (prev === 'stats' ? null : prev));
+  };
 
   // The route gradient's live hue, advancing on a timer — see the constant
   // block above. `frozenHue` is null while animating; the route Copy button
@@ -280,6 +317,32 @@ export function ShareSheet({
             )}
 
             <Card label={t('share.statsLabel')} c={c}>
+              <View style={styles.chips} accessibilityLabel={t('share.pickStats')}>
+                {SHARE_STATS.map((stat) => {
+                  const on = stats.includes(stat);
+                  // The last one left can't be switched off — an empty
+                  // sticker would copy a blank card.
+                  const locked = on && stats.length === 1;
+                  return (
+                    <Pressable
+                      key={stat}
+                      onPress={() => toggle(stat)}
+                      disabled={locked}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: on, disabled: locked }}
+                      style={[
+                        styles.chip,
+                        on
+                          ? { backgroundColor: c.accent, borderColor: c.accent }
+                          : { borderColor: c.textSecondary },
+                      ]}>
+                      <Text style={[styles.chipLabel, { color: on ? '#FFFFFF' : c.textSecondary }]}>
+                        {t(STAT_LABEL_KEY[stat])}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
               <View style={styles.checker}>
                 <Svg
                   ref={statsRef}
@@ -297,10 +360,14 @@ export function ShareSheet({
                     textAnchor="middle">
                     Runners&apos; Races MX
                   </SvgText>
-                  <StatColumn x={37.5} label={t('track.distance')} value={distance} />
-                  <StatColumn x={112.5} label={t('track.pace')} value={pace} />
-                  <StatColumn x={187.5} label={t('track.time')} value={time} />
-                  <StatColumn x={262.5} label={t('track.tiles')} value={tiles} />
+                  {stats.map((stat, i) => (
+                    <StatColumn
+                      key={stat}
+                      x={columnXs(stats.length, STATS_VB_W)[i]}
+                      label={t(STAT_LABEL_KEY[stat])}
+                      value={{ distance, pace, time, tiles }[stat]}
+                    />
+                  ))}
                 </Svg>
               </View>
               <CopyButton
@@ -312,13 +379,19 @@ export function ShareSheet({
               />
             </Card>
 
-            <Text style={[styles.hint, { color: c.textSecondary }]}>{t('share.hint')}</Text>
           </View>
         </View>
       </View>
     </Modal>
   );
 }
+
+const STAT_LABEL_KEY: Record<ShareStat, string> = {
+  distance: 'track.distance',
+  pace: 'track.pace',
+  time: 'track.time',
+  tiles: 'track.tiles',
+};
 
 function StatColumn({ x, label, value }: { x: number; label: string; value: string }) {
   return (
@@ -418,6 +491,14 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 18, fontWeight: '700' },
   card: { alignItems: 'center', gap: Spacing.two },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: Spacing.one },
+  chip: {
+    paddingVertical: Spacing.one + 2,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  chipLabel: { fontSize: 13, fontWeight: '700' },
   cardLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -452,5 +533,4 @@ const styles = StyleSheet.create({
   copyLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   copyFailed: { fontSize: 12 },
   emptyNotice: { fontSize: 14, textAlign: 'center', paddingVertical: Spacing.three },
-  hint: { fontSize: 12, textAlign: 'center' },
 });
