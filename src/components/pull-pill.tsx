@@ -5,8 +5,9 @@
 // renders nothing at all, so on the live web app it would not exist either.
 // Pull-to-refresh starts at the TOP of the screen, and the one thing up
 // there that isn't map is this pill. Drag it down: it pulls away on a
-// tether, the chevron flips when letting go would refresh, and it springs
-// back with a spinner while the board reloads.
+// tether, the label changes when letting go would refresh, and it springs
+// back with a spinner while the board reloads. No chevron at rest — only
+// the ‹ › arrows (Pedro, 2026-09-30).
 //
 // RN core responder props + Animated, not gesture-handler: the responder
 // system runs on both platforms (mouse and touch on web), and this is one
@@ -102,13 +103,6 @@ export function PullPill({
     return isPullGesture(dx, dy);
   };
 
-  // The chevron turns as the pull approaches the threshold, pointing up once
-  // letting go would refresh — the classic arrow flip, driven by the stretch.
-  const rotate = stretch.interpolate({
-    inputRange: [0, PULL_THRESHOLD * 0.6, PULL_THRESHOLD],
-    outputRange: ['0deg', '0deg', '180deg'],
-    extrapolate: 'clamp',
-  });
   const tetherOpacity = stretch.interpolate({
     inputRange: [0, 12, PULL_THRESHOLD],
     outputRange: [0, 0.35, 0.7],
@@ -171,15 +165,14 @@ export function PullPill({
               {text}
             </Text>
           </Pressable>
-          <View style={styles.glyph}>
-            {refreshing ? (
+          {/* No idle glyph (Pedro: arrows only). The label itself says
+              "release to refresh" once a pull is armed; a spinner shows only
+              while the refresh runs. */}
+          {refreshing && (
+            <View style={styles.glyph}>
               <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Animated.View style={{ transform: [{ rotate }] }}>
-                <Icon ios="chevron.down" android="expand_more" size={14} color="rgba(255,255,255,0.7)" />
-              </Animated.View>
-            )}
-          </View>
+            </View>
+          )}
           {onNext && <Arrow onPress={onNext} label={nextLabel ?? ''} ios="chevron.right" android="chevron_right" />}
         </GlassSurface>
       </View>

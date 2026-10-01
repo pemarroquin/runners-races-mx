@@ -238,16 +238,27 @@ export function rankMayors(
   const scoped = scopeVisits(visits, arena);
   const mayors = mayorByCell(scoped, now, stats);
 
+  return rankMayorMap(mayors, namesOf(scoped));
+}
+
+/** First non-null display name per user — a partial profile join leaves
+ *  some rows null, same "the count is the point, the name is a garnish"
+ *  posture as districtConquest. A user seen only with null rows is still
+ *  RECORDED as null. */
+export function namesOf(visits: TileVisitRow[]): Map<string, string | null> {
   const nameById = new Map<string, string | null>();
-  for (const visit of scoped) {
-    // First non-null wins — a partial profile join leaves some rows null,
-    // same "the count is the point, the name is a garnish" posture as
-    // districtConquest. A user seen only with null rows is still RECORDED as
-    // null, so `get` below cannot confuse "no name" with "not in this
-    // district".
+  for (const visit of visits) {
     if (nameById.get(visit.userId) == null) nameById.set(visit.userId, visit.displayName);
   }
+  return nameById;
+}
 
+/** The board from an already-computed mayor map, so a screen that also draws
+ *  the map decides mayorship ONCE and both views read the same answer. */
+export function rankMayorMap(
+  mayors: Map<string, { userId: string; days: number }>,
+  nameById: Map<string, string | null>,
+): MayorshipEntry[] {
   const byUser = new Map<string, { cellsHeld: number; bestDays: number }>();
   for (const { userId, days } of mayors.values()) {
     const entry = byUser.get(userId);

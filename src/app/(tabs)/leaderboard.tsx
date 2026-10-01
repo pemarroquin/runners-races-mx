@@ -30,42 +30,45 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BoardRow } from '@/components/board-row';
 import { DistrictMap, type DistrictHolding } from '@/components/district-map';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { ProfilePill } from '@/components/profile-pill';
 import { PULL_PILL_H, PullPill } from '@/components/pull-pill';
-import { ShareBar, type ShareSegment } from '@/components/share-bar';
 import { GlassSurface } from '@/components/ui/glass-surface';
 import { Icon } from '@/components/ui/icon';
 import { GlassRadii } from '@/constants/glass';
 import { FENCE_COLOR_SETS } from '@/constants/map';
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { onIdentityChanged } from '@/lib/auth-events';
-import { fetchDistrictParkCells, fetchDistrictVisits, fetchRunStats, type ParkCell } from '@/lib/boards';
+import {
+  fetchDistrictParkCells,
+  fetchDistrictVisits,
+  fetchRunStats,
+  fetchRunVisits,
+  type ParkCell,
+} from '@/lib/boards';
 import { districtLabel } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
-import { daysPresent, mayorHoldings, runnerTotals, type RunnerTotals } from '@/lib/local-leaders';
+import { daysPresent, holdingsOf, runnerTotals, sessionGroundVisits } from '@/lib/local-leaders';
 import {
   MAYORSHIP_WINDOW_DAYS,
-  contestedCells,
   mayorByCell,
-  rankMayors,
+  namesOf,
+  rankMayorMap,
   scopeVisits,
-  type MayorshipEntry,
   type RunStats,
+  type TileVisitRow,
 } from '@/lib/mayorship';
 import { formatDistance, formatPace } from '@/lib/tracking';
 import {
@@ -96,6 +99,12 @@ interface BoardData {
    *  is applied): rows then show days only and ties go to the incumbent —
    *  never everyone at zero. */
   runStats: Map<string, RunStats> | null;
+  /** Local Leaders' raw material: each recent session's GROUND (tiles it
+   *  crossed plus the inside of loops it closed), one row per tile, stamped
+   *  with the session's day — see sessionGroundVisits. null when the
+   *  sessions' paths couldn't be read: the card says so rather than ranking
+   *  on crossed streets alone, which reads as broken enclosure. */
+  leaderVisits: TileVisitRow[] | null;
   failed: boolean;
 }
 
@@ -185,20 +194,23 @@ export default function LeaderboardScreen() {
         : Promise.resolve({ ok: true as const, parkCells: [] as ParkCell[] }),
       fetchDistrictVisits(forArena.districts),
     ]);
-    // After the visits, because it needs their run ids — and only the runs
-    // that can matter: inside this arena's outline (the reads also return
-    // the padding ring) and inside the window mayorship reads. Visits are
-    // all-time, so passing every id would grow with history for nothing.
+    // After the visits, because it needs their run ids: the sessions inside
+    // the window mayorship reads that came near this arena (the padding ring
+    // included, so a loop around ground at the edge still counts). Visits
+    // are all-time, so passing every id would grow with history for nothing.
+    // Then, together: their numbers (tiebreakers) and their WHOLE paths, so
+    // each session's enclosure can be rebuilt even where it crosses the edge.
     const cutoff = Date.now() - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
     const runIds = visits.ok
-      ? visits.visits.flatMap((v) =>
-          v.runId && Date.parse(v.visitedAt) >= cutoff && forArena.contains(v.h3) ? [v.runId] : [],
-        )
+      ? visits.visits.flatMap((v) => (v.runId && Date.parse(v.visitedAt) >= cutoff ? [v.runId] : []))
       : [];
-    const runStats = visits.ok ? await fetchRunStats(runIds) : null;
+    const [runStats, runVisits] = visits.ok
+      ? await Promise.all([fetchRunStats(runIds), fetchRunVisits(runIds, namesOf(visits.visits))])
+      : [null, null];
     return {
       arenaKey: forArena.key,
       runStats: runStats?.ok ? runStats.stats : null,
+      leaderVisits: runVisits?.ok ? sessionGroundVisits(runVisits.visits) : null,
       tiles: board.ok ? board.tiles : null,
       meUserId: board.ok ? board.meUserId : null,
       parkCells: parks.ok ? parks.parkCells : [],
@@ -264,35 +276,54 @@ export default function LeaderboardScreen() {
   // municipio shows loading until its own read lands, never the previous
   // place's numbers under the new name.
   const board = data && arena && data.arenaKey === arena.key ? data : null;
+  // While the next place loads, keep showing the previous one, dimmed — the
+  // map flies there and the card swaps when the new rows land, instead of
+  // blanking to a spinner on every arrow tap. Always paired with ITS OWN
+  // arena, so old rows are never cut by the new outline or shown as the new
+  // place's numbers.
+  const shownArena = board ? arena : (data && arenas?.find((a) => a.key === data.arenaKey)) ?? null;
+  const shown = board ?? (shownArena ? data : null);
+  const stale = board === null && shown !== null;
 
-  // ---- Board 1: who holds the claimed ground in this district ------------
+  // ---- Board 1: who holds the claimed ground in this arena -------------
   //
-  // Needs no data beyond the tiles themselves — no park table, no
-  // hand-applied migration, nothing that can be forgotten. See
-  // ConquestEntry.share for why the denominator is claimed ground rather
-  // than the district.
+  // Needs no data beyond the tiles themselves. See ConquestEntry.share for
+  // why the denominator is claimed ground rather than the arena.
   const conquest = useMemo(() => {
-    if (!board?.tiles || arena === null) return null;
-    return districtConquest(board.tiles, arena);
-  }, [board, arena]);
+    if (!shown?.tiles || shownArena === null) return null;
+    return districtConquest(shown.tiles, shownArena);
+  }, [shown, shownArena]);
 
   // ---- Board 2: mayorship over ground people keep coming back to ----------
+  // Decided ONCE per load; the ranking and the map shapes both read it, so
+  // they can't disagree.
+  const leaderScoped = useMemo(
+    () => (shown?.leaderVisits && shownArena ? scopeVisits(shown.leaderVisits, shownArena) : null),
+    [shown, shownArena],
+  );
   const mayors = useMemo(
-    () =>
-      board && arena
-        ? mayorByCell(scopeVisits(board.visits, arena), undefined, board.runStats ?? undefined)
-        : null,
-    [board, arena],
+    () => (leaderScoped ? mayorByCell(leaderScoped, undefined, shown?.runStats ?? undefined) : null),
+    [leaderScoped, shown],
   );
   const leaders = useMemo(
-    () => (board && arena ? rankMayors(board.visits, arena, undefined, board.runStats ?? undefined) : null),
-    [board, arena],
+    () => (mayors && leaderScoped ? rankMayorMap(mayors, namesOf(leaderScoped)) : null),
+    [mayors, leaderScoped],
+  );
+  const leaderDays = useMemo(
+    () => (leaderScoped ? daysPresent(leaderScoped, null) : new Map<string, number>()),
+    [leaderScoped],
+  );
+  const leaderTotals = useMemo(
+    () =>
+      shown?.runStats && shown.leaderVisits && shownArena
+        ? runnerTotals(shown.leaderVisits, shownArena, shown.runStats)
+        : null,
+    [shown, shownArena],
   );
 
-  // The arena's caption. A subdivision has its own name. A district (the
-  // fallback outside every mapped subdivision) takes districtLabel — the
-  // municipio by majority vote over its park cells — then the metro region.
-  // Decorative for a district: the district id is what scores.
+  // The arena's caption — always the place being switched TO, so the pill
+  // names the destination the moment an arrow is tapped. A subdivision has
+  // its own name; a district takes districtLabel, then the metro region.
   const label = useMemo(() => {
     if (arena?.name) return arena.name;
     if (arena && board) {
@@ -302,22 +333,8 @@ export default function LeaderboardScreen() {
     return coords ? (nearestRegion(coords.lat, coords.lng)?.name ?? null) : null;
   }, [arena, board, coords]);
 
-  // ---- Your own standing, which is the hero ------------------------------
-  const me = conquest?.entries.find((e) => e.userId === board?.meUserId) ?? null;
-  const myRank = me ? (conquest?.entries.indexOf(me) ?? -1) + 1 : 0;
-  const contested = useMemo(() => {
-    if (!board?.tiles || !mayors || !board.meUserId || arena === null) return 0;
-    const mine = board.tiles
-      .filter((tile) => tile.ownerId === board.meUserId && arena.contains(tile.h3))
-      .map((tile) => tile.h3);
-    return contestedCells(mine, mayors, board.meUserId).length;
-  }, [board, mayors, arena]);
-
-  // The map's input. Same source as the share bar and the rows — one fetch,
-  // three views of it, so they can never disagree about who holds what.
-  // ONE assignment for the screen, over everyone who appears on either
-  // board, so the map, the bar and both lists agree — and so a runner who is
-  // on Local Leaders but holds no ground still gets a distinct colour.
+  // ONE colour assignment for the screen, over everyone on either board, so
+  // a runner is the same colour on both tabs, their shape and their row.
   const tints = useMemo(() => {
     const ids = [
       ...(conquest?.entries ?? []).map((e) => e.userId),
@@ -331,10 +348,10 @@ export default function LeaderboardScreen() {
   );
 
   const holdings = useMemo<DistrictHolding[]>(() => {
-    if (!board?.tiles || arena === null) return [];
+    if (!shown?.tiles || shownArena === null) return [];
     const byOwner = new Map<string, string[]>();
-    for (const tile of board.tiles) {
-      if (!arena.contains(tile.h3)) continue;
+    for (const tile of shown.tiles) {
+      if (!shownArena.contains(tile.h3)) continue;
       const cells = byOwner.get(tile.ownerId);
       if (cells) cells.push(tile.h3);
       else byOwner.set(tile.ownerId, [tile.h3]);
@@ -343,41 +360,19 @@ export default function LeaderboardScreen() {
       userId,
       cells,
       color: tintOf(userId),
-      isMe: userId === board.meUserId,
+      isMe: userId === shown.meUserId,
     }));
-  }, [board, arena, tintOf]);
+  }, [shown, shownArena, tintOf]);
 
-  // Board 2 on the map: each runner's mayor cells, scoped exactly as
-  // rankMayors scopes them, so a shape and its row always hold the same
-  // count (test/local-leaders.test.ts).
   const leaderHoldings = useMemo<DistrictHolding[]>(() => {
-    if (!board || arena === null) return [];
-    return [...mayorHoldings(board.visits, arena, undefined, board.runStats ?? undefined).entries()].map(([userId, cells]) => ({
+    if (!mayors || !shown) return [];
+    return [...holdingsOf(mayors).entries()].map(([userId, cells]) => ({
       userId,
       cells,
       color: tintOf(userId),
-      isMe: userId === board.meUserId,
+      isMe: userId === shown.meUserId,
     }));
-  }, [board, arena, tintOf]);
-  const leaderDays = useMemo(
-    () => (board && arena ? daysPresent(board.visits, arena) : new Map<string, number>()),
-    [board, arena],
-  );
-  const leaderTotals = useMemo(
-    () => (board?.runStats && arena ? runnerTotals(board.visits, arena, board.runStats) : null),
-    [board, arena],
-  );
-
-  const shareSegments = useMemo<ShareSegment[]>(() => {
-    if (!conquest) return [];
-    return conquest.entries.map((entry) => ({
-      key: entry.userId,
-      share: entry.share,
-      color: tintOf(entry.userId),
-      label: `${entry.displayName ?? t('leaderboard.anonymous')} ${pct(entry.share)}`,
-      isMe: entry.userId === board?.meUserId,
-    }));
-  }, [conquest, board, t, tintOf]);
+  }, [mayors, shown, tintOf]);
 
   const chromeTop = insets.top + Spacing.two;
   const belowChrome = chromeTop + CAPSULE_H + Spacing.two;
@@ -451,172 +446,112 @@ export default function LeaderboardScreen() {
     );
   }
 
-  if (activeBoard === 'local') {
-    // Full-bleed. The district is known, so the map draws even while the
-    // board loads or after it fails — loading and errors live in the card.
-    const cardBottom = insets.bottom + BottomTabInset - Spacing.two;
-    // A pick that fell off the board after a refresh just clears.
-    const focus = focusUserId && leaders?.some((e) => e.userId === focusUserId) ? focusUserId : null;
-    return shell(
-      <>
-        <MapErrorBoundary
-          message={t('track.mapUnavailable')}
-          color={c.textSecondary}
-          background={c.background}>
-          <DistrictMap
-            // A new arena remounts with a new camera frame, same as Municipio.
-            key={arena.key}
-            arena={arena}
-            holdings={leaderHoldings}
-            focusUserId={focus}
-            full={{
-              padding: {
-                top: belowChrome + PULL_PILL_H + Spacing.three,
-                bottom: cardBottom + CARD_H + Spacing.three,
-                left: Spacing.four,
-                // Clears the zoom stack on the right edge.
-                right: Spacing.three + 44 + Spacing.three,
-              },
-              controlsTop: belowChrome + PULL_PILL_H + Spacing.three,
-              controls: {
-                zoomInLabel: t('track.zoomIn'),
-                zoomOutLabel: t('track.zoomOut'),
-                refitLabel: t('leaderboard.leadersRefit'),
-              },
-            }}
-          />
-        </MapErrorBoundary>
-        <LeadersCard
-          bottom={cardBottom}
-          state={board === null ? 'loading' : board.failed ? 'failed' : 'ready'}
-          leaders={leaders ?? []}
-          days={leaderDays}
-          totals={leaderTotals}
-          meUserId={board?.meUserId ?? null}
-          tintOf={tintOf}
-          focusUserId={focus}
-          onFocus={(userId) => setFocusUserId((cur) => (cur === userId ? null : userId))}
-        />
-      </>,
-    );
-  }
+  // Both tabs, one layout (Pedro, 2026-09-30): a full-bleed map of who
+  // holds what, and a floating card of the top contenders. Same map
+  // instance across tabs AND across places — switching tabs swaps whose
+  // ground is drawn, switching places flies the camera — so neither tears
+  // down a WebGL map and builds another.
+  const isLocal = activeBoard === 'local';
+  const cardBottom = insets.bottom + BottomTabInset - Spacing.two;
+  const ranked = isLocal ? (leaders ?? []) : (conquest?.entries ?? []);
+  // A pick that fell off the board after a refresh or a switch just clears.
+  const focus = focusUserId && ranked.some((e) => e.userId === focusUserId) ? focusUserId : null;
 
-  if (board === null) {
-    return shell(
-      <View style={styles.centre}>
-        <ActivityIndicator color={c.textSecondary} />
-      </View>,
-    );
-  }
+  const rows: BoardCardRow[] = isLocal
+    ? (leaders ?? []).map((entry) => {
+        // Days, then the 30-day effort that breaks ties on them: distance,
+        // pace (shown, never ranked) and laps.
+        const tot = leaderTotals?.get(entry.userId);
+        return {
+          userId: entry.userId,
+          name: entry.displayName ?? t('leaderboard.anonymous'),
+          score: String(entry.cellsHeld),
+          detail: [
+            t('leaderboard.leaderDays', { count: leaderDays.get(entry.userId) ?? 0 }),
+            tot ? formatDistance(tot.distanceM) : null,
+            tot ? formatPace(tot.distanceM, tot.durationS) : null,
+            tot && tot.laps > 0 ? t('leaderboard.leaderLaps', { count: tot.laps }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        };
+      })
+    : (conquest?.entries ?? []).map((entry) => {
+        // Ground held right now — no days, no laps. Share of claimed ground,
+        // then the same 30-day distance and pace Local Leaders shows, so one
+        // runner reads the same on both tabs.
+        const tot = leaderTotals?.get(entry.userId);
+        return {
+          userId: entry.userId,
+          name: entry.displayName ?? t('leaderboard.anonymous'),
+          score: String(entry.cellsHeld),
+          detail: [
+            pct(entry.share),
+            tot ? formatDistance(tot.distanceM) : null,
+            tot ? formatPace(tot.distanceM, tot.durationS) : null,
+            entry.flaggedCellsHeld > 0
+              ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        };
+      });
 
-  if (board.failed) {
-    return shell(<Empty icon="exclamationmark.triangle" android="warning" text={t('leaderboard.error')} c={c} />);
-  }
+  const cardState: BoardCardState =
+    shown === null
+      ? 'loading'
+      : shown.failed || (isLocal && shown.leaderVisits === null)
+        ? 'failed'
+        : 'ready';
 
   return shell(
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: belowChrome + PULL_PILL_H + Spacing.three }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.textSecondary} />
-        }>
-
-        {/* THE HERO — your own standing, as the biggest thing on screen. */}
-        <Animated.View
-          entering={FadeInDown.duration(340)}
-          style={[styles.hero, { backgroundColor: c.backgroundElement }]}>
-          <Text style={[styles.heroValue, { color: c.text }]}>
-            {pct(me?.share ?? 0)}
-          </Text>
-          <Text style={[styles.heroCaption, { color: c.textSecondary }]}>
-            {/* Share of the ground anyone holds here — the competitive
-                number. How much of the district is untouched is a different
-                question and is answered under the bar. */}
-            {t('leaderboard.heroClaimedShare')}
-          </Text>
-          <View style={styles.heroChips}>
-            <Chip
-              text={myRank > 0 ? t('leaderboard.rankOf', { rank: myRank, total: conquest?.entries.length ?? 0 }) : t('leaderboard.unranked')}
-              c={c}
-            />
-            {contested > 0 && (
-              <Chip text={t('leaderboard.contested', { count: contested })} c={c} tone={c.accent} />
-            )}
-          </View>
-        </Animated.View>
-
-        {/* WHERE the ground is. Keyed on the district so a new arena
-            remounts with a new camera frame rather than animating there —
-            see the map's own mount-effect comment. Hidden when nobody holds
-            anything: an empty frame is not a picture of a contest. */}
-        {holdings.length > 0 && (
-          <Animated.View entering={FadeInDown.duration(340).delay(40)}>
-            <DistrictMap key={arena.key} arena={arena} holdings={holdings} />
-          </Animated.View>
-        )}
-
-        {/* WHO HOLDS THIS PLACE, as one bar. Only where there is a real
-            denominator — a bar of nothing is not a picture of anything. */}
-        {shareSegments.length > 0 && (
-          <Animated.View entering={FadeInDown.duration(340).delay(60)} style={styles.block}>
-            {/* Segments sum to 1 — every claimed cell has exactly one
-                holder — so there is no remainder to draw. */}
-            <ShareBar segments={shareSegments} c={c} unclaimedLabel={null} />
-            {/* The frontier, as a caption rather than a slice. It is a
-                different question with a different denominator (the whole
-                district, buildings and all), and drawing it in the same bar
-                would squash every runner into an invisible sliver — which is
-                what it did. Small here is the honest answer and the point:
-                it is how much is left to take. */}
-            <Text style={[styles.frontier, { color: c.textSecondary }]}>
-              {t('leaderboard.frontier', {
-                pct: pct((conquest?.claimedTotal ?? 0) / (conquest?.districtTotal || 1)),
-              })}
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* BOARD 1 */}
-        <Section
-          title={t('leaderboard.conquestTitle')}
-          note={t('leaderboard.conquestNote')}
-          c={c}>
-          {conquest && conquest.entries.length > 0 ? (
-            conquest.entries.map((entry, i) => {
-              const effort = leaderTotals?.get(entry.userId);
-              return (
-                <BoardRow
-                  key={entry.userId}
-                  rank={i + 1}
-                  name={entry.displayName ?? t('leaderboard.anonymous')}
-                  score={pct(entry.share)}
-                  // Tiles, then the runner's 30-day distance and pace here —
-                  // the same totals Local Leaders shows, so one runner reads
-                  // the same on both boards.
-                  detail={[
-                    t('leaderboard.cellsDetail', { count: entry.cellsHeld }),
-                    effort ? formatDistance(effort.distanceM) : null,
-                    effort ? formatPace(effort.distanceM, effort.durationS) : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  tint={tintOf(entry.userId)}
-                  isMe={entry.userId === board.meUserId}
-                  flaggedLabel={
-                    entry.flaggedCellsHeld > 0
-                      ? t('leaderboard.flaggedTiles', { count: entry.flaggedCellsHeld })
-                      : undefined
-                  }
-                  c={c}
-                />
-              );
-            })
-          ) : (
-            <Text style={[styles.note, { color: c.textSecondary }]}>
-              {t('leaderboard.conquestEmpty')}
-            </Text>
-          )}
-        </Section>
-      </ScrollView>,
+    <>
+      <MapErrorBoundary
+        message={t('track.mapUnavailable')}
+        color={c.textSecondary}
+        background={c.background}>
+        <DistrictMap
+          arena={arena}
+          holdings={isLocal ? leaderHoldings : holdings}
+          focusUserId={focus}
+          full={{
+            padding: {
+              top: belowChrome + PULL_PILL_H + Spacing.three,
+              bottom: cardBottom + CARD_H + Spacing.three,
+              left: Spacing.four,
+              // Clears the zoom stack on the right edge.
+              right: Spacing.three + 44 + Spacing.three,
+            },
+            controlsTop: belowChrome + PULL_PILL_H + Spacing.three,
+            controls: {
+              zoomInLabel: t('track.zoomIn'),
+              zoomOutLabel: t('track.zoomOut'),
+              refitLabel: t('leaderboard.leadersRefit'),
+            },
+          }}
+        />
+      </MapErrorBoundary>
+      <BoardCard
+        bottom={cardBottom}
+        title={
+          isLocal ? t('leaderboard.leadersTitle', { days: MAYORSHIP_WINDOW_DAYS }) : t('leaderboard.conquestTitle')
+        }
+        note={isLocal ? t('leaderboard.leadersNote') : t('leaderboard.conquestNote')}
+        empty={
+          isLocal
+            ? t('leaderboard.leadersEmpty', { days: MAYORSHIP_WINDOW_DAYS })
+            : t('leaderboard.conquestEmpty')
+        }
+        state={cardState}
+        stale={stale}
+        rows={rows}
+        meUserId={shown?.meUserId ?? null}
+        tintOf={tintOf}
+        focusUserId={focus}
+        onFocus={(userId) => setFocusUserId((cur) => (cur === userId ? null : userId))}
+      />
+    </>,
   );
 }
 
@@ -694,26 +629,41 @@ function BoardTabs({
   );
 }
 
-/** Board 2's ranking, floating over its own map. Rank, colour (the link to
- *  the shape on the map), name, days present, cells held. Your row is
- *  highlighted and scrolled into view. */
-function LeadersCard({
+type BoardCardState = 'loading' | 'failed' | 'ready';
+
+interface BoardCardRow {
+  userId: string;
+  name: string;
+  /** Tiles held — the number each board ranks by. */
+  score: string;
+  detail: string;
+}
+
+/** The ranking, floating over the map — the same card on both tabs, rows
+ *  prepared by the caller. Rank, colour (the link to the shape on the map),
+ *  name, detail, score. Your row is highlighted and scrolled into view; a
+ *  tap highlights that runner's ground. While the next place loads the
+ *  previous rows stay, dimmed, instead of blanking to a spinner. */
+function BoardCard({
   bottom,
+  title,
+  note,
+  empty,
   state,
-  leaders,
-  days,
-  totals,
+  stale,
+  rows,
   meUserId,
   tintOf,
   focusUserId,
   onFocus,
 }: {
   bottom: number;
-  state: 'loading' | 'failed' | 'ready';
-  leaders: MayorshipEntry[];
-  days: Map<string, number>;
-  /** Null when run stats are unavailable: rows show days only. */
-  totals: Map<string, RunnerTotals> | null;
+  title: string;
+  note: string;
+  empty: string;
+  state: BoardCardState;
+  stale: boolean;
+  rows: BoardCardRow[];
   meUserId: string | null;
   tintOf: (userId: string) => string;
   focusUserId: string | null;
@@ -722,7 +672,7 @@ function LeadersCard({
   const { t } = useI18n();
   const [showNote, setShowNote] = useState(false);
   const listRef = useRef<ScrollView | null>(null);
-  const myIndex = leaders.findIndex((e) => e.userId === meUserId);
+  const myIndex = rows.findIndex((r) => r.userId === meUserId);
 
   useEffect(() => {
     // One row of context above your own, so you see who you're chasing.
@@ -739,109 +689,58 @@ function LeadersCard({
           accessibilityLabel={t('leaderboard.leadersNoteToggle')}
           style={styles.cardHeader}>
           <Text style={styles.cardTitle} numberOfLines={1}>
-            {t('leaderboard.leadersTitle', { days: MAYORSHIP_WINDOW_DAYS })}
+            {title}
           </Text>
-          <View>
+          <View style={styles.cardHeaderEnd}>
+            {stale && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />}
             <Icon ios="info.circle" android="info" size={16} color="rgba(255,255,255,0.6)" />
           </View>
         </Pressable>
-        {showNote && <Text style={styles.cardNote}>{t('leaderboard.leadersNote')}</Text>}
+        {showNote && <Text style={styles.cardNote}>{note}</Text>}
         {state === 'loading' ? (
           <View style={styles.cardState}>
             <ActivityIndicator color="rgba(255,255,255,0.7)" />
           </View>
         ) : state === 'failed' ? (
           <Text style={[styles.cardNote, styles.cardState]}>{t('leaderboard.error')}</Text>
-        ) : leaders.length === 0 ? (
-          <Text style={[styles.cardNote, styles.cardState]}>
-            {t('leaderboard.leadersEmpty', { days: MAYORSHIP_WINDOW_DAYS })}
-          </Text>
+        ) : rows.length === 0 ? (
+          <Text style={[styles.cardNote, styles.cardState]}>{empty}</Text>
         ) : (
-          <ScrollView ref={listRef} style={{ maxHeight: ROW_H * 3 }} showsVerticalScrollIndicator>
-            {leaders.map((entry, i) => {
-              const isMe = entry.userId === meUserId;
-              const name = entry.displayName ?? t('leaderboard.anonymous');
-              const focused = entry.userId === focusUserId;
-              // Days, then the 30-day effort that breaks ties on them:
-              // distance, pace (shown, never ranked) and laps.
-              const tot = totals?.get(entry.userId);
-              const detail = [
-                t('leaderboard.leaderDays', { count: days.get(entry.userId) ?? 0 }),
-                tot ? formatDistance(tot.distanceM) : null,
-                tot ? formatPace(tot.distanceM, tot.durationS) : null,
-                tot && tot.laps > 0 ? t('leaderboard.leaderLaps', { count: tot.laps }) : null,
-              ]
-                .filter(Boolean)
-                .join(' · ');
-              return (
-                <Pressable
-                  key={entry.userId}
-                  onPress={() => onFocus(entry.userId)}
-                  style={[styles.leaderRow, isMe && styles.leaderRowMe, focused && styles.leaderRowFocused]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: focused }}
-                  accessibilityHint={t('leaderboard.leaderFocusHint')}
-                  accessibilityLabel={t('leaderboard.leaderRowA11y', {
-                    rank: i + 1,
-                    name,
-                    count: entry.cellsHeld,
-                    days: days.get(entry.userId) ?? 0,
-                  })}>
-                  <Text style={styles.leaderRank}>{i + 1}</Text>
-                  <View style={[styles.leaderSwatch, { backgroundColor: tintOf(entry.userId) }]} />
-                  <View style={styles.leaderText}>
-                    <Text style={styles.leaderName} numberOfLines={1}>
-                      {isMe ? t('leaderboard.leaderMe', { name }) : name}
-                    </Text>
-                    <Text style={styles.leaderDays} numberOfLines={1}>
-                      {detail}
-                    </Text>
-                  </View>
-                  <Text style={styles.leaderScore}>{entry.cellsHeld}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <Animated.View key={rows.map((r) => r.userId).join(',')} entering={FadeIn.duration(220)}>
+            <ScrollView
+              ref={listRef}
+              style={{ maxHeight: ROW_H * 3, opacity: stale ? 0.45 : 1 }}
+              showsVerticalScrollIndicator>
+              {rows.map((row, i) => {
+                const isMe = row.userId === meUserId;
+                const focused = row.userId === focusUserId;
+                return (
+                  <Pressable
+                    key={row.userId}
+                    onPress={() => onFocus(row.userId)}
+                    style={[styles.leaderRow, isMe && styles.leaderRowMe, focused && styles.leaderRowFocused]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: focused }}
+                    accessibilityHint={t('leaderboard.leaderFocusHint')}
+                    accessibilityLabel={`${i + 1}. ${row.name}, ${row.score}. ${row.detail}`}>
+                    <Text style={styles.leaderRank}>{i + 1}</Text>
+                    <View style={[styles.leaderSwatch, { backgroundColor: tintOf(row.userId) }]} />
+                    <View style={styles.leaderText}>
+                      <Text style={styles.leaderName} numberOfLines={1}>
+                        {isMe ? t('leaderboard.leaderMe', { name: row.name }) : row.name}
+                      </Text>
+                      <Text style={styles.leaderDays} numberOfLines={1}>
+                        {row.detail}
+                      </Text>
+                    </View>
+                    <Text style={styles.leaderScore}>{row.score}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Animated.View>
         )}
       </GlassSurface>
-    </View>
-  );
-}
-
-function Section({
-  title,
-  note,
-  c,
-  children,
-}: {
-  title: string;
-  note: string;
-  c: Record<ThemeColor, string>;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.block}>
-      <Text style={[styles.sectionTitle, { color: c.text }]}>{title}</Text>
-      {/* Every section states what it measures. This is what lets both
-          boards share one screen — see this file's header. */}
-      <Text style={[styles.sectionNote, { color: c.textSecondary }]}>{note}</Text>
-      <View style={styles.rows}>{children}</View>
-    </View>
-  );
-}
-
-function Chip({
-  text,
-  c,
-  tone,
-}: {
-  text: string;
-  c: Record<ThemeColor, string>;
-  tone?: string;
-}) {
-  return (
-    <View style={[styles.chip, { backgroundColor: c.backgroundSelected }]}>
-      <Text style={[styles.chipText, { color: tone ?? c.textSecondary }]}>{text}</Text>
     </View>
   );
 }
@@ -938,13 +837,15 @@ function assignTints(userIds: string[]): Map<string, string> {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  // Left of the 40pt profile pill, level with it (profile-pill.tsx).
+  // Centred on the viewport, level with the 40pt profile pill
+  // (profile-pill.tsx). Equal side insets that clear the pill keep it both
+  // centred and off the pill on a narrow phone.
   capsuleWrap: {
     position: 'absolute',
-    left: Spacing.three,
+    left: Spacing.three + 40 + Spacing.two,
     right: Spacing.three + 40 + Spacing.two,
     zIndex: 10,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   capsule: { flexDirection: 'row', height: CAPSULE_H, padding: 3, gap: 2 },
   capsuleItem: {
@@ -964,6 +865,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
+  cardHeaderEnd: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   cardTitle: {
     flexShrink: 1,
     color: 'rgba(255,255,255,0.7)',
@@ -995,22 +897,6 @@ const styles = StyleSheet.create({
   leaderName: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
   leaderDays: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
   leaderScore: { color: '#ffffff', fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  scroll: { padding: Spacing.three, gap: Spacing.four, paddingBottom: BottomTabInset },
-  arena: { gap: 2 },
-  arenaKicker: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8 },
-  arenaName: { fontSize: 22, fontWeight: '700' },
-  hero: { borderRadius: Spacing.three, padding: Spacing.four, gap: Spacing.one },
-  heroValue: { fontSize: 52, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  heroCaption: { fontSize: 14, lineHeight: 19 },
-  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, paddingTop: Spacing.two },
-  chip: { paddingVertical: 4, paddingHorizontal: Spacing.two, borderRadius: 999 },
-  chipText: { fontSize: 12, fontWeight: '700' },
-  block: { gap: Spacing.two },
-  frontier: { fontSize: 12, fontWeight: '600' },
-  sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8 },
-  sectionNote: { fontSize: 13, lineHeight: 18 },
-  rows: { gap: Spacing.two, paddingTop: Spacing.one },
-  note: { fontSize: 13, lineHeight: 19 },
   centre: {
     flex: 1,
     alignItems: 'center',

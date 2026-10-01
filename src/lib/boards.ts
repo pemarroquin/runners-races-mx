@@ -178,3 +178,46 @@ export async function fetchRunStats(
     return { ok: true, stats };
   });
 }
+
+/** Runs per request when fetching sessions' whole visit lists. */
+const RUNS_PER_REQUEST = 100;
+
+/**
+ * Every visit of the given runs, wherever they are — each session's WHOLE
+ * path, so its enclosure can be rebuilt (local-leaders.ts,
+ * sessionGroundVisits). The arena read only returns tiles near the arena, and
+ * a loop that crosses its edge would never close from that alone.
+ */
+export async function fetchRunVisits(
+  runIds: string[],
+  nameById: Map<string, string | null>,
+): Promise<Outcome<{ visits: TileVisitRow[] }>> {
+  return withSession<{ visits: TileVisitRow[] }>(async () => {
+    const unique = [...new Set(runIds)];
+    const visits: TileVisitRow[] = [];
+    for (let i = 0; i < unique.length; i += RUNS_PER_REQUEST) {
+      const chunk = unique.slice(i, i + RUNS_PER_REQUEST);
+      for (let offset = 0; ; offset += PAGE) {
+        const { data, error } = await supabase
+          .from('tile_visits')
+          .select('h3, user_id, visited_at, run_id')
+          .in('run_id', chunk)
+          .order('h3', { ascending: true })
+          .order('run_id', { ascending: true })
+          .range(offset, offset + PAGE - 1);
+        if (error || !data) return { ok: false, reason: 'network' as const };
+        for (const r of data) {
+          visits.push({
+            h3: r.h3,
+            userId: r.user_id,
+            displayName: nameById.get(r.user_id) ?? null,
+            visitedAt: r.visited_at,
+            runId: r.run_id,
+          });
+        }
+        if (data.length < PAGE) break;
+      }
+    }
+    return { ok: true, visits };
+  });
+}

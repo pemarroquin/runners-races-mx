@@ -80,8 +80,26 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
     if (!full || framedHoldingsRef.current || !readyRef.current) return;
     if (!holdings.some((h) => h.cells.length > 0)) return;
     framedHoldingsRef.current = true;
-    refit(false);
+    refit(true);
   }, [holdings, full, refit]);
+
+  // A new place, same map: fly there rather than remount (see the web map).
+  const arenaRef = useRef(arena);
+  useEffect(() => {
+    if (arenaRef.current === arena) return;
+    arenaRef.current = arena;
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    framedHoldingsRef.current = false;
+    const b = arena.bounds;
+    map.fitToCoordinates(
+      [
+        { latitude: b.minLat, longitude: b.minLng },
+        { latitude: b.maxLat, longitude: b.maxLng },
+      ],
+      { edgePadding: full?.padding ?? { top: 24, right: 24, bottom: 24, left: 24 }, animated: true },
+    );
+  }, [arena, full]);
 
   // Every ring of the arena's outline, [lng, lat] flipped to
   // react-native-maps' { latitude, longitude }.
