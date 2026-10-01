@@ -190,6 +190,11 @@ export interface RunTracker {
    *  checkpoint is UNTOUCHED on disk — the caller must keep offering it
    *  rather than leaving the runner on an idle screen with no way back. */
   restoreFromCheckpoint: (checkpoint: RunCheckpoint) => Promise<boolean>;
+  /** Puts an already-FINISHED run back on screen, from last-run-debug.ts's
+   *  raw copy — for a run that finished but never saved. No GPS, nothing
+   *  awaited: the summary's own effects then mask, tile and save it exactly
+   *  as they would have on Stop. */
+  restoreFinished: (run: { points: TrackPoint[]; distanceM: number; startedAt: number; endedAt: number }) => void;
 }
 
 export function useRunTracker(): RunTracker {
@@ -659,6 +664,25 @@ export function useRunTracker(): RunTracker {
     }
   }, [clearSub, beginRecording]);
 
+  const restoreFinished = useCallback(
+    (run: { points: TrackPoint[]; distanceM: number; startedAt: number; endedAt: number }) => {
+      clearSub();
+      lastRef.current = null;
+      legStartRef.current = null;
+      // Wall-clock duration: the raw copy doesn't keep pauses. uploadRun
+      // stores endedAt - startedAt either way.
+      accumulatedRef.current = Math.max(0, run.endedAt - run.startedAt);
+      setPoints(run.points);
+      setDistanceM(run.distanceM);
+      setElapsedS(Math.floor(accumulatedRef.current / 1000));
+      setStartedAt(run.startedAt);
+      setEndedAt(run.endedAt);
+      setError(null);
+      setStatus('finished');
+    },
+    [clearSub],
+  );
+
   const stop = useCallback(() => {
     clearSub();
     const legStart = legStartRef.current;
@@ -821,6 +845,7 @@ export function useRunTracker(): RunTracker {
     stop,
     reset,
     restoreFromCheckpoint,
+    restoreFinished,
   };
 }
 

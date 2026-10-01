@@ -120,6 +120,9 @@ const translations = {
       weakSignal: 'Señal débil — muévete a cielo abierto para empezar a trazar.',
       degradedSignal: 'Señal débil — seguimos trazando, con menos precisión.',
       summaryTitle: 'Territorio conquistado',
+      unsavedTitle: 'Tu última sesión no se guardó',
+      unsavedBody: '%{distance}, terminada el %{time}. Sigue en este teléfono; guárdala ahora.',
+      unsavedSave: 'Guardar sesión',
       noFence:
         'Tu recorrido fue muy corto para formar un área. Corre un circuito y vuelve a intentarlo.',
       save: 'Guardar territorio',
@@ -715,6 +718,9 @@ const translations = {
       weakSignal: 'Weak signal — move into open sky to start tracing.',
       degradedSignal: 'Weak signal — still tracking, with less precision.',
       summaryTitle: 'Territory claimed',
+      unsavedTitle: "Your last session didn't save",
+      unsavedBody: '%{distance}, finished %{time}. It is still on this phone — save it now.',
+      unsavedSave: 'Save session',
       noFence:
         'Your route was too short to enclose an area. Run a loop and try again.',
       save: 'Save territory',

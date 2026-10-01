@@ -34,7 +34,13 @@ import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/th
 import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
 import { detectLaps, pickSafeLapMarkerCenter } from '@/lib/laps';
-import { saveLastRunDebug } from '@/lib/last-run-debug';
+import {
+  dismissLastRun,
+  isLastRunDismissed,
+  loadLastRunDebug,
+  saveLastRunDebug,
+  type LastRunDebug,
+} from '@/lib/last-run-debug';
 import { isImpossiblePace } from '@/lib/pace-guard';
 import { fetchDistrictParkCells } from '@/lib/boards';
 import { districtLabel, districtOf } from '@/lib/district';
@@ -45,11 +51,11 @@ import { pickMarkerAnchor } from '@/lib/marker-anchor';
 import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
-import { buildFence, type FenceResult } from '@/lib/territory';
-import { uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
+import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
+import { fetchMyFences, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
 import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
-import { enqueueRun, flushQueue, queuedCount, removeQueued } from '@/lib/upload-queue';
+import { enqueueRun, flushQueue, listQueued, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
@@ -62,7 +68,7 @@ const STOP_COLOR = '#E5484D';
 export default function TrackScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tracker = useRunTracker();
   const isFocused = useIsFocused();
 
@@ -241,6 +247,39 @@ export default function TrackScreen() {
   // component stays mounted, so re-checking on refocus would just find the
   // same value or (worse) the one the runner already dismissed.
   const [checkpoint, setCheckpoint] = useState<RunCheckpoint | null>(null);
+
+  // A run that FINISHED but never reached the server (2026-09-30: a 7 km
+  // run hit buildFence's "too short" path, and save() refused without a
+  // fence). last-run-debug.ts keeps its raw points; if they aren't among
+  // the runner's saved runs or in the upload queue, offer to save them.
+  // Only on a confirmed answer from the server — a failed read must never
+  // tell a runner their run is lost when it isn't.
+  const [unsavedRun, setUnsavedRun] = useState<LastRunDebug | null>(null);
+  useEffect(() => {
+    if (!isFocused || tracker.status !== 'idle' || checkpoint) return;
+    let stale = false;
+    const id = setTimeout(() => {
+      const debug = loadLastRunDebug();
+      if (
+        !debug ||
+        debug.distanceM < 300 ||
+        Date.now() - debug.endedAt > 7 * 24 * 60 * 60 * 1000 ||
+        isLastRunDismissed(debug.startedAt) ||
+        listQueued().some((q) => q.run.startedAt === debug.startedAt)
+      ) {
+        setUnsavedRun(null);
+        return;
+      }
+      fetchMyFences().then((outcome) => {
+        if (stale || !outcome.ok) return;
+        setUnsavedRun(outcome.fences.some((f) => f.startedAtMs === debug.startedAt) ? null : debug);
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [isFocused, tracker.status, checkpoint]);
   useEffect(() => {
     // Deferred by a tick, not called straight from the effect body — the
     // React Compiler's lint rule traces a call through and flags any
@@ -420,7 +459,16 @@ export default function TrackScreen() {
       // don't delete) — still computed and uploaded for audit/comparison
       // (see legacyArea in i18n.tsx), just no longer what the map or the
       // stat bar render as this run's territory.
-      const builtFence = result.points.length > 0 ? buildFence(result.points) : null;
+      // Never "too short" for a real run: save() refuses without a fence, so
+      // a null here on a 7 km run (2026-09-30) silently lost it. A run of
+      // 300 m+ whose outline can't be built gets its convex hull instead —
+      // legacy fence only; tiles are the territory. Under 300 m the honest
+      // "too short" answer stands.
+      const builtFence =
+        result.points.length > 0
+          ? (buildFence(result.points) ??
+            (tracker.distanceM >= 300 ? hullFence(result.points.map((p) => [p.lng, p.lat])) : null))
+          : null;
       setFence(builtFence);
       // This run's masked-path cells — the same set the upload actually
       // claims. Kept as a local rather than read back from sessionTiles
@@ -1244,6 +1292,42 @@ export default function TrackScreen() {
                   <Text style={[styles.secondary, { color: c.textSecondary }]}>
                     {t('track.discard')}
                   </Text>
+                </Pressable>
+              </View>
+            </>
+          ) : unsavedRun ? (
+            // A finished run that never saved — see unsavedRun above. Save
+            // puts it back on the summary screen, which masks, tiles and
+            // uploads it exactly as Stop would have.
+            <>
+              <Text style={[styles.stageTitle, { color: c.text }]}>{t('track.unsavedTitle')}</Text>
+              <Text style={[styles.overlayNotice, { color: c.text }]}>
+                {t('track.unsavedBody', {
+                  distance: formatDistance(unsavedRun.distanceM),
+                  time: new Date(unsavedRun.endedAt).toLocaleString(locale, {
+                    weekday: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  }),
+                })}
+              </Text>
+              <View style={styles.summaryActions}>
+                <PrimaryButton
+                  label={t('track.unsavedSave')}
+                  onPress={() => {
+                    tracker.restoreFinished(unsavedRun);
+                    setUnsavedRun(null);
+                  }}
+                  c={c}
+                />
+                <Pressable
+                  onPress={() => {
+                    dismissLastRun(unsavedRun.startedAt);
+                    setUnsavedRun(null);
+                  }}
+                  accessibilityRole="button"
+                  hitSlop={10}>
+                  <Text style={[styles.secondary, { color: c.textSecondary }]}>{t('track.discard')}</Text>
                 </Pressable>
               </View>
             </>
