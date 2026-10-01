@@ -250,3 +250,46 @@ describe('buildFence on shapes that enclose nothing', () => {
     expect(fence!.areaM2).toBeGreaterThan(500);
   });
 });
+
+describe('hullFence — buildFence never calls a real run "too short"', () => {
+  it('returns the convex hull of a ring, marked approximate', async () => {
+    const { hullFence } = await import('../src/lib/territory');
+    // A square with an interior point and a self-crossing zig: the hull is
+    // the square.
+    const ring = [
+      [-100.4, 25.6],
+      [-100.39, 25.6],
+      [-100.395, 25.605],
+      [-100.39, 25.61],
+      [-100.4, 25.61],
+      [-100.391, 25.601],
+      [-100.4, 25.6],
+    ];
+    const fence = hullFence(ring)!;
+    expect(fence.approximate).toBe(true);
+    expect(fence.geometry.geometry.type).toBe('Polygon');
+    expect((fence.geometry.geometry.coordinates as number[][][])[0]).toHaveLength(5); // 4 corners + close
+    expect(fence.areaM2).toBeGreaterThan(1_000_000 * 0.9);
+  });
+
+  it('is null for collinear points — a straight line still encloses nothing', async () => {
+    const { hullFence } = await import('../src/lib/territory');
+    expect(hullFence([[-100.4, 25.6], [-100.39, 25.6], [-100.38, 25.6], [-100.4, 25.6]])).toBeNull();
+  });
+
+  it('gives a long, messy, self-crossing route a fence', async () => {
+    const { buildFence } = await import('../src/lib/territory');
+    // A dense random walk around a city block grid: the shape of input that
+    // made turf's union throw on a real 7 km run (2026-09-30).
+    let lat = 25.656;
+    let lng = -100.372;
+    let seed = 7;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const path = Array.from({ length: 3000 }, () => {
+      lat += (rand() - 0.5) * 0.0004;
+      lng += (rand() - 0.5) * 0.0004;
+      return { lat, lng };
+    });
+    expect(buildFence(path)).not.toBeNull();
+  });
+});

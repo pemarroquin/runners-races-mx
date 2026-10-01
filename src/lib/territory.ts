@@ -24,6 +24,9 @@ export interface FenceResult {
    *  the raw route self-intersected and split into separate lobes. */
   geometry: Feature<Polygon | MultiPolygon>;
   areaM2: number;
+  /** True when this is the convex-hull fallback (hullFence), not the route's
+   *  own outline — its area overstates what was run around. */
+  approximate?: boolean;
 }
 
 // ~3m at the equator, tightening slightly at MX latitudes. Cuts GPS jitter
@@ -157,12 +160,54 @@ export function buildFence(path: LatLng[], toleranceDeg = DEFAULT_TOLERANCE_DEG)
     // tells a runner who just did 15km that their "route was too short",
     // with the Save button gated off and nothing recorded anywhere.
     //
-    // Still returns null (the screen must not crash), but says so, so the
-    // difference between "you walked in a line" and "turf fell over on your
-    // real run" is recoverable from a log instead of invisible.
+    //
+    // That warning was right and nothing acted on it: on 2026-09-30 Pedro
+    // ran ~7 km, pressed Stop, got "too short to enclose an area", and the
+    // run never uploaded — save() refuses without a fence. So a throw here
+    // now falls back to the route's CONVEX HULL: always a valid simple
+    // polygon (it can't trip GEOS in the runs triggers the way a
+    // self-crossing outline could), and the fence is legacy anyway — tiles
+    // are the territory, and the area is marked approximate. A route that
+    // truly encloses nothing (a straight line) still returns null above or
+    // from the hull's own area check.
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[buildFence] geometry pipeline threw; treating as no fence', e);
+      console.warn('[buildFence] geometry pipeline threw; using the convex hull', e);
     }
+    return hullFence(ring);
+  }
+}
+
+/**
+ * The convex hull of a ring's points as a fence — buildFence's fallback when
+ * turf throws on a long, self-crossing route. Andrew's monotone chain, on
+ * [lng, lat]; null when the points are collinear (no area to enclose).
+ */
+export function hullFence(ring: number[][]): FenceResult | null {
+  const pts = [...new Map(ring.map(([x, y]) => [`${x},${y}`, [x, y] as [number, number]])).values()].sort(
+    (a, b) => a[0] - b[0] || a[1] - b[1],
+  );
+  if (pts.length < 3) return null;
+  const cross = (o: number[], a: number[], b: number[]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: [number, number][] = [];
+  for (const p of pts) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper: [number, number][] = [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const p = pts[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  const hull = [...lower.slice(0, -1), ...upper.slice(0, -1)];
+  if (hull.length < 3) return null;
+  try {
+    const geometry = polygon([[...hull, hull[0]]]);
+    const areaM2 = area(geometry);
+    if (!Number.isFinite(areaM2) || areaM2 <= 0) return null;
+    return { geometry, areaM2, approximate: true };
+  } catch {
     return null;
   }
 }

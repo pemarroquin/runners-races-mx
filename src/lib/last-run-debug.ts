@@ -81,3 +81,16 @@ export function loadLastRunDebug(): LastRunDebug | null {
 export function lastRunDebugToJSON(debug: LastRunDebug): string {
   return JSON.stringify(debug, null, 2);
 }
+
+const PREF_DISMISSED = 'debug.lastRunDismissed.v1';
+
+/** The runner chose not to recover this run (by its startedAt). */
+export function dismissLastRun(startedAt: number): void {
+  initDb();
+  setPref(PREF_DISMISSED, String(startedAt));
+}
+
+export function isLastRunDismissed(startedAt: number): boolean {
+  initDb();
+  return getPref(PREF_DISMISSED) === String(startedAt);
+}
