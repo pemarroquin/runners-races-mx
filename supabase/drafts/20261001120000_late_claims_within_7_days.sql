@@ -1,4 +1,6 @@
--- DRAFT — NOT APPLIED. Late runs claim territory (weakly) instead of being
+-- DRAFT — NOT APPLIED. Lives in supabase/drafts/ so `supabase db push` can't
+-- pick it up; move it to supabase/migrations/ when approved.
+-- Late runs claim territory (weakly) instead of being
 -- refused at 12 hours. Pedro's call before applying.
 --
 -- WHY (2026-10-01): a run that reaches the server more than 12 h after it
@@ -36,8 +38,8 @@
 -- cleanly proves nothing; see the backlog's "A migration that applies isn't
 -- verified"):
 --   select position('late_cap' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as late_cap_installed,
---          position('r.ended_at
-    on conflict (h3, run_id)' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as visits_stamped_with_ended_at;
+--          position('select unnest(p_visited), r.user_id, r.id, r.ended_at' in pg_get_functiondef('claim_run_tiles(uuid,text[],text[],text)'::regprocedure)) > 0 as visits_stamped_with_ended_at;
+--   -- expect: true, true
 -- then exercise the write path on a throwaway: in a transaction that you
 -- ROLL BACK, insert a test run that ended 2 days ago, call the function as
 -- its owner, check the counts and visited_at, and roll back.
