@@ -52,7 +52,8 @@ import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
-import { fetchMyFences, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
+import { fetchMyFences, reclaimUnclaimedRuns, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
+import { flushClaims, listClaims } from '@/lib/claim-queue';
 import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, listQueued, queuedCount, removeQueued } from '@/lib/upload-queue';
@@ -147,7 +148,7 @@ export default function TrackScreen() {
   // failure nor an accusation: a run uploaded past the claim window saved
   // fine and simply arrived too late to compete for ground. Telling that
   // runner "we couldn't confirm your tiles" would be false.
-  const [tilesFailure, setTilesFailure] = useState<'tooOld' | 'other' | null>(null);
+  const [tilesFailure, setTilesFailure] = useState<'tooOld' | 'retrying' | 'other' | null>(null);
   // Per-area "+N" conquest bubbles for FenceMap — one per contiguous patch
   // of tileClaim.takenCells (clusterCells, tiles.ts), replacing the old
   // single aggregate "You took N tiles" banner that had no place on the
@@ -332,6 +333,19 @@ export default function TrackScreen() {
     if (!isFocused) return;
     let stale = false;
     const id = setTimeout(() => {
+      // Claims that failed after their run saved (claim-queue.ts) retry on
+      // the same occasions. A landed claim changes the maps, so the screens
+      // showing territory hear about it like a saved run.
+      if (listClaims().length > 0) {
+        void flushClaims(retryClaim).then((r) => {
+          if (r.claimed > 0) notifyRunSaved();
+        });
+      }
+      // Own runs from the last 7 days that saved with no territory (too
+      // late, or before the claim queue existed) — once per app session.
+      void reclaimUnclaimedRuns().then((r) => {
+        if (r.claimed > 0) notifyRunSaved();
+      });
       const before = queuedCount();
       if (before === 0) {
         setPending(0);
@@ -382,12 +396,6 @@ export default function TrackScreen() {
           // show a tiles-conquered bubble that might be labelled with the
           // wrong place's name, a background-resolved run simply shows no
           // tile stats at all — see the executor's report.
-        } else if (result.abandonedIds.includes(current)) {
-          // Retried MAX_ATTEMPTS times and given up — the run genuinely
-          // will not upload. Not surfaced with copy on this screen (see the
-          // file header above the 'finished' branch); this only stops
-          // `queuedId` from pointing at a queue entry that no longer exists.
-          setQueuedId(null);
         }
       });
     }, 0);
@@ -721,7 +729,15 @@ export default function TrackScreen() {
       if (outcome.tiles) {
         setTileClaim(outcome.tiles);
       } else {
-        setTilesFailure(outcome.tilesReason === 'tooOld' ? 'tooOld' : 'other');
+        // 'retrying': the claim is queued (claim-queue.ts) and will be tried
+        // again — say so, rather than imply the territory is gone.
+        setTilesFailure(
+          outcome.tilesReason === 'tooOld'
+            ? 'tooOld'
+            : outcome.tilesReason === 'rejected'
+              ? 'other'
+              : 'retrying',
+        );
       }
       // The conquered-tiles bubble's place name, upgraded from the metro
       // fallback once this resolves. Best-effort: a failed or empty read
@@ -1057,7 +1073,13 @@ export default function TrackScreen() {
               caused. */}
           {tilesFailure !== null && (
             <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
-              {t(tilesFailure === 'tooOld' ? 'track.claimTooOld' : 'track.tilesUnavailable')}
+              {t(
+                tilesFailure === 'tooOld'
+                  ? 'track.claimTooOld'
+                  : tilesFailure === 'retrying'
+                    ? 'track.tilesRetrying'
+                    : 'track.tilesUnavailable',
+              )}
             </Text>
           )}
           {/* Ground won off another runner used to be one aggregate banner

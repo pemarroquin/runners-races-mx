@@ -22,7 +22,7 @@ import { AchievementsView } from '@/components/achievements-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { groundOfRun, noiseHoles } from '@/lib/enclosure';
 import { useI18n } from '@/lib/i18n';
-import { fetchMyVisitedCells } from '@/lib/territory-sync';
+import { fetchMyFences } from '@/lib/territory-sync';
 import { DEFAULT_TILE_RES } from '@/lib/tiles';
 
 type Base = { status: 'loading' } | { status: 'error' } | { status: 'ready'; cells: string[] };
@@ -38,7 +38,13 @@ export default function PlacesScreen() {
     // Deferred a tick, never called from the effect body — same React
     // Compiler rule as every other fetch effect here.
     const id = setTimeout(() => {
-      fetchMyVisitedCells().then((outcome) => {
+      // EVERY saved run, from its own stored route — not from visit rows,
+      // which only a successful claim writes. A run that reached the server
+      // too late for territory (past the 12 h claim window) still belongs
+      // in the permanent record (Pedro, 2026-10-01). For a run that did
+      // claim, pathCells are exactly its visit rows: same route, same
+      // pathToTiles.
+      fetchMyFences().then((outcome) => {
         if (stale) return;
         if (!outcome.ok) {
           setBase({ status: 'error' });
@@ -48,16 +54,16 @@ export default function PlacesScreen() {
         // crossed, plus the interior of any loop THAT SINGLE SESSION closed.
         // Per run, never across runs — unioning first and enclosing that
         // would let a six-month city perimeter claim everything inside, the
-        // failure enclosure.ts exists to refuse. Recomputed from the
-        // append-only visit log rather than read from territory_tiles,
-        // because territory is "what I hold NOW" and conquest takes ground
-        // off you; this layer is the permanent record.
+        // failure enclosure.ts exists to refuse. Recomputed from each run's
+        // own route rather than read from territory_tiles, because
+        // territory is "what I hold NOW" and conquest takes ground off you;
+        // this layer is the permanent record.
         //
         // Privacy: these cells were privacy-zone-trimmed on the way in (see
         // uploadRun), so enclosure derived from them can't expose a home
         // loop the mask removed.
         const ground = [
-          ...new Set(outcome.runs.flatMap(({ cells }) => groundOfRun(cells, DEFAULT_TILE_RES))),
+          ...new Set(outcome.fences.flatMap(({ pathCells }) => groundOfRun(pathCells, DEFAULT_TILE_RES))),
         ];
         // Sampling holes filled at enclosure.ts's measured cap: a session
         // that never closed its loop encloses nothing, so a cell the GPS

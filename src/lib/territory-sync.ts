@@ -15,6 +15,8 @@ import { nearestRegion } from '@/lib/regions';
 import type { FenceResult, LatLng } from '@/lib/territory';
 import { districtChunks, districtsOrFilter } from '@/lib/district';
 import { lapsForUpload } from '@/lib/laps';
+import { enqueueClaim, listClaims } from '@/lib/claim-queue';
+import { getPref, initDb, setPref } from '@/lib/db';
 import { announceClaim } from '@/lib/live-territory';
 import { enclosedCells } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
@@ -564,6 +566,13 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
 
     const allEnclosed = [...new Set([...(run.enclosedCells ?? []), ...unionNewEnclosed])];
     const claim = await claimTiles(data.id, cells, region, allEnclosed);
+    // The run is saved; a claim that failed for a reason a retry can fix
+    // waits in claim-queue.ts and is retried on every flush, instead of the
+    // run's territory being lost to one bad moment of signal. 'tooOld' and
+    // 'rejected' are the server's final word — not queued.
+    if (!claim.ok && claim.reason !== 'tooOld' && claim.reason !== 'rejected') {
+      enqueueClaim({ runId: data.id, visited: cells, enclosed: allEnclosed, region });
+    }
     const claimResult = claim.ok ? claim.result : null;
     if (claimResult && cycleBonus) claimResult.cycleBonus = cycleBonus;
     return {
@@ -659,6 +668,13 @@ export interface MyFence {
    * null-fence case below.
    */
   route: LatLng[] | null;
+  /** The tiles this run's stored (privacy-trimmed) route crosses — the same
+   *  algorithm and the same route a claim uses, so for a run that claimed
+   *  these ARE its visit rows. Present for every saved run, claimed or not,
+   *  which is what lets Profile › Places I've been show a run that reached
+   *  the server too late to claim territory. Empty when the route is
+   *  missing or unreadable. */
+  pathCells: string[];
   areaM2: number;
   distanceM: number;
   /** Wall-clock seconds from start to finish (`duration_s`, stored on every
@@ -727,6 +743,32 @@ export function parseFenceGeometry(value: unknown): Polygon | MultiPolygon | nul
  * clean array of `[lat, lng, ts]` triples returns null rather than throwing
  * or drawing a corrupted line.
  */
+/** Tiles crossed by a stored raw_path ([lat, lng, ts] triples), through the
+ *  same pathToTiles a claim uses. Timestamps are required — they decide which
+ *  gaps are bridged — so a row without them yields []. */
+export function pathCellsOf(value: unknown): string[] {
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+  const points: { lat: number; lng: number; ts: number }[] = [];
+  for (const entry of value) {
+    if (!Array.isArray(entry) || entry.length < 3) return [];
+    const [lat, lng, ts] = entry;
+    if (typeof lat !== 'number' || typeof lng !== 'number' || typeof ts !== 'number') return [];
+    points.push({ lat, lng, ts });
+  }
+  try {
+    return pathToTiles(points).cells;
+  } catch {
+    return [];
+  }
+}
+
 export function parseRawPath(value: unknown): LatLng[] | null {
   if (typeof value === 'string') {
     try {
@@ -785,6 +827,7 @@ export async function fetchMyFences(): Promise<FencesOutcome> {
         startedAtMs,
         geometry,
         route,
+        pathCells: pathCellsOf(row.raw_path),
         areaM2: Number(row.area_m2) || 0,
         distanceM: Number(row.distance_m) || 0,
         durationS: Number(row.duration_s) || 0,
@@ -1214,4 +1257,131 @@ export async function fetchMyVisitedCells(): Promise<VisitedOutcome> {
 
     return { ok: true, runs: groupVisitsByRun(rows) };
   });
+}
+
+/** Retry one queued claim (claim-queue.ts). */
+export async function retryClaim(c: {
+  runId: string;
+  visited: string[];
+  enclosed: string[];
+  region: string | null;
+}): Promise<{ ok: true } | { ok: false; reason: 'disabled' | 'auth' | 'network' | 'rejected' | 'tooOld' }> {
+  const outcome = await claimTiles(c.runId, c.visited, c.region, c.enclosed);
+  return outcome.ok ? { ok: true } : { ok: false, reason: outcome.reason };
+}
+
+/** The server's claim window (claim_run_tiles, 12 h). Past it a run keeps
+ *  no territory — it still shows in Profile › Places I've been, which draws
+ *  every saved run from its own route. */
+export const RECLAIM_WINDOW_MS = 12 * 60 * 60 * 1000;
+const PREF_RECLAIM_TRIED = 'reclaimTried.v1';
+
+function reclaimTried(): string[] {
+  initDb();
+  try {
+    const parsed: unknown = JSON.parse(getPref(PREF_RECLAIM_TRIED) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function markReclaimTried(runId: string): void {
+  initDb();
+  // Bounded: only runs inside the claim window ever matter here.
+  setPref(PREF_RECLAIM_TRIED, JSON.stringify([...reclaimTried().filter((id) => id !== runId), runId].slice(-100)));
+}
+
+let reclaimedThisSession = false;
+
+/**
+ * Claim territory for the runner's OWN saved runs, still inside the 12 h
+ * claim window, that never claimed any — e.g. the app closed between saving
+ * the run and claiming, or the run saved before the claim queue existed.
+ * Rebuilt from the stored,
+ * privacy-trimmed route exactly as uploadRun builds a claim: its tiles, its
+ * own loop's enclosure, and enclosure against the runner's existing
+ * territory. Through the normal claim_run_tiles, so every rule applies; a
+ * run only takes ground nobody has run since it ended.
+ *
+ * At most once per run (remembered on the device): a final answer marks it
+ * done, and a connectivity failure hands it to the claim queue. Runs once per
+ * app session.
+ */
+export async function reclaimUnclaimedRuns(now: number = Date.now()): Promise<{ claimed: number }> {
+  if (reclaimedThisSession) return { claimed: 0 };
+  reclaimedThisSession = true;
+  const outcome = await withSession<{ claimed: number }>(async (session) => {
+    const since = new Date(now - RECLAIM_WINDOW_MS).toISOString();
+    const { data: runs, error } = await supabase
+      .from('runs')
+      .select('id, ended_at, distance_m, region, raw_path')
+      .eq('user_id', session.user.id)
+      .gte('ended_at', since)
+      .order('ended_at', { ascending: true });
+    if (error || !runs) return { ok: false, reason: 'network' };
+
+    const tried = new Set(reclaimTried());
+    const queued = new Set(listClaims().map((c) => c.runId));
+    const candidates = (runs as { id: string; distance_m: number | string; region: string | null; raw_path: unknown }[])
+      .filter((r) => Number(r.distance_m) >= 300 && !tried.has(r.id) && !queued.has(r.id));
+    if (candidates.length === 0) return { ok: true, claimed: 0 };
+
+    // Which of them already claimed: any visit row at all means yes.
+    const { data: visited, error: visitsError } = await supabase
+      .from('tile_visits')
+      .select('run_id')
+      .in('run_id', candidates.map((r) => r.id))
+      .range(0, 9999);
+    if (visitsError || !visited) return { ok: false, reason: 'network' };
+    const hasVisits = new Set((visited as { run_id: string }[]).map((v) => v.run_id));
+    const unclaimed = candidates.filter((r) => !hasVisits.has(r.id));
+    if (unclaimed.length === 0) return { ok: true, claimed: 0 };
+
+    // The runner's current territory, for enclosure against it — paged past
+    // PostgREST's 1000-row cap, as uploadRun does.
+    const owned = new Set<string>();
+    for (let offset = 0; ; offset += 1000) {
+      const { data: page, error: pageError } = await supabase
+        .from('territory_tiles')
+        .select('h3')
+        .eq('owner_id', session.user.id)
+        .order('h3', { ascending: true })
+        .range(offset, offset + 999);
+      if (pageError || !page) return { ok: false, reason: 'network' };
+      for (const row of page as { h3: string }[]) if (isCurrentTileRes(row.h3)) owned.add(row.h3);
+      if (page.length < 1000) break;
+    }
+
+    let claimed = 0;
+    for (const run of unclaimed) {
+      const path = Array.isArray(run.raw_path) ? (run.raw_path as number[][]) : [];
+      const points = path.map(([lat, lng, ts]) => ({ lat, lng, ts }));
+      const cells = pathToTiles(points).cells;
+      if (cells.length === 0) {
+        markReclaimTried(run.id);
+        continue;
+      }
+      const cellSet = new Set(cells);
+      let enclosed: string[] = [];
+      try {
+        const ownLoop = enclosedCells(cells, DEFAULT_TILE_RES);
+        const union = enclosedCells([...new Set([...cells, ...owned])], DEFAULT_TILE_RES);
+        enclosed = [...new Set([...ownLoop, ...union])].filter((c) => !cellSet.has(c) && !owned.has(c));
+      } catch {
+        // Enclosure is a bonus; the crossed tiles still claim.
+      }
+      const claim = await claimTiles(run.id, cells, run.region, enclosed);
+      if (claim.ok) {
+        claimed++;
+        for (const c of [...cells, ...enclosed]) owned.add(c);
+        announceClaim([...cells, ...enclosed]);
+      } else if (claim.reason !== 'tooOld' && claim.reason !== 'rejected') {
+        enqueueClaim({ runId: run.id, visited: cells, enclosed, region: run.region });
+      }
+      markReclaimTried(run.id);
+    }
+    return { ok: true, claimed };
+  });
+  return outcome.ok ? { claimed: outcome.claimed } : { claimed: 0 };
 }

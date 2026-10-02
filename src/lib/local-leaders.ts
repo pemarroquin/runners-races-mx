@@ -227,3 +227,20 @@ export function holdingsOf(mayors: Map<string, { userId: string }>): Map<string,
   }
   return out;
 }
+
+/**
+ * The map's holdings with the runner's ground ELSEWHERE added (Pedro,
+ * 2026-10-01): inside the selected place everything stays exactly as the
+ * board computed it (so it matches the card); the runner's tiles outside the
+ * place are appended as one faded holding. Rivals are never shown outside.
+ */
+export function withMineElsewhere<H extends { userId: string; cells: string[] }>(
+  inside: H[],
+  mine: string[] | null,
+  contains: (h3: string) => boolean,
+  make: (cells: string[]) => H,
+): H[] {
+  if (!mine) return inside;
+  const outside = mine.filter((c) => !contains(c));
+  return outside.length > 0 ? [...inside, make(outside)] : inside;
+}

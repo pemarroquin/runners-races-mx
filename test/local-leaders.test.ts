@@ -12,6 +12,7 @@ import {
   mayorHoldings,
   runnerTotals,
   sessionGroundVisits,
+  withMineElsewhere,
 } from '../src/lib/local-leaders';
 import { mayorByCell, rankMayors, type TileVisitRow } from '../src/lib/mayorship';
 
@@ -292,5 +293,22 @@ describe('holdingsOf', () => {
     const mayors = mayorByCell(VISITS, NOW);
     const held = holdingsOf(mayors);
     expect(new Set(held.get('pedro'))).toEqual(new Set([B, C, CELL_FAR]));
+  });
+});
+
+describe('withMineElsewhere', () => {
+  const inside = [{ userId: 'rival', cells: [A] }, { userId: 'me', cells: [B] }];
+  const contains = (h3: string) => h3 === A || h3 === B;
+  const make = (cells: string[]) => ({ userId: 'me', cells, faded: true });
+
+  it('adds only the runner’s tiles outside the place, faded', () => {
+    const out = withMineElsewhere(inside, [B, C, CELL_FAR], contains, make);
+    expect(out).toHaveLength(3);
+    expect(out[2]).toEqual({ userId: 'me', cells: [C, CELL_FAR], faded: true });
+  });
+
+  it('leaves the place untouched when nothing is outside or nothing loaded', () => {
+    expect(withMineElsewhere(inside, [B], contains, make)).toBe(inside);
+    expect(withMineElsewhere(inside, null, contains, make)).toBe(inside);
   });
 });
