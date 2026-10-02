@@ -44,6 +44,9 @@ export interface DistrictHolding {
   cells: string[];
   color: string;
   isMe: boolean;
+  /** The runner's own ground OUTSIDE the selected place — drawn dimmer, so
+   *  the contest inside the place stands out (Pedro, 2026-10-01). */
+  faded?: boolean;
 }
 
 /** Where the board is: a subdivision's real outline, or a district's
@@ -66,6 +69,11 @@ export interface DistrictMapProps {
   /** Full mode: one runner picked from the ranking card. Their ground reads
    *  bright, everyone else's dims, and the camera flies to them. */
   focusUserId?: string | null;
+  /** What the camera frames (no focus): e.g. all of the runner's ground on
+   *  opening. Omitted: every holding. */
+  frameCells?: string[];
+  /** Changes when the caller wants a fresh framing (a new target landed). */
+  frameKey?: string;
 }
 
 export interface DistrictMapFull {
@@ -124,7 +132,7 @@ function holdingsCollection(holdings: DistrictHolding[]): FeatureCollection {
           // layer. A layer per owner would mean adding and removing layers
           // every time the board refreshes, which is style churn on a live
           // map for no gain.
-          properties: { color: holding.color, isMe: holding.isMe, userId: holding.userId },
+          properties: { color: holding.color, isMe: holding.isMe, userId: holding.userId, faded: holding.faded === true },
           geometry: { type: 'Polygon', coordinates: ring as never },
         }),
       );
@@ -137,24 +145,28 @@ function holdingsCollection(holdings: DistrictHolding[]): FeatureCollection {
  *  and everyone else's faded back. */
 function fillOpacity(focus: string | null | undefined) {
   const base = ['case', ['get', 'isMe'], 0.55, 0.3];
-  return focus ? ['case', ['==', ['get', 'userId'], focus], 0.7, 0.08] : base;
+  const bright = focus ? ['case', ['==', ['get', 'userId'], focus], 0.7, 0.08] : base;
+  // Ground outside the selected place: dimmer, brighter only when focused.
+  const faded = focus ? ['case', ['==', ['get', 'userId'], focus], 0.3, 0.05] : 0.16;
+  return ['case', ['==', ['get', 'faded'], true], faded, bright];
 }
 
 function lineOpacity(focus: string | null | undefined) {
-  return focus ? ['case', ['==', ['get', 'userId'], focus], 1, 0.15] : 0.8;
+  const bright = focus ? ['case', ['==', ['get', 'userId'], focus], 1, 0.15] : 0.8;
+  return ['case', ['==', ['get', 'faded'], true], 0.3, bright];
 }
 
-export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapProps) {
+export function DistrictMap({ arena, holdings, full, focusUserId, frameCells, frameKey }: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const readyRef = useRef(false);
   // The freshest props for the async load callback — the map builds once, but
   // holdings usually arrive after the dynamic import has started. Written
   // from an effect rather than during render, same as fence-map.web.tsx.
-  const dataRef = useRef({ arena, holdings, full, focusUserId });
+  const dataRef = useRef({ arena, holdings, full, focusUserId, frameCells });
   useEffect(() => {
-    dataRef.current = { arena, holdings, full, focusUserId };
-  }, [arena, holdings, full, focusUserId]);
+    dataRef.current = { arena, holdings, full, focusUserId, frameCells };
+  }, [arena, holdings, full, focusUserId, frameCells]);
   // Full mode frames the held ground, which usually lands after the map has
   // loaded on the district alone. Refit once when it does, never again —
   // after that the camera is the runner's.
@@ -163,9 +175,10 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
   const refit = useCallback((animate: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { arena: a, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const { arena: a, holdings: h, full: f, focusUserId: focus, frameCells: fc } = dataRef.current;
     const focused = focus ? h.filter((x) => x.userId === focus) : [];
-    const b = frameOf(a.bounds, focused.length > 0 ? focused : h, !!f);
+    const target = focused.length > 0 ? focused : fc && fc.length > 0 ? [{ cells: fc }] : h;
+    const b = frameOf(a.bounds, target, !!f);
     if (!b) return;
     map.fitBounds(
       [
@@ -297,6 +310,16 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
       refit(true);
     }
   }, [holdings, full, refit]);
+
+  // The caller asked for a fresh framing (e.g. all the runner's ground just
+  // loaded). Skipped until ready; the load handler frames whatever is
+  // current then.
+  const frameKeyRef = useRef(frameKey);
+  useEffect(() => {
+    if (frameKeyRef.current === frameKey) return;
+    frameKeyRef.current = frameKey;
+    if (full) refit(true);
+  }, [frameKey, full, refit]);
 
   // A new place, same map: redraw the outline and fly there, instead of
   // tearing the map down and building another (which flashed on every

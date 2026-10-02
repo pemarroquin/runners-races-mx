@@ -36,21 +36,22 @@ const ZOOM_STEP = 1;
  *  of the card. */
 const FRAME_PAD = 0.12;
 
-export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapProps) {
+export function DistrictMap({ arena, holdings, full, focusUserId, frameCells, frameKey }: DistrictMapProps) {
   const mapRef = useRef<MapView | null>(null);
   const readyRef = useRef(false);
   const framedHoldingsRef = useRef(false);
-  const dataRef = useRef({ arena, holdings, full, focusUserId });
+  const dataRef = useRef({ arena, holdings, full, focusUserId, frameCells });
   useEffect(() => {
-    dataRef.current = { arena, holdings, full, focusUserId };
-  }, [arena, holdings, full, focusUserId]);
+    dataRef.current = { arena, holdings, full, focusUserId, frameCells };
+  }, [arena, holdings, full, focusUserId, frameCells]);
 
   const refit = useCallback((animated: boolean) => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    const { arena: a, holdings: h, full: f, focusUserId: focus } = dataRef.current;
+    const { arena: a, holdings: h, full: f, focusUserId: focus, frameCells: fc } = dataRef.current;
     const focused = focus ? h.filter((x) => x.userId === focus) : [];
-    const b = frameOf(a.bounds, focused.length > 0 ? focused : h, !!f);
+    const target = focused.length > 0 ? focused : fc && fc.length > 0 ? [{ cells: fc }] : h;
+    const b = frameOf(a.bounds, target, !!f);
     if (!b) return;
     map.fitToCoordinates(
       [
@@ -82,6 +83,14 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
     framedHoldingsRef.current = true;
     refit(true);
   }, [holdings, full, refit]);
+
+  // A fresh framing requested by the caller (see the web map).
+  const frameKeyRef = useRef(frameKey);
+  useEffect(() => {
+    if (frameKeyRef.current === frameKey) return;
+    frameKeyRef.current = frameKey;
+    if (full) refit(true);
+  }, [frameKey, full, refit]);
 
   // A new place, same map: fly there rather than remount (see the web map).
   const arenaRef = useRef(arena);
@@ -136,6 +145,7 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
           color: holding.color,
           isMe: holding.isMe,
           userId: holding.userId,
+          faded: holding.faded === true,
           coords: (ring[0] as unknown as [number, number][]).map(([lat, lng]) => ({
             latitude: lat,
             longitude: lng,
@@ -177,7 +187,9 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
             // Your own ground reads stronger than everyone else's, matching
             // the ring on your row and your slice of the share bar.
             fillColor={`${shape.color}${fillAlpha(shape, focusUserId)}`}
-            strokeColor={focusUserId && shape.userId !== focusUserId ? `${shape.color}26` : shape.color}
+            strokeColor={
+              shape.faded || (focusUserId && shape.userId !== focusUserId) ? `${shape.color}4D` : shape.color
+            }
             strokeWidth={1}
           />
         ))}
@@ -198,7 +210,9 @@ export function DistrictMap({ arena, holdings, full, focusUserId }: DistrictMapP
 
 /** Hex alpha suffix, matching the web map's opacities: yours stronger with
  *  no focus; with a focus, theirs bright and everyone else faded back. */
-function fillAlpha(shape: { isMe: boolean; userId: string }, focus: string | null | undefined): string {
+function fillAlpha(shape: { isMe: boolean; userId: string; faded?: boolean }, focus: string | null | undefined): string {
+  // Ground outside the selected place: dimmer (matches the web map's 0.16).
+  if (shape.faded) return focus ? (shape.userId === focus ? '4D' : '0D') : '29';
   if (focus) return shape.userId === focus ? 'B3' : '14';
   return shape.isMe ? '8C' : '4D';
 }

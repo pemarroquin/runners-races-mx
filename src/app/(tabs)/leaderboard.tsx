@@ -52,6 +52,7 @@ import { onIdentityChanged } from '@/lib/auth-events';
 import {
   fetchDistrictParkCells,
   fetchDistrictVisits,
+  fetchMyMayorCells,
   fetchRunStats,
   fetchRunVisits,
   type ParkCell,
@@ -60,7 +61,13 @@ import { districtLabel } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
-import { daysPresent, holdingsOf, runnerTotals, sessionGroundVisits } from '@/lib/local-leaders';
+import {
+  daysPresent,
+  holdingsOf,
+  runnerTotals,
+  sessionGroundVisits,
+  withMineElsewhere,
+} from '@/lib/local-leaders';
 import {
   MAYORSHIP_WINDOW_DAYS,
   mayorByCell,
@@ -79,7 +86,7 @@ import {
 } from '@/lib/subdivisions';
 import { useCurrentLocation } from '@/lib/use-current-location';
 import { useLiveTerritory } from '@/lib/use-live-territory';
-import { fetchTileLeaderboard } from '@/lib/territory-sync';
+import { fetchMyClaimedCells, fetchTileLeaderboard } from '@/lib/territory-sync';
 
 /** Everything the screen needs, resolved together. `null` is "not loaded
  *  yet"; a failed visits read keeps the rest — Local Leaders going empty
@@ -173,6 +180,41 @@ export default function LeaderboardScreen() {
   const [identitySignal, setIdentitySignal] = useState(0);
   useEffect(() => onIdentityChanged(() => setIdentitySignal((v) => v + 1)), []);
 
+  // The runner's ground in EVERY place (Pedro, 2026-10-01): the map shows
+  // it faded outside the selected place; the card stays the place's ranking.
+  // Leaderboard: every tile you hold. Local Leaders: every tile you're mayor
+  // of — heavier (it needs other runners' days near your ground), so it
+  // loads only while that tab is open, once per visit and on pull.
+  const [myHeldAll, setMyHeldAll] = useState<string[] | null>(null);
+  const [myMayorAll, setMyMayorAll] = useState<string[] | null>(null);
+  const [mineTick, setMineTick] = useState(0);
+  useEffect(() => {
+    if (!isFocused) return;
+    let stale = false;
+    const id = setTimeout(() => {
+      fetchMyClaimedCells().then((outcome) => {
+        if (!stale && outcome.ok) setMyHeldAll([...new Set(outcome.runs.flatMap((r) => r.cells))]);
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [isFocused, identitySignal, mineTick]);
+  useEffect(() => {
+    if (!isFocused || activeBoard !== 'local') return;
+    let stale = false;
+    const id = setTimeout(() => {
+      fetchMyMayorCells().then((outcome) => {
+        if (!stale && outcome.ok) setMyMayorAll(outcome.cells);
+      });
+    }, 0);
+    return () => {
+      stale = true;
+      clearTimeout(id);
+    };
+  }, [isFocused, activeBoard, identitySignal, mineTick]);
+
   const load = useCallback(async (forArena: Arena): Promise<BoardData> => {
     // Three independent reads, no ordering between them.
     //
@@ -237,6 +279,7 @@ export default function LeaderboardScreen() {
     if (arena === null) return;
     const ticket = ++loadTicketRef.current;
     setRefreshing(true);
+    setMineTick((v) => v + 1);
     const next = await load(arena);
     if (loadTicketRef.current === ticket) setData(next);
     setRefreshing(false);
@@ -498,6 +541,30 @@ export default function LeaderboardScreen() {
         };
       });
 
+  // Your ground outside the selected place joins the map, faded; inside,
+  // the board's own holdings stay exactly as computed (they match the card).
+  const meId = shown?.meUserId ?? null;
+  const myAll = isLocal ? myMayorAll : myHeldAll;
+  const mapHoldings =
+    meId && shownArena
+      ? withMineElsewhere(isLocal ? leaderHoldings : holdings, myAll, shownArena.contains, (cells) => ({
+          userId: meId,
+          cells,
+          color: tintOf(meId),
+          isMe: true,
+          faded: true,
+        }))
+      : isLocal
+        ? leaderHoldings
+        : holdings;
+  // Camera: in the place you're standing in, open on ALL your ground; after
+  // switching to another place, frame that place. frameKey changes when the
+  // target does (your ground finishing loading, a tab or place switch).
+  const atHome = arena === arenas?.[0];
+  const myCellsShown = mapHoldings.filter((h) => h.userId === meId).flatMap((h) => h.cells);
+  const frameCells = atHome && myCellsShown.length > 0 ? myCellsShown : undefined;
+  const frameKey = `${arena.key}|${activeBoard}|${atHome ? (myAll === null ? 'pending' : 'mine') : 'place'}`;
+
   const cardState: BoardCardState =
     shown === null
       ? 'loading'
@@ -513,8 +580,10 @@ export default function LeaderboardScreen() {
         background={c.background}>
         <DistrictMap
           arena={arena}
-          holdings={isLocal ? leaderHoldings : holdings}
+          holdings={mapHoldings}
           focusUserId={focus}
+          frameCells={frameCells}
+          frameKey={frameKey}
           full={{
             padding: {
               top: belowChrome + PULL_PILL_H + Spacing.three,

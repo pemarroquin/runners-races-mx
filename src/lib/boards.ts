@@ -18,8 +18,17 @@
 // loaded the same day (36,193 cells, see BACKLOG). `fetchDistrictParkCells`
 // is restored ONLY for district.ts's districtLabel — a decorative caption,
 // never a score — not for any denominator.
-import { districtCellPattern, districtChunks, districtsOrFilter } from '@/lib/district';
-import type { RunStats, TileVisitRow } from '@/lib/mayorship';
+import { gridDisk } from 'h3-js';
+
+import { districtCellPattern, districtChunks, districtOfCell, districtsOrFilter } from '@/lib/district';
+import { sessionGroundVisits } from '@/lib/local-leaders';
+import {
+  MAYORSHIP_WINDOW_DAYS,
+  mayorByCell,
+  namesOf,
+  type RunStats,
+  type TileVisitRow,
+} from '@/lib/mayorship';
 import { supabase } from '@/lib/supabase';
 import { withSession, type Outcome } from '@/lib/territory-sync';
 
@@ -219,5 +228,80 @@ export async function fetchRunVisits(
       }
     }
     return { ok: true, visits };
+  });
+}
+
+/**
+ * Every tile the runner is Local Leaders mayor of, in EVERY place — for the
+ * map's faded "your ground elsewhere" layer (Pedro, 2026-10-01). Mayorship
+ * depends on other runners' days too, so it can't come from the runner's
+ * own data alone:
+ *
+ *   1. the runner's sessions in the window, rebuilt as session ground;
+ *   2. the districts that ground touches, plus one ring (a rival loop that
+ *      encloses those tiles can run entirely in the next district);
+ *   3. EVERY runner's sessions there, through the same pipeline the board
+ *      uses (whole paths, session ground, run stats for the tiebreakers);
+ *   4. the cells where the runner is mayor.
+ *
+ * Heavier than one place's board, so callers load it once per tab visit and
+ * on pull-to-refresh, never per place switch.
+ */
+export async function fetchMyMayorCells(
+  now: number = Date.now(),
+): Promise<Outcome<{ cells: string[] }>> {
+  return withSession<{ cells: string[] }>(async (session) => {
+    const me = session.user.id;
+    const cutoffMs = now - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const cutoff = new Date(cutoffMs).toISOString();
+
+    // 1. The runner's own sessions in the window.
+    const myRunIds = new Set<string>();
+    for (let offset = 0; ; offset += PAGE) {
+      const { data, error } = await supabase
+        .from('tile_visits')
+        .select('run_id')
+        .eq('user_id', me)
+        .gte('visited_at', cutoff)
+        .order('run_id', { ascending: true })
+        .order('h3', { ascending: true })
+        .range(offset, offset + PAGE - 1);
+      if (error || !data) return { ok: false, reason: 'network' as const };
+      for (const row of data as { run_id: string }[]) myRunIds.add(row.run_id);
+      if (data.length < PAGE) break;
+    }
+    if (myRunIds.size === 0) return { ok: true, cells: [] };
+
+    const mine = await fetchRunVisits([...myRunIds], new Map());
+    if (!mine.ok) return { ok: false, reason: 'network' as const };
+
+    // 2. Districts the runner's ground touches, plus one ring.
+    const districts = new Set<string>();
+    for (const v of sessionGroundVisits(mine.visits)) {
+      const d = districtOfCell(v.h3);
+      if (d) for (const near of gridDisk(d, 1)) districts.add(near);
+    }
+    if (districts.size === 0) return { ok: true, cells: [] };
+
+    // 3. Everyone's sessions there, inside the window.
+    const there = await fetchDistrictVisits([...districts]);
+    if (!there.ok) return { ok: false, reason: 'network' as const };
+    const runIds = [
+      ...new Set(
+        there.visits.flatMap((v) => (v.runId && Date.parse(v.visitedAt) >= cutoffMs ? [v.runId] : [])),
+      ),
+    ];
+    const [all, stats] = await Promise.all([
+      fetchRunVisits(runIds, namesOf(there.visits)),
+      fetchRunStats(runIds),
+    ]);
+    if (!all.ok) return { ok: false, reason: 'network' as const };
+
+    // 4. Where the runner is mayor. Stats missing (the RPC failing) only
+    //    drops the tiebreakers, exactly as on the board.
+    const mayors = mayorByCell(sessionGroundVisits(all.visits), now, stats.ok ? stats.stats : undefined);
+    const cells: string[] = [];
+    for (const [h3, mayor] of mayors) if (mayor.userId === me) cells.push(h3);
+    return { ok: true, cells };
   });
 }
