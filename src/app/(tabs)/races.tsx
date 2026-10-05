@@ -135,6 +135,19 @@ const CAROUSEL_SNAP_PROPS = {
   decelerationRate: 'fast' as const,
   disableIntervalMomentum: true,
 };
+// Render window for every horizontal carousel. FlatList's defaults (10 items
+// up front, a 21-screen window) are tuned for a full-screen vertical list;
+// here a card is CAROUSEL_CARD_WIDTH_RATIO of the width, so ~1.2 cards are
+// visible, and every shelf mounts at once inside the idle ScrollView. On the
+// defaults the idle feed mounted up to 10 image cards PER SHELF on open,
+// nearly all of them off-screen. Two cards (the visible one + the peek) and
+// one screen of buffer each side keeps a swipe from ever showing a blank
+// card while decoding a fraction of the images.
+const CAROUSEL_RENDER_PROPS = {
+  initialNumToRender: 2,
+  maxToRenderPerBatch: 2,
+  windowSize: 3,
+};
 // Section-title icon size, derived from the shelf header's own text size
 // (`styles.shelfHeaderText.fontSize`) rather than a disconnected literal —
 // keeps the glyph visually tied to the title it sits next to instead of
@@ -734,6 +747,9 @@ export default function FeedScreen() {
                   race={item.race}
                   variant="hero"
                   imageSource={pickRegionArt(region.id, item.race.id, 'hero')}
+                  // Heroes repeat every GRID_ROWS_PER_HERO rows; only row 0
+                  // is on screen at load, the rest stay lazy.
+                  priorityImage={index === 0}
                   onPress={() => goToRace(item.race.id)}
                 />
               ) : (
@@ -794,12 +810,16 @@ export default function FeedScreen() {
                     const idx = Math.round(e.nativeEvent.contentOffset.x / carouselStep);
                     setHeroIndex(Math.max(0, Math.min(idx, heroRaces.length - 1)));
                   }}
-                  renderItem={({ item }) => (
+                  {...CAROUSEL_RENDER_PROPS}
+                  renderItem={({ item, index: heroIdx }) => (
                     <View style={{ width: carouselCardWidth }}>
                       <RaceCard
                         race={item}
                         variant="hero"
                         imageSource={pickRegionArt(region.id, item.id, 'hero')}
+                        // Only the first card is in view; the peeking second
+                        // and the rest load lazily as the carousel moves.
+                        priorityImage={heroIdx === 0}
                         onPress={() => goToRace(item.id)}
                       />
                     </View>
@@ -822,6 +842,7 @@ export default function FeedScreen() {
                 race={heroRaces[0]}
                 variant="hero"
                 imageSource={pickRegionArt(region.id, heroRaces[0].id, 'hero')}
+                priorityImage
                 onPress={() => goToRace(heroRaces[0].id)}
               />
             )}
@@ -852,6 +873,7 @@ export default function FeedScreen() {
                   {...CAROUSEL_SNAP_PROPS}
                   keyExtractor={(r) => r.id}
                   contentContainerStyle={styles.shelfContent}
+                  {...CAROUSEL_RENDER_PROPS}
                   renderItem={({ item }) => (
                     <View style={{ width: carouselCardWidth }}>
                       <RaceCard
