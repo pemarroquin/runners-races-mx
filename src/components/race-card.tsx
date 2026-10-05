@@ -22,9 +22,20 @@ interface RaceCardProps {
   /** Bundled region-art asset for this race's region, or undefined to stay text-only (the real-world default for regions with no art yet, e.g. chih). */
   imageSource?: ImageSourcePropType;
   variant?: 'hero' | 'compact';
+  /** The single image on screen that should load first (eager, high
+   * priority). Only the FIRST hero a screen shows passes this — a hero
+   * further down the list or later in the carousel is off-screen at load and
+   * must stay lazy like the grid around it. */
+  priorityImage?: boolean;
 }
 
-export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: RaceCardProps) {
+export function RaceCard({
+  race,
+  onPress,
+  imageSource,
+  variant = 'compact',
+  priorityImage = false,
+}: RaceCardProps) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t, locale } = useI18n();
@@ -79,10 +90,12 @@ export function RaceCard({ race, onPress, imageSource, variant = 'compact' }: Ra
           accent={c.accent}
           tint={c.backgroundSelected}
           style={{ aspectRatio: isHero ? HERO_IMAGE_RATIO : COMPACT_IMAGE_RATIO }}
-          // Hero is at most one on screen and the single most visually
-          // prominent element in the feed — worth prioritizing over the
-          // dozen-odd unprioritized compact grid images around it.
-          priority={isHero ? 'high' : undefined}
+          // Was `isHero ? 'high'`, which made EVERY hero eager — the filtered
+          // list repeats a hero every 5 grid rows and the "this week"
+          // carousel holds several, so off-screen heroes skipped lazy loading
+          // and competed with the one LCP image. The caller now marks only
+          // the first visible hero.
+          priority={priorityImage ? 'high' : undefined}
         />
       )}
       <View style={styles.content}>

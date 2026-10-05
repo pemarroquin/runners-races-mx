@@ -27,9 +27,15 @@
 // past the >15-20% bar that justified the format switch; expo-image and RN
 // Web both decode WebP natively, so this added zero new dependencies.
 //
-// chih has no art yet (the generation run went 66/75 before running out of
-// Higgsfield credits) — its array stays empty, which pickRegionArt() already
-// handles as a text-only-card fallback, same as every region did before this.
+// v2 art (2026-10-05): every image was regenerated sport-first — runners and
+// race furniture are the subject, the landmark is the backdrop — in a warm
+// amber/orange/charcoal palette with no blue. This set also fills chih and the
+// two slw scenes (arteaga, piedras-negras) that the v1 run never generated, so
+// every region now has art. Prompts + rationale: Source Data/Outputs/Running
+// App/region-art-v2-prompts.md. v2 is far more detailed than the flat v1
+// illustrations, so both variants are encoded at WebP quality 72 (not 82):
+// visually identical at 1:1, 5.1 MiB for the whole set instead of 7.1.
+// An empty array is still handled by pickRegionArt() as a text-only card.
 import type { ImageSourcePropType } from 'react-native';
 
 import { REGIONS } from '@/lib/regions';
@@ -375,6 +381,11 @@ export const REGION_ART: Record<string, RegionArtEntry[]> = {
   ],
   slw: [
     {
+      key: 'slw-arteaga',
+      heroSource: require('../../assets/images/regions/slw/slw-arteaga.webp'),
+      compactSource: require('../../assets/images/regions/slw/slw-arteaga-compact.webp'),
+    },
+    {
       key: 'slw-bosque-carranza',
       heroSource: require('../../assets/images/regions/slw/slw-bosque-carranza.webp'),
       compactSource: require('../../assets/images/regions/slw/slw-bosque-carranza-compact.webp'),
@@ -390,6 +401,11 @@ export const REGION_ART: Record<string, RegionArtEntry[]> = {
       compactSource: require('../../assets/images/regions/slw/slw-museo-desierto-compact.webp'),
     },
     {
+      key: 'slw-piedras-negras',
+      heroSource: require('../../assets/images/regions/slw/slw-piedras-negras.webp'),
+      compactSource: require('../../assets/images/regions/slw/slw-piedras-negras-compact.webp'),
+    },
+    {
       key: 'slw-saltillo-catedral',
       heroSource: require('../../assets/images/regions/slw/slw-saltillo-catedral.webp'),
       compactSource: require('../../assets/images/regions/slw/slw-saltillo-catedral-compact.webp'),
@@ -400,7 +416,43 @@ export const REGION_ART: Record<string, RegionArtEntry[]> = {
       compactSource: require('../../assets/images/regions/slw/slw-torreon-skyline-compact.webp'),
     },
   ],
-  chih: [],
+  chih: [
+    {
+      key: 'chih-catedral',
+      heroSource: require('../../assets/images/regions/chih/chih-catedral.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-catedral-compact.webp'),
+    },
+    {
+      key: 'chih-copper-canyon',
+      heroSource: require('../../assets/images/regions/chih/chih-copper-canyon.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-copper-canyon-compact.webp'),
+    },
+    {
+      key: 'chih-creel',
+      heroSource: require('../../assets/images/regions/chih/chih-creel.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-creel-compact.webp'),
+    },
+    {
+      key: 'chih-cuauhtemoc',
+      heroSource: require('../../assets/images/regions/chih/chih-cuauhtemoc.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-cuauhtemoc-compact.webp'),
+    },
+    {
+      key: 'chih-estadio-olimpico',
+      heroSource: require('../../assets/images/regions/chih/chih-estadio-olimpico.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-estadio-olimpico-compact.webp'),
+    },
+    {
+      key: 'chih-juarez',
+      heroSource: require('../../assets/images/regions/chih/chih-juarez.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-juarez-compact.webp'),
+    },
+    {
+      key: 'chih-parral',
+      heroSource: require('../../assets/images/regions/chih/chih-parral.webp'),
+      compactSource: require('../../assets/images/regions/chih/chih-parral-compact.webp'),
+    },
+  ],
 };
 
 // Every region id in REGIONS must have an entry above (even if empty) — this
@@ -426,7 +478,7 @@ function fnv1a(input: string): number {
  * across both size variants — hero and compact requests for the same
  * regionId+raceId land on the same array index (one shared hash, one shared
  * entries array), they just read a different field off that entry. Returns
- * `undefined` when the region has no art (chih, for now) — that is the
+ * `undefined` when the region has no art (none today, but keep it) — that is the
  * fallback path that keeps cards text-only, and it must work correctly
  * against an empty array.
  */
