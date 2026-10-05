@@ -277,7 +277,9 @@ indistinguishable from one reading 0% because nobody ran.
   when a session started before the map loaded — silently removing the
   camera's browse hold. Readiness is state now. When gating an effect on
   readiness, ask what re-runs it.
-- **`npm run measure-holes`** — read-only, anon key. Reports the size
+- **`npm run measure-holes`** — read-only, public key (it reads
+  `tile_visits`, which is world-readable — an open privacy item in
+  BACKLOG.md; it stops working the day that's narrowed). Reports the size
   distribution of holes in every runner's covered ground and what the shipped
   `noiseHoles()` would fill. Run it before changing `MAX_NOISE_HOLE_CELLS`;
   the cap sits in a measured gap (nothing between 3 cells / 56 m and 9 cells
@@ -401,10 +403,18 @@ indistinguishable from one reading 0% because nobody ran.
 
 React Native + Expo (SDK 57, expo-router, TypeScript). `npx expo start`, then
 Expo Go on device — no store builds. Bilingual, Spanish default
-(`src/lib/i18n.tsx`). Local-first, no backend: bundled seed refreshed from
+(`src/lib/i18n.tsx`). Race data is local-first: bundled seed refreshed from
 GitHub on open, SQLite saved list (`src/lib/db.ts`), `expo-calendar`,
-`react-native-webview` for sponsor checkout. Web preview auto-deploys to
-runningapp.pmarroquin.com on push to `main`.
+`react-native-webview` for sponsor checkout. Territory Mode is NOT: runs,
+tiles and visits live in Supabase (anonymous auth, publishable key). `runs`
+is select-own since 2026-09-20; `tile_visits` is still read-all (see
+BACKLOG.md). Web preview auto-deploys to runningapp.pmarroquin.com on push to
+`main`.
+
+Race-card art is 75 bundled WebP scenes in `src/lib/region-art.ts`
+(sport-first, warm, no blue — PR #71). Settled in Design Decisions.md; read
+it before regenerating. Encode new art at WebP q72, keep filenames, and give
+only the first visible hero `priorityImage` (every other card stays lazy).
 
 For discovery of *new* races (adding a city, refreshing a calendar), use the
 `race-research` skill — that's a different job from this pre-race verification.
