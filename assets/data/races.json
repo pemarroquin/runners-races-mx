@@ -348,9 +348,9 @@
       "notes": "First of two 2026 Monterrey adidas Splits events. Capacity 4,500. Kit pickup Oct 10 at Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
       "notesEs": "Primero de los dos eventos adidas Splits 2026 en Monterrey. Cupo de 4,500. Entrega de kit el 10 de octubre en el Centro de Exposiciones Fundidora. Hub Sports: 'Mapa oficial de ruta a publicar próximamente' (2026-07-04).",
       "status": "ok",
-      "statusNote": "No change found. Still listed for Oct 11, 2026 on hubsports.mx and in press coverage (cronica.com.mx); no postponement/cancellation signals in search.",
-      "sourceNotes": "Direct WebFetch of hubsports.mx blocked by network egress policy this run; relied on WebSearch corroboration (endorphinsrunning.com, running.life, cronica.com.mx) rather than a live page load.",
-      "lastVerified": "2026-10-05"
+      "statusNote": "No change found. Still listed for Oct 11, 2026 on hubsports.mx and in third-party listings (running.life, endorphinsrunning.com); no postponement/cancellation signals in search.",
+      "sourceNotes": "Direct WebFetch of hubsports.mx blocked by network egress policy this run; relied on WebSearch corroboration (endorphinsrunning.com, running.life, cronica.com.mx) rather than a live page load. Re-verified 2026-10-09: direct WebFetch of hubsports.mx DNS-failed again this run; third-party listings disagree on distances (one cites 10K/15K instead of 6K/12K) but none report a date/venue change or cancellation.",
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "ultra-nuevo-leon-larutamadre-2026",
@@ -379,7 +379,11 @@
       "sourceUrl": "https://larutamadre.mx/en/home/",
       "confidence": "high",
       "notes": "Mountain/trail race in the Sierra Madre. Also kids 2K/4K/6K and dog categories. Registration deadline Sep 30, 2026.",
-      "notesEs": "Carrera de montaña/trail en la Sierra Madre. También hay categorías infantiles de 2K/4K/6K y de perros. Fecha límite de registro: 30 de septiembre de 2026."
+      "notesEs": "Carrera de montaña/trail en la Sierra Madre. También hay categorías infantiles de 2K/4K/6K y de perros. Fecha límite de registro: 30 de septiembre de 2026.",
+      "status": "ok",
+      "statusNote": "No change found. Still listed for Oct 17, 2026 (ITRA race pages, gotrail.run) in Ciénega de González, Nuevo León; no postponement/cancellation signals in search.",
+      "sourceNotes": "Direct WebFetch of larutamadre.mx DNS-failed this run (network egress policy); relied on WebSearch corroboration (itra.run, gotrail.run, running.life), which are third-party listings, not the organizer's own site/socials.",
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "carrera-vivamus-merco-2026",
@@ -873,10 +877,10 @@
       "distanceTags": [
         "Half"
       ],
-      "sourceNotes": "On both calendars. krono.mx 2026 page 404s; only 2025 exists. Direct WebFetch of idemsport.com blocked by network egress policy this run; no cancellation/postponement signals found via WebSearch.",
+      "sourceNotes": "On both calendars. krono.mx 2026 page 404s; only 2025 exists. Direct WebFetch of idemsport.com blocked by network egress policy this run; no cancellation/postponement signals found via WebSearch. Re-verified 2026-10-09: direct WebFetch of idemsport.com DNS-failed again this run; no cancellation/postponement signals found via WebSearch.",
       "status": "ok",
       "statusNote": "No change found; no postponement/cancellation signals in search.",
-      "lastVerified": "2026-10-05"
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "bob-esponja-2026",
@@ -896,10 +900,10 @@
       "distanceTags": [
         "TBD"
       ],
-      "sourceNotes": "On both calendars; distances not specified on either source. Asdeporte typically publishes 5-6 months out — expect the registration page soon. Direct WebFetch of idemsport.com blocked by network egress policy this run; no cancellation/postponement signals found via WebSearch.",
+      "sourceNotes": "On both calendars; distances not specified on either source. Asdeporte typically publishes 5-6 months out — expect the registration page soon. Direct WebFetch of idemsport.com blocked by network egress policy this run; no cancellation/postponement signals found via WebSearch. Re-verified 2026-10-09: direct WebFetch of idemsport.com DNS-failed again this run; no cancellation/postponement signals found via WebSearch, and no independent confirmation found of a 2026 Monterrey edition beyond the two aggregator calendars already on file — absence of a dedicated announcement is not itself a cancellation signal, so status is left at ok rather than guessed.",
       "status": "ok",
       "statusNote": "No change found; no postponement/cancellation signals in search.",
-      "lastVerified": "2026-10-05"
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "rosa-fuerte-benavides-2026",
@@ -2690,10 +2694,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "notes": null,
-      "sourceNotes": "tritour listing (marcate slug); event page DNS-failed. Direct WebFetch of tritour.org blocked by network egress policy this run; relied on WebSearch corroboration.",
+      "sourceNotes": "tritour listing (marcate slug); event page DNS-failed. Direct WebFetch of tritour.org blocked by network egress policy this run; relied on WebSearch corroboration. Re-verified 2026-10-09: direct WebFetch of tritour.org DNS-failed again this run; same Aug 2026 press coverage holds, no cancellation/postponement signals.",
       "status": "ok",
-      "statusNote": "No change found. Aug 2026 press (cronica.com.mx) confirms the 11th edition proceeding Oct 11, certified 21.0975K route, Cuexcomatitlán to Malecón de Cajititlán; no postponement/cancellation signals.",
-      "lastVerified": "2026-10-05"
+      "statusNote": "No change found. Aug 2026 press (cronica.com.mx) still describes the 11th edition proceeding Oct 11, certified 21.0975K route, Cuexcomatitlán to Malecón de Cajititlán, 06:00 start; no postponement/cancellation signals.",
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "c-de-las-estaciones-oto-o-guadalajara-2026",
@@ -3238,10 +3242,10 @@
       "confidence": "medium",
       "notes": "Annual flagship half marathon, World Athletics course. Registration open as of Aug 2026, $352 MXN, capped at 3,000 runners.",
       "notesEs": "Medio maratón insignia anual, ruta homologada por World Athletics. Inscripciones abiertas desde agosto 2026, $352 MXN, cupo limitado a 3,000 corredores.",
-      "sourceNotes": "Date/time previously unconfirmed (null). Resolved via web search 2026-09-14: multiple independent outlets (pulsociudadano.mx, elportavoznoticias.com.mx, californiamedios.com) agree on Sunday Oct 11, 2026, 06:30, at UDES, matching the recorded venue. Direct WebFetch of tjrun.com.mx and the news sources was blocked by network egress policy this run, so this rests on search-result corroboration, not a live page load. Registration platform/URL not identified in search results — signupUrl left null rather than guessed; confidence raised low→medium given source agreement. Re-verified 2026-10-05: same outlets reconfirm Oct 11 (one search-engine-generated summary incorrectly said \"Oct 12\" — rejected as a day-of-week inconsistency, Oct 12 2026 is a Monday, not checked against any actual cited source); no cancellation/postponement signals.",
+      "sourceNotes": "Date/time previously unconfirmed (null). Resolved via web search 2026-09-14: multiple independent outlets (pulsociudadano.mx, elportavoznoticias.com.mx, californiamedios.com) agree on Sunday Oct 11, 2026, 06:30, at UDES, matching the recorded venue. Direct WebFetch of tjrun.com.mx and the news sources was blocked by network egress policy this run, so this rests on search-result corroboration, not a live page load. Registration platform/URL not identified in search results — signupUrl left null rather than guessed; confidence raised low→medium given source agreement. Re-verified 2026-10-05: same outlets reconfirm Oct 11 (one search-engine-generated summary incorrectly said \"Oct 12\" — rejected as a day-of-week inconsistency, Oct 12 2026 is a Monday, not checked against any actual cited source); no cancellation/postponement signals. Re-verified 2026-10-09: direct WebFetch of tjrun.com.mx DNS-failed again this run; el imparcial (Apr 2026) reconfirms Oct 11; no cancellation/postponement signals.",
       "status": "ok",
       "statusNote": "Date reconfirmed: Sunday, October 11, 2026, 06:30, at UDES, Tecate.",
-      "lastVerified": "2026-10-05"
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "medio-maraton-ciudad-de-mexicali",
@@ -3860,8 +3864,8 @@
       "notesEs": "Maratón completo (42.195K) + 21K de relevos; 'La Moderna Kids' el día anterior (sábado 10 de octubre, 09:00). Salida en Parque Centro. Bolsa de premios de $76,000 MXN general + $20,000 MXN para corredores de Coahuila. Registro abierto. Confirmado vía tritour + Municipio de Saltillo/prensa; no se capturaron precios individuales.",
       "status": "ok",
       "statusNote": "No change found; no postponement/cancellation signals in search.",
-      "sourceNotes": "Direct WebFetch of tritour.org and chronosport.dashport.run blocked by network egress policy this run. Press coverage (playersoflife.com, vanguardia.com.mx) continues to describe the 2026 edition as proceeding; no postponement/cancellation signals found via WebSearch.",
-      "lastVerified": "2026-10-05"
+      "sourceNotes": "Direct WebFetch of tritour.org and chronosport.dashport.run blocked by network egress policy this run. Press coverage (playersoflife.com, vanguardia.com.mx) continues to describe the 2026 edition as proceeding; no postponement/cancellation signals found via WebSearch. Re-verified 2026-10-09: direct WebFetch of both URLs DNS-failed again this run; May 2026 official presentation (playersoflife.com, with the mayor, La Moderna, Chronosport and the Instituto Estatal del Deporte de Coahuila) confirms the 5th edition proceeding; no cancellation/postponement signals.",
+      "lastVerified": "2026-10-09"
     },
     {
       "id": "carrera-del-desierto-2026-museo-del-desierto-8a",
