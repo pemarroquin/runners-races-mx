@@ -382,8 +382,8 @@
       "notesEs": "Carrera de montaña/trail en la Sierra Madre. También hay categorías infantiles de 2K/4K/6K y de perros. Fecha límite de registro: 30 de septiembre de 2026.",
       "status": "ok",
       "statusNote": "No change found. Still listed for Oct 17, 2026 (ITRA race pages, gotrail.run) in Ciénega de González, Nuevo León; no postponement/cancellation signals in search.",
-      "sourceNotes": "Direct WebFetch of larutamadre.mx DNS-failed this run (network egress policy); relied on WebSearch corroboration (itra.run, gotrail.run, running.life), which are third-party listings, not the organizer's own site/socials.",
-      "lastVerified": "2026-10-09"
+      "sourceNotes": "Direct WebFetch of larutamadre.mx DNS-failed again this run (network egress policy); relied on WebSearch corroboration (itra.run) and a targeted search for an Instagram/social postponement notice, neither of which surfaced a change.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "carrera-vivamus-merco-2026",
@@ -917,7 +917,7 @@
       "city": "Monterrey",
       "venue": null,
       "organizer": "Farmacias Benavides / Idemsport",
-      "signupUrl": null,
+      "signupUrl": "https://www.benavides.com.mx/rosafuerte",
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
       "notes": null,
@@ -926,7 +926,10 @@
         "5K",
         "10K"
       ],
-      "sourceNotes": "On both calendars. Idemsport links a 2025-slug event page — 2026 registration link not yet confirmed."
+      "sourceNotes": "On both calendars. Idemsport links a 2025-slug event page. 2026-10-12 recheck: benavides.com.mx/rosafuerte now live with 2026 registration (Innovasport event codes #4283 5K/10K, #4284 reto) — current-edition signupUrl added. That page and the 2025 recap (El Congresista) don't independently restate the Oct 18 date for 2026; no contradicting date found either.",
+      "status": "ok",
+      "statusNote": "No change found. Registration for the 2026 edition is live on benavides.com.mx/rosafuerte; no postponement/cancellation signals in search.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "gatorade-g15k-2026",
@@ -1823,7 +1826,11 @@
       "notesEs": "Carrera con temática de feria gastronómica; la página del listado aún no indica distancias.",
       "distanceTags": [
         "TBD"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "No change found. Still listed for Oct 18, 2026 in Nopaltepec (gotrail.run, running.life); no postponement/cancellation signals in search.",
+      "sourceNotes": "Direct WebFetch of asdeporte.com failed (DNS, network egress policy); relied on WebSearch corroboration (gotrail.run, running.life — third-party listings, not asdeporte.com itself). Those listings give 5K/11K distances and a venue (Plaza Estado de México, Parque Bicentenario) not yet added to this record since they aren't the organizer/aggregator-of-record source this entry cites.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "estaciones-otono-cdmx-2026",
@@ -1842,7 +1849,11 @@
       "notesEs": "Etapa de otoño de la serie; la etapa de invierno aparece el 6 de diciembre de 2026 en la misma página.",
       "distanceTags": [
         "TBD"
-      ]
+      ],
+      "status": "ok",
+      "statusNote": "No change found. Still listed for Oct 18, 2026 in CDMX (running.life, haid.app); no postponement/cancellation signals in search.",
+      "sourceNotes": "Direct WebFetch of asdeporte.com failed (DNS, network egress policy); relied on WebSearch corroboration (running.life, haid.app — third-party listings, not asdeporte.com itself). One listing notes the in-person start/finish point is still 'por confirmar' (to be confirmed) by the organizer — not a change, just unannounced yet, so left as venue: null rather than guessed.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "shrek-run-cdmx-2027",
@@ -4422,7 +4433,10 @@
       "confidence": "medium",
       "notes": "Distances are 3K/5K/10K — no 21K offered, despite the 'FCP 21k' nickname used by some aggregators.",
       "notesEs": "Las distancias son 3K/5K/10K — no se ofrece 21K, a pesar del apodo 'FCP 21k' que usan algunos agregadores.",
-      "sourceNotes": "Two independent sources (khronometraje.com + endondecorrer.com) agree on date and distances. One source mislabeled the city's state as Yucatán; Felipe Carrillo Puerto is confirmed to be in Quintana Roo."
+      "sourceNotes": "Two independent sources (khronometraje.com + endondecorrer.com) agree on date and distances. One source mislabeled the city's state as Yucatán; Felipe Carrillo Puerto is confirmed to be in Quintana Roo. 2026-10-12 recheck: direct WebFetch of khronometraje.com failed (DNS, network egress policy); WebSearch corroboration (running.life) still shows Oct 18, 2026, 3K/5K/10K, cap of 700 runners; no postponement/cancellation signals found.",
+      "status": "ok",
+      "statusNote": "No change found; still on for Oct 18, 2026 in Felipe Carrillo Puerto.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "medio-maraton-bahia-chetumal-2026",
@@ -4806,7 +4820,10 @@
       "confidence": "high",
       "notes": "World Athletics/AIMS-accredited.",
       "notesEs": "Acreditado por World Athletics/AIMS.",
-      "sourceNotes": "Date confirmed independently by tritour.org, finishers.com, and the World Athletics calendar listing. Start time not published on any source checked."
+      "sourceNotes": "Date confirmed independently by tritour.org, finishers.com, and the World Athletics calendar listing. Start time not published on any source checked. 2026-10-12 recheck: direct WebFetch of maratondejuarez.com failed (DNS, network egress policy); WebSearch corroboration (racecast.io, finishers.com) still shows Oct 18, 2026; no postponement/cancellation signals found. Start time still not published on any source checked.",
+      "status": "ok",
+      "statusNote": "No change found; still on for Oct 18, 2026 in Ciudad Juárez.",
+      "lastVerified": "2026-10-12"
     },
     {
       "id": "chihuahua-by-utmb-2026",
