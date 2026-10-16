@@ -553,7 +553,10 @@ export default function TrackScreen() {
                 markerCenter: safeCenter,
                 // A Local Leaders tiebreaker. Only counted for a real loop:
                 // an ordinary run's start/finish cell reads 2 with no repeats.
-                laps: lapResult.laps,
+                // lapCount, not `laps`: the raw max reads 3 for two laps of a
+                // loop (the seam cell), so it over-credited every loop runner
+                // by one. Same number the "+N" marker shows (2026-10-15).
+                laps: lapResult.lapCount,
               }
             : { qualifies: false, markerCenter: null, laps: 0 },
         );

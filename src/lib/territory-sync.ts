@@ -109,7 +109,9 @@ export interface RunUpload {
   lap?: {
     qualifies: boolean;
     markerCenter: { lat: number; lng: number } | null;
-    /** Laps counted by detectLaps, 0 unless the run qualified. The number
+    /** Laps counted by detectLaps — its honest `lapCount`, not the
+     *  seam-inflated `laps` max (uploads before 2026-10-15 used that one, so
+     *  older loop runs read one lap high) — 0 unless the run qualified. The number
      *  alone leaves the device. Optional: an entry queued by an older build
      *  has none, and uploads as 0. */
     laps?: number;
