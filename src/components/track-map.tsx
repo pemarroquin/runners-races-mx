@@ -31,6 +31,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import MapView, { Marker, Polygon, Polyline } from 'react-native-maps';
 
+import { LapMarker, useLapMarkerTracking } from '@/components/lap-marker';
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
@@ -60,6 +61,7 @@ import {
 } from '@/lib/camera';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { gradientStrokeColors } from '@/lib/fence-draw';
+import { lapMarkerGeometry } from '@/lib/conquest-marker';
 import { useRegion } from '@/lib/region-context';
 import type { LatLng } from '@/lib/territory';
 import { altitudeForZoom } from '@/lib/map-camera';
@@ -108,6 +110,12 @@ interface TrackMapProps {
    *  <Polygon> on a timer, on a device, mid-run. Not worth it unprompted,
    *  and untestable from here (Expo Go, needs a phone). */
   enclosedTiles: string[];
+  /** The live "+N" lap marker — index.tsx's liveLap: same gate and count as
+   *  the session summary's (laps.ts's liveLapMarker), centre pinned for the
+   *  session so it marks one spot of the route and only the count changes.
+   *  null until the run's own path qualifies as lapped. `label` is
+   *  pre-translated. */
+  lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   /** Accepted for interface parity with track-map.web.tsx; the map is always
    *  dark here (MAP_ALWAYS_DARK) regardless. */
   dark: boolean;
@@ -158,6 +166,7 @@ export function TrackMap({
   fenceColor,
   tiles,
   enclosedTiles,
+  lapMarker,
   placeholder,
   placeholderColor,
   zoomInLabel,
@@ -169,6 +178,7 @@ export function TrackMap({
   const readyRef = useRef(false);
   const flownRef = useRef(false);
   const { region } = useRegion();
+  const trackLapMarker = useLapMarkerTracking(lapMarker?.laps ?? null);
 
   // Camera mode — same product decision as web (track-map.web.tsx): the
   // control CYCLES between 'follow' (heading-up, tilted, zoomed to the
@@ -477,6 +487,19 @@ export function TrackMap({
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}>
             <View style={styles.startBar} />
+          </Marker>
+        )}
+
+        {/* The live "+N" lap marker — centre pinned for the session by
+            index.tsx, so it stays on one spot of the route. Redraws only
+            while its pop-in/bump plays (see lap-marker.tsx). */}
+        {lapMarker && (
+          <Marker
+            coordinate={{ latitude: lapMarker.center.lat, longitude: lapMarker.center.lng }}
+            anchor={{ x: 0.5, y: lapMarkerGeometry(lapMarker.laps).anchorY }}
+            accessibilityLabel={lapMarker.label}
+            tracksViewChanges={trackLapMarker}>
+            <LapMarker laps={lapMarker.laps} />
           </Marker>
         )}
       </MapView>
