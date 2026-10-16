@@ -196,12 +196,14 @@ const translations = {
       tilesUnavailable: 'No pudimos confirmar tus casillas esta vez — tu recorrido sigue guardado.',
       tilesRetrying:
         'Tu sesión está guardada. Aún no pudimos reclamar sus casillas; lo seguiremos intentando cada vez que abras la app.',
-      // Accessibility label for the blue cycle-bonus marker (map/
-      // cycle-bonus-marker.tsx and conquest-marker.ts's cycleBonusMarkerHtml
-      // on web), which otherwise renders only a bare "%{pts}pt" with nothing
-      // saying what was earned. Short by design — it's read alongside a
-      // small map pin, not a banner.
-      cycleBonusLabel: 'Bono por repetir el recorrido: %{pts} pts',
+      // Accessibility label for the blue "+N" lap marker (lap-marker.tsx, and
+      // lap-marker-web.ts on web), which otherwise renders only a bare "+2"
+      // with nothing saying what it counts. Short by design — it's read
+      // alongside a small map pin, not a banner.
+      lapMarkerLabel: {
+        one: '1 vuelta al mismo recorrido',
+        other: '%{count} vueltas al mismo recorrido',
+      } as PluralForm,
       // The "joining" half of the brief §6 step 5 transition: the enclosure
       // area still gets computed and stored every upload (buildFence isn't
       // deleted — brief §4), shown here small and explicitly labelled as
@@ -761,9 +763,11 @@ const translations = {
       tilesUnavailable: "We couldn't confirm your tiles this time — your run is still saved.",
       tilesRetrying:
         "Your run is saved. We couldn't claim its tiles yet — we'll keep trying each time you open the app.",
-      // See the ES entry's comment: accessibility label for the blue
-      // cycle-bonus marker, which otherwise renders only a bare "%{pts}pt".
-      cycleBonusLabel: 'Bonus for repeating the route: %{pts} pts',
+      // See the ES entry's comment: accessibility label for the "+N" lap marker.
+      lapMarkerLabel: {
+        one: '1 lap of the same route',
+        other: '%{count} laps of the same route',
+      } as PluralForm,
     },
     leaderboard: {
       title: 'Leaderboard',

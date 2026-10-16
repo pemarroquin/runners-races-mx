@@ -21,6 +21,7 @@ import { describe, expect, it } from 'vitest';
 import type { TimedPoint } from '@/lib/gap-policy';
 import {
   detectLaps,
+  liveLapMarker,
   MIN_REPEAT_FRACTION,
   MIN_REPEATED_CELLS,
   MIN_SEPARATION_CELLS,
@@ -154,7 +155,7 @@ const HOME_OUT_AND_BACK: [number, number][] = [
 describe('detectLaps', () => {
   it('returns laps: 0 for an empty path', () => {
     const result = detectLaps([]);
-    expect(result).toEqual({ laps: 0, repeatedCells: [], repeatFraction: 0, qualifies: false });
+    expect(result).toEqual({ laps: 0, lapCount: 0, repeatedCells: [], repeatFraction: 0, qualifies: false });
   });
 
   it('returns laps: 1 for a single point', () => {
@@ -189,6 +190,8 @@ describe('detectLaps', () => {
     // surprising, maximum.
     const result = detectLaps(chain(laps(BIG_LOOP, 2)));
     expect(result.laps).toBe(3);
+    // ...which is why a marker shows lapCount instead: two laps.
+    expect(result.lapCount).toBe(2);
     expect(result.repeatedCells.length).toBeGreaterThanOrEqual(MIN_REPEATED_CELLS);
     expect(result.repeatFraction).toBeGreaterThanOrEqual(MIN_REPEAT_FRACTION);
     expect(result.qualifies).toBe(true);
@@ -197,6 +200,7 @@ describe('detectLaps', () => {
   it('three laps report laps: 4 (three completions plus the initial arrival)', () => {
     const result = detectLaps(chain(laps(BIG_LOOP, 3)));
     expect(result.laps).toBe(4);
+    expect(result.lapCount).toBe(3);
     expect(result.qualifies).toBe(true);
   });
 
@@ -215,6 +219,7 @@ describe('detectLaps', () => {
     ]);
     const result = detectLaps(outAndBack);
     expect(result.laps).toBe(2);
+    expect(result.lapCount).toBe(2);
     expect(result.repeatedCells.length).toBeGreaterThanOrEqual(MIN_REPEATED_CELLS);
     expect(result.qualifies).toBe(true);
   });
@@ -462,5 +467,41 @@ describe('lapsForUpload', () => {
       const laps = lapsForUpload({ qualifies: true, laps: 999 }, d);
       expect(laps).toBeLessThanOrEqual(1 + Math.floor(Math.round(d) / 150));
     }
+  });
+});
+
+describe('liveLapMarker', () => {
+  // Generous: these cases are about the gate and the pin, not the server's
+  // distance clamp (lapsForUpload's own tests cover that).
+  const FAR_M = 100_000;
+
+  it('shows nothing for a single ordinary loop', () => {
+    // detectLaps reads 2 here (start/finish cell crossed twice) but the run
+    // doesn't qualify — the live marker must not say "+2" for it.
+    expect(liveLapMarker(chain(BIG_LOOP), FAR_M, null)).toBeNull();
+  });
+
+  it('shows "+2" on a lapped route, on a cell that was actually lapped', () => {
+    const points = chain(laps(BIG_LOOP, 2));
+    const marker = liveLapMarker(points, FAR_M, null);
+    expect(marker?.laps).toBe(2);
+    const repeated = new Set(detectLaps(points).repeatedCells);
+    expect(repeated.has(latLngToCell(marker!.center.lat, marker!.center.lng, DEFAULT_TILE_RES))).toBe(
+      true,
+    );
+  });
+
+  it('keeps its pinned centre while the count goes up', () => {
+    const two = liveLapMarker(chain(laps(BIG_LOOP, 2)), FAR_M, null);
+    const pinned = { lat: 1, lng: 2 };
+    const three = liveLapMarker(chain(laps(BIG_LOOP, 3)), FAR_M, pinned);
+    expect(two?.laps).toBe(2);
+    expect(three?.laps).toBe(3);
+    expect(three?.center).toBe(pinned);
+  });
+
+  it("never shows more laps than the server will accept for the distance", () => {
+    // 3 real laps, but a distance the server's runs_laps_plausible caps at 2.
+    expect(liveLapMarker(chain(laps(BIG_LOOP, 3)), 150, null)?.laps).toBe(2);
   });
 });

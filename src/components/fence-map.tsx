@@ -28,10 +28,10 @@ import Svg, { Rect as SvgRect } from 'react-native-svg';
 import type { MultiPolygon, Polygon as GeoPolygon } from 'geojson';
 
 import { ConquestMarker } from '@/components/conquest-marker';
-import { CycleBonusMarker } from '@/components/cycle-bonus-marker';
+import { LapMarker, useLapMarkerTracking } from '@/components/lap-marker';
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
-import { conquestMarkerGeometry, cycleBonusMarkerGeometry } from '@/lib/conquest-marker';
+import { conquestMarkerGeometry, lapMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
   fenceColorForRun,
@@ -87,11 +87,11 @@ interface FenceMapProps {
    *  now one weighted-centroid item, not one per cluster). `label` is
    *  pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
-  /** Blue cycle-bonus marker — present when this run's OWN path was
-   *  detected as a genuine loop (src/lib/laps.ts). Absent until the upload
-   *  resolves; null/undefined when no qualifying loop. `label` is
-   *  pre-translated, same convention as `takenClusters` above. */
-  cycleBonus?: { pts: number; center: { lat: number; lng: number }; label: string } | null;
+  /** Blue "+N" lap marker — present when this run's OWN path was detected
+   *  as a genuine loop (src/lib/laps.ts); `laps` is the honest lap count.
+   *  null/undefined when no qualifying loop. `label` is pre-translated, same
+   *  convention as `takenClusters` above. */
+  lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
   /** Previously-captured fences, rendered muted in their own colours. May
@@ -126,7 +126,7 @@ export function FenceMap({
   tiles,
   rivalTiles,
   takenClusters,
-  cycleBonus,
+  lapMarker,
   color,
   others,
   excludeId,
@@ -146,6 +146,7 @@ export function FenceMap({
   // back here would be a setState in an effect body (the cascading-render
   // lint). The window opens when the markers actually exist, not at mount.
   const [trackTakenMarkers, setTrackTakenMarkers] = useState(true);
+  const trackLapMarker = useLapMarkerTracking(lapMarker?.laps ?? null);
   useEffect(() => {
     if (takenClusters.length === 0) return;
     const id = setTimeout(() => setTrackTakenMarkers(false), 800);
@@ -435,13 +436,14 @@ export function FenceMap({
             <ConquestMarker count={cluster.count} />
           </Marker>
         ))}
-        {cycleBonus && (
+        {lapMarker && (
           <Marker
-            coordinate={{ latitude: cycleBonus.center.lat, longitude: cycleBonus.center.lng }}
-            anchor={{ x: 0.5, y: cycleBonusMarkerGeometry(cycleBonus.pts).anchorY }}
-            accessibilityLabel={cycleBonus.label}
-            tracksViewChanges={false}>
-            <CycleBonusMarker pts={cycleBonus.pts} />
+            coordinate={{ latitude: lapMarker.center.lat, longitude: lapMarker.center.lng }}
+            anchor={{ x: 0.5, y: lapMarkerGeometry(lapMarker.laps).anchorY }}
+            accessibilityLabel={lapMarker.label}
+            // On only while the pop-in plays — see lap-marker.tsx.
+            tracksViewChanges={trackLapMarker}>
+            <LapMarker laps={lapMarker.laps} />
           </Marker>
         )}
       </MapView>

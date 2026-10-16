@@ -1,12 +1,15 @@
-// Shared marker geometry for the conquest "+N" bubble and the cycle "Xpt"
-// bonus bubble. ONE silhouette (teardrop: circle + tangent tail) shared by
-// the native maps (components/conquest-marker.tsx, cycle-bonus-marker.tsx)
-// and the web maps' DOM markers (fence-map.web.tsx), so platforms can't drift.
+// Shared marker geometry for the conquest "+N" bubble and the lap "+N"
+// bubble. ONE silhouette (teardrop: circle + tangent tail) shared by the
+// native maps (components/conquest-marker.tsx, lap-marker.tsx) and the web
+// maps' DOM markers (fence-map.web.tsx, track-map.web.tsx via
+// lib/lap-marker-web.ts), so platforms can't drift.
 //
 // ConquestMarker: Figma master Atoms/Bubble/ConquestMarker (node 49:6,
 // page "Organisms — Chrome over the Map") — purple, shows "+N taken tiles".
-// CycleBonusMarker: blue variant, shows "Xpt" bonus points for re-running
-// the same territory (10 pts per qualifying run).
+// LapMarker: blue variant, shows "+N" — N laps of the same ground
+// (laps.ts's detectLaps, only once the run qualifies). Used to show the
+// "10pt" cycle bonus instead, which read as a lap count nobody could map to
+// anything (Pedro, 2026-10-15: "+X, X being the number of laps").
 //
 // It replaces a circle + a separately drawn triangle. That composite always
 // read as two pieces, for two reasons, both fixed here:
@@ -97,9 +100,9 @@ export type ConquestMarkerGeometry = {
   shadowPath: string;
 };
 
-/** Blue palette for the cycle-bonus marker — same teardrop shape as
- *  ConquestMarker, different colour, shows "Xpt" repeat-run bonus. */
-export const CYCLE_MARKER = {
+/** Blue palette for the lap marker — same teardrop shape as ConquestMarker,
+ *  different colour, shows "+N" laps. */
+export const LAP_MARKER = {
   baseDiameter: 28,
   tailRatio: 5 / 14,
   stroke: 2,
@@ -185,23 +188,19 @@ export function conquestMarkerGeometry(count: number): ConquestMarkerGeometry {
   );
 }
 
-/** The body diameter that fits "Xpt" (e.g. "10pt") with even clearance. */
-export function cycleBonusMarkerDiameter(pts: number): number {
-  const chars = String(Math.abs(Math.round(pts))).length + 2; // the "pt"
-  const needed =
-    chars * CYCLE_MARKER.fontSize * CYCLE_MARKER.charAdvanceEm +
-    CYCLE_MARKER.innerPadding * 2 +
-    CYCLE_MARKER.stroke;
-  return Math.max(CYCLE_MARKER.baseDiameter, Math.ceil(needed / 2) * 2);
+/** The body diameter that fits "+N" laps — same metrics as the conquest
+ *  bubble, so a "+2" lap marker and a "+2" conquest marker are one size. */
+export function lapMarkerDiameter(laps: number): number {
+  return conquestMarkerDiameter(laps);
 }
 
-export function cycleBonusMarkerGeometry(pts: number): ConquestMarkerGeometry {
+export function lapMarkerGeometry(laps: number): ConquestMarkerGeometry {
   return _teardropGeometry(
-    cycleBonusMarkerDiameter(pts),
-    CYCLE_MARKER.tailRatio,
-    CYCLE_MARKER.stroke,
-    CYCLE_MARKER.shadowBlurStdDeviation,
-    CYCLE_MARKER.shadowOffsetY,
+    lapMarkerDiameter(laps),
+    LAP_MARKER.tailRatio,
+    LAP_MARKER.stroke,
+    LAP_MARKER.shadowBlurStdDeviation,
+    LAP_MARKER.shadowOffsetY,
   );
 }
 
@@ -243,33 +242,34 @@ export function conquestMarkerHtml(count: number, uid: string | number): string 
   );
 }
 
-/** Blue cycle-bonus marker as an HTML string for the web map's DOM markers. */
-export function cycleBonusMarkerHtml(pts: number, uid: string | number): string {
-  const g = cycleBonusMarkerGeometry(pts);
-  const fillId = `cycle-fill-${uid}`;
-  const shadowId = `cycle-shadow-${uid}`;
+/** The blue lap marker's SVG + "+N" label, for the web maps' DOM markers.
+ *  The animated wrapper around it lives in lib/lap-marker-web.ts. */
+export function lapMarkerHtml(laps: number, uid: string | number): string {
+  const g = lapMarkerGeometry(laps);
+  const fillId = `lap-fill-${uid}`;
+  const shadowId = `lap-shadow-${uid}`;
   return (
     `<svg width="${g.boxWidth}" height="${g.boxHeight}" viewBox="${g.viewBox}" ` +
     `style="display:block;pointer-events:none;">` +
     `<defs>` +
     `<linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0" stop-color="${CYCLE_MARKER.fillTop}"/>` +
-    `<stop offset="1" stop-color="${CYCLE_MARKER.fillBottom}"/>` +
+    `<stop offset="0" stop-color="${LAP_MARKER.fillTop}"/>` +
+    `<stop offset="1" stop-color="${LAP_MARKER.fillBottom}"/>` +
     `</linearGradient>` +
     `<filter id="${shadowId}" x="-50%" y="-50%" width="200%" height="200%">` +
-    `<feGaussianBlur stdDeviation="${CYCLE_MARKER.shadowBlurStdDeviation}"/>` +
+    `<feGaussianBlur stdDeviation="${LAP_MARKER.shadowBlurStdDeviation}"/>` +
     `</filter>` +
     `</defs>` +
-    `<g filter="url(#${shadowId})" opacity="${CYCLE_MARKER.shadowOpacity}">` +
-    `<path d="${g.shadowPath}" fill="${CYCLE_MARKER.shadowColor}"/>` +
+    `<g filter="url(#${shadowId})" opacity="${LAP_MARKER.shadowOpacity}">` +
+    `<path d="${g.shadowPath}" fill="${LAP_MARKER.shadowColor}"/>` +
     `</g>` +
-    `<path d="${g.path}" fill="url(#${fillId})" stroke="${CYCLE_MARKER.ring}" ` +
-    `stroke-width="${CYCLE_MARKER.stroke}" stroke-linejoin="round"/>` +
+    `<path d="${g.path}" fill="url(#${fillId})" stroke="${LAP_MARKER.ring}" ` +
+    `stroke-width="${LAP_MARKER.stroke}" stroke-linejoin="round"/>` +
     `</svg>` +
-    `<div style="position:absolute;left:0;top:${g.bleed}px;width:${g.boxWidth}px;` +
+    `<div class="lap-marker__count" style="position:absolute;left:0;top:${g.bleed}px;width:${g.boxWidth}px;` +
     `height:${g.centerY * 2}px;display:flex;align-items:center;justify-content:center;` +
-    `color:#fff;font-weight:700;font-size:${CYCLE_MARKER.fontSize}px;` +
-    `line-height:${CYCLE_MARKER.lineHeight}px;font-variant-numeric:tabular-nums;` +
-    `pointer-events:none;">${pts}pt</div>`
+    `color:#fff;font-weight:700;font-size:${LAP_MARKER.fontSize}px;` +
+    `line-height:${LAP_MARKER.lineHeight}px;font-variant-numeric:tabular-nums;` +
+    `pointer-events:none;"><span>+${laps}</span></div>`
   );
 }

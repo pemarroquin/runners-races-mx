@@ -41,13 +41,9 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon as GeoPolygon } 
 
 import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, Spacing } from '@/constants/theme';
-import {
-  conquestMarkerGeometry,
-  conquestMarkerHtml,
-  cycleBonusMarkerGeometry,
-  cycleBonusMarkerHtml,
-} from '@/lib/conquest-marker';
+import { conquestMarkerGeometry, conquestMarkerHtml, lapMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
+import { createLapMarkerElement } from '@/lib/lap-marker-web';
 import {
   EMISSIVE_STRENGTH_FULL,
   fenceColorForRun,
@@ -158,11 +154,10 @@ interface FenceMapProps {
   /** Single consolidated "+N" conquest bubble — one weighted-centroid item.
    *  `label` is pre-translated. Empty until the upload resolves. */
   takenClusters: { center: { lat: number; lng: number }; count: number; label: string }[];
-  /** Blue cycle-bonus marker — present when this run's OWN path was
-   *  detected as a genuine loop (src/lib/laps.ts). Absent until upload
-   *  resolves. `label` is pre-translated, same convention as
-   *  `takenClusters` above. */
-  cycleBonus?: { pts: number; center: { lat: number; lng: number }; label: string } | null;
+  /** Blue "+N" lap marker — present when this run's OWN path was detected
+   *  as a genuine loop (src/lib/laps.ts); `laps` is the honest lap count.
+   *  `label` is pre-translated, same convention as `takenClusters` above. */
+  lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   color: string;
   others: MyFence[];
   excludeId?: string | null;
@@ -216,7 +211,7 @@ export function FenceMap({
   tiles,
   rivalTiles,
   takenClusters,
-  cycleBonus,
+  lapMarker,
   color,
   others,
   excludeId,
@@ -248,8 +243,8 @@ export function FenceMap({
   const finishMarkerRef = useRef<Marker | null>(null);
   // "+N" conquest bubbles — one DOM marker per cluster, same technique.
   const takenMarkersRef = useRef<Marker[]>([]);
-  // Blue cycle-bonus marker — one DOM marker, present only when cycleBonus arrives.
-  const cycleMarkerRef = useRef<Marker | null>(null);
+  // Blue "+N" lap marker — one DOM marker, present only when lapMarker is.
+  const lapMarkerRef = useRef<Marker | null>(null);
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
@@ -534,8 +529,8 @@ export function FenceMap({
       finishMarkerRef.current = null;
       for (const marker of takenMarkersRef.current) marker.remove();
       takenMarkersRef.current = [];
-      cycleMarkerRef.current?.remove();
-      cycleMarkerRef.current = null;
+      lapMarkerRef.current?.remove();
+      lapMarkerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -596,16 +591,23 @@ export function FenceMap({
         const el = document.createElement('div');
         el.setAttribute('role', 'img');
         el.setAttribute('aria-label', cluster.label);
-        el.style.cssText = 'position:relative;line-height:0;pointer-events:none;';
+        // NO `position` here: mapboxgl.Marker gives this element
+        // `.mapboxgl-marker` (position:absolute) and positions it with a
+        // transform. An inline `position:relative` used to beat that class,
+        // put the bubble in normal flow, and leave it a fixed number of
+        // SCREEN pixels off its coordinate — which reads as the marker
+        // sliding across the route on every zoom (2026-10-15). The label
+        // inside still finds its containing block: absolute is positioned.
+        const g = conquestMarkerGeometry(cluster.count);
+        el.style.cssText = `width:${g.boxWidth}px;height:${g.boxHeight}px;line-height:0;pointer-events:none;`;
         el.innerHTML = conquestMarkerHtml(cluster.count, i);
         // The element carries a margin for the blurred shadow, so its bottom
         // edge is NOT the tip — push it down by the difference so the tip
         // lands on the coordinate (lib/conquest-marker's webOffsetY).
-        const { webOffsetY } = conquestMarkerGeometry(cluster.count);
         return new mapboxgl.Marker({
           element: el,
           anchor: 'bottom' as const,
-          offset: [0, webOffsetY],
+          offset: [0, g.webOffsetY],
         })
           .setLngLat([cluster.center.lng, cluster.center.lat])
           .addTo(map);
@@ -616,7 +618,9 @@ export function FenceMap({
     };
   }, [takenClusters, mapReady]);
 
-  // Blue cycle-bonus marker — same lifecycle as the conquest markers above.
+  // Blue "+N" lap marker — same lifecycle as the conquest markers above.
+  // Pops in on creation (lap-marker-web.ts), which on this screen is the
+  // moment the summary appears.
   useEffect(() => {
     if (!readyRef.current) return;
     let cancelled = false;
@@ -624,27 +628,22 @@ export function FenceMap({
       const { default: mapboxgl } = await import('mapbox-gl');
       const map = mapRef.current;
       if (cancelled || !map) return;
-      cycleMarkerRef.current?.remove();
-      cycleMarkerRef.current = null;
-      if (!cycleBonus) return;
-      const el = document.createElement('div');
-      el.setAttribute('role', 'img');
-      el.setAttribute('aria-label', cycleBonus.label);
-      el.style.cssText = 'position:relative;line-height:0;pointer-events:none;';
-      el.innerHTML = cycleBonusMarkerHtml(cycleBonus.pts, 'cycle');
-      const { webOffsetY } = cycleBonusMarkerGeometry(cycleBonus.pts);
-      cycleMarkerRef.current = new mapboxgl.Marker({
+      lapMarkerRef.current?.remove();
+      lapMarkerRef.current = null;
+      if (!lapMarker) return;
+      const el = createLapMarkerElement(lapMarker.laps, lapMarker.label, 'summary');
+      lapMarkerRef.current = new mapboxgl.Marker({
         element: el,
         anchor: 'bottom' as const,
-        offset: [0, webOffsetY],
+        offset: [0, lapMarkerGeometry(lapMarker.laps).webOffsetY],
       })
-        .setLngLat([cycleBonus.center.lng, cycleBonus.center.lat])
+        .setLngLat([lapMarker.center.lng, lapMarker.center.lat])
         .addTo(map);
     })();
     return () => {
       cancelled = true;
     };
-  }, [cycleBonus, mapReady]);
+  }, [lapMarker, mapReady]);
 
   // The "recenter" control's target — re-fit to the highlighted fence,
   // shorter/snappier than the mount effect's entrance sweep (that one is a

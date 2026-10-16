@@ -77,6 +77,15 @@ export interface LapResult {
    *  need far more than one coincidental cell to fire. Don't surface `laps`
    *  to the runner directly without accounting for this. */
   laps: number;
+  /** How many times the lapped ground was actually covered — the LOWER
+   *  MEDIAN of the per-cell counts over `repeatedCells`, not their max. This
+   *  is the number to show a runner: two laps of a loop read `laps: 3` (the
+   *  start/finish cell is crossed once more than the loop is run — see
+   *  `laps` above) but `lapCount: 2`, because every other cell on the loop
+   *  reads exactly 2. Mid-lap it ticks over once more than half the ground
+   *  has been covered again. Equals `laps` when nothing repeated (1, or 0
+   *  for an empty path). */
+  lapCount: number;
   /** Cells visited 2+ times with proper separation (see
    *  MIN_SEPARATION_CELLS) — the ground that was actually lapped. Each cell
    *  id appears once, regardless of how many times it was revisited. */
@@ -138,7 +147,7 @@ export function detectLaps(points: TimedPoint[], res: number = DEFAULT_TILE_RES)
   }
 
   if (seq.length === 0) {
-    return { laps: 0, repeatedCells: [], repeatFraction: 0, qualifies: false };
+    return { laps: 0, lapCount: 0, repeatedCells: [], repeatFraction: 0, qualifies: false };
   }
 
   // Every occurrence index (into `seq`) of each cell, in order.
@@ -154,6 +163,7 @@ export function detectLaps(points: TimedPoint[], res: number = DEFAULT_TILE_RES)
 
   let laps = 1;
   const repeatedCells: string[] = [];
+  const repeatedCounts: number[] = [];
 
   for (const [cell, indices] of visitsByCell) {
     if (indices.length < 2) continue;
@@ -169,14 +179,15 @@ export function detectLaps(points: TimedPoint[], res: number = DEFAULT_TILE_RES)
       // occurrences of the same cell), and those must not count as an
       // "other" cell separating the loop from itself.
       //
-      // Straightforward O(range length) scan, not a Fenwick/BIT range-
-      // distinct structure — the worst case across a whole run is bounded
-      // by realistic path lengths (a marathon's collapsed sequence is a few
-      // thousand entries at most), and this only runs once per upload, not
-      // per GPS tick. Same "measured and bounded, not asymptotically
-      // optimal" posture as measure-holes.ts's spanM.
+      // Straightforward scan, not a Fenwick/BIT range-distinct structure —
+      // and it stops the moment the threshold is met, since only "at least
+      // MIN_SEPARATION_CELLS" matters, never the exact count. That early
+      // exit is what makes this cheap enough to run LIVE (index.tsx calls it
+      // on every live-tiles throttle tick for the on-map lap marker, not
+      // just once per upload): a genuine revisit clears the bar within its
+      // first dozen cells instead of scanning a whole lap.
       const distinctOther = new Set<string>();
-      for (let i = lastCounted + 1; i < idx; i++) {
+      for (let i = lastCounted + 1; i < idx && distinctOther.size < MIN_SEPARATION_CELLS; i++) {
         if (seq[i] !== cell) distinctOther.add(seq[i]);
       }
       if (distinctOther.size >= MIN_SEPARATION_CELLS) {
@@ -185,7 +196,10 @@ export function detectLaps(points: TimedPoint[], res: number = DEFAULT_TILE_RES)
       }
     }
 
-    if (count >= 2) repeatedCells.push(cell);
+    if (count >= 2) {
+      repeatedCells.push(cell);
+      repeatedCounts.push(count);
+    }
     if (count > laps) laps = count;
   }
 
@@ -193,8 +207,13 @@ export function detectLaps(points: TimedPoint[], res: number = DEFAULT_TILE_RES)
   // above, and a non-empty seq means at least one cell has at least one visit.
   const repeatFraction = repeatedCells.length / visitsByCell.size;
 
+  repeatedCounts.sort((a, b) => a - b);
+  const lapCount =
+    repeatedCounts.length > 0 ? repeatedCounts[Math.floor((repeatedCounts.length - 1) / 2)] : laps;
+
   return {
     laps,
+    lapCount,
     repeatedCells,
     repeatFraction,
     qualifies:
@@ -305,4 +324,44 @@ export function lapsForUpload(
   if (!lap?.qualifies) return 0;
   const laps = Math.floor(lap.laps ?? 0);
   return Math.max(0, Math.min(laps, maxPlausibleLaps(distanceM)));
+}
+
+/**
+ * The live Track map's "+N" lap marker for the path so far, or null when
+ * there's nothing to show yet.
+ *
+ * Same gate and same number as the summary — `displayLaps` — so the marker
+ * that appears mid-run is the one the summary shows, never a live-only
+ * guess that vanishes at Finish. Shown only from 2 laps up: "+1" says
+ * nothing.
+ *
+ * `prevCenter` pins the position. The centre is recomputed from the lapped
+ * ground, which keeps growing all run, so without the pin the marker would
+ * hop along the route every few seconds — once it has landed, it stays
+ * there and only the count changes (Pedro, 2026-10-15: "stuck to a same
+ * point"). Live uses the UNMASKED centre on purpose: the runner is the
+ * privacy zone's owner and the live map is not shareable — the summary
+ * re-picks a masked-safe centre with `pickSafeLapMarkerCenter`.
+ */
+export function liveLapMarker(
+  points: TimedPoint[],
+  distanceM: number,
+  prevCenter: { lat: number; lng: number } | null,
+): { laps: number; center: { lat: number; lng: number } } | null {
+  const result = detectLaps(points);
+  const laps = displayLaps(result, distanceM);
+  if (laps < 2) return null;
+  const center = prevCenter ?? pickLapMarkerCenter(result.repeatedCells);
+  return center ? { laps, center } : null;
+}
+
+/** The "+N" a lap marker shows: 0 unless the run qualifies, else the honest
+ *  `lapCount` (never the seam-inflated `laps`), and never above what the
+ *  server accepts for the distance. */
+export function displayLaps(
+  lap: { qualifies: boolean; lapCount: number },
+  distanceM: number,
+): number {
+  if (!lap.qualifies) return 0;
+  return Math.max(0, Math.min(Math.floor(lap.lapCount), maxPlausibleLaps(distanceM)));
 }

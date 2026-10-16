@@ -33,7 +33,7 @@ import { fenceColorForRun, LIVE_FILL_RECOMPUTE_MS, LIVE_FILL_RECOMPUTE_POINTS } 
 import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { getHomeZone } from '@/lib/home-point';
-import { detectLaps, pickSafeLapMarkerCenter } from '@/lib/laps';
+import { detectLaps, displayLaps, liveLapMarker, pickSafeLapMarkerCenter } from '@/lib/laps';
 import {
   dismissLastRun,
   isLastRunDismissed,
@@ -176,16 +176,6 @@ export default function TrackScreen() {
         label: t('track.tookTiles', { count: total }),
       },
     ];
-  }, [tileClaim, t]);
-  // The blue cycle-bonus marker's accessible label — same convention as
-  // takenClusters' `label` just above: computed here (not inside FenceMap)
-  // so the map components stay dumb about i18n. Without this the marker
-  // rendered only a bare "%{pts}pt" glyph with nothing on screen or to a
-  // screen reader saying what was earned (reported 2026-09-20).
-  const cycleBonusMarker = useMemo(() => {
-    const bonus = tileClaim?.cycleBonus;
-    if (!bonus) return undefined;
-    return { ...bonus, label: t('track.cycleBonusLabel', { pts: bonus.pts }) };
   }, [tileClaim, t]);
   // The conquered-tiles bubble's place name — districtLabel's real municipio
   // by majority vote over this run's district's park cells (best-effort,
@@ -441,6 +431,31 @@ export default function TrackScreen() {
   // (see the effect below and laps.ts's pickSafeLapMarkerCenter) before it
   // ever reaches state, so nothing here can point at the runner's home.
   const [sessionLap, setSessionLap] = useState<NonNullable<RunUpload['lap']> | null>(null);
+  // What the summary's "+N" lap marker shows — display only, kept out of
+  // sessionLap so the upload payload (and the retry queue that persists it)
+  // doesn't grow a field the server never reads. `laps` is the honest lap
+  // count (laps.ts's displayLaps), not RunUpload.lap.laps: that one is
+  // detectLaps' raw max, which reads 3 for two laps of a loop.
+  const [sessionLapMarker, setSessionLapMarker] = useState<{
+    laps: number;
+    center: { lat: number; lng: number };
+  } | null>(null);
+  // The blue "+N" lap marker on the summary map, with its accessible label
+  // — same convention as takenClusters' `label` just above: computed here
+  // (not inside FenceMap) so the map components stay dumb about i18n.
+  //
+  // Built from THIS device's own lap detection (sessionLapMarker, set in the
+  // finish effect below), not from tileClaim.cycleBonus: it used to wait on
+  // the claim round trip and then showed the bonus POINTS ("10pt"), a number
+  // nobody could map to anything. It's the lap count now, there the instant
+  // the run finishes, matching the marker the runner just watched live.
+  const summaryLapMarker = useMemo(() => {
+    if (!sessionLapMarker) return null;
+    return {
+      ...sessionLapMarker,
+      label: t('track.lapMarkerLabel', { count: sessionLapMarker.laps }),
+    };
+  }, [sessionLapMarker, t]);
 
   // The share sheet's input — the MASKED path (same privacy-trimmed route
   // FenceMap draws below, never tracker.points), so a shared route sticker
@@ -526,19 +541,28 @@ export default function TrackScreen() {
       // territory-sync.ts's RunUpload.lap.
       try {
         const lapResult = detectLaps(tracker.points);
+        const shownLaps = displayLaps(lapResult, tracker.distanceM);
+        const safeCenter = lapResult.qualifies
+          ? pickSafeLapMarkerCenter(lapResult.repeatedCells, maskedCells)
+          : null;
+        setSessionLapMarker(shownLaps >= 2 && safeCenter ? { laps: shownLaps, center: safeCenter } : null);
         setSessionLap(
           lapResult.qualifies
             ? {
                 qualifies: true,
-                markerCenter: pickSafeLapMarkerCenter(lapResult.repeatedCells, maskedCells),
+                markerCenter: safeCenter,
                 // A Local Leaders tiebreaker. Only counted for a real loop:
                 // an ordinary run's start/finish cell reads 2 with no repeats.
-                laps: lapResult.laps,
+                // lapCount, not `laps`: the raw max reads 3 for two laps of a
+                // loop (the seam cell), so it over-credited every loop runner
+                // by one. Same number the "+N" marker shows (2026-10-15).
+                laps: lapResult.lapCount,
               }
             : { qualifies: false, markerCenter: null, laps: 0 },
         );
       } catch {
         setSessionLap(null);
+        setSessionLapMarker(null);
       }
       // Diagnostic escape hatch (last-run-debug.ts) — the RAW, pre-mask
       // points, so a suspicious area report can be re-run through
@@ -575,6 +599,15 @@ export default function TrackScreen() {
   // distinction unrecoverable downstream. Mirrors the finished-run split
   // sessionTiles/sessionEnclosed already uses.
   const [liveEnclosed, setLiveEnclosed] = useState<string[]>([]);
+  // The live "+N" lap marker — same gate and number as the summary's
+  // (laps.ts's liveLapMarker), recomputed on the same throttle as the tiles.
+  // Its centre is pinned the first time it appears (liveLapCenterRef) so it
+  // stays on one spot of the route for the rest of the session and only the
+  // count changes; a recomputed centre would hop as the lapped ground grows.
+  const [liveLap, setLiveLap] = useState<{ laps: number; center: { lat: number; lng: number } } | null>(
+    null,
+  );
+  const liveLapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const liveTilesThrottleRef = useRef({ atMs: 0, pointCount: 0 });
   useEffect(() => {
     // Deferred by a tick, not called straight from the effect body — same
@@ -590,6 +623,8 @@ export default function TrackScreen() {
         liveTilesThrottleRef.current = { atMs: 0, pointCount: 0 };
         setLiveTiles((prev) => (prev.length > 0 ? [] : prev));
         setLiveEnclosed((prev) => (prev.length > 0 ? [] : prev));
+        liveLapCenterRef.current = null;
+        setLiveLap((prev) => (prev ? null : prev));
         return;
       }
       const now = Date.now();
@@ -626,10 +661,26 @@ export default function TrackScreen() {
         }
         setLiveTiles(live);
         setLiveEnclosed(enclosed);
+        // Same guard posture as the enclosure: a throw here must not take the
+        // tiles down with it, and showing no marker is the safe direction.
+        let lap: ReturnType<typeof liveLapMarker> = null;
+        try {
+          lap = liveLapMarker(tracker.points, tracker.distanceM, liveLapCenterRef.current);
+        } catch {
+          lap = null;
+        }
+        if (lap) liveLapCenterRef.current = lap.center;
+        setLiveLap((prev) =>
+          prev && lap && prev.laps === lap.laps && prev.center === lap.center ? prev : lap,
+        );
       }
     }, 0);
     return () => clearTimeout(id);
-  }, [inSession, tracker.points]);
+  }, [inSession, tracker.points, tracker.distanceM]);
+  const liveLapMarkerProp = useMemo(
+    () => (liveLap ? { ...liveLap, label: t('track.lapMarkerLabel', { count: liveLap.laps }) } : null),
+    [liveLap, t],
+  );
 
 
   // Where the tilesHeld bubble's caption is resolved from — computed here
@@ -837,6 +888,8 @@ export default function TrackScreen() {
     // guarantee, and this pair feeds both the summary map and the upload
     // payload. They must be cleared together or not at all.
     setSessionEnclosed([]);
+    setSessionLap(null);
+    setSessionLapMarker(null);
     setTileClaim(null);
     setTilesFailure(null);
     setDistrictPlaceName(null);
@@ -948,9 +1001,9 @@ export default function TrackScreen() {
             // The "+N" conquest bubbles — see takenClusters' own comment
             // above. Empty until claimTiles() resolves, same as rivalTiles.
             takenClusters={takenClusters}
-            // Blue cycle-bonus marker — non-null once the claim resolves and
-            // this run's own path was detected as a genuine loop (laps.ts).
-            cycleBonus={cycleBonusMarker}
+            // Blue "+N" lap marker — non-null when this run's own path was
+            // detected as a genuine loop (laps.ts); see summaryLapMarker.
+            lapMarker={summaryLapMarker}
             color={fenceColor}
             others={[]}
             excludeId={savedRunId}
@@ -1120,6 +1173,8 @@ export default function TrackScreen() {
           // throttle, and liveEnclosed's for why the two arrive separately.
           tiles={liveTiles}
           enclosedTiles={liveEnclosed}
+          // The live "+N" lap marker — see liveLap's own comment.
+          lapMarker={liveLapMarkerProp}
           dark={scheme === 'dark'}
           color={c.accent}
           placeholder={t('track.waiting')}

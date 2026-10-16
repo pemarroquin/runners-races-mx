@@ -112,9 +112,11 @@ import {
   smoothBearing,
   type ChromeInsets,
 } from '@/lib/camera';
+import { lapMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
+import { createLapMarkerElement, updateLapMarkerElement } from '@/lib/lap-marker-web';
 import { buildPinMapUrl } from '@/lib/mapbox';
 import { useRegion } from '@/lib/region-context';
 import { type LatLng } from '@/lib/territory';
@@ -357,6 +359,12 @@ interface TrackMapProps {
    *  siblings, not stacked, so neither region ever blends two translucent
    *  fills and reads muddier than the other. */
   enclosedTiles: string[];
+  /** The live "+N" lap marker — index.tsx's liveLap: same gate and count as
+   *  the session summary's (laps.ts's liveLapMarker), centre pinned for the
+   *  session so it marks one spot of the route and only the count changes.
+   *  null until the run's own path qualifies as lapped. `label` is
+   *  pre-translated. */
+  lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   dark: boolean;
   color: ColorValue;
   placeholder: string;
@@ -431,6 +439,7 @@ export function TrackMap({
   fenceColor,
   tiles,
   enclosedTiles,
+  lapMarker,
   placeholder,
   placeholderColor,
   unavailable,
@@ -449,6 +458,10 @@ export function TrackMap({
   // before that marker was redesigned to the Figma bar, so a run's start
   // pin visibly changed the instant the session ended.
   const startMarkerRef = useRef<Marker | null>(null);
+  // The live "+N" lap marker — created the first time `lapMarker` arrives,
+  // then updated IN PLACE as laps go up (lap-marker-web.ts), so it bumps
+  // rather than re-dropping on every new lap.
+  const lapMarkerRef = useRef<Marker | null>(null);
   const readyRef = useRef(false);
   // The same fact as readyRef, as STATE — because a ref cannot wake an
   // effect. Every effect below bails until the map has loaded, and most
@@ -1033,6 +1046,42 @@ export function TrackMap({
     }
     marker.setLngLat([points[0].lng, points[0].lat]).addTo(map);
   }, [points, mapReady]);
+
+  // The live "+N" lap marker. Pinned to `lapMarker.center` (fixed for the
+  // session by index.tsx), and a Mapbox Marker is positioned by Mapbox on
+  // every camera frame — so it holds its spot on the route through any pan
+  // or zoom, and can sit off-screen while the runner is zoomed in elsewhere.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    if (!lapMarker) {
+      lapMarkerRef.current?.remove();
+      lapMarkerRef.current = null;
+      return;
+    }
+    const existing = lapMarkerRef.current;
+    if (existing) {
+      const resized = updateLapMarkerElement(existing.getElement(), lapMarker.laps, lapMarker.label, 'live');
+      if (resized) existing.setOffset([0, lapMarkerGeometry(lapMarker.laps).webOffsetY]);
+      existing.setLngLat([lapMarker.center.lng, lapMarker.center.lat]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { default: mapboxgl } = await import('mapbox-gl');
+      if (cancelled || mapRef.current !== map || !readyRef.current) return;
+      lapMarkerRef.current = new mapboxgl.Marker({
+        element: createLapMarkerElement(lapMarker.laps, lapMarker.label, 'live'),
+        anchor: 'bottom' as const,
+        offset: [0, lapMarkerGeometry(lapMarker.laps).webOffsetY],
+      })
+        .setLngLat([lapMarker.center.lng, lapMarker.center.lat])
+        .addTo(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lapMarker, mapReady]);
 
   // Idle: keep the camera over the runner as they move, so the map isn't
   // still framing wherever they were when the tab opened. Skipped during a
