@@ -27,7 +27,10 @@
       [
         "expo-router",
         {
-          "asyncRoutes": { "web": "production", "default": false }
+          "asyncRoutes": {
+            "web": "production",
+            "default": false
+          }
         }
       ],
       [
@@ -52,7 +55,10 @@
           "locationWhenInUsePermission": "Runners' Races MX uses your location to show races in your city."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
