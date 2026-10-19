@@ -411,7 +411,10 @@
         "lat": 25.6686,
         "lng": -100.3103,
         "approx": true
-      }
+      },
+      "status": "ok",
+      "statusNote": "No change found. Could not reach asdeporte.com or asociaciondeatletismonl.com directly (network egress policy); web search found no postponement/cancellation signals — third-party listings still show 25 Oct 2026, Plaza Zaragoza, 10K 07:00 / 5K 07:20.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "tmim-triple-maraton-2026",
@@ -956,7 +959,10 @@
         "lng": -100.2444,
         "approx": true
       },
-      "sourceNotes": "Edition number differs between sources (8ª Idemsport, 9ª AANL)."
+      "sourceNotes": "Edition number differs between sources (8ª Idemsport, 9ª AANL).",
+      "status": "ok",
+      "statusNote": "No change found. Could not reach idemsport.com directly (network egress policy); web search found no cancellation/postponement signal for this Monterrey/Guadalupe 2026 edition — only the (unrelated) 2025 Monterrey edition and a separate CDMX 2026 edition turned up.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "5k-fieles-difuntos-2026",
@@ -2082,8 +2088,8 @@
       ],
       "sourceNotes": "Dashport page is JS-rendered, unverified directly — confirm before race week.",
       "status": "ok",
-      "statusNote": "No change found. Could not reach dashport.run or tritour.org directly (network egress policy); no postponement/cancellation signals in search.",
-      "lastVerified": "2026-10-16"
+      "statusNote": "Re-checked for 2026-10-24. Still could not reach dashport.run or tritour.org directly (network egress policy); web search returned no results at all for this specific event, so no cancellation/postponement signal found either way.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "ultra-valle-bravo-utms-2026",
@@ -2336,7 +2342,10 @@
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
       "confidence": "high",
       "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX.",
-      "notesEs": "Salida/meta 'por confirmar'. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX."
+      "notesEs": "Salida/meta 'por confirmar'. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX.",
+      "status": "ok",
+      "statusNote": "No change found. Could not reach asdeporte.com directly (network egress policy); web search found no postponement/cancellation signals — third-party listings still show 25 Oct 2026, venue still 'por confirmar'.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "carrera-canacine",
@@ -2736,7 +2745,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "high",
       "notes": null,
-      "sourceNotes": "Date agrees across tritour + runera (asdeporte slug oton-o-...-6r9). Venue not rendered."
+      "sourceNotes": "Date agrees across tritour + runera (asdeporte slug oton-o-...-6r9). Venue not rendered.",
+      "status": "ok",
+      "statusNote": "No change found. Could not reach tritour.org directly (network egress policy); web search found no postponement/cancellation signals — third-party listing (haid.app) still shows 25 Oct 2026.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "xlii-marat-n-internacional-guadalajara-2026-elec",
@@ -2922,10 +2934,9 @@
       "confidence": "low",
       "notes": "Snoopy-themed, dog-friendly run. Distances 3K/5K, from $600 MXN.",
       "notesEs": "Carrera temática de Snoopy, pet friendly. Distancias 3K/5K, desde $600 MXN.",
-      "sourceNotes": "Date conflict: tritour/press say Sep 6; Asdeporte page showed Sep 12 — used Sep 6 (two sources vs one). Venue TBC. Re-checked 2026-08-31: Asdeporte's own event page, Tri Tour, Runera, Solo Atletas and the organizer's own Instagram post now all agree on Sunday 6 Sep 2026, 07:00 — the earlier Sep 12 reading looks like a stale snapshot. Date conflict considered resolved.",
+      "sourceNotes": "Re-checked 2026-09-04: direct fetch of asdeporte.com blocked by network policy; web search this run surfaced only the 2025 edition (Oct 19, 2025) and no 2026-specific new results, positive or negative — no cancellation/postponement/aviso signal found either. Prior sweep's date-conflict resolution (Sep 6, not Sep 12) stands.",
       "status": "ok",
       "statusNote": "Confirmed for 6 Sep 2026, 07:00, per Asdeporte, Tri Tour, Runera, Solo Atletas and an organizer Instagram post. No cancellation/postponement/aviso signals found via web search (2026-08-31, reconfirmed 2026-09-04).",
-      "sourceNotes": "Re-checked 2026-09-04: direct fetch of asdeporte.com blocked by network policy; web search this run surfaced only the 2025 edition (Oct 19, 2025) and no 2026-specific new results, positive or negative — no cancellation/postponement/aviso signal found either. Prior sweep's date-conflict resolution (Sep 6, not Sep 12) stands.",
       "lastVerified": "2026-09-04"
     },
     {
@@ -3234,7 +3245,10 @@
       "sourceUrl": "https://running.life/es/carrera/binational-race",
       "confidence": "high",
       "notes": "Cross-border race San Diego to Tijuana; 21K = 13.1 mi half. Passport/Global Entry/SENTRI needed for border crossing. running.life + Race Roster 2026 event page agree.",
-      "notesEs": "Carrera binacional de San Diego a Tijuana; el 21K equivale al medio maratón de 13.1 mi. Se necesita pasaporte/Global Entry/SENTRI para cruzar la frontera. running.life + la página del evento 2026 en Race Roster coinciden."
+      "notesEs": "Carrera binacional de San Diego a Tijuana; el 21K equivale al medio maratón de 13.1 mi. Se necesita pasaporte/Global Entry/SENTRI para cruzar la frontera. running.life + la página del evento 2026 en Race Roster coinciden.",
+      "status": "ok",
+      "statusNote": "No change found. Could not reach raceroster.com directly (network egress policy); web search found no postponement/cancellation signals — Zeta Tijuana (local news, mid-Oct 2026) and running.life both confirm the race is still set for 25 Oct 2026.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "medio-maraton-internacional-de-tecate",
@@ -4594,7 +4608,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-merida",
       "confidence": "medium",
       "notes": "Chocholá is ~35km south of Mérida, outside the core metro list, but it is a Mérida-organized race (Khronometraje) appearing on Mérida's own race calendar. Pricing not confirmed.",
-      "notesEs": "Chocholá está a ~35 km al sur de Mérida, fuera del listado metropolitano principal, pero es una carrera organizada desde Mérida (Khronometraje) que aparece en el propio calendario de carreras de Mérida. El precio no está confirmado."
+      "notesEs": "Chocholá está a ~35 km al sur de Mérida, fuera del listado metropolitano principal, pero es una carrera organizada desde Mérida (Khronometraje) que aparece en el propio calendario de carreras de Mérida. El precio no está confirmado.",
+      "status": "ok",
+      "statusNote": "No change found. Could not reach khronometraje.com directly (network egress policy); web search returned no results at all for this specific race (only general cenote tourism pages), so no cancellation/postponement signal found either way.",
+      "lastVerified": "2026-10-19"
     },
     {
       "id": "37-maraton-de-la-marina",
