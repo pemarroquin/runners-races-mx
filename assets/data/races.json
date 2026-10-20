@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro.",
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro. 2027 calendar sweep 2026-10-20: Baja California, Guanajuato, Yucatán.",
     "generatedOn": "2026-08-10",
-    "count": 258,
+    "count": 294,
     "distanceTags": [
       "3K",
       "5K",
@@ -3114,23 +3114,25 @@
     },
     {
       "id": "serial-atletico-delegacional-de-tijuana-2026",
-      "name": "Serial Atlético Delegacional de Tijuana 2026",
-      "date": null,
+      "name": "Serial Atlético Delegacional de Tijuana 2026 – Etapa 8 (La Presa Este)",
+      "date": "2026-11-07",
       "time": null,
-      "distances": [],
+      "distances": [
+        "5K"
+      ],
       "distanceTags": [
-        "TBD"
+        "5K"
       ],
       "city": "Tijuana",
       "state": "Baja California",
-      "venue": null,
+      "venue": "Delegación La Presa Este",
       "organizer": "IMDET (Instituto Municipal del Deporte de Tijuana)",
       "signupUrl": null,
       "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-de-tijuana/",
-      "confidence": "low",
-      "notes": "Municipal Saturday series with multiple 2026 stages (Aug 22, Sep 19, Oct 10).",
-      "notesEs": "Serie municipal de sábados con varias fechas en 2026 (22 de agosto, 19 de septiembre, 10 de octubre).",
-      "sourceNotes": "Distances not published; single date left null because it is a multi-stage series. Source: TJRUN calendar."
+      "confidence": "high",
+      "notes": "Eighth stage of Tijuana's municipal 5K series, held on Saturdays across the city's delegaciones. The final stage is December 12 in Zona Centro. Municipal Saturday series with multiple 2026 stages (Aug 22, Sep 19, Oct 10).",
+      "notesEs": "Octava etapa del serial municipal de 5K de Tijuana, que se corre en sábado en las distintas delegaciones. La última etapa es el 12 de diciembre en la Zona Centro. Serie municipal de sábados con varias fechas en 2026 (22 de agosto, 19 de septiembre, 10 de octubre).",
+      "sourceNotes": "Stage list on the tjrun page (8 remaining stages, 7 nov La Presa Este, 12 dic Zona Centro) matches IMDET's 2026 calendar as reported by Zeta Tijuana 2025-12-30 (https://zetatijuana.com/2025/12/imdet-presenta-calendario-deportivo-del-2026/), which lists nine Saturday stages. tjrun shows 7:00 am - 12:00 pm, but that is the MEC calendar's event block, not a confirmed gun time, so time is left null. No stage-specific signup URL seen; series registration is via IMDET. (Earlier: Distances not published; single date left null because it is a multi-stage series. Source: TJRUN calendar.)"
     },
     {
       "id": "trail-dog-run-tijuana-2026",
@@ -3483,7 +3485,7 @@
     },
     {
       "id": "maraton-internacional-dolores-hidalgo-2027-2-edi",
-      "name": "Maratón Internacional Dolores Hidalgo 2027 (2ª edición)",
+      "name": "Maratón Internacional Moroleón 2027 (2ª edición)",
       "date": "2027-01-10",
       "time": null,
       "distances": [
@@ -3498,16 +3500,20 @@
         "Half",
         "Full"
       ],
-      "city": "Dolores Hidalgo",
+      "city": "Moroleón",
       "state": "Guanajuato",
-      "venue": null,
-      "organizer": "COMUDE Dolores Hidalgo",
-      "signupUrl": null,
-      "sourceUrl": "https://www.tritour.org/calendario-carreras-leon-guanajuato",
-      "confidence": "medium",
-      "notes": "2nd edition, aiming to be a Boston qualifier. 2026 (1st ed.) prices: 42K $950, 21K $850, 10K $750, 5K $650.",
-      "notesEs": "2ª edición, con la meta de ser clasificatorio para Boston. Precios de 2026 (1ª ed.): 42K $950, 21K $850, 10K $750, 5K $650.",
-      "sourceNotes": "2027 confirmed by news (Periódico Correo, Jan 2026); tritour lists Jan 10, 2027. 2027 convocatoria/registration not yet published, so signupUrl left null."
+      "venue": "Centro de Convenciones de Moroleón",
+      "organizer": "Maratón Internacional Moroleón (MetaX)",
+      "signupUrl": "https://maratonmoroleon.metaxpro.com/",
+      "sourceUrl": "https://maratonmoroleon.metaxpro.com/",
+      "confidence": "high",
+      "notes": "Second edition, start and finish at the Convention Center. Marathon $1,045 MXN, half $935, 10K $850, 5K $750, plus bank fee. Category for blind and visually impaired runners in the 10K. No race-day registration.",
+      "notesEs": "Segunda edición, salida y meta en el Centro de Convenciones. Maratón $1,045 MXN, medio $935, 10K $850, 5K $750, más cargo bancario. Categoría para personas ciegas y con debilidad visual en el 10K. No hay inscripción el día de la carrera.",
+      "sourceNotes": "CORRECTION of existing 'Maratón Internacional Dolores Hidalgo 2027 (2ª edición)' (2027-01-10, sourced to the tritour León calendar): the tritour calendar now lists 'Maratón Internacional Moroleón 2027' on 10 Jan with 5/10/21.1/42.2 km and no Dolores Hidalgo marathon; official site maratonmoroleon.metaxpro.com titles it '2.ª Edición', 10 Ene 2027; running.life agrees. A search found no Dolores Hidalgo marathon for 2027. Existing row appears to be this race with the wrong city/name — replace it. Official page shows '05:59 hrs' (likely a countdown/timezone artifact) so time left null. Moroleón is in southern Guanajuato, outside the León-Celaya corridor. (Earlier: 2027 confirmed by news (Periódico Correo, Jan 2026); tritour lists Jan 10, 2027. 2027 convocatoria/registration not yet published, so signupUrl left null.)",
+      "status": "changed",
+      "statusNote": "Corrected: this marathon is in Moroleón, not Dolores Hidalgo. Date unchanged, 10 January 2027.",
+      "statusNoteEs": "Corrección: este maratón es en Moroleón, no en Dolores Hidalgo. La fecha no cambia: 10 de enero de 2027.",
+      "lastVerified": "2026-10-20"
     },
     {
       "id": "bjx21k-medio-maraton-bajio-2027",
@@ -3537,7 +3543,7 @@
     {
       "id": "ultra-maraton-leon-2026",
       "name": "Ultra Maratón León 2026",
-      "date": null,
+      "date": "2026-11-07",
       "time": null,
       "distances": [
         "30K",
@@ -3553,11 +3559,11 @@
       "venue": null,
       "organizer": "Ultra Maratón León",
       "signupUrl": null,
-      "sourceUrl": "https://deportedigital.mx/leon-la-capital-del-deporte-tendra-mas-de-70-carreras-atleticas-en-2026",
+      "sourceUrl": "https://estadoluz.com/2025/12/31/leon-se-pone-los-tenis-confirman-66-carreras-atleticas-para-2026/",
       "confidence": "low",
-      "notes": "Trail ultra.",
-      "notesEs": "Ultra de trail.",
-      "sourceNotes": "Listed on León's official 2026 calendar for November 2026; exact date/venue/registration not published. Aggregator/press-level source only."
+      "notes": "Ultra distances of 30, 50 and 70 km. Trail ultra.",
+      "notesEs": "Distancias ultra de 30, 50 y 70 km. Ultra de trail.",
+      "sourceNotes": "Date only from the 2026 León season calendar (Asociación de Atletismo Guanajuatense) as reported by Estado Luz, 2025-12-31: 'Ultramaratón León con rutas de 30, 50 y 70 km (7 de noviembre)'. deportedigital.mx (existing source) lists it in November without a day. No event page, registration or organizer found on Márcate, Asdeporte, tritour, runera or gotrail — treat date as unconfirmed; race-watch should verify or drop. (Earlier: Listed on León's official 2026 calendar for November 2026; exact date/venue/registration not published. Aggregator/press-level source only.)"
     },
     {
       "id": "carrera-atletica-el-sol-de-irapuato-circuito-run",
@@ -3588,8 +3594,8 @@
     {
       "id": "maraton-capital-ciudad-de-guanajuato-iv-edicion",
       "name": "Maratón Capital Ciudad de Guanajuato (IV edición)",
-      "date": null,
-      "time": null,
+      "date": "2027-02-07",
+      "time": "06:00",
       "distances": [
         "10K",
         "21K",
@@ -3602,14 +3608,14 @@
       ],
       "city": "Guanajuato",
       "state": "Guanajuato",
-      "venue": "Plaza de la Paz, Centro Histórico",
+      "venue": "Explanada de la Alhóndiga de Granaditas",
       "organizer": "Maratón Capital",
-      "signupUrl": null,
-      "sourceUrl": "https://rutarunning.com/noticias/maraton-capital-2026-guanajuato-se-prepara-para-una-fiesta-historica-del-running/",
-      "confidence": "low",
-      "notes": "Flagship marathon. Historic start/finish at Plaza de la Paz, 06:00.",
-      "notesEs": "Maratón insignia. Salida/meta histórica en la Plaza de la Paz, 06:00.",
-      "sourceNotes": "III edición ran Feb 15, 2026 (out of window). IV edición (expected Feb 2027, in window) not yet announced — date left null."
+      "signupUrl": "https://registro.maratoncapital.com/registro",
+      "sourceUrl": "https://maratoncapital.com/",
+      "confidence": "high",
+      "notes": "Fourth edition, start and finish at the Alhóndiga de Granaditas; all distances 6:00 (be there 5:30). Cap 3,500. 21K/42K require age 18+. Marathon limit 6 hours with cutoffs at km 19 and km 30. Price rises by phase: $650/$700/$850 until Dec 31, 2026. The state capital’s flagship marathon.",
+      "notesEs": "Cuarta edición, salida y meta en la Alhóndiga de Granaditas; todas las distancias a las 6:00 (preséntate a las 5:30). Cupo de 3,500. 21K y 42K desde 18 años. Límite del maratón: 6 horas, con cortes en el km 19 y el km 30. Precio por fases: $650/$700/$850 hasta el 31 de diciembre de 2026. Maratón insignia de la capital.",
+      "sourceNotes": "Official maratoncapital.com shows 07 de febrero del 2027 with registro link; tritour /eventos/maraton-capital details the convocatoria (time, venue, prices, cap). Same day as Carrera de los Barrios León. (Earlier: III edición ran Feb 15, 2026 (out of window). IV edición (expected Feb 2027, in window) not yet announced — date left null.)"
     },
     {
       "id": "maraton-las-batallas-de-celaya",
@@ -4638,32 +4644,34 @@
     {
       "id": "37-maraton-de-la-marina",
       "name": "37ª Maratón de la Marina",
-      "date": null,
-      "time": null,
+      "date": "2026-06-07",
+      "time": "04:00",
       "distances": [
+        "5K",
         "21K",
         "42K"
       ],
       "distanceTags": [
+        "5K",
         "Half",
         "Full"
       ],
       "city": "Mérida",
       "state": "Yucatán",
-      "venue": "Salida: Monumento a la Patria, Mérida; Meta: Malecón de Progreso (Museo del Meteorito)",
+      "venue": "Salida: Monumento a la Patria (42K) y puente de Komchén (21K, 05:30); meta: Malecón de Progreso",
       "organizer": "Instituto del Deporte del Estado de Yucatán (IDEY)",
       "signupUrl": null,
       "sourceUrl": "https://www.yucatan.gob.mx/saladeprensa/ver_nota.php?id=9981",
-      "confidence": "medium",
-      "notes": "Prize purse ~$350,000 MXN; ~3,200 runners expected.",
-      "notesEs": "Bolsa de premios ~$350,000 MXN; se esperan ~3,200 corredores.",
-      "sourceNotes": "37th edition held 2026-06-07, before this research window (starts 2026-07-13) — date set to null since the only confirmed occurrence falls outside the window; flagged as a known flagship per self-audit. Next edition date not yet published."
+      "confidence": "high",
+      "notes": "Mérida-to-Progreso route for Navy Day. Marathon, half marathon, mixed relays and 5K. 350,000-peso prize purse. About 3,200 runners expected.",
+      "notesEs": "Ruta Mérida–Progreso por el Día de la Marina. Maratón, medio maratón, relevos mixtos y 5K. Bolsa de premios de 350 mil pesos. Se esperan unos 3,200 corredores.",
+      "sourceNotes": "Already ran (2026 edition). Date from state press release 25-1659 (14 Nov 2025) and posta.com.mx/yucatan/cuando-es-el-maraton-de-la-marina-2026 (both 7 Jun 2026, 4:00 first gun). Posta reports a 370k purse vs 350k in the press release. Starts in Mérida (Monumento a la Patria) and finishes in Progreso (malecón); city kept as Mérida, the start (discovery agent proposed Progreso; main session ruled a date fill does not move the race). Registration was on Volaré. No 2027 edition published. (Earlier: 37th edition held 2026-06-07, before this research window (starts 2026-07-13) — date set to null since the only confirmed occurrence falls outside the window; flagged as a known flagship per self-audit. Next edition date not yet published.)"
     },
     {
       "id": "carrera-anahuac-finbe-abc-10k-5k-anahuac",
       "name": "Carrera Anáhuac-FinBe ABC (10K/5K Anáhuac)",
-      "date": null,
-      "time": null,
+      "date": "2026-02-01",
+      "time": "06:00",
       "distances": [
         "5K",
         "10K"
@@ -4678,16 +4686,16 @@
       "organizer": "Universidad Anáhuac Mayab",
       "signupUrl": null,
       "sourceUrl": "https://merida.anahuac.mx/carrera-anahuac",
-      "confidence": "medium",
-      "notes": "Annual recurring university race.",
-      "notesEs": "Carrera universitaria anual recurrente.",
-      "sourceNotes": "14th edition held 2026-02-01 (kids' race 2026-01-31), before this window — date set to null. Next edition date not yet published; the 2026 registration link (vivedeporte.mx/evento_1148) is intentionally omitted as a stale prior-edition slug."
+      "confidence": "high",
+      "notes": "10K at 6:00 and 5K at 6:15 (skates and skateboards allowed). Kids' races the Saturday before. Annual recurring university race.",
+      "notesEs": "10K a las 6:00 y 5K a las 6:15 (se permiten patines y patinetas). Carreras infantiles el sábado previo. Carrera universitaria anual recurrente.",
+      "sourceNotes": "Already ran. Official page still shows the 2026 edition (Sun 1 Feb 2026; registration via vivedeporte.mx/evento_1148). No 2027 edition published yet. (Earlier: 14th edition held 2026-02-01 (kids' race 2026-01-31), before this window — date set to null. Next edition date not yet published; the 2026 registration link (vivedeporte.mx/evento_1148) is intentionally omitted as a stale prior-edition slug.)"
     },
     {
       "id": "carrera-atletica-uady-aniversario",
       "name": "Carrera Atlética UADY (Aniversario)",
-      "date": null,
-      "time": null,
+      "date": "2026-02-22",
+      "time": "06:00",
       "distances": [
         "3K",
         "5K",
@@ -4700,19 +4708,20 @@
       ],
       "city": "Mérida",
       "state": "Yucatán",
-      "venue": "Remate de Paseo de Montejo",
+      "venue": "Remate de Paseo de Montejo (salida en calle 45)",
       "organizer": "UADY (Universidad Autónoma de Yucatán)",
       "signupUrl": null,
       "sourceUrl": "https://kora180.mx/uady-alista-su-carrera-atletica-por-el-104-aniversario-universitario/",
-      "confidence": "low",
-      "notes": null,
-      "sourceNotes": "Details drawn from search-engine synthesis of kora180.mx/activatesport.com.mx coverage — a direct fetch of the official deportes.uady.mx event page returned no renderable content, so this could not be independently confirmed on the primary source. 2026 (104th anniversary) edition held 2026-02-22, before this window — date set to null. Next edition date not yet published."
+      "confidence": "medium",
+      "notes": "Traditional race for UADY's anniversary: 10K, 5K and a 3K recreational walk.",
+      "sourceNotes": "Already ran. Single news source (kora180, 23 Jan 2026); fee 380 MXN, registration was via vivedeporte.mx. No 2027 edition published. (Earlier: Details drawn from search-engine synthesis of kora180.mx/activatesport.com.mx coverage — a direct fetch of the official deportes.uady.mx event page returned no renderable content, so this could not be independently confirmed on the primary source. 2026 (104th anniversary) edition held 2026-02-22, before this window — date set to null. Next edition date not yet published.)",
+      "notesEs": "Carrera tradicional por el aniversario de la UADY: 10K, 5K y caminata recreativa de 3K."
     },
     {
       "id": "carrera-cmic-dia-del-ingeniero-2026",
       "name": "Carrera CMIC Día del Ingeniero 2026",
-      "date": null,
-      "time": null,
+      "date": "2026-07-05",
+      "time": "06:00",
       "distances": [
         "5K",
         "10K"
@@ -4723,14 +4732,14 @@
       ],
       "city": "Mérida",
       "state": "Yucatán",
-      "venue": "Facultad de Ingeniería, UADY",
+      "venue": "Facultad de Ingeniería UADY",
       "organizer": "CMIC Yucatán (Cámara Mexicana de la Industria de la Construcción)",
       "signupUrl": null,
       "sourceUrl": "https://tintapublicanoticias.com/carrera-cmic-dia-del-ingeniero-2026-reunira-a-800-corredores-con-nueva-ruta-en-merida/",
       "confidence": "medium",
-      "notes": "~800 competitors expected; entry ~$390 MXN via Dashport.",
-      "notesEs": "Se esperan ~800 competidores; inscripción ~$390 MXN vía Dashport.",
-      "sourceNotes": "2026 edition held 2026-07-05 (Día del Ingeniero, observed ~July 1 annually), 8 days before this research window opened (2026-07-13) — date set to null. Next edition (~July 2027) date not yet published."
+      "notes": "31st edition: 10K and a 5K recreational walk, plus kids' races. New route. ~800 competitors expected; entry ~$390 MXN via Dashport.",
+      "notesEs": "31ª edición: 10K y caminata recreativa de 5K, más carreras infantiles. Nueva ruta. Se esperan ~800 competidores; inscripción ~$390 MXN vía Dashport.",
+      "sourceNotes": "Already ran. Single news source (29 Jun 2026); 390 MXN; registration was on Dashport (no URL given). (Earlier: 2026 edition held 2026-07-05 (Día del Ingeniero, observed ~July 1 annually), 8 days before this research window opened (2026-07-13) — date set to null. Next edition (~July 2027) date not yet published.)"
     },
     {
       "id": "53-carrera-atletica-del-mayab-uxmal-muna",
@@ -4761,8 +4770,8 @@
     {
       "id": "run-coffee-merida-2026-3-edicion",
       "name": "Run & Coffee Mérida 2026 (3ª edición)",
-      "date": null,
-      "time": null,
+      "date": "2026-04-26",
+      "time": "06:00",
       "distances": [
         "5K",
         "10K"
@@ -4773,20 +4782,20 @@
       ],
       "city": "Mérida",
       "state": "Yucatán",
-      "venue": "Salida: Cafetería Mosaico Itzimná; Meta: Parque de Itzimná",
+      "venue": "Salida: café Mosaico Itzimná; meta: Parque de Itzimná",
       "organizer": "Daniel Coral Muñoz",
       "signupUrl": null,
       "sourceUrl": "https://grupomuronoticias.com.mx/2026/04/14/run-coffee-merida-2026-presenta-su-tercera-edicion/",
       "confidence": "medium",
-      "notes": "~600 runners expected.",
-      "notesEs": "Se esperan ~600 corredores.",
-      "sourceNotes": "3rd annual edition held 2026-04-26, before this window (starts 2026-07-13) — date set to null. Next edition date not yet published."
+      "notes": "10K, 5K and a recreational walk. ~600 runners expected.",
+      "notesEs": "10K, 5K y caminata recreativa. Se esperan ~600 corredores.",
+      "sourceNotes": "Already ran. News source (14 Apr 2026); timed by Khronometraje per its homepage gallery. No 2027 edition published. (Earlier: 3rd annual edition held 2026-04-26, before this window (starts 2026-07-13) — date set to null. Next edition date not yet published.)"
     },
     {
       "id": "the-yellow-run-la-carrera-de-la-felicidad",
       "name": "The Yellow Run: La Carrera de la Felicidad",
-      "date": null,
-      "time": null,
+      "date": "2026-06-21",
+      "time": "06:00",
       "distances": [
         "2.5K",
         "5K",
@@ -4803,10 +4812,10 @@
       "organizer": "The Kind Heart Foundation A.C.",
       "signupUrl": null,
       "sourceUrl": "https://www.posta.com.mx/yucatan/anuncian-the-yellow-run-en-merida-carrera-con-causa-bienestar-emocional-y-comunidad/v-vl2212727",
-      "confidence": "low",
-      "notes": "Mental-health-themed charity race, capped at 404 participants, $350 MXN entry.",
-      "notesEs": "Carrera benéfica con temática de salud mental, cupo de 404 participantes, inscripción $350 MXN.",
-      "sourceNotes": "First edition held 2026-06-21, before this research window — date set to null. Confirmed as a first edition, so annual recurrence isn't established yet; next edition unconfirmed. Rechecked via web search 2026-09-14: no coverage of a second edition or a next date found — still unresolved.",
+      "confidence": "medium",
+      "notes": "Charity race for emotional well-being: 10K, 5K and an inclusive 2.5K walk. Entry 350 pesos. Capped at 404 participants.",
+      "notesEs": "Carrera con causa por el bienestar emocional: 10K, 5K y caminata incluyente de 2.5K. Cuota de 350 pesos. Cupo de 404 participantes.",
+      "sourceNotes": "Already ran. Posta article (5 Jun 2026) gives 21 June; registration was khronometraje id=YELLOW (past, not published as signup). Different event from 'La Gran Carrera Yellow Run' in Izamal (15 Nov 2026, Dashport) — added separately as new. (Earlier: First edition held 2026-06-21, before this research window — date set to null. Confirmed as a first edition, so annual recurrence isn't established yet; next edition unconfirmed. Rechecked via web search 2026-09-14: no coverage of a second edition or a next date found — still unresolved.)",
       "status": "ok",
       "lastVerified": "2026-09-14"
     },
@@ -6683,6 +6692,878 @@
       "notes": "Last race of the year, 'La última y nos vamos'. 5.4 km starts 07:55, 10.4 km at 08:00. $325 MXN in October, $350 from Nov 1 to Dec 26 (plus fees). Cap of 500. Kit pickup Sat Dec 26, 10:00-16:00 at the venue.",
       "notesEs": "La última carrera del año, 'La última y nos vamos'. Salida de 5.4 km a las 07:55 y de 10.4 km a las 08:00. $325 MXN en octubre y $350 del 1 de noviembre al 26 de diciembre (más cargos). Cupo de 500. Entrega de kits el sábado 26 de diciembre, de 10:00 a 16:00, en la sede.",
       "sourceNotes": "Carreras México registration page (open) and Tri Tour (tritour.org/eventos/carrera-san-silvestre-hercules-2026) and Runera all agree. Organizer name not stated on fetched pages."
+    },
+    {
+      "id": "serial-atletico-delegacional-de-tijuana-2026-etapa-9",
+      "name": "Serial Atlético Delegacional de Tijuana 2026 – Etapa 9 (Zona Centro)",
+      "date": "2026-12-12",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "Zona Centro, Tijuana",
+      "organizer": "IMDET (Instituto Municipal del Deporte de Tijuana)",
+      "signupUrl": null,
+      "sourceUrl": "https://zetatijuana.com/2025/12/imdet-presenta-calendario-deportivo-del-2026/",
+      "confidence": "high",
+      "notes": "Ninth and final stage of Tijuana's municipal 5K series for 2026.",
+      "notesEs": "Novena y última etapa del serial municipal de 5K de Tijuana en 2026.",
+      "sourceNotes": "Date and delegación from IMDET's 2026 calendar (Zeta Tijuana) and confirmed by the tjrun serial page stage list plus tjrun homepage listing 'Dic 12 2026 Serial Atlético Delegacional de Tijuana 2026'. Start time not published. Kept as its own row because the existing row is filled with the Nov 7 stage."
+    },
+    {
+      "id": "serial-atletico-delegacional-rosarito-2026-11-14",
+      "name": "Serial Atlético Delegacional Rosarito 2026 (14 de noviembre)",
+      "date": "2026-11-14",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Playas de Rosarito",
+      "state": "Baja California",
+      "venue": null,
+      "organizer": "IMDER Rosarito",
+      "signupUrl": null,
+      "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-rosarito/",
+      "confidence": "medium",
+      "notes": "Stage of Rosarito's municipal 5K series, open to beginners, families and experienced runners.",
+      "notesEs": "Etapa del serial municipal de 5K de Rosarito, abierta a principiantes, familias y corredores con experiencia.",
+      "sourceNotes": "tjrun's MEC event now shows next occurrence 'Nov 14 2026' (also on tjrun homepage 'Próximas Carreras'); the page body only describes the March 14 Spring Run opener and gives no stage list, venue or confirmed time (the 7:00 am - 6:00 pm block is the plugin default). Existing row 2026-08-15 is a past stage; this is the next stage, not a correction."
+    },
+    {
+      "id": "milla-internacional-de-tijuana-2026",
+      "name": "Milla Internacional de Tijuana 2026",
+      "date": "2026-10-23",
+      "time": "13:00",
+      "distances": [
+        "1.6K"
+      ],
+      "distanceTags": [
+        "3K"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "CREA, Tijuana",
+      "organizer": "IMDET (Instituto Municipal del Deporte de Tijuana)",
+      "signupUrl": null,
+      "sourceUrl": "https://zetatijuana.com/2026/10/correran-la-milla-internacional-de-tijuana-2/",
+      "confidence": "high",
+      "notes": "Traditional one-mile (1,609 m) speed event on a Friday, with about 20 elite runners plus age-group categories (around 200 athletes in total).",
+      "notesEs": "Tradicional prueba de velocidad de una milla (1,609 m) en viernes, con unos 20 corredores élite y categorías por edad (alrededor de 200 atletas en total).",
+      "sourceNotes": "Zeta Tijuana 2026-10-12: Friday Oct 23 at CREA facilities, categories from 1 pm. Date also in IMDET's 2026 calendar (Zeta 2025-12-30). It is a track/athletics-style mile with categories, not a mass road race; registration link not published. '1 de la tarde' is when categories start, not necessarily the elite heat."
+    },
+    {
+      "id": "el-regreso-de-los-corredores-vivientes-5k-2026",
+      "name": "El regreso de los corredores vivientes 5K 2026",
+      "date": "2026-10-25",
+      "time": "18:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "Otay, Tijuana",
+      "organizer": "Yo También Corro en Tijuana",
+      "signupUrl": "https://web.rockthesport.com/es/event/el-regreso-de-los-corredores-vivientes-5k",
+      "sourceUrl": "https://web.rockthesport.com/es/event/el-regreso-de-los-corredores-vivientes-5k",
+      "confidence": "high",
+      "notes": "Halloween-themed evening 5K. Entry $350 MXN; relay team $1,400 MXN. Registration closes October 24 at 5:00 p.m. Same day as the Binational Race.",
+      "notesEs": "5K nocturna con temática de Halloween. Inscripción $350 MXN; relevo por equipo $1,400 MXN. Las inscripciones cierran el 24 de octubre a las 5:00 p.m. Es el mismo día que la Binational Race.",
+      "sourceNotes": "Rockthesport page (inscripciones abiertas): Sun 25 Oct 2026, 18:00, 'Tijuana (Otay)'. Also listed on running.life BC calendar (startDate 2026-10-25). Exact start venue in Otay not given."
+    },
+    {
+      "id": "carrera-dia-de-muertos-cdt-crowe-5k-2026",
+      "name": "Carrera Día de Muertos CDT – Crowe 5K 2026",
+      "date": "2026-11-01",
+      "time": "08:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "Parque Esperanto (Av. Hermosillo, Fracc. Sonora, Presa Rodríguez)",
+      "organizer": "Crowe / CDT (Consejo de Desarrollo Económico de Tijuana)",
+      "signupUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
+      "sourceUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
+      "confidence": "high",
+      "notes": "Second edition, benefiting Casa Hogar Niños con Fe. Entry $300 MXN. Cash prizes for the top three men and women ($10,000 / $8,000 / $5,000 MXN), plus best Catrina and best costumed pet contests. Free shirt for the first 500 registrants.",
+      "notesEs": "Segunda edición, a beneficio de la Casa Hogar Niños con Fe. Inscripción $300 MXN. Premios en efectivo a los tres primeros lugares de cada rama ($10,000 / $8,000 / $5,000 MXN), además de concursos a la mejor Catrina y a la mascota mejor disfrazada. Playera de regalo para las primeras 500 personas inscritas.",
+      "sourceNotes": "Rockthesport (inscripciones abiertas, cierre 30 oct 17:00). running.life lists it on 2026-11-01 but geocodes locality as 'Buenos Aires, BC' (a Tijuana colonia near Presa Rodríguez); city set to Tijuana."
+    },
+    {
+      "id": "tercera-edicion-medio-maraton-uabc-tijuana-2026",
+      "name": "Tercera Edición Medio Maratón UABC Tijuana 2026",
+      "date": "2026-11-08",
+      "time": "06:30",
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "Facultad de Deportes, UABC Campus Tijuana (Universidad 14418)",
+      "organizer": "UABC / Altec Sports",
+      "signupUrl": "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026",
+      "sourceUrl": "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026",
+      "confidence": "high",
+      "notes": "Certified 21.0975 km course. Entry $500 MXN; two-person relay (10 km + 11 km) $1,000 MXN. Capped at 2,000 runners, adults only, 4-hour time limit. Kit pickup November 7, 8:00 a.m. to 7:00 p.m., at the Teatro Universitario. Closes the UABC series.",
+      "notesEs": "Ruta certificada de 21.0975 km. Inscripción $500 MXN; relevo en pareja (10 km + 11 km) $1,000 MXN. Cupo de 2,000 corredores, solo mayores de edad, tiempo límite de 4 horas. Entrega de kits el 7 de noviembre de 8:00 a.m. a 7:00 p.m. en el Teatro Universitario. Cierra el Serial UABC.",
+      "sourceNotes": "Rockthesport convocatoria (inscripciones abiertas, cierre 7 nov 19:00). Also on running.life (2026-11-08). Convocatoria also names https://mediomaraton.uabc.mx/ as a registration page (not fetched)."
+    },
+    {
+      "id": "medio-maraton-rosarito-puerto-nuevo-2026-puerto",
+      "name": "Medio Maratón Rosarito – Puerto Nuevo 2026 (Puerto Nuevo 21K Corazón del Mar)",
+      "date": "2026-11-15",
+      "time": "06:30",
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Playas de Rosarito",
+      "state": "Baja California",
+      "venue": "Hacienda Floresta del Mar (Piña 134), finish at Puerto Nuevo Baja Hotel & Villas",
+      "organizer": "5KRUNMX",
+      "signupUrl": null,
+      "sourceUrl": "https://web.rockthesport.com/es/event/medio-maraton-rosarito-puerto-nuevo-2026",
+      "confidence": "high",
+      "notes": "Coastal half marathon on a World Athletics–certified course (MEX-2024-119) with an oceanfront finish in Puerto Nuevo. Entry was $550 MXN. Rockthesport registration is full; a limited number of spots remain through the organizer's other official platforms. Kit pickup November 14, 9:00 a.m. to 5:00 p.m., at Hotel City Express Rosarito (Plaza Pabellón).",
+      "notesEs": "Medio maratón costero con ruta certificada por World Athletics (MEX-2024-119) y meta frente al mar en Puerto Nuevo. La inscripción fue de $550 MXN. En Rockthesport ya se agotó; quedan lugares limitados en las otras plataformas oficiales del organizador. Entrega de kits el 14 de noviembre de 9:00 a.m. a 5:00 p.m. en el Hotel City Express Rosarito (Plaza Pabellón).",
+      "sourceNotes": "Rockthesport: inscripciones cerradas desde 12 oct 2026; the page says two other official platforms still have spots but does not name/link them, so signupUrl null. Address on RTS header is Piña 134, Hacienda Floresta del Mar; body says meta at Puerto Nuevo Baja Hotel & Villas (start location not explicitly stated). Also on running.life (2026-11-15). Distinct from the June 'Xmo 21k Rosarito' half."
+    },
+    {
+      "id": "rd-trail-half-marathon-2026-run-dirty-cowboy",
+      "name": "RD Trail Half Marathon 2026 (Run Dirty – Cowboy Edition)",
+      "date": "2026-11-22",
+      "time": "07:30",
+      "distances": [
+        "21K",
+        "10K"
+      ],
+      "distanceTags": [
+        "10K",
+        "Half"
+      ],
+      "city": "Playas de Rosarito",
+      "state": "Baja California",
+      "venue": "Rancho Dagninos, Corredor 2000 km 31",
+      "organizer": "Run Dirty",
+      "signupUrl": "https://ultrasignup.com/register.aspx?eid=15630",
+      "sourceUrl": "https://ultrasignup.com/register.aspx?eid=15630",
+      "confidence": "high",
+      "notes": "Sixth edition, trail. 21K starts 7:30 a.m. ($700 MXN / $43 USD); 10K starts 8:00 a.m. ($600 MXN / $37 USD). 5-hour time limit. Cowboy theme, with a beer mile and live music at the finish. Registration closes November 1.",
+      "notesEs": "Sexta edición, de trail. El 21K sale a las 7:30 a.m. ($700 MXN / $43 USD); el 10K a las 8:00 a.m. ($600 MXN / $37 USD). Tiempo límite de 5 horas. Temática vaquera, con beer mile y música en vivo en la meta. Las inscripciones cierran el 1 de noviembre.",
+      "sourceNotes": "UltraSignup page titled 'RD Trail Half Marathon - November 22, 2026' (current edition). UltraSignup header says 'TIJUANA, Mexico' but body places it at Rancho Dagninos, Rosarito; running.life and gotrail.run list Playas de Rosarito (2026-11-22)."
+    },
+    {
+      "id": "maraton-baja-california-2026-60-edicion",
+      "name": "Maratón Baja California 2026 (60ª edición)",
+      "date": "2026-11-29",
+      "time": null,
+      "distances": [
+        "42K"
+      ],
+      "distanceTags": [
+        "Full"
+      ],
+      "city": "Mexicali",
+      "state": "Baja California",
+      "venue": null,
+      "organizer": "INDE Baja California",
+      "signupUrl": null,
+      "sourceUrl": "https://www.elimparcial.com/tij/columnas/2026/07/29/lo-adelantan/",
+      "confidence": "low",
+      "notes": "Mexico's oldest marathon (formerly Maratón Gobernador), reaching its 60th edition. Moved up from its traditional December date.",
+      "notesEs": "El maratón más antiguo de México (antes Maratón Gobernador), en su edición 60. Se adelantó de su fecha tradicional de diciembre.",
+      "sourceNotes": "Only source is an El Imparcial column (2026-07-29) stating the 2026 edition will be Nov 29; the columnist only 'supposes' the usual Ciudad Deportiva de Mexicali start/finish, so venue left null. No official INDE convocatoria or signup found. 60th-edition claim from a Zeta column surfaced in search (not fetched). 2025 edition (59th) was Dec 14, 2025. Re-verify before race week."
+    },
+    {
+      "id": "gran-carrera-atletica-la-enchilada-12k-2027",
+      "name": "Gran Carrera Atlética La Enchilada 12K 2027",
+      "date": "2027-02-28",
+      "time": "07:00",
+      "distances": [
+        "12K"
+      ],
+      "distanceTags": [
+        "15K"
+      ],
+      "city": "Tijuana",
+      "state": "Baja California",
+      "venue": "Cañón Aviación s/n, Centro, Tijuana",
+      "organizer": "De Los Angeles Team",
+      "signupUrl": "https://web.rockthesport.com/es/event/gran-carrera-atletica-la-enchilada-12k-2027",
+      "sourceUrl": "https://web.rockthesport.com/es/event/gran-carrera-atletica-la-enchilada-12k-2027",
+      "confidence": "high",
+      "notes": "Classic hilly 12K through central Tijuana. Entry $450 MXN; registration open until February 27, 2027.",
+      "notesEs": "Clásica 12K con subidas por el centro de Tijuana. Inscripción $450 MXN; inscripciones abiertas hasta el 27 de febrero de 2027.",
+      "sourceNotes": "Rockthesport 2027 page (inscripciones abiertas since 19 jul 2026). Also running.life (startDate 2027-02-28, links laenchilada12k.mx and the same RTS 2027 slug). 2026 edition was Feb 26 per tjrun; not in existing list."
+    },
+    {
+      "id": "carrera-monclair-2026-run-to-the-future",
+      "name": "Carrera Monclair 2026 – Run to the Future",
+      "date": "2026-10-25",
+      "time": "07:00",
+      "distances": [
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "León",
+      "state": "Guanajuato",
+      "venue": "Colegio Monclair Campus Las Torres, Blvd. Juan Alonso de Torres 3505, Col. La Esperanza de Alfaro",
+      "organizer": "Colegio Monclair",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786134767/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786134767/",
+      "confidence": "high",
+      "notes": "Celebrates the school's 20th anniversary. 10K starts 7:00, 5K (competitive and recreational) 7:15. Cap 1,000 runners. $500 MXN until Oct 24; kit pickup Sat Oct 24, 8:00-17:00 at the campus.",
+      "notesEs": "Celebra el 20 aniversario del colegio. El 10K sale a las 7:00 y el 5K (competitivo y recreativo) a las 7:15. Cupo de 1,000 corredores. $500 MXN hasta el 24 de octubre; entrega de kits el sábado 24 de octubre de 8:00 a 17:00 en el campus.",
+      "sourceNotes": "Convocatoria on Márcate event page; also listed on tritour León calendar and runera Guanajuato calendar (both 2026-10-25). Alternate signup caveshop.com.mx listed in convocatoria."
+    },
+    {
+      "id": "9-carrera-nissan-vegusa-2026",
+      "name": "9ª Carrera Nissan Vegusa 2026",
+      "date": "2026-10-25",
+      "time": "07:00",
+      "distances": [
+        "10K",
+        "5K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Irapuato",
+      "state": "Guanajuato",
+      "venue": "Agencia Nissan Vegusa Villas, Av. Villas de Irapuato 2065",
+      "organizer": "Nissan Vegusa (con CODE y COMUDAJ Irapuato)",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786988331/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786988331/",
+      "confidence": "high",
+      "notes": "10K at 7:00, 5K at 7:20, kids' race at 8:30. Cap 1,300. $450 MXN; no race-day registration or kit pickup — kits Sat Oct 24, 10:00-19:00 at Vegusa Villas.",
+      "notesEs": "10K a las 7:00, 5K a las 7:20 e infantil a las 8:30. Cupo de 1,300. $450 MXN; no hay inscripción ni entrega de kits el día de la carrera; los kits se entregan el sábado 24 de octubre de 10:00 a 19:00 en Vegusa Villas.",
+      "sourceNotes": "Márcate convocatoria; tritour + runera list same date. running.life places it at 'San José del Potrero' — convocatoria says start/finish at Vegusa Villas, Irapuato; trusted convocatoria."
+    },
+    {
+      "id": "carrera-nocturna-corre-entre-la-vida-y-la",
+      "name": "Carrera Nocturna \"Corre entre la vida y la memoria\" 2026 (3ª edición)",
+      "date": "2026-11-07",
+      "time": "19:00",
+      "distances": [
+        "7K",
+        "3K",
+        "650m infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Irapuato",
+      "state": "Guanajuato",
+      "venue": "Calle Sor Juana Inés de la Cruz, Centro Histórico",
+      "organizer": "COMUDAJ Irapuato",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787782172/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787782172/",
+      "confidence": "high",
+      "notes": "Day of the Dead night run — costumes encouraged. 3K and 7K start 19:00; 650 m kids' run (ages 6-11, with an adult). $250 MXN adults, $150 for kids and runners with disabilities. Registration closes Thu Nov 5 at 12:00.",
+      "notesEs": "Carrera nocturna de Día de Muertos; se vale ir disfrazado. El 3K y el 7K salen a las 19:00; recorrido infantil de 650 m (6 a 11 años, con un adulto). $250 MXN adultos, $150 niñas, niños y personas con discapacidad. Inscripciones hasta el jueves 5 de noviembre a las 12:00.",
+      "sourceNotes": "Márcate convocatoria (date Sat 2026-11-07, start 19:00 in body; listing header shows 18:30). Tritour + runera agree on Nov 7. running.life lists 2026-10-31 — conflict, convocatoria trusted."
+    },
+    {
+      "id": "la-nocturna-2026-corre-tras-la-luna-21-edicion",
+      "name": "La Nocturna 2026 \"Corre Tras la Luna\" (21ª edición)",
+      "date": "2026-11-07",
+      "time": "20:00",
+      "distances": [
+        "10K",
+        "7K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "León",
+      "state": "Guanajuato",
+      "venue": "Fórum Cultural de León",
+      "organizer": "Comité Organizador La Nocturna (con COMUDE León y CODE Guanajuato)",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1781307400/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1781307400/",
+      "confidence": "high",
+      "notes": "Saturday night run. 7K (recreational) and 10K at 20:00; kids' race at 18:00. $600 MXN (kids $200). Benefits the pediatric specialty hospital board, IREE, RILAC and Club Rotario Bajío.",
+      "notesEs": "Carrera nocturna de sábado. 7K (recreativa) y 10K a las 20:00; carrera infantil a las 18:00. $600 MXN (infantil $200). A beneficio del Patronato del Hospital de Especialidades Pediátricas, IREE, RILAC y Club Rotario Bajío.",
+      "sourceNotes": "Márcate convocatoria; tritour, runera and running.life agree on 2026-11-07."
+    },
+    {
+      "id": "6-ultra-manada-trail-run-2026",
+      "name": "6ª Ultra Manada Trail Run 2026",
+      "date": "2026-11-08",
+      "time": "05:30",
+      "distances": [
+        "50K",
+        "30K",
+        "12K",
+        "6K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K",
+        "30K",
+        "Ultra"
+      ],
+      "city": "Guanajuato",
+      "state": "Guanajuato",
+      "venue": "Teatro Cervantes, Plaza Allende, Guanajuato capital",
+      "organizer": "Manada Trail Run",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787852451/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787852451/",
+      "confidence": "high",
+      "notes": "Trail race in the hills around Guanajuato capital. Staggered starts: 50K 5:30 (D+ 2,404 m), 30K 6:30 (D+ 1,481 m), 12K 7:00 (D+ 710 m), 6K 7:30 (D+ 275 m). $400-$800 MXN plus 1 kg of food donation.",
+      "notesEs": "Carrera de trail en los cerros de Guanajuato capital. Salidas escalonadas: 50K 5:30 (D+ 2,404 m), 30K 6:30 (D+ 1,481 m), 12K 7:00 (D+ 710 m), 6K 7:30 (D+ 275 m). De $400 a $800 MXN más 1 kg de víveres.",
+      "sourceNotes": "Márcate convocatoria; runera + gotrail.run + running.life list 2026-11-08. Time is the first (50K) start."
+    },
+    {
+      "id": "medio-maraton-bachoco-2026",
+      "name": "Medio Maratón Bachoco 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "21K",
+        "10K",
+        "5K",
+        "3K caminata",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Celaya",
+      "state": "Guanajuato",
+      "venue": null,
+      "organizer": "Grupo Bachoco (con el Ayuntamiento de Celaya y el Sistema de Cultura Física y Deporte de Celaya)",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787171939/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787171939/",
+      "confidence": "high",
+      "notes": "21K $470 MXN; walk, 5K and 10K $420; kids $270. Proceeds go to the 'Unidos por la Alimentación y la Salud' social program with DIF Celaya. 21K time limit 3 hours.",
+      "notesEs": "21K $470 MXN; caminata, 5K y 10K $420; infantil $270. Lo recaudado va al programa social \"Unidos por la Alimentación y la Salud\" con DIF Celaya. Tiempo límite del 21K: 3 horas.",
+      "sourceNotes": "Márcate convocatoria + official mediomaratonbachoco.com (Domingo 08 de noviembre, 7:00 AM); tritour, runera, running.life agree. Start venue not stated on either page. Note: Márcate SPTMCAR1786651665 is a Guadalajara relay event, not this race."
+    },
+    {
+      "id": "carrera-flexi-2026",
+      "name": "Carrera Flexi 2026",
+      "date": "2026-11-29",
+      "time": "07:15",
+      "distances": [
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "León",
+      "state": "Guanajuato",
+      "venue": "Av. de los Niños, frente a la empresa Flexi (a la altura de la locomotora del Parque Explora)",
+      "organizer": "Flexi",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-flexi-2026-td1/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-flexi-2026-td1/datos-del-evento",
+      "confidence": "high",
+      "notes": "All categories start 7:15. From $400 MXN; registration until Nov 27 at 15:00 or until sold out. Cash prizes for the 10K overall podium.",
+      "notesEs": "Todas las categorías salen a las 7:15. Desde $400 MXN; inscripciones hasta el 27 de noviembre a las 15:00 o hasta agotar cupo. Premios en efectivo para el podio general del 10K.",
+      "sourceNotes": "Asdeporte page: header shows 13:15 h (UTC); body text says 07:15 hrs — used body. Tritour agrees (2026-11-29, 07:15). León 2026 calendar press (Estado Luz/deportedigital) called it '(2do) Medio Maratón Flexi', but the 2026 event page lists only 10K and 5K."
+    },
+    {
+      "id": "carrera-el-sol-del-bajio-san-miguel-de-allende",
+      "name": "Carrera El Sol del Bajío – San Miguel de Allende 2026",
+      "date": "2026-12-05",
+      "time": null,
+      "distances": [
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Miguel de Allende",
+      "state": "Guanajuato",
+      "venue": null,
+      "organizer": "El Sol del Bajío (Circuito Running OEM)",
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/en/event/carrera-el-sol-del-bajio-san-miguel-de-allende",
+      "confidence": "low",
+      "notes": "Saturday race in San Miguel de Allende with 5K and 10K options.",
+      "notesEs": "Carrera en sábado en San Miguel de Allende con opciones de 5K y 10K.",
+      "sourceNotes": "Single aggregator (running.life, 2026-12-05). It links an OEM article (oem.com.mx/running/incoming/carrera-san-miguel-de-allende-2026-32497369) that returned 403 to fetch — could not confirm time, venue, price or signup."
+    },
+    {
+      "id": "69-carrera-de-los-barrios-guiar-2027",
+      "name": "69ª Carrera de los Barrios Guiar 2027",
+      "date": "2027-02-07",
+      "time": "06:30",
+      "distances": [
+        "21K",
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "León",
+      "state": "Guanajuato",
+      "venue": "Arco de la Calzada",
+      "organizer": "Comité Organizador Carrera de los Barrios (con apoyo de Maratón León)",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786738100/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786738100/",
+      "confidence": "high",
+      "notes": "León's traditional neighborhood race, 69th edition. All distances start 6:30. Presale $700 MXN until Dec 31, 2026; $750 from Jan 1 to Feb 6. Kit pickup Sat Feb 6 at the expo by the Arco de la Calzada; no race-day registration.",
+      "notesEs": "La tradicional carrera de los barrios de León, edición 69. Todas las distancias salen a las 6:30. Preventa $700 MXN hasta el 31 de diciembre de 2026; $750 del 1 de enero al 6 de febrero. Entrega de kits el sábado 6 de febrero en la expo junto al Arco de la Calzada; no hay inscripción el día de la carrera.",
+      "sourceNotes": "Márcate convocatoria; tritour and running.life agree on 2027-02-07. Not in existing list (2026 edition, Feb 8, wasn't either). Same date as Maratón Capital (Guanajuato capital)."
+    },
+    {
+      "id": "run-rotary-2026",
+      "name": "Run Rotary 2026",
+      "date": "2026-10-24",
+      "time": null,
+      "distances": [
+        "5K",
+        "3K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Paseo Verde",
+      "organizer": "Rotary Mérida",
+      "signupUrl": "https://dashport.run/evento_1371",
+      "sourceUrl": "https://www.tritour.org/eventos/run-rotary-2026",
+      "confidence": "medium",
+      "notes": "5K and a 3K walk. Entry 250 pesos, with shirt and medal.",
+      "notesEs": "5K y caminata de 3K. Cuota de 250 pesos con playera y medalla.",
+      "sourceNotes": "Tri Tour only; Dashport is a SPA (unverified directly)."
+    },
+    {
+      "id": "carrera-normalista-2026",
+      "name": "Carrera Normalista 2026",
+      "date": "2026-10-24",
+      "time": "06:00",
+      "distances": [
+        "8K",
+        "4K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Valladolid",
+      "state": "Yucatán",
+      "venue": "Escuela Normal Juan de Dios Rodríguez Heredia",
+      "organizer": "Escuela Normal Juan de Dios Rodríguez Heredia",
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=NORMALISTA",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=NORMALISTA",
+      "confidence": "high",
+      "notes": "8K and a 4K walk. Capped at 396. Basic kit 100 pesos, or 280 with shirt.",
+      "notesEs": "8K y caminata de 4K. Cupo de 396. Kit básico 100 pesos o con playera 280.",
+      "sourceNotes": "Khronometraje page + Tri Tour agree. Tri Tour says registration closes 20 Oct 2026."
+    },
+    {
+      "id": "carrera-rosa-telchac-puerto-2026",
+      "name": "Carrera Rosa Telchac Puerto 2026",
+      "date": "2026-10-25",
+      "time": "06:00",
+      "distances": [
+        "10K",
+        "5K",
+        "2K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Telchac Puerto",
+      "state": "Yucatán",
+      "venue": "Calle 20 con 21-A",
+      "organizer": null,
+      "signupUrl": "https://proximos.eventosvolare.com/evento_1421",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-rosa-telchac-puerto-2026",
+      "confidence": "medium",
+      "notes": "10K at 6:00, 5K at 6:06 (wheelchair 6:05) and a 2K walk at 9:00. 350 pesos; the walk and the student 5K are free.",
+      "notesEs": "10K a las 6:00, 5K a las 6:06 (silla de ruedas 6:05) y caminata de 2K a las 9:00. 350 pesos; caminata y 5K estudiantil sin costo.",
+      "sourceNotes": "Tri Tour; Volaré registration is a SPA."
+    },
+    {
+      "id": "20k-camino-del-jaguar",
+      "name": "20K Camino del Jaguar",
+      "date": "2026-10-31",
+      "time": "17:30",
+      "distances": [
+        "20K",
+        "7K"
+      ],
+      "distanceTags": [
+        "5K",
+        "Half"
+      ],
+      "city": "Muna",
+      "state": "Yucatán",
+      "venue": "Comisaría de Yaxhá",
+      "organizer": null,
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
+      "confidence": "high",
+      "notes": "Late-afternoon race, 20K and 7K. Capped at 503. 20K 550 pesos, 7K 400.",
+      "notesEs": "Carrera vespertina de 20K y 7K. Cupo de 503. 20K 550 pesos, 7K 400.",
+      "sourceNotes": "Khronometraje official registration page. Venue text also mentions a 16:00 Parque Infantil activity."
+    },
+    {
+      "id": "sendero-de-las-animas-merida-2026",
+      "name": "Sendero de las Ánimas Mérida 2026",
+      "date": "2026-10-31",
+      "time": "18:30",
+      "distances": [
+        "8K",
+        "4K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Hacienda San Ignacio",
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1399",
+      "sourceUrl": "https://www.tritour.org/eventos/sendero-de-las-animas-merida-2026",
+      "confidence": "medium",
+      "notes": "Day of the Dead night run: 8K and a 4K walk. 420 pesos.",
+      "notesEs": "Carrera nocturna de Día de Muertos: 8K y caminata de 4K. 420 pesos.",
+      "sourceNotes": "Tri Tour gives only 'Hacienda San Ignacio, Yucatán'; municipality unconfirmed (city set to Mérida from the event name — check before pinning)."
+    },
+    {
+      "id": "carrera-megamedia-dunosusa-progreso-2026",
+      "name": "Carrera Megamedia Dunosusa Progreso 2026",
+      "date": "2026-11-08",
+      "time": null,
+      "distances": [
+        "21K",
+        "10K",
+        "5K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Progreso",
+      "state": "Yucatán",
+      "venue": "Playón de Progreso",
+      "organizer": "Grupo Megamedia (Diario de Yucatán)",
+      "signupUrl": "https://dashport.run/evento_1386",
+      "sourceUrl": "https://www.yucatan.com.mx/deportes/2026/09/24/la-carrera-megamedia-dunosusa-2026-con-un-botin-de-152-mil-pesos.html",
+      "confidence": "high",
+      "notes": "First edition, on the Progreso waterfront: half marathon, 10K, youth 5K and a 5K walk. Kids' races on Saturday the 7th at Estadio Salvador Alvarado. 21K 550 pesos, other distances 430.",
+      "notesEs": "Primera edición frente al mar en Progreso: medio maratón, 10K, 5K juvenil y caminata de 5K. Infantiles el sábado 7 en el Estadio Salvador Alvarado. 21K 550 pesos, resto 430.",
+      "sourceNotes": "Organizer's own paper (Diario de Yucatán, 24 Sep 2026) + Tri Tour agree on 8 Nov; venue Playón from Tri Tour; signup from Tri Tour (Dashport SPA). Start times not published. This is the Diario de Yucatán flagship race."
+    },
+    {
+      "id": "carrera-aniversario-uman-2026",
+      "name": "Carrera Aniversario Umán 2026",
+      "date": "2026-11-15",
+      "time": "06:00",
+      "distances": [],
+      "distanceTags": [
+        "TBD"
+      ],
+      "city": "Umán",
+      "state": "Yucatán",
+      "venue": "Palacio Municipal de Umán",
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://www.khronometraje.com/",
+      "confidence": "medium",
+      "notes": "Race celebrating Umán's anniversary.",
+      "notesEs": "Carrera por el aniversario de Umán.",
+      "sourceNotes": "Listed on Khronometraje homepage (Próximos). Its registration page (id=UMAN1026) returned a database error, so distances/price unknown and signup withheld."
+    },
+    {
+      "id": "la-gran-carrera-yellow-run-2026",
+      "name": "La Gran Carrera Yellow Run 2026",
+      "date": "2026-11-15",
+      "time": null,
+      "distances": [
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Izamal",
+      "state": "Yucatán",
+      "venue": "Plaza frente al convento",
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1331",
+      "sourceUrl": "https://www.tritour.org/eventos/la-gran-carrera-yellow-run-2026",
+      "confidence": "medium",
+      "notes": "10K and 5K in Izamal. Capped at 1,000. Regular entry 450 pesos.",
+      "notesEs": "10K y 5K en Izamal. Cupo de 1,000. Cuota regular de 450 pesos.",
+      "sourceNotes": "Tri Tour; running.life also lists 15 Nov 2026 (two calendars). Distinct from the Mérida Yellow Run (June)."
+    },
+    {
+      "id": "carrera-upp-tekax-2026",
+      "name": "Carrera UPP Tekax 2026",
+      "date": "2026-11-22",
+      "time": "06:00",
+      "distances": [
+        "10K",
+        "5K",
+        "3K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Tekax",
+      "state": "Yucatán",
+      "venue": "Av. Ricardo Palmerín, frente a la antigua estación de ferrocarril",
+      "organizer": "UPP Tekax",
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=UPP",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=UPP",
+      "confidence": "high",
+      "notes": "10K, 5K and a 3K walk. Capped at 396. 360 pesos.",
+      "notesEs": "10K, 5K y caminata de 3K. Cupo de 396. 360 pesos.",
+      "sourceNotes": "Khronometraje + Tri Tour agree."
+    },
+    {
+      "id": "carrera-marista-merida-2026",
+      "name": "Carrera Marista Mérida 2026",
+      "date": "2026-11-29",
+      "time": "06:00",
+      "distances": [
+        "10K",
+        "5K",
+        "3K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Universidad Marista",
+      "organizer": "Universidad Marista de Mérida",
+      "signupUrl": "https://dashport.run/evento_1416",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-marista-merida-2026",
+      "confidence": "medium",
+      "notes": "10K, 5K, a 3K walk and a kids' race. 380 pesos until October 31, 400 from November 1.",
+      "notesEs": "10K, 5K, caminata de 3K e infantil. 380 pesos hasta el 31 de octubre, 400 desde el 1 de noviembre.",
+      "sourceNotes": "Tri Tour only."
+    },
+    {
+      "id": "20-carrera-y-caminata-centro-guadalupano",
+      "name": "20 Carrera y Caminata Centro Guadalupano",
+      "date": "2026-12-06",
+      "time": "07:00",
+      "distances": [
+        "10K"
+      ],
+      "distanceTags": [
+        "10K"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Centro Guadalupano de Evangelización y Promoción Social",
+      "organizer": null,
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CARGUA26",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CARGUA26",
+      "confidence": "high",
+      "notes": "10K with a walking category. Capped at 346. 290 pesos.",
+      "notesEs": "10K con categoría de caminata. Cupo de 346. 290 pesos.",
+      "sourceNotes": "Khronometraje official registration page."
+    },
+    {
+      "id": "carrera-126-aniversario-de-cacalchen-2026",
+      "name": "Carrera 126 Aniversario de Cacalchén 2026",
+      "date": "2026-12-06",
+      "time": null,
+      "distances": [
+        "10K",
+        "5K",
+        "3K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Cacalchén",
+      "state": "Yucatán",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1436",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-126-aniversario-de-cacalchen-2026",
+      "confidence": "medium",
+      "notes": "10K, 5K, a 3K walk and kids' races. 100 pesos without shirt, 270 with shirt.",
+      "notesEs": "10K, 5K, caminata de 3K e infantiles. 100 pesos sin playera, 270 con playera.",
+      "sourceNotes": "Tri Tour only."
+    },
+    {
+      "id": "carrera-chacmultun-tekax-2026",
+      "name": "Carrera Chacmultún–Tekax 2026",
+      "date": "2026-12-06",
+      "time": "07:00",
+      "distances": [
+        "10K",
+        "5K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Tekax",
+      "state": "Yucatán",
+      "venue": "Salida: zona arqueológica de Chacmultún; meta: centro de Tekax",
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1438",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-chacmultuntekax-2026",
+      "confidence": "medium",
+      "notes": "Route from the Chacmultún archaeological site to downtown Tekax, with transport from Tekax to the start. 350 pesos; kids' races are free.",
+      "notesEs": "Ruta de la zona arqueológica de Chacmultún al centro de Tekax, con traslado desde Tekax a la salida. 350 pesos; infantiles gratis.",
+      "sourceNotes": "Tri Tour only."
+    },
+    {
+      "id": "5k-ox-2026",
+      "name": "5K OX 2026",
+      "date": "2026-12-12",
+      "time": "17:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Oxkutzcab",
+      "state": "Yucatán",
+      "venue": "Palacio Municipal de Oxkutzcab",
+      "organizer": null,
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CNARANJA26",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CNARANJA26",
+      "confidence": "high",
+      "notes": "Late-afternoon 5K. Capped at 90. 350 pesos with shirt, or 250 for the basic kit.",
+      "notesEs": "5K vespertina. Cupo de 90. 350 pesos con playera o 250 kit básico.",
+      "sourceNotes": "Khronometraje official registration page."
+    },
+    {
+      "id": "xxxiv-carrera-del-pavo-2026",
+      "name": "XXXIV Carrera del Pavo 2026",
+      "date": "2026-12-13",
+      "time": "05:30",
+      "distances": [
+        "21K",
+        "10K",
+        "5K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Parque de las Américas",
+      "organizer": null,
+      "signupUrl": "https://proximos.eventosvolare.com/evento_1325",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-del-pavo-2026",
+      "confidence": "medium",
+      "notes": "21K at 5:30, 10K at 6:00 and 5K at 6:15. 21K 580 pesos (480 without shirt), 5K and 10K 380 (280 without shirt). Turkeys as prizes.",
+      "notesEs": "21K a las 5:30, 10K a las 6:00 y 5K a las 6:15. 21K 580 pesos (480 sin playera), 5K y 10K 380 (280 sin playera). Pavos de premio.",
+      "sourceNotes": "Tri Tour only; Volaré registration is SPA."
+    },
+    {
+      "id": "corre-con-santa-2026",
+      "name": "Corre con Santa 2026",
+      "date": "2026-12-20",
+      "time": "06:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Mérida",
+      "state": "Yucatán",
+      "venue": "Parque de las Américas",
+      "organizer": null,
+      "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=SANTA26",
+      "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=SANTA26",
+      "confidence": "high",
+      "notes": "Christmas 5K. Capped at 400. 360 pesos with shirt.",
+      "notesEs": "5K navideña. Cupo de 400. 360 pesos con playera.",
+      "sourceNotes": "Khronometraje + Tri Tour agree."
+    },
+    {
+      "id": "carrera-tunel-de-los-arboles-2027",
+      "name": "Carrera Túnel de los Árboles 2027",
+      "date": "2027-01-24",
+      "time": null,
+      "distances": [
+        "13.8K",
+        "7K",
+        "3K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "15K"
+      ],
+      "city": "Muna",
+      "state": "Yucatán",
+      "venue": "Tienda La Curvita (salida de 13.8K en Choyob)",
+      "organizer": null,
+      "signupUrl": "https://dashport.run/evento_1327",
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-tunel-de-los-arboles-2027",
+      "confidence": "medium",
+      "notes": "13.8K from Choyob to La Curvita, 7K and a 3K walk. 260 pesos without shirt, 380 with shirt.",
+      "notesEs": "13.8K de Choyob a La Curvita, 7K y caminata de 3K. 260 pesos sin playera, 380 con playera.",
+      "sourceNotes": "Tri Tour only."
     }
   ]
 }
