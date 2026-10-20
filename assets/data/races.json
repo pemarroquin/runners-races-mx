@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose.",
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro.",
     "generatedOn": "2026-08-10",
-    "count": 195,
+    "count": 258,
     "distanceTags": [
       "3K",
       "5K",
@@ -1343,7 +1343,7 @@
       "id": "barbie-run-cdmx-2026",
       "name": "Barbie Run CDMX 2026",
       "date": "2026-11-22",
-      "time": null,
+      "time": "06:30",
       "distances": [
         "3K",
         "5K",
@@ -1351,18 +1351,23 @@
       ],
       "city": "Ciudad de México",
       "state": "Ciudad de México",
-      "venue": "Paseo de la Reforma",
-      "organizer": "Mattel / Asdeporte",
-      "signupUrl": "https://asdeporte.com/evento/barbie-run-cdmx-2026-49f/datos-del-evento",
-      "sourceUrl": "https://runmx.com/events/barbie-run-cdmx-2026/",
+      "venue": "Paseo de la Reforma, frente a Torre Mayor",
+      "organizer": "Asmas",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/evento/barbie-run-cdmx-2026-49f/datos-del-evento",
       "confidence": "high",
-      "notes": "Distinct from Barbie Run MTY (Dec 6).",
-      "notesEs": "Es distinta de Barbie Run MTY (6 de diciembre).",
+      "notes": "Sold out. 5K 6:30, 10K 7:00, 3K walk 7:30. Distinct from Barbie Run MTY (Dec 6).",
+      "notesEs": "Inscripciones agotadas. 5K 6:30, 10K 7:00, caminata 3K 7:30. Es distinta de Barbie Run MTY (6 de diciembre).",
       "distanceTags": [
         "3K",
         "5K",
         "10K"
-      ]
+      ],
+      "sourceNotes": "CORRECTION: Asdeporte now titles it \"Barbie Run CDMX 2026- AGOTADA\" and the convocatoria says \"¡INSCRIPCIONES AGOTADAS!\". Date unchanged. Wave times from Time Out (Jul 2026). signupUrl nulled.",
+      "status": "changed",
+      "statusNote": "Registration is sold out. The race date (22 November) is unchanged.",
+      "statusNoteEs": "Las inscripciones están agotadas. La fecha de la carrera (22 de noviembre) no cambia.",
+      "lastVerified": "2026-10-20"
     },
     {
       "id": "san-silvestre-cdmx-2026",
@@ -1388,23 +1393,23 @@
     {
       "id": "minions-run-cdmx-2026",
       "name": "Minions Run CDMX 2026",
-      "date": null,
-      "time": null,
+      "date": "2026-07-19",
+      "time": "06:15",
       "distances": [
+        "3K",
         "5K",
-        "10K",
-        "3K caminata"
+        "10K"
       ],
       "city": "Ciudad de México",
       "state": "Ciudad de México",
-      "venue": null,
-      "organizer": "Asdeporte / Universal",
+      "venue": "Ciudad de México",
+      "organizer": "Asmas",
       "signupUrl": null,
       "sourceUrl": "https://asdeporte.com/evento/minions-run-cdmx-2026-2rv/datos-del-evento",
-      "confidence": "medium",
+      "confidence": "high",
       "status": "changed",
-      "statusNote": "Postponed. It was scheduled for 5 July 2026 and the organiser says a new date will be announced.",
-      "lastVerified": "2026-07-05",
+      "statusNote": "Rescheduled from 5 July to 19 July 2026, when it was run.",
+      "lastVerified": "2026-10-20",
       "notes": "From $1,269 MXN.",
       "notesEs": "Desde $1,269 MXN.",
       "distanceTags": [
@@ -1412,8 +1417,8 @@
         "5K",
         "10K"
       ],
-      "statusNoteEs": "Pospuesta. Estaba programada para el 5 de julio de 2026 y la organización anunciará una nueva fecha.",
-      "sourceNotes": "Postponement per the Asdeporte event page. signupUrl removed 2026-08-10: postponed with no announced date, so the registration link cannot be for a live edition."
+      "statusNoteEs": "Se reprogramó del 5 al 19 de julio de 2026, fecha en que se corrió.",
+      "sourceNotes": "Undated existing row: Asdeporte event date field = 2026-07-19 12:15Z (06:15 local), inscription_allow=false. Already run (before window); no 2027 edition published. A news search snippet said July 5 — not used. (Earlier: Postponement per the Asdeporte event page. signupUrl removed 2026-08-10: postponed with no announced date, so the registration link cannot be for a live edition.)"
     },
     {
       "id": "medio-maraton-metepec-2026",
@@ -1864,22 +1869,30 @@
     {
       "id": "shrek-run-cdmx-2027",
       "name": "Shrek Run CDMX 2027",
-      "date": "2027-01-17",
-      "time": null,
-      "distances": [],
+      "date": "2027-01-10",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "15K"
+      ],
       "city": "Ciudad de México",
       "state": "Ciudad de México",
-      "venue": null,
-      "organizer": "Asdeporte",
-      "signupUrl": null,
-      "sourceUrl": "https://www.asdeporte.com/eventos/",
-      "confidence": "medium",
-      "notes": "Shrek-themed character run.",
-      "notesEs": "Carrera temática de personaje de Shrek.",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Asmas",
+      "signupUrl": "https://www.asdeporte.com/evento/shrek-run-cdmx-2027-m8a/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/shrek-run-cdmx-2027-m8a/datos-del-evento",
+      "confidence": "high",
+      "notes": "Shrek-themed race with staggered start waves from 6:30. From $1,200.",
+      "notesEs": "Carrera temática de Shrek con salidas por bloques desde las 6:30. Desde $1,200.",
       "distanceTags": [
-        "TBD"
+        "5K",
+        "15K"
       ],
-      "sourceNotes": "Distances/venue not yet published."
+      "sourceNotes": "CORRECTION: existing row and runera.mx say 2027-01-17, but the Asdeporte convocatoria (official registration page) says \"Domingo 10 de enero del 2027\" and its event date field is 2027-01-10 12:30Z. Used Asdeporte. Note Human 21K is on Jan 17. (Earlier: Distances/venue not yet published.)",
+      "status": "changed",
+      "statusNote": "Date moved to Sunday 10 January 2027 (it was listed as 17 January). Start waves from 6:30 on Paseo de la Reforma.",
+      "statusNoteEs": "La fecha cambió al domingo 10 de enero de 2027 (antes aparecía el 17 de enero). Salidas por bloques desde las 6:30 en Paseo de la Reforma.",
+      "lastVerified": "2026-10-20"
     },
     {
       "id": "discovery-offroad-valle-2026",
@@ -2094,21 +2107,30 @@
     {
       "id": "ultra-valle-bravo-utms-2026",
       "name": "Ultra Valle de Bravo (Ultra Trail México Series)",
-      "date": null,
+      "date": "2026-11-28",
       "time": null,
-      "distances": [],
+      "distances": [
+        "10K",
+        "22K",
+        "29K",
+        "49K"
+      ],
       "city": "Valle de Bravo",
       "state": "Estado de México",
-      "venue": null,
+      "venue": "San Mateo Acatitlán, Valle de Bravo",
       "organizer": "Ultra Trail México Series",
-      "signupUrl": null,
-      "sourceUrl": "https://www.ultrailmexicoseries.com/",
-      "confidence": "low",
-      "notes": null,
+      "signupUrl": "https://endurancecui.active.com/new/events/97780501/select-race",
+      "sourceUrl": "https://www.ultrailmexicoseries.com/ultra-valle-de-bravo/",
+      "confidence": "high",
+      "notes": "Trail race weekend, 27–28 November. Four distances: Caudal 10K (350 m D+), Capasuri 22K (950 m D+), Monarca 29K (1,200 m D+), Alba 49K (2,050 m D+). Spots are first-come, no waitlist.",
       "distanceTags": [
-        "TBD"
+        "10K",
+        "Half",
+        "30K",
+        "Ultra"
       ],
-      "sourceNotes": "Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published."
+      "sourceNotes": "Official page says 27-28 Nov 2026 without per-distance start days; tritour lists 28 Nov, running.life 27-28 Nov. Date set to 28 Nov (tritour); which distances run on the 27th is unconfirmed. Signup is the Active Endurance link from the official page's Inscripciones button. (Earlier: Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published.)",
+      "notesEs": "Fin de semana de trail, 27 y 28 de noviembre. Cuatro distancias: Caudal 10K (350 m D+), Capasuri 22K (950 m D+), Monarca 29K (1,200 m D+) y Alba 49K (2,050 m D+). Lugares por orden de inscripción, sin lista de espera."
     },
     {
       "id": "3a-carrera-ibero",
@@ -5100,6 +5122,1567 @@
       "notes": "Trail race through Mennonite farmland near Cuauhtémoc. Registration historically via www.summits.com.mx.",
       "notesEs": "Carrera de trail por tierras agrícolas menonitas cerca de Cuauhtémoc. El registro históricamente ha sido vía www.summits.com.mx.",
       "sourceNotes": "Inaugural (1st) edition held June 14, 2025; no 2026/2027 edition confirmed yet. Included as the only verified Cuauhtémoc-area race."
+    },
+    {
+      "id": "corre-llorona-5k-2026",
+      "name": "Corre Llorona 5K 2026",
+      "date": "2026-10-24",
+      "time": "19:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Parque Ecológico Xochimilco",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/corre-llorona-5k-2026-8et/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/corre-llorona-5k-2026-8et/datos-del-evento",
+      "confidence": "high",
+      "notes": "Night 5K with a La Llorona theme. From $550.",
+      "notesEs": "5K nocturna con temática de La Llorona. Desde $550.",
+      "sourceNotes": "Asdeporte event page + runera.mx agree (date, 19:00, venue)."
+    },
+    {
+      "id": "1-carrera-esencia-viva-con-mascotas-2026",
+      "name": "1ª Carrera Esencia Viva con Mascotas 2026",
+      "date": "2026-10-24",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec, 2ª Sección",
+      "organizer": "Sport Running Evolution",
+      "signupUrl": "https://www.asdeporte.com/evento/1--carrera-esencia-viva-2026-ab9/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/1--carrera-esencia-viva-2026-ab9/datos-del-evento",
+      "confidence": "high",
+      "notes": "Pet-friendly race: 10K, 5K and a 3K recreational walk. From $275.",
+      "notesEs": "Carrera pet friendly: 10K, 5K y caminata recreativa de 3K. Desde $275.",
+      "sourceNotes": "Asdeporte convocatoria body: start 07:00 (page header shows 13:00, which is UTC). Registration closes 2026-10-22."
+    },
+    {
+      "id": "super-villains-run-cdmx-2026-dc",
+      "name": "Super Villains Run CDMX 2026 — DC",
+      "date": "2026-10-25",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. de los Compositores, Fuente Xochipilli, Bosque de Chapultepec 2ª Sección",
+      "organizer": "Asmas",
+      "signupUrl": "https://www.asdeporte.com/evento/super-villains-run-cdmx-2026-sk1/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/super-villains-run-cdmx-2026-sk1/datos-del-evento",
+      "confidence": "high",
+      "notes": "DC super-villains themed race. From $999.",
+      "notesEs": "Carrera temática de supervillanos DC. Desde $999.",
+      "sourceNotes": "Venue conflict: runera.mx lists \"Paseo de La Reforma\"; Asdeporte convocatoria says 2ª Sección de Chapultepec (Fuente Xochipilli) — used Asdeporte. Time 06:30 from Asdeporte event date field."
+    },
+    {
+      "id": "3a-carrera-petalo-dejando-huella-cdmx-2026",
+      "name": "3a. Carrera Pétalo® Dejando Huella CDMX 2026",
+      "date": "2026-10-25",
+      "time": "06:15",
+      "distances": [
+        "3K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. Zacatépetl esq. Calle Alborada, Parques del Pedregal, Tlalpan",
+      "organizer": "Pétalo",
+      "signupUrl": "https://www.asdeporte.com/evento/3a--carrera-pe-talo--dejando-huella-cdmx-2026-2ju/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/3a--carrera-pe-talo--dejando-huella-cdmx-2026-2ju/datos-del-evento",
+      "confidence": "high",
+      "notes": "5K run and 3K, with a category for runners with their pets. From $310.",
+      "notesEs": "Carrera de 5K y 3K, con categoría para correr con tu mascota. Desde $310.",
+      "sourceNotes": "Time conflict: runera.mx says 07:00; Asdeporte convocatoria says 5K starts 6:15 a.m. — used Asdeporte. Organizer inferred from race brand name."
+    },
+    {
+      "id": "carrera-farmarun-by-farmatodo-2026",
+      "name": "Carrera FarmaRun by Farmatodo 2026",
+      "date": "2026-10-25",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Gran Avenida casi esq. Calz. del Rey (Tótem Canadiense), Bosque de Chapultepec 1ª Sección",
+      "organizer": "Grupo Farmatodo",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-farmatodo-2026-a1s/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-farmatodo-2026-a1s/datos-del-evento",
+      "confidence": "high",
+      "notes": "Capped at 1,200 runners. From $300.",
+      "notesEs": "Cupo limitado a 1,200 participantes. Desde $300.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree."
+    },
+    {
+      "id": "xxiii-pumathon-universitario-2026",
+      "name": "XXIII Pumathon Universitario 2026",
+      "date": "2026-10-25",
+      "time": "09:00",
+      "distances": [],
+      "distanceTags": [
+        "TBD"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Estadio Olímpico Universitario, Ciudad Universitaria (Coyoacán)",
+      "organizer": "UNAM — Dirección General del Deporte Universitario",
+      "signupUrl": null,
+      "sourceUrl": "https://www.cronica.com.mx/deportes/2026/10/01/pumathon-universitario-2026-precios-fechas-como-y-cuando-inscribirte-a-la-carrera-por-cu-este-25-de-octubre/",
+      "confidence": "medium",
+      "notes": "UNAM race through CU, part of the university's 475th anniversary. Open to the public: $200 UNAM students, $350 staff/alumni, $500 general public.",
+      "notesEs": "Carrera de la UNAM por CU, parte del 475 aniversario de la universidad. Abierta al público: $200 alumnos UNAM, $350 académicos/exalumnos, $500 público general.",
+      "sourceNotes": "Single news source (La Crónica, 2026-10-01); distances not stated. Registration via Red Puma was announced as closing 2026-10-16, so signupUrl left null. Official UNAM convocatoria not fetched."
+    },
+    {
+      "id": "halloween-race-5k-2026",
+      "name": "Halloween Race 5K 2026",
+      "date": "2026-10-31",
+      "time": "19:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Invernadero del Bosque de Aragón (Gustavo A. Madero)",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/halloween-race-5k-2026-02t/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/halloween-race-5k-2026-02t/datos-del-evento",
+      "confidence": "high",
+      "notes": "Night Halloween 5K. From $470.",
+      "notesEs": "5K nocturna de Halloween. Desde $470.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "calacas-on-the-run-under-armour-2026",
+      "name": "Calacas on the Run Under Armour 2026",
+      "date": "2026-10-31",
+      "time": "19:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec, 1ª Sección",
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-calacas-on-the-run-under-armour-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-calacas-on-the-run-under-armour-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Under Armour night race with a calaca (Day of the Dead) theme. $699, $799 late fee.",
+      "notesEs": "Carrera nocturna de Under Armour con temática de calacas. $699, cuota extemporánea $799.",
+      "sourceNotes": "Emoción Deportiva convocatoria; also on runera.mx and marcate.com.mx with same date/time."
+    },
+    {
+      "id": "calaveritas-run-2026",
+      "name": "Calaveritas Run 2026",
+      "date": "2026-11-01",
+      "time": "19:30",
+      "distances": [
+        "5K",
+        "10K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Complejo Cultural Los Pinos / Bosque de Chapultepec",
+      "organizer": "Mario Julián César Ruiz Flores",
+      "signupUrl": "https://www.asdeporte.com/evento/calaveritas-run-2026-s7d/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/calaveritas-run-2026-s7d/datos-del-evento",
+      "confidence": "high",
+      "notes": "Day of the Dead night race through Chapultepec, plus 100–400 m kids' races.",
+      "notesEs": "Carrera nocturna de Día de Muertos por Chapultepec, con carreras infantiles de 100 a 400 m.",
+      "sourceNotes": "Asdeporte + runera.mx agree. Asdeporte lists \"desde $450\" (likely kids price); Time Out (Jul 2026) listed adult $750 from Oct 1 — price not put in notes due to ambiguity."
+    },
+    {
+      "id": "carrera-espn-2026-21k-y-10k",
+      "name": "Carrera ESPN 2026 — 21K y 10K",
+      "date": "2026-11-01",
+      "time": "06:30",
+      "distances": [
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "10K",
+        "Half"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Runaholics",
+      "signupUrl": "https://www.espnrun.mx/",
+      "sourceUrl": "https://www.espnrun.mx/",
+      "confidence": "high",
+      "notes": "10K $800 and 21K $900 until Oct 30 (+10% platform fee); higher price at kit pickup on Oct 31.",
+      "notesEs": "10K $800 y 21K $900 hasta el 30 de octubre (más 10% de comisión); precio más alto en la entrega de kits del 31 de octubre.",
+      "sourceNotes": "Official site rendered prices; date/time/venue from runera.mx detail page and runmx calendar (Nov 1, 6:30). Search snippet cited $750 for 10K — official site says $800."
+    },
+    {
+      "id": "capibaras-5k-2026",
+      "name": "Capibaras 5K 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec, 1ª Sección",
+      "organizer": "En Dónde Correr",
+      "signupUrl": "https://www.asdeporte.com/evento/capibaras-5k-2025-2kf/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/capibaras-5k-2025-2kf/datos-del-evento",
+      "confidence": "high",
+      "notes": "Capybara-themed 5K, plus a walk and kids' race. From $500.",
+      "notesEs": "5K con temática de capibaras, con caminata y carrera infantil. Desde $500.",
+      "sourceNotes": "Asdeporte slug still says \"2025\" but the rendered page is the 2026 edition (name, 2026-11-08, inscription open) — verified, not stale."
+    },
+    {
+      "id": "12a-karrera-snoopy-un-kilo-de-ayuda-2026",
+      "name": "12a. Karrera Snoopy Un Kilo de Ayuda 2026",
+      "date": "2026-11-08",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Monumento Estela de Luz, Paseo de la Reforma",
+      "organizer": "Un Kilo de Ayuda",
+      "signupUrl": "https://www.asdeporte.com/evento/12va--karrera-snoopy-un-kilo-de-ayuda-2026-43p/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/12va--karrera-snoopy-un-kilo-de-ayuda-2026-43p/datos-del-evento",
+      "confidence": "high",
+      "notes": "Benefits Un Kilo de Ayuda's early-childhood programs (40th anniversary). 5K 6:30, 10K 6:45. Cap 9,700 adults and 300 kids. From $663.",
+      "notesEs": "A beneficio de los programas de desarrollo infantil de Un Kilo de Ayuda (40 aniversario). 5K 6:30, 10K 6:45. Cupo de 9,700 adultos y 300 niños. Desde $663.",
+      "sourceNotes": "Distinct from existing snoopy-run-cdmx-2026 (Snoopy Run Club, Aug 2). Asdeporte date_end field is 2026-10-21 — online registration may close very soon."
+    },
+    {
+      "id": "10a-carrera-escucha-a-fondo-2026",
+      "name": "10a Carrera Escucha a Fondo 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Estadio de prácticas Roberto \"Tapatío\" Méndez, Ciudad Universitaria (Coyoacán)",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/10a-carrera-escucha-a-fondo-2026-hre/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/10a-carrera-escucha-a-fondo-2026-hre/datos-del-evento",
+      "confidence": "high",
+      "notes": "Includes kids' races from 50 to 300 m. From $380.",
+      "notesEs": "Incluye carreras infantiles de 50 a 300 m. Desde $380.",
+      "sourceNotes": "runera.mx shows \"Inscripciones agotadas\" while Asdeporte still has inscription_allow=true — possibly sold out; kept signupUrl."
+    },
+    {
+      "id": "bob-esponja-cdmx-2026",
+      "name": "Bob Esponja CDMX 2026",
+      "date": "2026-11-08",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. de los Compositores, Fuente Xochipilli, Bosque de Chapultepec 2ª Sección",
+      "organizer": "Asmas",
+      "signupUrl": "https://www.asdeporte.com/evento/bob-esponja-cdmx-2026-yun/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/bob-esponja-cdmx-2026-yun/datos-del-evento",
+      "confidence": "high",
+      "notes": "SpongeBob-themed family race. From $1,069.",
+      "notesEs": "Carrera familiar de Bob Esponja. Desde $1,069.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree."
+    },
+    {
+      "id": "10-carrera-up-huellas-que-inspiran-2026",
+      "name": "10° Carrera UP: Huellas que Inspiran 2026",
+      "date": "2026-11-22",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec",
+      "organizer": "Universidad Panamericana",
+      "signupUrl": "https://www.asdeporte.com/evento/10--carrera-up--huellas-que-inspiran-r9a/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/10--carrera-up--huellas-que-inspiran-r9a/datos-del-evento",
+      "confidence": "high",
+      "notes": "Universidad Panamericana race with 10K, 5K, walk and kids' race. From $560.",
+      "notesEs": "Carrera de la Universidad Panamericana con 10K, 5K, caminata e infantil. Desde $560.",
+      "sourceNotes": "Asdeporte + runera.mx agree. Organizer inferred from name (\"UP\")."
+    },
+    {
+      "id": "perroton-2026",
+      "name": "Perrotón 2026",
+      "date": "2026-11-22",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "3K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Hipódromo de las Américas (Miguel Hidalgo)",
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-perrot%C3%B3n-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-perrot%C3%B3n-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Run with your dog in the Hipódromo infield: 1K 7:00, 3K 7:30, 5K 8:00, waves by dog size. $699 owner + dog in November.",
+      "notesEs": "Corre con tu perro en el Hipódromo: 1K 7:00, 3K 7:30, 5K 8:00, salidas por tamaño de perro. $699 dueño y perrito en noviembre.",
+      "sourceNotes": "Emoción Deportiva + marcate.com.mx convocatorias agree."
+    },
+    {
+      "id": "carrera-vuela-run-2026",
+      "name": "Carrera Vuela Run 2026",
+      "date": "2026-11-22",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "6K",
+        "12K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "15K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec",
+      "organizer": "Emoción Deportiva y Fundación Vuela",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-vuela-run-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-vuela-run-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Benefits Fundación Vuela (children with cancer). 3K is recreational. $799 until Nov 15, $899 late.",
+      "notesEs": "A beneficio de Fundación Vuela (niños con cáncer). La 3K es recreativa. $799 hasta el 15 de noviembre, $899 extemporánea.",
+      "sourceNotes": "Emoción Deportiva convocatoria; not on runera.mx."
+    },
+    {
+      "id": "womanup-run-2026",
+      "name": "WomanUp Run 2026",
+      "date": "2026-11-29",
+      "time": "06:45",
+      "distances": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. de los Compositores, Fuente Xochipilli, Bosque de Chapultepec 2ª Sección",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento",
+      "confidence": "high",
+      "notes": "15K individual, pairs or relay at 6:45; 10K at 7:00; 5K is recreational. From $550.",
+      "notesEs": "15K individual, parejas o relevos a las 6:45; 10K a las 7:00; la 5K es recreativa. Desde $550.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree."
+    },
+    {
+      "id": "carrera-del-ring-2026",
+      "name": "Carrera del Ring 2026",
+      "date": "2026-11-29",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Monumento a la Revolución, Col. Tabacalera (Cuauhtémoc)",
+      "organizer": "Gobierno de la CDMX, CMLL y Asdeporte",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-del-ring-2026-k5c/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-del-ring-2026-k5c/datos-del-evento",
+      "confidence": "high",
+      "notes": "Ends with a special lucha libre show. Capped at 4,000. 10K 6:30. From $550.",
+      "notesEs": "Termina con una función especial de lucha libre. Cupo de 4,000. 10K 6:30. Desde $550.",
+      "sourceNotes": "Asdeporte convocatoria (5K start \"por definir\") + runera.mx + adn40 article."
+    },
+    {
+      "id": "carrera-platano-run-2026",
+      "name": "Carrera Plátano Run 2026",
+      "date": "2026-11-29",
+      "time": "06:15",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma (salida junto a la Estela de Luz)",
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-pl%C3%A1tano-run-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-pl%C3%A1tano-run-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Banana-themed run on Reforma. $699, $799 late fee.",
+      "notesEs": "Carrera temática de plátano por Reforma. $699, cuota extemporánea $799.",
+      "sourceNotes": "Emoción Deportiva + runera.mx agree."
+    },
+    {
+      "id": "circuito-de-las-estaciones-invierno-penafiel",
+      "name": "Circuito de las Estaciones — Invierno Peñafiel CDMX 2026",
+      "date": "2026-12-06",
+      "time": "06:15",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. Zacatépetl esq. Calle Alborada (Tlalpan)",
+      "organizer": "Asmas",
+      "signupUrl": "https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/datos-del-evento",
+      "confidence": "high",
+      "notes": "Winter stop of the Circuito de las Estaciones. From $755; a virtual option is also available.",
+      "notesEs": "Fecha de invierno del Circuito de las Estaciones. Desde $755; también hay opción virtual.",
+      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop)."
+    },
+    {
+      "id": "carrera-uvm-2026",
+      "name": "Carrera UVM 2026",
+      "date": "2026-12-06",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma, a la altura de la Torre Mayor",
+      "organizer": "Universidad del Valle de México",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/datos-del-evento",
+      "confidence": "high",
+      "notes": "Capped at 4,000 runners. From $400.",
+      "notesEs": "Cupo limitado a 4,000 participantes. Desde $400.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "jingle-bells-5-km-2026",
+      "name": "Jingle Bells 5 km 2026",
+      "date": "2026-12-12",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Bosque de Chapultepec, 1ª Sección",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/jingle-bells-5-km-2026-o0f/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/jingle-bells-5-km-2026-o0f/datos-del-evento",
+      "confidence": "high",
+      "notes": "Christmas 5K with a walk and kids' race. From $500.",
+      "notesEs": "5K navideña con caminata y carrera infantil. Desde $500.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "oysho-rock-n-roll-mexico-city-2026",
+      "name": "OYSHO Rock 'n' Roll Mexico City 2026",
+      "date": "2026-12-13",
+      "time": "06:15",
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma (Auditorio Nacional) — meta en Campo Marte",
+      "organizer": "Rock 'n' Roll Running Series / Asmas",
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/evento/rock-n-roll-mexico-city-2026-ubr/datos-del-evento",
+      "confidence": "high",
+      "notes": "Half marathon from Reforma to Campo Marte with Rock 'n' Roll series live music.",
+      "notesEs": "Medio maratón de Reforma a Campo Marte con la música en vivo de la serie Rock 'n' Roll.",
+      "sourceNotes": "runera.mx: \"Inscripciones cerradas\", 06:30; Asdeporte convocatoria: 6:15, external registration runrocknroll.com/events/mexico-city/register — signupUrl left null because runera reports registration closed."
+    },
+    {
+      "id": "marvel-run-2026",
+      "name": "Marvel Run 2026",
+      "date": "2026-12-13",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "6K",
+        "12K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "15K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Av. Zacatépetl, CDMX",
+      "organizer": null,
+      "signupUrl": "https://www.marvelrun.mx/",
+      "sourceUrl": "https://www.marvelrun.mx/",
+      "confidence": "high",
+      "notes": "Marvel superhero race: 6K and 12K timed, 3K family walk. $850 (6K/12K) and $650 (3K) until Dec 11.",
+      "notesEs": "Carrera de superhéroes Marvel: 6K y 12K cronometradas, 3K familiar. $850 (6K/12K) y $650 (3K) hasta el 11 de diciembre.",
+      "sourceNotes": "Official site: convocatoria says starts from 6:30, but route section lists 3K 07:00 and 6K/12K 07:30 — internal conflict, used convocatoria. runera.mx agrees on date/venue."
+    },
+    {
+      "id": "rave-run-by-carrera-nocturna-2026",
+      "name": "Rave Run by Carrera Nocturna 2026",
+      "date": "2026-12-19",
+      "time": "19:00",
+      "distances": [
+        "10K"
+      ],
+      "distanceTags": [
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Estadio Olímpico Universitario, Ciudad Universitaria (Coyoacán)",
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/rave-run-by-carrera-nocturna-2026/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/rave-run-by-carrera-nocturna-2026/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Night 10K on the Circuito Universitario with a rave theme. $749.",
+      "notesEs": "10K nocturna por el Circuito Universitario con temática rave. $749.",
+      "sourceNotes": "Emoción Deportiva + runera.mx agree."
+    },
+    {
+      "id": "carrera-flor-de-nochebuena-5k-2026",
+      "name": "Carrera Flor de Nochebuena 5K 2026",
+      "date": "2026-12-20",
+      "time": "08:00",
+      "distances": [
+        "5K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Parque Ecológico Xochimilco",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-flor-de-nochebuena-5k-2026-12k/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-flor-de-nochebuena-5k-2026-12k/datos-del-evento",
+      "confidence": "high",
+      "notes": "Poinsettia-themed 5K with kids' races from 100 to 400 m. From $300.",
+      "notesEs": "5K con temática de flor de nochebuena y carreras infantiles de 100 a 400 m. Desde $300.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "christmas-run-2026",
+      "name": "Christmas Run 2026",
+      "date": "2026-12-20",
+      "time": "06:15",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/christmas-run-2026-z3r/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/christmas-run-2026-z3r/datos-del-evento",
+      "confidence": "high",
+      "notes": "Christmas race on Reforma with kids' races. From $600.",
+      "notesEs": "Carrera navideña en Reforma con carreras infantiles. Desde $600.",
+      "sourceNotes": "Asdeporte + runera.mx agree; kit pickup at Complejo Cultural Los Pinos per haid.app snippet (not used)."
+    },
+    {
+      "id": "human-21k-2027",
+      "name": "Human 21K 2027",
+      "date": "2027-01-17",
+      "time": "06:00",
+      "distances": [
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "10K",
+        "Half"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma esq. Anatole France",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/human-21k-2027-dx3/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/human-21k-2027-dx3/datos-del-evento",
+      "confidence": "high",
+      "notes": "Half marathon and 10K on Reforma. From $600.",
+      "notesEs": "Medio maratón y 10K por Reforma. Desde $600.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "carrera-coffee-run-2027",
+      "name": "Carrera Coffee Run 2027",
+      "date": "2027-01-24",
+      "time": "06:15",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Paseo de la Reforma",
+      "organizer": "Emoción Deportiva",
+      "signupUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-coffee-run-2027/ciudad-de-m%C3%A9xico",
+      "sourceUrl": "https://www.emociondeportiva.com/detalle-evento/carrera-coffee-run-2027/ciudad-de-m%C3%A9xico",
+      "confidence": "high",
+      "notes": "Coffee-themed run on Reforma. $799 from Nov 1, $999 late fee.",
+      "notesEs": "Carrera con temática de café por Reforma. $799 desde el 1 de noviembre, $999 extemporánea.",
+      "sourceNotes": "Emoción Deportiva + runera.mx agree."
+    },
+    {
+      "id": "15-carrera-kardias-tudn-2027",
+      "name": "15ª Carrera Kardias TUDN 2027",
+      "date": "2027-02-28",
+      "time": "06:30",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Estela de Luz, Paseo de la Reforma (Bosque de Chapultepec 1ª Sección)",
+      "organizer": "Kardias",
+      "signupUrl": "https://www.asdeporte.com/evento/15--carrera-kardias-tudn-2027-hso/datos-del-evento",
+      "sourceUrl": "https://www.asdeporte.com/evento/15--carrera-kardias-tudn-2027-hso/datos-del-evento",
+      "confidence": "high",
+      "notes": "Benefits Kardias, which treats children with heart disease. Half marathon at 6:30. From $600.",
+      "notesEs": "A beneficio de Kardias, que atiende a niñas y niños con cardiopatías. Medio maratón a las 6:30. Desde $600.",
+      "sourceNotes": "Asdeporte + runera.mx agree."
+    },
+    {
+      "id": "carrera-del-dia-del-padre-21k-edicion-45-2027",
+      "name": "Carrera del Día del Padre 21K, edición 45, 2027",
+      "date": "2027-06-20",
+      "time": "05:50",
+      "distances": [
+        "21K"
+      ],
+      "distanceTags": [
+        "Half"
+      ],
+      "city": "Ciudad de México",
+      "state": "Ciudad de México",
+      "venue": "Periférico Sur frente al Hotel Radisson Paraíso (paso por Cuemanco)",
+      "organizer": null,
+      "signupUrl": "https://fhinix.com/carrera-del-dia-del-padre-21k-edicion-45-2027.html",
+      "sourceUrl": "https://runera.mx/carreras/detalle/carrera-del-da-del-padre-21k-edicin-45-2027",
+      "confidence": "medium",
+      "notes": "45th Father's Day half marathon through southern CDMX.",
+      "notesEs": "45 edición del medio maratón del Día del Padre por el sur de la CDMX.",
+      "sourceNotes": "runera.mx detail page only (fhinix registration page is a JS shell); running.life search snippet agrees on 2027-06-20 and mentions $800 member/$1,000 public fees (not verified on fetched page)."
+    },
+    {
+      "id": "carrera-al-inframundo-teotihuacano-2026",
+      "name": "Carrera al Inframundo Teotihuacano 2026",
+      "date": "2026-10-24",
+      "time": "17:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "1K de Fuego"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Teotihuacán",
+      "state": "Estado de México",
+      "venue": "Deportivo Tepalcates, Teotihuacán",
+      "organizer": "Márcate",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1784745490/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1784745490/",
+      "confidence": "high",
+      "notes": "Evening race near the pyramids: 3K walk, 5K or 10K, with the option to add the 1K de Fuego.",
+      "notesEs": "Carrera vespertina cerca de las pirámides: caminata de 3K, 5K o 10K, con opción de sumar el 1K de Fuego.",
+      "sourceNotes": "Runera detail page agrees on date/venue but says 5:00 p.m.; Márcate says 17:00 (same). Event spans 24-25 Oct per Márcate; listing shows Sat 24 Oct. Price conflict: listing $660/$1,650 vs convocatoria $600-700/$1,400-1,500."
+    },
+    {
+      "id": "carrera-catrinas-2026-huixquilucan",
+      "name": "Carrera Catrinas 2026 — Huixquilucan",
+      "date": "2026-10-24",
+      "time": "19:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Huixquilucan",
+      "state": "Estado de México",
+      "venue": null,
+      "organizer": "NXTONE / Instituto Municipal de Cultura Física y Deporte de Huixquilucan",
+      "signupUrl": null,
+      "sourceUrl": "https://web.rockthesport.com/es/event/catrinas-2026",
+      "confidence": "high",
+      "notes": "Free municipal night 5K (two 2.5K laps). Registration is sold out.",
+      "notesEs": "5K nocturno municipal gratuito (dos vueltas de 2.5K). Inscripciones agotadas.",
+      "sourceNotes": "RockTheSport shows 'Inscripciones agotadas', window 14-24 Oct; signupUrl nulled. No specific venue given."
+    },
+    {
+      "id": "medio-maraton-alfenique-2026-2-edicion",
+      "name": "Medio Maratón Alfeñique 2026 (2ª edición)",
+      "date": "2026-10-25",
+      "time": "07:30",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Toluca",
+      "state": "Estado de México",
+      "venue": "Frente al Palacio Municipal de Toluca",
+      "organizer": "Ayuntamiento de Toluca / IMCUFIDET",
+      "signupUrl": "https://www.asdeporte.com/evento/2da-edicio-n-medio-marato-n-alfen-ique-2026-kbv/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/2da-edicio-n-medio-marato-n-alfen-ique-2026-kbv/datos-del-evento",
+      "confidence": "high",
+      "notes": "Toluca's municipal half marathon during the Feria del Alfeñique. Start and finish in front of the Palacio Municipal. From $450 MXN. Cash prizes per category.",
+      "notesEs": "El medio maratón municipal de Toluca, durante la Feria del Alfeñique. Salida y meta frente al Palacio Municipal. Desde $450 MXN. Premios en efectivo por categoría.",
+      "sourceNotes": "Asdeporte header 25 Oct 2026; body text says '25 Octubre del 2025' (copy-paste typo from 2025). Start 7:30 from body (header shows 13:30 UTC). Same day as Medio Maratón Mexiquense (also Toluca). Coords 19.2920347,-99.6563722."
+    },
+    {
+      "id": "carrera-las-animas-de-metepec-2026",
+      "name": "Carrera Las Ánimas de Metepec 2026",
+      "date": "2026-10-31",
+      "time": "20:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Metepec",
+      "state": "Estado de México",
+      "venue": "Metepec",
+      "organizer": "Tiempo De: Correr / IMCUFIDE Metepec",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-las-a-nimas-de-metepec-2026-sry/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-las-a-nimas-de-metepec-2026-sry/datos-del-evento",
+      "confidence": "high",
+      "notes": "Night race on the eve of Día de Muertos. Pre-race activities from 19:30. Includes a 5K for wheelchair athletes. From $420 MXN.",
+      "notesEs": "Carrera nocturna en la víspera de Día de Muertos. Actividades previas desde las 19:30. Incluye 5K de deporte adaptado en silla de ruedas. Desde $420 MXN.",
+      "sourceNotes": "Asdeporte header shows 1 Nov (01:30 UTC); body: Sábado 31 oct 2026, salida 20:00 — used body. running.life lists 1 Nov (UTC artifact). Venue line blank on page. Coords 19.2528864,-99.598551."
+    },
+    {
+      "id": "carrera-atletica-jonnatan-morales-10k-2026",
+      "name": "Carrera Atlética Jonnatan Morales 10K 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "10K"
+      ],
+      "city": "Metepec",
+      "state": "Estado de México",
+      "venue": "Parque Providencia, Metepec",
+      "organizer": "Jonnatan Morales Running Club / IMCUFIDEM Metepec",
+      "signupUrl": "https://www.asdeporte.com/evento/carrera-atle-tica-jonnatan-morales-10k-2026-0zg/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/carrera-atle-tica-jonnatan-morales-10k-2026-0zg/datos-del-evento",
+      "confidence": "high",
+      "notes": "10K with over $60,000 MXN in prize money across categories, plus a 3K. From $400 MXN.",
+      "notesEs": "10K con más de $60,000 MXN en premios entre todas las categorías, además de un 3K. Desde $400 MXN.",
+      "sourceNotes": "Coords 19.2701603,-99.60804."
+    },
+    {
+      "id": "medio-maraton-con-encanto-temoaya-2026",
+      "name": "Medio Maratón con Encanto Temoaya 2026",
+      "date": "2026-11-08",
+      "time": "08:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Temoaya",
+      "state": "Estado de México",
+      "venue": "Plaza Sagitario, Centro Ceremonial Otomí",
+      "organizer": "Cultura Física y Deporte Temoaya",
+      "signupUrl": "https://www.asdeporte.com/evento/medio-marato-n-con-encanto-temoaya-2026-hxu/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/medio-marato-n-con-encanto-temoaya-2026-hxu/datos-del-evento",
+      "confidence": "high",
+      "notes": "Half marathon inside the Centro Ceremonial Otomí. Staggered starts: 21K 8:00, 10K 8:05, 5K 8:10. From $250 MXN.",
+      "notesEs": "Medio maratón dentro del Centro Ceremonial Otomí. Salidas escalonadas: 21K 8:00, 10K 8:05, 5K 8:10. Desde $250 MXN.",
+      "sourceNotes": "Coords 19.5314966,-99.5223506."
+    },
+    {
+      "id": "medio-maraton-metepec-dia-de-muertos-2026",
+      "name": "Medio Maratón Metepec Día de Muertos 2026",
+      "date": "2026-11-15",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Metepec",
+      "state": "Estado de México",
+      "venue": "Parque Bicentenario, Metepec",
+      "organizer": "Capital Deportiva",
+      "signupUrl": "https://www.asdeporte.com/evento/medio-marato-n-metepec-di-a-de-muertos-2026-5al/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/medio-marato-n-metepec-di-a-de-muertos-2026-5al/datos-del-evento",
+      "confidence": "high",
+      "notes": "Día de Muertos-themed half marathon starting and finishing at Parque Bicentenario. Cash prizes for the top three of each distance. From $400 MXN.",
+      "notesEs": "Medio maratón con temática de Día de Muertos, con salida y meta en el Parque Bicentenario. Premios en efectivo a los tres primeros de cada distancia. Desde $400 MXN.",
+      "sourceNotes": "Distinct from the July Medio Maratón Metepec (existing row). Coords 19.2500939,-99.5816458."
+    },
+    {
+      "id": "13-carrera-cruz-roja-delegacion-toluca-2026",
+      "name": "13ª Carrera Cruz Roja Delegación Toluca 2026",
+      "date": "2026-11-22",
+      "time": "08:00",
+      "distances": [
+        "200m",
+        "400m",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Toluca",
+      "state": "Estado de México",
+      "venue": "Cruz Roja Mexicana Delegación Toluca, Jesús Carranza casi esq. Tollocan",
+      "organizer": "Cruz Roja Mexicana Delegación Toluca",
+      "signupUrl": "https://www.asdeporte.com/evento/13---edicio-n-carrera-cruz-roja-delegacio-n-toluca-2026-6gp/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/13---edicio-n-carrera-cruz-roja-delegacio-n-toluca-2026-6gp/datos-del-evento",
+      "confidence": "high",
+      "notes": "Benefit race for the Red Cross. 5K and 10K at 8:00, a 5K with your dog at 8:05, kids' races at 9:30, and a 20K bike ride at 6:30. From $300 MXN.",
+      "notesEs": "Carrera a beneficio de la Cruz Roja. 5K y 10K a las 8:00, 5K con tu mascota a las 8:05, infantiles a las 9:30 y un recorrido ciclista de 20K a las 6:30. Desde $300 MXN.",
+      "sourceNotes": "Found via haid.app listing; verified on Asdeporte page. 20K is cycling, excluded from distances. Coords 19.271624,-99.6585079."
+    },
+    {
+      "id": "12-carrera-por-las-vocaciones-artesanos-de-la",
+      "name": "12ª Carrera por las Vocaciones 'Artesanos de la Paz' 2026",
+      "date": "2026-11-22",
+      "time": "08:00",
+      "distances": [
+        "2.5K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Tlalnepantla de Baz",
+      "state": "Estado de México",
+      "venue": "Explanada Gustavo Baz, Centro de Tlalnepantla",
+      "organizer": "Arquidiócesis de Tlalnepantla / Seminario (Meta Sports)",
+      "signupUrl": "https://meta.mx/product/12va-carrera-por-las-vocaciones",
+      "sourceUrl": "https://meta.mx/product/12va-carrera-por-las-vocaciones",
+      "confidence": "high",
+      "notes": "5K and 10K competitive plus a 2.5K family walk. $600 MXN regular ($550 each for groups of 4+). Cap of 2,000 runners.",
+      "notesEs": "5K y 10K competitivos y caminata familiar de 2.5K. $600 MXN precio regular ($550 por persona en grupos de 4 o más). Cupo de 2,000 corredores.",
+      "sourceNotes": "Regular price window runs to 20 Nov; remaining availability not stated."
+    },
+    {
+      "id": "1-carrera-del-musico-2026",
+      "name": "1ª Carrera del Músico 2026",
+      "date": "2026-11-22",
+      "time": "06:00",
+      "distances": [
+        "1 milla",
+        "5K",
+        "10K",
+        "Infantil"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Otumba",
+      "state": "Estado de México",
+      "venue": "Cuautlacingo, Otumba",
+      "organizer": "Márcate",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1790369782/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1790369782/",
+      "confidence": "high",
+      "notes": "5K or 10K, with the option to add the Milla del Músico mile challenge, plus a kids' race. Check-in from 5:00. Cap of 1,000 participants.",
+      "notesEs": "5K o 10K, con opción de sumar el reto de la Milla del Músico, además de carrera infantil. Registro desde las 5:00. Cupo de 1,000 participantes.",
+      "sourceNotes": "Price conflict on page: convocatoria Stage 2 says $450/$600 MXN, registration buttons show $495/$660 (likely incl. fees). Prices left out of notes."
+    },
+    {
+      "id": "loop-12-horas-de-montana-2026",
+      "name": "LOOP 12 Horas de Montaña 2026",
+      "date": "2026-11-28",
+      "time": "06:30",
+      "distances": [
+        "4K loop",
+        "6K loop"
+      ],
+      "distanceTags": [
+        "Ultra"
+      ],
+      "city": "Ocoyoacac (La Marquesa)",
+      "state": "Estado de México",
+      "venue": "Valle de la Tortuga, La Marquesa",
+      "organizer": "Tótems",
+      "signupUrl": "https://totems.mx/loop/",
+      "sourceUrl": "https://totems.mx/loop/",
+      "confidence": "high",
+      "notes": "12-hour team relay (06:30 to 18:30) for teams of three on a 6K trail loop or 4K hike loop; most total kilometres wins. $1,590 MXN per person.",
+      "notesEs": "Relevo de 12 horas (06:30 a 18:30) en equipos de tres, en un circuito trail de 6K o de senderismo de 4K; gana el equipo con más kilómetros. $1,590 MXN por persona.",
+      "sourceNotes": "Also on tritour (28 Nov 2026) and emociondeportiva listing. Remaining spots not stated."
+    },
+    {
+      "id": "neon-xperience-2026",
+      "name": "Neón Xperience 2026",
+      "date": "2026-11-28",
+      "time": "20:00",
+      "distances": [
+        "1K",
+        "7K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Tenango del Valle",
+      "state": "Estado de México",
+      "venue": "Palacio Municipal de Tenango del Valle",
+      "organizer": "Capital Deportiva",
+      "signupUrl": "https://www.asdeporte.com/evento/neo-n-xperience-2026-xxf/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/neo-n-xperience-2026-xxf/datos-del-evento",
+      "confidence": "medium",
+      "notes": "Night neon run: 7K and 10K plus a 1K kids' race. From $350 MXN.",
+      "notesEs": "Carrera nocturna neón: 7K y 10K, además de 1K infantil. Desde $350 MXN.",
+      "sourceNotes": "Page conflicts: intro says 28 Nov 2026 at 20:00; 'Datos del evento' says 'Sábado 8 de noviembre' (typo; 8 Nov is a Sunday); header shows 29 Nov 02:00 UTC = 28 Nov 20:00 local. Used 28 Nov. running.life places it in 'Monte Calvario'. Coords 19.1037465,-99.5916652."
+    },
+    {
+      "id": "unicornio-run-2026-naucalpan",
+      "name": "Unicornio Run 2026 — Naucalpan",
+      "date": "2026-11-29",
+      "time": "07:30",
+      "distances": [
+        "50m",
+        "100m",
+        "200m",
+        "300m",
+        "3K",
+        "6K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Naucalpan de Juárez",
+      "state": "Estado de México",
+      "venue": "Parque Naucalli",
+      "organizer": "Magic Run MX",
+      "signupUrl": "https://www.asdeporte.com/evento/unicornio-run----2026-lq7/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/unicornio-run----2026-lq7/datos-del-evento",
+      "confidence": "high",
+      "notes": "Unicorn-themed family fun run. 5K at 7:30, 3K walk at 7:35, kids' races around 8:00. Costumes welcome. From $499 MXN.",
+      "notesEs": "Carrera familiar temática de unicornios. 5K a las 7:30, caminata de 3K a las 7:35 e infantiles alrededor de las 8:00. Ven disfrazado. Desde $499 MXN.",
+      "sourceNotes": "Distance header lists 6km but body says 5K start; kept header distances. Coords 19.4940897,-99.2418927."
+    },
+    {
+      "id": "el-sendero-oscuro-de-malinalxochitl-2026",
+      "name": "El Sendero Oscuro de Malinalxóchitl 2026",
+      "date": "2026-12-19",
+      "time": "19:00",
+      "distances": [
+        "10K"
+      ],
+      "distanceTags": [
+        "10K"
+      ],
+      "city": "Malinalco",
+      "state": "Estado de México",
+      "venue": "Campamento Huixtla, Malinalco",
+      "organizer": "JPcastillo",
+      "signupUrl": "https://carrerasmexico.com/registro/el-sendero-oscuro-de-malinalxochitl",
+      "sourceUrl": "https://carrerasmexico.com/registro/el-sendero-oscuro-de-malinalxochitl",
+      "confidence": "high",
+      "notes": "Night 10K trail race. $450 MXN plus fees; price goes up 1 November.",
+      "notesEs": "Trail nocturno de 10K. $450 MXN más servicios; el precio sube el 1 de noviembre.",
+      "sourceNotes": "Rendered carrerasmexico page (not an empty shell). Also on running.life."
+    },
+    {
+      "id": "medio-maraton-santa-claus-2026",
+      "name": "Medio Maratón Santa Claus 2026",
+      "date": "2026-12-20",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "Metepec",
+      "state": "Estado de México",
+      "venue": "Parque Bicentenario, Metepec",
+      "organizer": "Capital Deportiva",
+      "signupUrl": "https://www.asdeporte.com/evento/medio-marato-n-santa-claus-2026-v3e/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/medio-marato-n-santa-claus-2026-v3e/datos-del-evento",
+      "confidence": "high",
+      "notes": "Christmas-themed half marathon at Parque Bicentenario. Cash prizes for the top three of each distance. From $400 MXN.",
+      "notesEs": "Medio maratón navideño en el Parque Bicentenario. Premios en efectivo a los tres primeros de cada distancia. Desde $400 MXN.",
+      "sourceNotes": "Coords 19.2500939,-99.5816458."
+    },
+    {
+      "id": "carrera-navidena-cerrando-el-ano-con-mit",
+      "name": "Carrera Navideña Cerrando el Año con MIT Runners 2026",
+      "date": "2026-12-20",
+      "time": "18:00",
+      "distances": [
+        "Caminata",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Texcoco",
+      "state": "Estado de México",
+      "venue": "Texcoco",
+      "organizer": "MIT Runners Tex",
+      "signupUrl": "https://carrerasmexico.com/registro/carrera-navidena-cerrando-el-ano-con-mit-runners",
+      "sourceUrl": "https://carrerasmexico.com/registro/carrera-navidena-cerrando-el-ano-con-mit-runners",
+      "confidence": "medium",
+      "notes": "Evening Christmas run with 5K, 10K and a walk. From $490 MXN plus fees. Registration closes 2 December.",
+      "notesEs": "Carrera navideña por la tarde con 5K, 10K y caminata. Desde $490 MXN más servicios. Inscripciones hasta el 2 de diciembre.",
+      "sourceNotes": "Exact venue not given (only 'Texcoco, Estado de México')."
+    },
+    {
+      "id": "6-trail-guadalupe-nopala-2026",
+      "name": "6ª Trail Guadalupe Nopala 2026",
+      "date": "2026-12-20",
+      "time": "07:45",
+      "distances": [
+        "7K",
+        "17K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K"
+      ],
+      "city": "Hueypoxtla",
+      "state": "Estado de México",
+      "venue": "Centro de Guadalupe Nopala, Hueypoxtla",
+      "organizer": "Chronostart",
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/555",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/555",
+      "confidence": "high",
+      "notes": "Trail race with 7K and 17K. $440 MXN.",
+      "notesEs": "Trail con distancias de 7K y 17K. $440 MXN.",
+      "sourceNotes": "Also on tritour (20 Dec 2026). Lower SP-category prices exist ($330)."
+    },
+    {
+      "id": "10-gran-carrera-fin-de-ano-toluca-2026",
+      "name": "10ª Gran Carrera Fin de Año Toluca 2026",
+      "date": "2026-12-27",
+      "time": "07:30",
+      "distances": [
+        "6.5K",
+        "13K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K"
+      ],
+      "city": "Toluca",
+      "state": "Estado de México",
+      "venue": "Av. Vicente Guerrero, junto al Estadio Universitario Alberto 'Chivo' Córdoba",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/10ma-edicio-n-la-gran-carrera-fin-de-an-o-toluca-2026-y8d/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/10ma-edicio-n-la-gran-carrera-fin-de-an-o-toluca-2026-y8d/datos-del-evento",
+      "confidence": "high",
+      "notes": "Year-end race with 6.5K and 13K and over $67,000 MXN in prize money. From $350 MXN.",
+      "notesEs": "Carrera de fin de año con 6.5K y 13K y más de $67,000 MXN en premios. Desde $350 MXN.",
+      "sourceNotes": "Organizer name not stated (contact pavigue@outlook.com, same as Jonnatan Morales/Cruz Roja). Coords 19.2849387,-99.6762522."
+    },
+    {
+      "id": "backyard-ftmx-2027",
+      "name": "Backyard FTMX 2027",
+      "date": "2027-02-12",
+      "time": null,
+      "distances": [
+        "Backyard"
+      ],
+      "distanceTags": [
+        "Ultra"
+      ],
+      "city": "Amanalco",
+      "state": "Estado de México",
+      "venue": "Corral de Piedra, Amanalco",
+      "organizer": "Frogs Trail México",
+      "signupUrl": "https://dashport.run/evento_1429",
+      "sourceUrl": "https://www.tritour.org/eventos/backyard-ftmx-2027",
+      "confidence": "medium",
+      "notes": "Backyard-format trail ultra: timed laps until one runner is left. Runner entry $1,300 MXN; camping and crew packages available.",
+      "notesEs": "Ultra de trail en formato backyard: vueltas cronometradas hasta que queda un corredor. Inscripción $1,300 MXN; hay paquetes con campamento y pits para equipo de apoyo.",
+      "sourceNotes": "Date conflict: tritour 12 Feb 2027, running.life 13 Feb 2027. dashport is a JS SPA, not verified directly. Tritour footer also says 'No Backyard Ultra', conflicting with the format description."
+    },
+    {
+      "id": "carrera-d-teotihuacan-2027-corazon-de-guerrero",
+      "name": "Carrera D Teotihuacan 2027 'Corazón de Guerrero' (incl. Maratón Teotihuacan)",
+      "date": "2027-03-14",
+      "time": "05:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K",
+        "21K",
+        "42K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K",
+        "Half",
+        "Full"
+      ],
+      "city": "Teotihuacán",
+      "state": "Estado de México",
+      "venue": "Teotihuacán",
+      "organizer": "Márcate",
+      "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1791308771/",
+      "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1791308771/",
+      "confidence": "high",
+      "notes": "Race weekend at Teotihuacán with a full marathon, half, 10K, 5K and 3K walk on Sunday, plus the Guerrero Águila obstacle course on Saturday 13 March. Cap of 5,000 runners.",
+      "notesEs": "Fin de semana de carreras en Teotihuacán con maratón, medio maratón, 10K, 5K y caminata de 3K el domingo, además de la carrera de obstáculos Guerrero Águila el sábado 13 de marzo. Cupo de 5,000 corredores.",
+      "sourceNotes": "Price conflict on page: buttons show 42K $1,650 / 21K $880 / short $770; stage table shows $1,500/$800/$700 (Stage 1) and $1,600/$850/$750 (Stage 2). Prices left out of notes. Exact venue not given."
+    },
+    {
+      "id": "travesia-en-las-sierras-2027-16-edicion",
+      "name": "Travesía en las Sierras 2027 (16ª edición)",
+      "date": "2027-05-15",
+      "time": "06:00",
+      "distances": [
+        "50K",
+        "50 millas",
+        "100K",
+        "100 millas"
+      ],
+      "distanceTags": [
+        "Ultra"
+      ],
+      "city": "Villa del Carbón",
+      "state": "Estado de México",
+      "venue": "Plaza Hidalgo, centro de Villa del Carbón",
+      "organizer": "Carreras México",
+      "signupUrl": "https://carrerasmexico.com/registro/travesia-en-las-sierras-2027",
+      "sourceUrl": "https://www.tritour.org/eventos/travesia-en-las-sierras-2027",
+      "confidence": "medium",
+      "notes": "Mountain ultra through the Monte Bajo and Monte Alto sierras. 100 mi, 100K and 50 mi start at 06:00; 50K at 08:00. From $910 MXN (50K); prices rise 1 January 2027.",
+      "notesEs": "Ultra de montaña por las sierras de Monte Bajo y Monte Alto. 100 millas, 100K y 50 millas salen a las 06:00; 50K a las 08:00. Desde $910 MXN (50K); los precios suben el 1 de enero de 2027.",
+      "sourceNotes": "Signup slug is 2027-specific per tritour; carrerasmexico page not fetched directly. Program runs 15-16 May."
+    },
+    {
+      "id": "carrera-con-causa-hito-2026",
+      "name": "Carrera con Causa HITO 2026",
+      "date": "2026-10-25",
+      "time": "06:30",
+      "distances": [
+        "3K",
+        "6K",
+        "9K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Facultad de Lenguas y Letras, UAQ Campus Aeropuerto",
+      "organizer": "Hospital Infantil Teletón de Oncología (HITO) / Everesp",
+      "signupUrl": null,
+      "sourceUrl": "https://www.everesp.com/eventos/evento/58/carrera-con-causa-hito-2026",
+      "confidence": "high",
+      "notes": "Charity run for the Hospital Infantil Teletón de Oncología. Registration is sold out (cap of 500). Donation was $450 MXN in October. Kit pickup Saturday Oct 24, 10:00-14:00 at HITO; no pickup on race day. Same morning as Borregos Think Feel Run.",
+      "notesEs": "Carrera con causa a beneficio del Hospital Infantil Teletón de Oncología. Inscripciones agotadas (cupo de 500). El donativo en octubre fue de $450 MXN. Entrega de paquetes el sábado 24 de octubre, de 10:00 a 14:00, en el HITO; no hay entrega el día de la carrera. Coincide con la Borregos Think Feel Run.",
+      "sourceNotes": "Everesp event page shows 'Agotado' / 'Inscripciones agotadas', so signupUrl left null. Start 06:30 from Everesp; Tri Tour (tritour.org/eventos/carrera-con-causa-hito-2026) agrees on date, venue, distances and prices but gives no start time."
+    },
+    {
+      "id": "borregos-think-feel-run-queretaro-2026",
+      "name": "Borregos Think Feel Run Querétaro 2026",
+      "date": "2026-10-25",
+      "time": null,
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Estadio Borregos, Tecnológico de Monterrey Campus Querétaro",
+      "organizer": "Tec de Monterrey Campus Querétaro / AQ Sports",
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/es/carrera/borregos-think-feel-run-queretaro",
+      "confidence": "medium",
+      "notes": "Tec de Monterrey campus race supporting the Líderes del Mañana scholarship program. 5K and 10K loop on Prolongación Tecnológico and Bernardo Quintana; kids' races on the stadium track. Kit includes technical shirt, bib, chip and medal. Same morning as the HITO charity run.",
+      "notesEs": "Carrera del Tec de Monterrey campus Querétaro a beneficio del programa de becas Líderes del Mañana. Circuito de 5K y 10K por Prolongación Tecnológico y Bernardo Quintana; carreras infantiles en la pista del estadio. El kit incluye playera técnica, número, chip y medalla. Coincide con la carrera con causa HITO.",
+      "sourceNotes": "Single calendar (running.life JSON-LD startDate 2026-10-25). AQ Sports' /inscribete/ page links an eventos.tec.mx registration (id=a5uUG000000OyhNYAS) but that Salesforce page did not render, so it is not confirmed tied to this edition; signupUrl null. Start time and price not published on the fetched pages. A web-search summary mentioned 21 Nov; not corroborated by any fetched page."
+    },
+    {
+      "id": "iv-circuito-de-carreras-skarch-5k-y-10k",
+      "name": "IV Circuito de Carreras Skarch 5K y 10K Querétaro 2026",
+      "date": "2026-11-15",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Parque Bicentenario Querétaro",
+      "organizer": "Skarch / TIM3",
+      "signupUrl": "https://www.tim3.com.mx/evento/44",
+      "sourceUrl": "https://www.tim3.com.mx/evento/44",
+      "confidence": "high",
+      "notes": "Registration $330 MXN, limited spots. Registration closes Friday Nov 13 at 17:00. Chip timing.",
+      "notesEs": "Inscripción de $330 MXN, cupo limitado. Las inscripciones cierran el viernes 13 de noviembre a las 17:00. Cronometraje con chip.",
+      "sourceNotes": "TIM3 registration page renders date, 07:00 start, venue, price and open 'Inscribirme Ahora'. running.life agrees on 2026-11-15 (geo listed as San Isidro Buenavista, the area of Parque Bicentenario in Querétaro municipality). An Aug 30 2026 Skarch date surfaced in search snippets: that was an earlier circuit stage, not this one."
+    },
+    {
+      "id": "midnight-run-club-2026",
+      "name": "Midnight Run Club 2026",
+      "date": "2026-11-21",
+      "time": "20:00",
+      "distances": [
+        "9K"
+      ],
+      "distanceTags": [
+        "10K"
+      ],
+      "city": "El Marqués",
+      "state": "Querétaro",
+      "venue": "Universidad Anáhuac Querétaro, Circuito Universidades 1 km 7",
+      "organizer": "Xtrail México",
+      "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=midnight-run-club",
+      "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=midnight-run-club",
+      "confidence": "high",
+      "notes": "Night relay in pairs: each runner does 3 km, then both run the final 3 km together. Men, women and mixed pairs. $700 MXN per pair. Wear black or neon with reflective gear and bring a headlamp. Strobe lights and loud music on course. Kit pickup race day 18:30-19:30.",
+      "notesEs": "Relevo nocturno por parejas: cada integrante corre 3 km y luego ambos corren juntos los últimos 3 km. Categorías varonil, femenil y mixta. $700 MXN por pareja. Usa ropa negra o neón con reflejantes y lleva lámpara frontal. Habrá luces intermitentes y música a alto volumen. Entrega de kits el mismo día, de 18:30 a 19:30.",
+      "sourceNotes": "Price conflict: Xtrail official page says $700 MXN per pair ('Desde $700.00'); Tri Tour (tritour.org/eventos/midnight-run-club-2026) says $1,199 per pair. Used the organizer's figure in notes. Xtrail lists the city as 'Querétaro' but the address text says the Anáhuac campus is in El Marqués."
+    },
+    {
+      "id": "run-rave-5k-wellness-weekend-2026",
+      "name": "Run & Rave 5K — Wellness Weekend 2026",
+      "date": "2026-11-22",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "El Marqués",
+      "state": "Querétaro",
+      "venue": "Bodega Barrigona",
+      "organizer": "Trail Festival",
+      "signupUrl": "https://carrerasmexico.com/registro/the-wellness-weekend",
+      "sourceUrl": "https://carrerasmexico.com/registro/the-wellness-weekend",
+      "confidence": "medium",
+      "notes": "Recreational 5K among vineyards with DJ, recovery zone and brunch, 08:00-12:00 program. $299 MXN through Oct 31, $399 from Nov 1 (plus fees). Kit: shirt, medal, bib. The Saturday Wellness Day is a separate registration.",
+      "notesEs": "5K recreativo entre viñedos con DJ, zona de recuperación y brunch; programa de 08:00 a 12:00. $299 MXN hasta el 31 de octubre y $399 desde el 1 de noviembre (más cargos). Kit: playera, medalla y número. El Wellness Day del sábado se inscribe por separado.",
+      "sourceNotes": "Carreras México registration page is for 'The Wellness Weekend' dated Sat 21 Nov at Bárbaro Asador de Campo (Salida 07:00), with a 'Run Rave 5k' $299 option. Tri Tour (tritour.org/eventos/run-rave-5k-wellness-weekend-2026) and Runera put the Run & Rave itself on Sun 22 Nov at Bodega Barrigona. Date taken from the two calendars that agree; time left null because 07:00 (registration page) vs 08:00 program start (Tri Tour) conflict. City El Marqués comes from Runera only; Tri Tour just says 'Querétaro'."
+    },
+    {
+      "id": "xtrail-dog-series-rancho-la-providencia-2026",
+      "name": "Xtrail Dog Series Rancho La Providencia 2026",
+      "date": "2026-12-06",
+      "time": "06:45",
+      "distances": [
+        "3K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Ezequiel Montes",
+      "state": "Querétaro",
+      "venue": "Rancho La Providencia",
+      "organizer": "Xtrail México",
+      "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=xtrail-dog-series-rancho-la-providencia",
+      "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=xtrail-dog-series-rancho-la-providencia",
+      "confidence": "high",
+      "notes": "Canitrail: run, jog or walk with your dog, last Dog Series edition of the year. From $500 MXN. Personalized bib guaranteed for entries before Nov 1. No cups on course, so carry your own bottle or soft flask. Vet service on site.",
+      "notesEs": "Canitrail: corre, trota o camina con tu perro; última edición del año de la Dog Series. Desde $500 MXN. Dorsal personalizado garantizado si te inscribes antes del 1 de noviembre. No hay vasos en la ruta, lleva tu propio cilindro o soft flask. Servicio veterinario en sitio.",
+      "sourceNotes": "Organizer page lists +3 km and +5 km Canitrail and '06/12/2026 · 06:45'. Also on the xtrailmexico.com/eventos/ upcoming list."
+    },
+    {
+      "id": "san-ildefonso-green-walker-trail-series-2026",
+      "name": "San Ildefonso Green Walker Trail Series 2026",
+      "date": "2026-12-06",
+      "time": null,
+      "distances": [
+        "6K",
+        "12K",
+        "21K",
+        "27K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K",
+        "Half",
+        "30K"
+      ],
+      "city": "Amealco de Bonfil",
+      "state": "Querétaro",
+      "venue": "Centro de San Ildefonso Tultepec",
+      "organizer": "Green Walker",
+      "signupUrl": "https://carrerasmexico.com/registro/san-ildefonso-green-walker-trail-series",
+      "sourceUrl": "https://carrerasmexico.com/registro/san-ildefonso-green-walker-trail-series",
+      "confidence": "high",
+      "notes": "Mountain trail race in the land of the Otomí doll. 6K $549, 12K $649, 21K $699, 27K $749 MXN (plus fees); free 600 m kids' run. Registration closes Dec 2. Trail shoes and a hydration pack or belt with a collapsible cup required.",
+      "notesEs": "Trail de montaña en la tierra de la muñeca otomí. 6K $549, 12K $649, 21K $699 y 27K $749 MXN (más cargos); carrera infantil de 600 m sin costo. Las inscripciones cierran el 2 de diciembre. Se requieren tenis de trail e hidratación con vaso plegable.",
+      "sourceNotes": "Start time conflict: Carreras México registration page says 'Salida 07:00'; Runera (runera.mx/carreras/detalle/san-ildefonso-green-walker-trail-series-2026) says 07:50 and also shows 'Inscripciones cerradas', which contradicts the open registration page. Time left null. Amealco is ~1.5 h from Querétaro city (state-level race)."
+    },
+    {
+      "id": "ruba-race-queretaro-2026",
+      "name": "Ruba Race Querétaro 2026",
+      "date": "2026-12-13",
+      "time": null,
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "El Marqués",
+      "state": "Querétaro",
+      "venue": "Fraccionamiento Ciudad Marqués, carretera 420 s/n, El Rosario",
+      "organizer": "Ruba Residencial",
+      "signupUrl": "https://carrerasmexico.com/registro/ruba-race-2026",
+      "sourceUrl": "https://carrerasmexico.com/registro/ruba-race-2026",
+      "confidence": "medium",
+      "notes": "5K plus kids' races (100 m and 200 m). $50 MXN fee plus a required new toy (about $300) delivered at kit pickup. Cap of 300. No bag check.",
+      "notesEs": "5K más carreras infantiles de 100 m y 200 m. Cuota de $50 MXN más un juguete nuevo obligatorio (de unos $300) que se entrega al recoger el kit. Cupo de 300. No hay guardarropa.",
+      "sourceNotes": "Date conflict: Carreras México registration page and Runera both say Sun 13 Dec 2026 (registration closes 6 Dec); Tri Tour (tritour.org/eventos/ruba-race-queretaro-2026) says Sun 6 Dec with kit pickup 4-5 Dec and registration closing 29 Nov. Used the registration page date. Time conflict: Carreras México 'Salida 08:00' vs Tri Tour/Runera 08:30 start (08:00 call time); left null."
+    },
+    {
+      "id": "corre-por-el-pavo-qro-2026",
+      "name": "Corre por el Pavo QRO 2026",
+      "date": "2026-12-13",
+      "time": "07:00",
+      "distances": [
+        "4K",
+        "8K",
+        "12K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "15K"
+      ],
+      "city": "Corregidora",
+      "state": "Querétaro",
+      "venue": "Plaza Gran Cué, Camino al Cerrito, El Pueblito",
+      "organizer": "Everesp",
+      "signupUrl": "https://www.everesp.com/eventos/evento/53/corre-por-el-pavo-qro-2026",
+      "sourceUrl": "https://www.everesp.com/eventos/evento/53/corre-por-el-pavo-qro-2026",
+      "confidence": "high",
+      "notes": "Christmas turkey run. $479.90 MXN, cap of 1,000. 12K starts 07:00, 8K 07:04, 4K 07:08; kids' and crawler races after. Kit pickup Sat Dec 12, 10:00-13:45 at Plaza Gran Cué with a printed medical certificate no older than 30 days. Same day as Ruba Race.",
+      "notesEs": "Carrera navideña del pavo. $479.90 MXN, cupo de 1,000. Salidas: 12K a las 07:00, 8K a las 07:04 y 4K a las 07:08; después, infantiles y gateadores. Entrega de kits el sábado 12 de diciembre, de 10:00 a 13:45, en Plaza Gran Cué, con certificado médico impreso de no más de 30 días. Coincide con la Ruba Race.",
+      "sourceNotes": "Everesp page shows 'Quiero inscribirme' with live categories; Tri Tour (tritour.org/eventos/corre-por-el-pavo-qro-2026) agrees on all fields."
+    },
+    {
+      "id": "carrera-san-silvestre-hercules-2026-6-edicion",
+      "name": "Carrera San Silvestre Hércules 2026 (6ª edición)",
+      "date": "2026-12-27",
+      "time": "07:55",
+      "distances": [
+        "5.4K",
+        "10.4K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Santiago de Querétaro",
+      "state": "Querétaro",
+      "venue": "Unidad Deportiva La Purísima, calle del Deporte 7, col. Hércules",
+      "organizer": null,
+      "signupUrl": "https://carrerasmexico.com/registro/carrera-san-silvestre-hercules-2026",
+      "sourceUrl": "https://carrerasmexico.com/registro/carrera-san-silvestre-hercules-2026",
+      "confidence": "high",
+      "notes": "Last race of the year, 'La última y nos vamos'. 5.4 km starts 07:55, 10.4 km at 08:00. $325 MXN in October, $350 from Nov 1 to Dec 26 (plus fees). Cap of 500. Kit pickup Sat Dec 26, 10:00-16:00 at the venue.",
+      "notesEs": "La última carrera del año, 'La última y nos vamos'. Salida de 5.4 km a las 07:55 y de 10.4 km a las 08:00. $325 MXN en octubre y $350 del 1 de noviembre al 26 de diciembre (más cargos). Cupo de 500. Entrega de kits el sábado 26 de diciembre, de 10:00 a 16:00, en la sede.",
+      "sourceNotes": "Carreras México registration page (open) and Tri Tour (tritour.org/eventos/carrera-san-silvestre-hercules-2026) and Runera all agree. Organizer name not stated on fetched pages."
     }
   ]
 }
