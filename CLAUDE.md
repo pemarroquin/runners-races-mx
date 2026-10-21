@@ -278,8 +278,9 @@ indistinguishable from one reading 0% because nobody ran.
   camera's browse hold. Readiness is state now. When gating an effect on
   readiness, ask what re-runs it.
 - **`npm run measure-holes`** — read-only, public key (it reads
-  `tile_visits`, which is world-readable — an open privacy item in
-  BACKLOG.md; it stops working the day that's narrowed). Reports the size
+  `tile_visits`, which since 20261021120000 needs a signed-in session, so the
+  script's bare public key now reads `[]`; it needs a secret key, or better,
+  a one-off export — an open privacy item, see below). Reports the size
   distribution of holes in every runner's covered ground and what the shipped
   `noiseHoles()` would fill. Run it before changing `MAX_NOISE_HOLE_CELLS`;
   the cap sits in a measured gap (nothing between 3 cells / 56 m and 9 cells
@@ -407,8 +408,11 @@ Expo Go on device — no store builds. Bilingual, Spanish default
 GitHub on open, SQLite saved list (`src/lib/db.ts`), `expo-calendar`,
 `react-native-webview` for sponsor checkout. Territory Mode is NOT: runs,
 tiles and visits live in Supabase (anonymous auth, publishable key). `runs`
-is select-own since 2026-09-20; `tile_visits` is still read-all (see
-BACKLOG.md). Web preview auto-deploys to runningapp.pmarroquin.com on push to
+is select-own since 2026-09-20; `tile_visits` is readable by any signed-in
+(anonymous included) user, because Local Leaders rebuilds enclosure on device
+from other runners' rows — still a route-trace leak to anyone who mints an
+anonymous session; the real fix is persisting each session's ground
+server-side (see the PR that added 20261021120000). Web preview auto-deploys to runningapp.pmarroquin.com on push to
 `main`.
 
 Race-card art is 75 bundled WebP scenes in `src/lib/region-art.ts`

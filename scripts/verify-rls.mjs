@@ -120,6 +120,20 @@ async function main() {
     }
   }
 
+  // Sessionless READ of the visit log. Reads prove nothing for most tables
+  // (see the header), but tile_visits is a route trace per run: it must answer
+  // [] to the bare publishable key. An empty table also answers [], so a pass
+  // here on a quiet project is reported as such rather than as proof.
+  const visits = await fetch(`${URL_BASE}/rest/v1/tile_visits?select=h3&limit=1`, { headers });
+  if (visits.status === 404) {
+    console.log('\n  tile_visits sessionless read: not deployed to this project');
+  } else if (visits.ok && (await visits.json()).length > 0) {
+    unprotected.push('tile_visits (sessionless read returns rows)');
+    console.log('\n  tile_visits sessionless read: *** RETURNS ROWS — apply 20261021120000_tile_visits_authenticated_only ***');
+  } else {
+    console.log(`\n  tile_visits sessionless read: ${visits.status}, no rows (also true if the table is empty)`);
+  }
+
   if (skipped.length > 0) {
     console.log(`\n${skipped.length} table(s) not probed: ${skipped.join(', ')}`);
     console.log('Give each a not-null column with no default, or check it by hand.');

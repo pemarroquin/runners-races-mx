@@ -5,11 +5,15 @@
 // repo has already shipped a leaderboard that silently ranked a truncated
 // 1000-row sample (see fetchTileLeaderboard's own paging comment).
 //
-// NEEDS NO MIGRATION, which is the point. `tile_visits` already has a `read
-// all` policy, opened when the table was created for exactly this ("other
-// runners' tile_visits eventually for the Layer 2 rolling board"). Migrations
-// here are applied BY HAND and an unapplied one reads as an honest zero, so
-// a board that needs no SQL cannot be broken by forgetting to run any.
+// NEEDS NO MIGRATION, which is the point. `tile_visits` is readable by any
+// signed-in user (anonymous sessions included) — opened when the table was
+// created for exactly this ("other runners' tile_visits eventually for the
+// Layer 2 rolling board"), and narrowed from every role to `authenticated` by
+// 20261021120000. Migrations here are applied BY HAND and an unapplied one
+// reads as an honest zero, so a board that needs no SQL cannot be broken by
+// forgetting to run any. The read stays this wide because Local Leaders
+// rebuilds each session's enclosure on device (see mayorship.ts); narrowing
+// further means moving that server-side.
 //
 // A park-path read used to live here and was deleted 2026-09-09 — at the
 // time, `park_path_cells` was genuinely empty in production, so the read fed
