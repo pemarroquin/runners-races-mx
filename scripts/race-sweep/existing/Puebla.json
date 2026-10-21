@@ -1,0 +1,86 @@
+[
+ {
+  "id": "3a-carrera-ibero",
+  "name": "3a Carrera Ibero",
+  "date": "2026-07-05",
+  "city": "San Andrés Cholula",
+  "sourceUrl": "https://tritour.org/calendario-carreras-puebla"
+ },
+ {
+  "id": "lomitos-imparables",
+  "name": "Lomitos Imparables",
+  "date": "2026-07-19",
+  "city": "Puebla",
+  "sourceUrl": "https://tritour.org/calendario-carreras-puebla"
+ },
+ {
+  "id": "carrera-bonn-2026",
+  "name": "Carrera Bonn 2026",
+  "date": "2026-07-25",
+  "city": "Puebla",
+  "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/530"
+ },
+ {
+  "id": "carrera-multimedios",
+  "name": "Carrera Multimedios",
+  "date": "2026-07-26",
+  "city": "Puebla",
+  "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/507"
+ },
+ {
+  "id": "snoopy-run-puebla-2026",
+  "name": "Snoopy Run Puebla 2026",
+  "date": "2026-08-16",
+  "city": "Puebla",
+  "sourceUrl": "https://asdeporte.com/evento/snoopy-run-club-puebla-2026-v19"
+ },
+ {
+  "id": "leones-an-huac-2026",
+  "name": "Leones Anáhuac 2026",
+  "date": "2026-09-20",
+  "city": "San Andrés Cholula",
+  "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/528"
+ },
+ {
+  "id": "bimbo-global-race-puebla-2026",
+  "name": "Bimbo Global Race Puebla 2026",
+  "date": "2026-09-27",
+  "city": "Puebla",
+  "sourceUrl": "https://www.asdeporte.com/evento/bimbo-global-race-puebla-2026-e27/inscripcion"
+ },
+ {
+  "id": "carrera-vertical-inxignia-2026-2",
+  "name": "Carrera Vertical Inxignia 2026 (2ª)",
+  "date": "2026-09-27",
+  "city": "San Andrés Cholula",
+  "sourceUrl": "https://running.life/calendario-carreras/mexico/puebla"
+ },
+ {
+  "id": "barbie-run-puebla-2026",
+  "name": "Barbie Run Puebla 2026",
+  "date": "2026-10-25",
+  "city": "Puebla",
+  "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento"
+ },
+ {
+  "id": "carrera-canacine",
+  "name": "Carrera Canacine",
+  "date": "2026-10-31",
+  "city": "Puebla",
+  "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/517"
+ },
+ {
+  "id": "3a-carrera-pericos",
+  "name": "3a Carrera Pericos",
+  "date": "2026-12-06",
+  "city": "Puebla",
+  "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501"
+ },
+ {
+  "id": "marat-n-de-puebla-2026",
+  "name": "Maratón de Puebla 2026",
+  "date": "2026-11-29",
+  "city": "Puebla",
+  "sourceUrl": "https://www.milenio.com/deportes/puebla-40-carreras-atleticas-2026-calendario"
+ }
+]
