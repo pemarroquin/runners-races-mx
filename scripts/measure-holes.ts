@@ -47,7 +47,13 @@ function env(name: string): string {
 }
 
 const URL_BASE = env('EXPO_PUBLIC_SUPABASE_URL');
-const ANON = env('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+// tile_visits is select-own since 20261023130000, so the publishable key
+// would measure only an anonymous nobody's (empty) ground and report no
+// holes. Read with the secret key, same as verify-claims.
+const SECRET = env('SUPABASE_SERVICE_KEY');
+if (!SECRET.startsWith('sb_secret_')) {
+  throw new Error('SUPABASE_SERVICE_KEY must be an sb_secret_ key: anything weaker sees no other runner');
+}
 
 /** Every row, following PostgREST's 1000-row page cap. A truncated
  *  measurement would under-report hole sizes, which is the direction that
@@ -56,7 +62,7 @@ async function restAll<T>(query: string): Promise<T[]> {
   const out: T[] = [];
   for (let offset = 0; ; offset += 1000) {
     const res = await fetch(`${URL_BASE}/rest/v1/${query}&offset=${offset}&limit=1000`, {
-      headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+      headers: { apikey: SECRET },
     });
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     const page = (await res.json()) as T[];

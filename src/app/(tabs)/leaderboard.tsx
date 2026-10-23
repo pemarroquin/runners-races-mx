@@ -51,32 +51,17 @@ import { BottomTabInset, Colors, Spacing, type ThemeColor } from '@/constants/th
 import { onIdentityChanged } from '@/lib/auth-events';
 import {
   fetchDistrictParkCells,
-  fetchDistrictVisits,
+  fetchLocalLeaders,
   fetchMyMayorCells,
-  fetchRunStats,
-  fetchRunVisits,
+  type LocalLeaders,
   type ParkCell,
 } from '@/lib/boards';
 import { districtLabel } from '@/lib/district';
 import { nearestRegion } from '@/lib/regions';
 import { useI18n } from '@/lib/i18n';
 import { districtConquest, type TileOwnerRow } from '@/lib/leaderboard';
-import {
-  daysPresent,
-  holdingsOf,
-  runnerTotals,
-  sessionGroundVisits,
-  withMineElsewhere,
-} from '@/lib/local-leaders';
-import {
-  MAYORSHIP_WINDOW_DAYS,
-  mayorByCell,
-  namesOf,
-  rankMayorMap,
-  scopeVisits,
-  type RunStats,
-  type TileVisitRow,
-} from '@/lib/mayorship';
+import { holdingsOf, withMineElsewhere } from '@/lib/local-leaders';
+import { MAYORSHIP_WINDOW_DAYS, rankMayorMap } from '@/lib/mayorship';
 import { formatDistance, formatPace } from '@/lib/tracking';
 import {
   BUNDLED_SUBDIVISIONS,
@@ -100,18 +85,10 @@ interface BoardData {
   /** For districtLabel's caption only — a failed or empty read just means
    *  the arena falls back to the metro region name, never a failed board. */
   parkCells: ParkCell[];
-  visits: Parameters<typeof mayorByCell>[0];
-  /** Distance/duration/laps per run, for Local Leaders' tiebreakers and row
-   *  totals. null when the run_stats read failed (e.g. before its migration
-   *  is applied): rows then show days only and ties go to the incumbent —
-   *  never everyone at zero. */
-  runStats: Map<string, RunStats> | null;
-  /** Local Leaders' raw material: each recent session's GROUND (tiles it
-   *  crossed plus the inside of loops it closed), one row per tile, stamped
-   *  with the session's day — see sessionGroundVisits. null when the
-   *  sessions' paths couldn't be read: the card says so rather than ranking
-   *  on crossed streets alone, which reads as broken enclosure. */
-  leaderVisits: TileVisitRow[] | null;
+  /** Local Leaders as the server scored it (boards.ts fetchLocalLeaders),
+   *  already cut to this arena. null when it couldn't be read: the card
+   *  says so rather than showing an empty board. */
+  leaders: LocalLeaders | null;
   failed: boolean;
 }
 
@@ -223,7 +200,7 @@ export default function LeaderboardScreen() {
     // denominator it used to feed stays gone (see ConquestEntry.share); a
     // failed or empty read here must never fail the board, just fall back
     // the caption to the metro region name.
-    const [board, parks, visits] = await Promise.all([
+    const [board, parks, leaders] = await Promise.all([
       // Scoped to this district server-side, like the two reads beside it —
       // see fetchTileLeaderboard's own `district` param for what the
       // unscoped version cost.
@@ -234,29 +211,15 @@ export default function LeaderboardScreen() {
       forArena.kind === 'district'
         ? fetchDistrictParkCells(forArena.key)
         : Promise.resolve({ ok: true as const, parkCells: [] as ParkCell[] }),
-      fetchDistrictVisits(forArena.districts),
+      // Scored server-side; never other runners' raw visits (20261023120000).
+      fetchLocalLeaders(forArena),
     ]);
-    // After the visits, because it needs their run ids: the sessions inside
-    // the window mayorship reads that came near this arena (the padding ring
-    // included, so a loop around ground at the edge still counts). Visits
-    // are all-time, so passing every id would grow with history for nothing.
-    // Then, together: their numbers (tiebreakers) and their WHOLE paths, so
-    // each session's enclosure can be rebuilt even where it crosses the edge.
-    const cutoff = Date.now() - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const runIds = visits.ok
-      ? visits.visits.flatMap((v) => (v.runId && Date.parse(v.visitedAt) >= cutoff ? [v.runId] : []))
-      : [];
-    const [runStats, runVisits] = visits.ok
-      ? await Promise.all([fetchRunStats(runIds), fetchRunVisits(runIds, namesOf(visits.visits))])
-      : [null, null];
     return {
       arenaKey: forArena.key,
-      runStats: runStats?.ok ? runStats.stats : null,
-      leaderVisits: runVisits?.ok ? sessionGroundVisits(runVisits.visits) : null,
+      leaders: leaders.ok ? leaders.leaders : null,
       tiles: board.ok ? board.tiles : null,
       meUserId: board.ok ? board.meUserId : null,
       parkCells: parks.ok ? parks.parkCells : [],
-      visits: visits.ok ? visits.visits : [],
       // Only the ownership read failing is a failed BOARD; missing park
       // cells or visits just means a decorative fallback / an empty Local
       // Leaders section.
@@ -338,31 +301,15 @@ export default function LeaderboardScreen() {
   }, [shown, shownArena]);
 
   // ---- Board 2: mayorship over ground people keep coming back to ----------
-  // Decided ONCE per load; the ranking and the map shapes both read it, so
-  // they can't disagree.
-  const leaderScoped = useMemo(
-    () => (shown?.leaderVisits && shownArena ? scopeVisits(shown.leaderVisits, shownArena) : null),
-    [shown, shownArena],
-  );
-  const mayors = useMemo(
-    () => (leaderScoped ? mayorByCell(leaderScoped, undefined, shown?.runStats ?? undefined) : null),
-    [leaderScoped, shown],
-  );
+  // Decided ONCE, on the server, per load; the ranking and the map shapes
+  // both read the same mayor map, so they can't disagree.
+  const mayors = shown?.leaders?.mayors ?? null;
   const leaders = useMemo(
-    () => (mayors && leaderScoped ? rankMayorMap(mayors, namesOf(leaderScoped)) : null),
-    [mayors, leaderScoped],
+    () => (shown?.leaders ? rankMayorMap(shown.leaders.mayors, shown.leaders.names) : null),
+    [shown],
   );
-  const leaderDays = useMemo(
-    () => (leaderScoped ? daysPresent(leaderScoped, null) : new Map<string, number>()),
-    [leaderScoped],
-  );
-  const leaderTotals = useMemo(
-    () =>
-      shown?.runStats && shown.leaderVisits && shownArena
-        ? runnerTotals(shown.leaderVisits, shownArena, shown.runStats)
-        : null,
-    [shown, shownArena],
-  );
+  const leaderDays = shown?.leaders?.days ?? EMPTY_DAYS;
+  const leaderTotals = shown?.leaders?.totals ?? null;
 
   // The arena's caption — always the place being switched TO, so the pill
   // names the destination the moment an arrow is tapped. A subdivision has
@@ -568,7 +515,7 @@ export default function LeaderboardScreen() {
   const cardState: BoardCardState =
     shown === null
       ? 'loading'
-      : shown.failed || (isLocal && shown.leaderVisits === null)
+      : shown.failed || (isLocal && shown.leaders === null)
         ? 'failed'
         : 'ready';
 
@@ -627,6 +574,10 @@ export default function LeaderboardScreen() {
 type Board = 'municipio' | 'local';
 
 /** Glass capsule height; content below it offsets by this. */
+/** One stable empty map, so a board with no leaders doesn't hand every
+ *  render a new object. */
+const EMPTY_DAYS: ReadonlyMap<string, number> = new Map();
+
 const CAPSULE_H = 40;
 /** Ranking card: header + about three rows, the rest scrolls inside. */
 const CARD_HEADER_H = 36;

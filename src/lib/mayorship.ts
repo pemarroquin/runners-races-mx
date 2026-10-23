@@ -30,6 +30,12 @@
 // PURE, on rows already fetched — same philosophy as leaderboard.ts and
 // territory.ts, and the reason this suite (`environment: 'node'`, no
 // renderer, no Postgres) can cover the mechanic completely.
+//
+// THE REFERENCE, not the live path, since 2026-10-23. The board is scored
+// in Postgres (20261023120000, local_leader_mayors) so other runners' raw
+// visits never reach a device; mayorByCell is the rule that SQL
+// transcribes, and test/local-leaders-sql.test.ts holds the two equal on
+// random data. Change the rule here AND there, or that test fails.
 import { asScope, type ArenaScope } from '@/lib/district';
 import { compareUserId } from '@/lib/leaderboard';
 

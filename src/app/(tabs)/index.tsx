@@ -52,7 +52,7 @@ import { nearestRegion } from '@/lib/regions';
 import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
-import { fetchMyFences, reclaimUnclaimedRuns, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
+import { fetchMyFences, reclaimUnclaimedRuns, recordMissingGround, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
 import { flushClaims, listClaims } from '@/lib/claim-queue';
 import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
@@ -335,6 +335,10 @@ export default function TrackScreen() {
       // late, or before the claim queue existed) — once per app session.
       void reclaimUnclaimedRuns().then((r) => {
         if (r.claimed > 0) notifyRunSaved();
+        // After the reclaim, which records ground for what it claims. This
+        // catches the rest: sessions claimed before Local Leaders moved to
+        // the server, or whose enclosure record failed.
+        void recordMissingGround();
       });
       const before = queuedCount();
       if (before === 0) {
