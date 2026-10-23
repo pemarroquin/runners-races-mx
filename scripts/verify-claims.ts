@@ -20,8 +20,12 @@
 // bounding box rather than by re-running enclosedCells, because the path
 // stored here is the privacy-MASKED one. See OFF_PATH_MARGIN_M below.
 //
-// Read-only. Uses the anon key and the read-all policies; it cannot modify
-// or delete anything. Same posture as audit-territories.mjs.
+// Read-only in what it does, NOT in what its key could do. `runs` is
+// select-own since 2026-09-20, so the publishable key sees ZERO runs and
+// this script used to report "no findings" about nothing. It now reads with
+// the project's secret key (SUPABASE_SERVICE_KEY in .env.local, an
+// `sb_secret_...` key: never committed, never pasted into chat), which
+// bypasses RLS. Every request below is a GET.
 //
 //   npm run verify-claims             # last 14 days
 //   npm run verify-claims -- --all    # every run
@@ -66,11 +70,18 @@ function env(name: string): string {
 }
 
 const URL_BASE = env('EXPO_PUBLIC_SUPABASE_URL');
-const ANON = env('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+const SECRET = env('SUPABASE_SERVICE_KEY');
+// The publishable key would authenticate fine and then see nothing, which is
+// exactly the silent failure this replaces. Refuse anything but a secret key.
+if (!SECRET.startsWith('sb_secret_')) {
+  throw new Error('SUPABASE_SERVICE_KEY must be an sb_secret_ key: anything weaker cannot read other runners\' runs');
+}
 
 async function rest<T>(query: string): Promise<T> {
+  // New-style keys are not JWTs: they go in `apikey` only. A Bearer header
+  // carrying one is rejected by the gateway.
   const res = await fetch(`${URL_BASE}/rest/v1/${query}`, {
-    headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+    headers: { apikey: SECRET },
   });
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
   return (await res.json()) as T;
@@ -112,6 +123,15 @@ async function main() {
     distance_m: number;
     raw_path: [number, number, number][] | null;
   }>('runs', 'id,user_id,started_at,distance_m,raw_path', all ? 'id=not.is.null' : `started_at=gte.${since}`, 'started_at.asc');
+
+  // Zero runs is a claim about the window, not proof of a clean audit. With
+  // --all it can only mean the read is blind (wrong key, wrong project), so
+  // that fails; for the 14-day window it is said out loud, never as "clean".
+  if (runs.length === 0) {
+    if (all) throw new Error('read 0 runs with --all: the key cannot see runs, so nothing was audited');
+    console.log(`no runs in the last ${DEFAULT_DAYS} days: nothing was audited (try --all)`);
+    return;
+  }
 
   const findings: Finding[] = [];
   let checked = 0;

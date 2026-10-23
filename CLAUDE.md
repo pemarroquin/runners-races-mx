@@ -168,15 +168,26 @@ base cells worldwide.
   by distinct days present in a trailing 30. **Enclosure counts** (Pedro,
   2026-09-30): each session's GROUND — tiles crossed plus the inside of loops
   that same session closed (`sessionGroundVisits`, enclosure.ts's
-  `groundOfRun`) — is stamped with the session's day, rebuilt on device
-  from `tile_visits` (each session's whole path via `fetchRunVisits`). Both
+  `groundOfRun`) — is stamped with the session's day. **Scored on the
+  SERVER since 2026-10-23** (`20261023120000_local_leaders_server_side.sql`):
+  each session's ground is stored once in `run_sessions` + `run_ground`
+  (crossed tiles mirrored from `tile_visits` by a trigger; the enclosed ones
+  computed by the runner's own device and sent via `record_run_ground`,
+  bounded like a claim and filtered to the loop's res-6 region), and
+  `local_leaders_cells` / `local_leaders_runners` / `my_mayor_cells` return
+  only mayors and per-mayor numbers. mayorship.ts + local-leaders.ts stay as
+  the REFERENCE: `test/local-leaders-sql.test.ts` runs the migration in
+  PGlite and holds the SQL equal to them on random data, so change the rule
+  in both or the test fails. Never go back to reading other runners'
+  `tile_visits` on device: that read is what kept location history public. Both
   boards enclose; Leaderboard's ground goes to whoever ran it last, Local
   Leaders' to whoever keeps coming back. One day per session. One point per day, so nobody
   buys a title with one huge Sunday. Ties on days go to more laps in the
   runs through that cell (whole-run laps — per-cell laps aren't stored),
   then more distance, then the incumbent (Pedro, 2026-09-30); pace is
-  shown, never ranked. Run numbers come from the `run_stats` RPC — `runs`
-  stays select-own. Cannot be taken in a single visit.
+  shown, never ranked. Run numbers are joined server-side (flagged runs add
+  no effort but still count their day) — `runs` stays select-own. Cannot be
+  taken in a single visit.
 
 **Live updates are a broadcast, not a table stream** (`live-territory.ts`).
 Streaming `territory_tiles` changes would push ~26,000 messages per 10 km
@@ -277,9 +288,13 @@ indistinguishable from one reading 0% because nobody ran.
   when a session started before the map loaded — silently removing the
   camera's browse hold. Readiness is state now. When gating an effect on
   readiness, ask what re-runs it.
-- **`npm run measure-holes`** — read-only, public key (it reads
-  `tile_visits`, which is world-readable — an open privacy item in
-  BACKLOG.md; it stops working the day that's narrowed). Reports the size
+- **`npm run measure-holes`** — read-only, reads every runner's
+  `tile_visits` with the SECRET key (`SUPABASE_SERVICE_KEY`, an
+  `sb_secret_...` in `.env.local`; `verify-claims` and `backfill-run-ground`
+  use it too). The publishable key sees no other runner since
+  `tile_visits` went select-own, and a script reading with it reports
+  "nothing found" about nothing. Needs `vite-node` (a devDependency again:
+  the vitest 5 bump dropped it and broke every `vite-node` script). Reports the size
   distribution of holes in every runner's covered ground and what the shipped
   `noiseHoles()` would fill. Run it before changing `MAX_NOISE_HOLE_CELLS`;
   the cap sits in a measured gap (nothing between 3 cells / 56 m and 9 cells
@@ -407,8 +422,11 @@ Expo Go on device — no store builds. Bilingual, Spanish default
 GitHub on open, SQLite saved list (`src/lib/db.ts`), `expo-calendar`,
 `react-native-webview` for sponsor checkout. Territory Mode is NOT: runs,
 tiles and visits live in Supabase (anonymous auth, publishable key). `runs`
-is select-own since 2026-09-20; `tile_visits` is still read-all (see
-BACKLOG.md). Web preview auto-deploys to runningapp.pmarroquin.com on push to
+is select-own since 2026-09-20; `tile_visits` goes select-own with
+`20261023130000` (applied only after the client scoring Local Leaders
+server-side is live; check BACKLOG.md for whether it has been).
+`npm run verify-tile-visits-closed` is the live check, with no session AND
+a fresh anonymous one. Web preview auto-deploys to runningapp.pmarroquin.com on push to
 `main`.
 
 Race-card art is 75 bundled WebP scenes in `src/lib/region-art.ts`

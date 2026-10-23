@@ -5,11 +5,12 @@
 // repo has already shipped a leaderboard that silently ranked a truncated
 // 1000-row sample (see fetchTileLeaderboard's own paging comment).
 //
-// NEEDS NO MIGRATION, which is the point. `tile_visits` already has a `read
-// all` policy, opened when the table was created for exactly this ("other
-// runners' tile_visits eventually for the Layer 2 rolling board"). Migrations
-// here are applied BY HAND and an unapplied one reads as an honest zero, so
-// a board that needs no SQL cannot be broken by forgetting to run any.
+// Board 2 (Local Leaders) DOES need SQL since 2026-10-23: its scoring moved
+// into 20261023120000 so `tile_visits` could stop serving every runner's
+// dated routes. The old rule here was "needs no migration, so forgetting
+// one can't break it"; that rule cost a privacy hole. An unapplied
+// migration now FAILS the board (an RPC error is 'network', and the card
+// says it couldn't load), never a silent zero.
 //
 // A park-path read used to live here and was deleted 2026-09-09 — at the
 // time, `park_path_cells` was genuinely empty in production, so the read fed
@@ -18,17 +19,8 @@
 // loaded the same day (36,193 cells, see BACKLOG). `fetchDistrictParkCells`
 // is restored ONLY for district.ts's districtLabel — a decorative caption,
 // never a score — not for any denominator.
-import { gridDisk } from 'h3-js';
-
-import { districtCellPattern, districtChunks, districtOfCell, districtsOrFilter } from '@/lib/district';
-import { sessionGroundVisits } from '@/lib/local-leaders';
-import {
-  MAYORSHIP_WINDOW_DAYS,
-  mayorByCell,
-  namesOf,
-  type RunStats,
-  type TileVisitRow,
-} from '@/lib/mayorship';
+import { districtCellPattern } from '@/lib/district';
+import type { RunnerTotals } from '@/lib/local-leaders';
 import { supabase } from '@/lib/supabase';
 import { withSession, type Outcome } from '@/lib/territory-sync';
 
@@ -75,233 +67,140 @@ export async function fetchDistrictParkCells(
   });
 }
 
-/**
- * The district's visits: Board 2's raw material.
- *
- * Everyone's, not just this device's — mayorship is a contest, so the whole
- * district's visits are needed to decide who holds each cell. The window is
- * applied CLIENT-SIDE in mayorByCell rather than as a `gte` here, on purpose:
- * one function owns what "inside the window" means, so the fetch and the
- * ranking can never disagree about it, and MAYORSHIP_WINDOW_DAYS stays a
- * single constant to tune.
- *
- * Ceiling, stated because it will arrive: tile_visits grows by roughly the
- * number of cells a run touches directly (~160 for a 3 km run — visits, not
- * enclosure). The district prefix keeps this proportional to one arena rather
- * than the whole table, and `tile_visits` has no index usable by a prefix
- * LIKE (its indexes are on user_id and run_id), so this is a sequential scan.
- * Fine at 1,745 rows; when it is not, the fix is an RPC that returns
- * mayorship per cell, not more paging here.
- */
-export async function fetchDistrictVisits(
-  /** One district, or every district covering a subdivision (subdivisions.ts
-   *  cuts the exact outline on device afterwards). */
-  districts: string | string[],
-): Promise<Outcome<{ visits: TileVisitRow[] }>> {
-  return withSession<{ visits: TileVisitRow[] }>(async () => {
-    const rows: { h3: string; user_id: string; visited_at: string; run_id: string }[] = [];
-    // Chunked so a municipio's hundred-odd districts never build one giant
-    // URL; each chunk pages on its own. Chunks can't overlap (districts are
-    // disjoint), so concatenating them never double-counts a visit.
-    for (const chunk of districtChunks(typeof districts === 'string' ? [districts] : districts)) {
-      for (let offset = 0; ; offset += PAGE) {
-        const { data, error } = await supabase
-          .from('tile_visits')
-          .select('h3, user_id, visited_at, run_id')
-          .or(districtsOrFilter(chunk))
-          // (h3, run_id) is the primary key; h3 alone is not unique, so the
-          // second key makes paging deterministic.
-          .order('h3', { ascending: true })
-          .order('run_id', { ascending: true })
-          .range(offset, offset + PAGE - 1);
-        if (error || !data) return { ok: false, reason: 'network' as const };
-        rows.push(...data);
-        if (data.length < PAGE) break;
-      }
-    }
+/** One mayor per cell, cut to the arena: what the map and the ranking both
+ *  read, so they can't disagree. */
+export type MayorMap = Map<string, { userId: string; days: number }>;
 
-    // Names in one follow-up query keyed on the distinct users present,
-    // rather than a PostgREST embed: tile_visits has no FK to profiles (it
-    // references auth.users), so there is no relationship for PostgREST to
-    // resolve. Same shape as fetchTileLeaderboard's own profile lookup.
-    const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
-    const nameById = new Map<string, string | null>();
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', userIds);
-      // A failed name lookup leaves every displayName null, which renders as
-      // "Anonymous". The mayorship itself is unaffected — the count is the
-      // point, the name is a garnish.
-      if (profiles) for (const p of profiles) nameById.set(p.id, p.display_name ?? null);
-    }
-
-    return {
-      ok: true,
-      visits: rows.map((r) => ({
-        h3: r.h3,
-        userId: r.user_id,
-        displayName: nameById.get(r.user_id) ?? null,
-        visitedAt: r.visited_at,
-        runId: r.run_id,
-      })),
-    };
-  });
+/** Board 2, as the server scored it (20261023120000). */
+export interface LocalLeaders {
+  /** Every cell with a mayor inside the arena. */
+  mayors: MayorMap;
+  /** Display names of those mayors; null renders as Anonymous. */
+  names: Map<string, string | null>;
+  /** Distinct days each mayor was anywhere in the arena, in the window. */
+  days: Map<string, number>;
+  /** 30-day totals of each mayor's sessions touching the arena. A mayor
+   *  whose every session there is flagged has no entry. */
+  totals: Map<string, RunnerTotals>;
 }
 
-/** Runs per `run_stats` call — the function's own cap. */
-const RUN_STATS_PER_CALL = 2000;
-
 /**
- * Distance, duration and laps of the runs behind an arena's visits, for
- * Local Leaders' tiebreakers and row totals. Through the `run_stats` RPC
- * (20260930120000_runs_laps_and_stats), because `runs` itself is readable
- * only by its owner — the RPC returns those three numbers and nothing else,
- * and nothing for a flagged run.
- *
- * A failure is its own outcome, not an empty map: before the migration is
- * applied this errors, and the board must then say it has no effort numbers
- * rather than show everyone at zero.
+ * `local_leaders_cells`' answer, `[[h3, user_id, days], ...]`, cut to the
+ * arena. Pure so it can be tested without a server. Anything that isn't
+ * that shape throws: a board that silently drops rows reads as "nobody
+ * runs here", the failure this file keeps refusing.
  */
-export async function fetchRunStats(
-  runIds: string[],
-): Promise<Outcome<{ stats: Map<string, RunStats> }>> {
-  return withSession<{ stats: Map<string, RunStats> }>(async () => {
-    const stats = new Map<string, RunStats>();
-    const unique = [...new Set(runIds)];
-    for (let i = 0; i < unique.length; i += RUN_STATS_PER_CALL) {
-      const { data, error } = await supabase.rpc('run_stats', {
-        p_run_ids: unique.slice(i, i + RUN_STATS_PER_CALL),
+export function parseMayorCells(raw: unknown, contains: (h3: string) => boolean): MayorMap {
+  if (!Array.isArray(raw)) throw new Error('local_leaders_cells: not an array');
+  const out: MayorMap = new Map();
+  for (const row of raw) {
+    if (
+      !Array.isArray(row) ||
+      typeof row[0] !== 'string' ||
+      typeof row[1] !== 'string' ||
+      typeof row[2] !== 'number'
+    ) {
+      throw new Error('local_leaders_cells: malformed row');
+    }
+    if (contains(row[0])) out.set(row[0], { userId: row[1], days: row[2] });
+  }
+  return out;
+}
+
+/** `local_leaders_runners`' answer as the row numbers the card shows.
+ *  numeric arrives from Postgres as a number inside jsonb, but is coerced
+ *  anyway: a string there would otherwise concatenate on the next sum. */
+export function parseRunnerRows(raw: unknown): { days: Map<string, number>; totals: Map<string, RunnerTotals> } {
+  if (!Array.isArray(raw)) throw new Error('local_leaders_runners: not an array');
+  const days = new Map<string, number>();
+  const totals = new Map<string, RunnerTotals>();
+  for (const row of raw as Record<string, unknown>[]) {
+    if (typeof row?.user_id !== 'string' || typeof row.days !== 'number') {
+      throw new Error('local_leaders_runners: malformed row');
+    }
+    days.set(row.user_id, row.days);
+    const runs = Number(row.runs);
+    // Same rule as runnerTotals: a runner with no countable session has no
+    // totals, never a row of zeros.
+    if (runs > 0) {
+      totals.set(row.user_id, {
+        distanceM: Number(row.distance_m),
+        durationS: Number(row.duration_s),
+        laps: Number(row.laps),
+        runs,
       });
-      if (error || !Array.isArray(data)) return { ok: false, reason: 'network' as const };
-      for (const row of data as { id: string; distance_m: number | string; duration_s: number; laps: number }[]) {
-        stats.set(row.id, {
-          // numeric arrives as a string from PostgREST.
-          distanceM: Number(row.distance_m),
-          durationS: row.duration_s,
-          laps: row.laps,
-        });
-      }
     }
-    return { ok: true, stats };
-  });
+  }
+  return { days, totals };
 }
 
-/** Runs per request when fetching sessions' whole visit lists. */
-const RUNS_PER_REQUEST = 100;
+/** District prefixes per `local_leaders_cells` call — under the function's
+ *  own cap of 2000. Districts are disjoint, so chunks never double-count. */
+const PREFIXES_PER_CALL = 1000;
 
 /**
- * Every visit of the given runs, wherever they are — each session's WHOLE
- * path, so its enclosure can be rebuilt (local-leaders.ts,
- * sessionGroundVisits). The arena read only returns tiles near the arena, and
- * a loop that crosses its edge would never close from that alone.
+ * Board 2 for one arena, scored on the server.
+ *
+ * Until 2026-10-23 this pulled every runner's raw `tile_visits` (route,
+ * run and date for every 9 m cell) and rebuilt everyone's sessions on this
+ * device. That read is what kept `tile_visits` world-readable. Now each
+ * session's ground is stored once and Postgres decides the mayors with the
+ * rule mayorship.ts still defines (test/local-leaders-sql.test.ts holds the
+ * two equal), returning only what the board shows.
+ *
+ * Two calls, in order: the mayors under the arena's districts (cut to the
+ * exact outline here, by `contains`, as before), then the numbers for the
+ * mayors of exactly those cells. Either failing fails the board: a card
+ * with mayors but no days would show everyone at "0 days".
  */
-export async function fetchRunVisits(
-  runIds: string[],
-  nameById: Map<string, string | null>,
-): Promise<Outcome<{ visits: TileVisitRow[] }>> {
-  return withSession<{ visits: TileVisitRow[] }>(async () => {
-    const unique = [...new Set(runIds)];
-    const visits: TileVisitRow[] = [];
-    for (let i = 0; i < unique.length; i += RUNS_PER_REQUEST) {
-      const chunk = unique.slice(i, i + RUNS_PER_REQUEST);
-      for (let offset = 0; ; offset += PAGE) {
-        const { data, error } = await supabase
-          .from('tile_visits')
-          .select('h3, user_id, visited_at, run_id')
-          .in('run_id', chunk)
-          .order('h3', { ascending: true })
-          .order('run_id', { ascending: true })
-          .range(offset, offset + PAGE - 1);
-        if (error || !data) return { ok: false, reason: 'network' as const };
-        for (const r of data) {
-          visits.push({
-            h3: r.h3,
-            userId: r.user_id,
-            displayName: nameById.get(r.user_id) ?? null,
-            visitedAt: r.visited_at,
-            runId: r.run_id,
-          });
-        }
-        if (data.length < PAGE) break;
-      }
+export async function fetchLocalLeaders(arena: {
+  districts: string[];
+  contains: (h3: string) => boolean;
+}): Promise<Outcome<{ leaders: LocalLeaders }>> {
+  return withSession<{ leaders: LocalLeaders }>(async () => {
+    const prefixes = [...new Set(arena.districts.map(districtCellPattern))];
+    const mayors: MayorMap = new Map();
+    for (let i = 0; i < prefixes.length; i += PREFIXES_PER_CALL) {
+      const { data, error } = await supabase.rpc('local_leaders_cells', {
+        p_prefixes: prefixes.slice(i, i + PREFIXES_PER_CALL),
+      });
+      if (error) return { ok: false, reason: 'network' as const };
+      for (const [h3, mayor] of parseMayorCells(data, arena.contains)) mayors.set(h3, mayor);
     }
-    return { ok: true, visits };
+
+    const empty = { days: new Map<string, number>(), totals: new Map<string, RunnerTotals>() };
+    let numbers = empty;
+    if (mayors.size > 0) {
+      const { data, error } = await supabase.rpc('local_leaders_runners', { p_cells: [...mayors.keys()] });
+      if (error) return { ok: false, reason: 'network' as const };
+      numbers = parseRunnerRows(data);
+    }
+
+    // Names in one follow-up query, as fetchTileLeaderboard does. A failed
+    // lookup leaves names null ("Anonymous"); the ranking is unaffected.
+    const names = new Map<string, string | null>();
+    const userIds = [...new Set([...mayors.values()].map((m) => m.userId))];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase.from('profiles').select('id, display_name').in('id', userIds);
+      if (profiles) for (const p of profiles) names.set(p.id, p.display_name ?? null);
+    }
+
+    return { ok: true, leaders: { mayors, names, ...numbers } };
   });
 }
 
 /**
  * Every tile the runner is Local Leaders mayor of, in EVERY place — for the
- * map's faded "your ground elsewhere" layer (Pedro, 2026-10-01). Mayorship
- * depends on other runners' days too, so it can't come from the runner's
- * own data alone:
- *
- *   1. the runner's sessions in the window, rebuilt as session ground;
- *   2. the districts that ground touches, plus one ring (a rival loop that
- *      encloses those tiles can run entirely in the next district);
- *   3. EVERY runner's sessions there, through the same pipeline the board
- *      uses (whole paths, session ground, run stats for the tiebreakers);
- *   4. the cells where the runner is mayor.
- *
- * Heavier than one place's board, so callers load it once per tab visit and
- * on pull-to-refresh, never per place switch.
+ * map's faded "your ground elsewhere" layer (Pedro, 2026-10-01). One RPC
+ * now: mayorship of a cell depends only on the ground stored on it, so the
+ * server takes the runner's own ground cells in the window and decides each
+ * against everyone's. The district + ring gathering this used to need was
+ * for rebuilding rivals' enclosure on device, which no longer happens.
  */
-export async function fetchMyMayorCells(
-  now: number = Date.now(),
-): Promise<Outcome<{ cells: string[] }>> {
-  return withSession<{ cells: string[] }>(async (session) => {
-    const me = session.user.id;
-    const cutoffMs = now - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const cutoff = new Date(cutoffMs).toISOString();
-
-    // 1. The runner's own sessions in the window.
-    const myRunIds = new Set<string>();
-    for (let offset = 0; ; offset += PAGE) {
-      const { data, error } = await supabase
-        .from('tile_visits')
-        .select('run_id')
-        .eq('user_id', me)
-        .gte('visited_at', cutoff)
-        .order('run_id', { ascending: true })
-        .order('h3', { ascending: true })
-        .range(offset, offset + PAGE - 1);
-      if (error || !data) return { ok: false, reason: 'network' as const };
-      for (const row of data as { run_id: string }[]) myRunIds.add(row.run_id);
-      if (data.length < PAGE) break;
-    }
-    if (myRunIds.size === 0) return { ok: true, cells: [] };
-
-    const mine = await fetchRunVisits([...myRunIds], new Map());
-    if (!mine.ok) return { ok: false, reason: 'network' as const };
-
-    // 2. Districts the runner's ground touches, plus one ring.
-    const districts = new Set<string>();
-    for (const v of sessionGroundVisits(mine.visits)) {
-      const d = districtOfCell(v.h3);
-      if (d) for (const near of gridDisk(d, 1)) districts.add(near);
-    }
-    if (districts.size === 0) return { ok: true, cells: [] };
-
-    // 3. Everyone's sessions there, inside the window.
-    const there = await fetchDistrictVisits([...districts]);
-    if (!there.ok) return { ok: false, reason: 'network' as const };
-    const runIds = [
-      ...new Set(
-        there.visits.flatMap((v) => (v.runId && Date.parse(v.visitedAt) >= cutoffMs ? [v.runId] : [])),
-      ),
-    ];
-    const [all, stats] = await Promise.all([
-      fetchRunVisits(runIds, namesOf(there.visits)),
-      fetchRunStats(runIds),
-    ]);
-    if (!all.ok) return { ok: false, reason: 'network' as const };
-
-    // 4. Where the runner is mayor. Stats missing (the RPC failing) only
-    //    drops the tiebreakers, exactly as on the board.
-    const mayors = mayorByCell(sessionGroundVisits(all.visits), now, stats.ok ? stats.stats : undefined);
-    const cells: string[] = [];
-    for (const [h3, mayor] of mayors) if (mayor.userId === me) cells.push(h3);
-    return { ok: true, cells };
+export async function fetchMyMayorCells(): Promise<Outcome<{ cells: string[] }>> {
+  return withSession<{ cells: string[] }>(async () => {
+    const { data, error } = await supabase.rpc('my_mayor_cells');
+    if (error || !Array.isArray(data)) return { ok: false, reason: 'network' as const };
+    return { ok: true, cells: data.filter((c): c is string => typeof c === 'string') };
   });
 }

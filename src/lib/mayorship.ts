@@ -30,6 +30,12 @@
 // PURE, on rows already fetched — same philosophy as leaderboard.ts and
 // territory.ts, and the reason this suite (`environment: 'node'`, no
 // renderer, no Postgres) can cover the mechanic completely.
+//
+// THE REFERENCE, not the live path, since 2026-10-23. The board is scored
+// in Postgres (20261023120000, local_leader_mayors) so other runners' raw
+// visits never reach a device; mayorByCell is the rule that SQL
+// transcribes, and test/local-leaders-sql.test.ts holds the two equal on
+// random data. Change the rule here AND there, or that test fails.
 import { asScope, type ArenaScope } from '@/lib/district';
 import { compareUserId } from '@/lib/leaderboard';
 
@@ -297,41 +303,4 @@ export function scopeVisits(
   if (arena === null) return visits;
   const { contains } = asScope(arena);
   return visits.filter((v) => contains(v.h3));
-}
-
-/** The cells one runner is mayor of, for drawing their turf on the map. */
-export function cellsHeldBy(
-  mayors: Map<string, { userId: string; days: number }>,
-  userId: string,
-): string[] {
-  const held: string[] = [];
-  for (const [h3, mayor] of mayors) if (mayor.userId === userId) held.push(h3);
-  return held;
-}
-
-/**
- * Ground you hold but somebody else runs more often — your territory at
- * RISK.
- *
- * This is the one number that ties the two boards together, and it is the
- * reason they belong on one screen rather than behind a toggle. Board 1 says
- * you own a cell (you ran it most recently). Board 2 says someone else is
- * there far more. Both are true at once, and together they say something
- * neither says alone: you are about to lose this.
- *
- * Cells with no mayor are NOT contested — nobody has been there inside the
- * window, so there is no one to lose them to. Cells you are mayor of are
- * likewise safe by definition.
- */
-export function contestedCells(
-  ownedCells: string[],
-  mayors: Map<string, { userId: string; days: number }>,
-  userId: string,
-): string[] {
-  const atRisk: string[] = [];
-  for (const h3 of ownedCells) {
-    const mayor = mayors.get(h3);
-    if (mayor && mayor.userId !== userId) atRisk.push(h3);
-  }
-  return atRisk;
 }

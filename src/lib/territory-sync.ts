@@ -18,7 +18,8 @@ import { lapsForUpload } from '@/lib/laps';
 import { enqueueClaim, listClaims } from '@/lib/claim-queue';
 import { getPref, initDb, setPref } from '@/lib/db';
 import { announceClaim } from '@/lib/live-territory';
-import { enclosedCells } from '@/lib/enclosure';
+import { enclosedCells, groundOfRun } from '@/lib/enclosure';
+import { MAYORSHIP_WINDOW_DAYS } from '@/lib/mayorship';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
 import type { TrackPoint } from '@/lib/tracking';
 
@@ -300,6 +301,14 @@ export async function claimTiles(
       if (message.includes(CLAIM_TOO_OLD_MARKER)) return { ok: false, reason: 'tooOld' };
       return { ok: false, reason: 'network' };
     }
+
+    // Local Leaders reads each session's GROUND from the server
+    // (20261023120000): the crossed tiles mirror from tile_visits by
+    // themselves, the inside of this session's own loop only this device can
+    // compute. Before the broadcast, so rivals who refetch on it see the
+    // enclosure too. Its outcome never touches the claim: a failure stays
+    // unrecorded and recordMissingGround retries it on the next app open.
+    await recordRunGround(runId, cells);
 
     // Ground changed hands: nudge anyone watching these districts to
     // refetch (live-territory.ts). Fire-and-forget; never affects this save.
@@ -1259,6 +1268,86 @@ export async function fetchMyVisitedCells(): Promise<VisitedOutcome> {
 
     return { ok: true, runs: groupVisitsByRun(rows) };
   });
+}
+
+/**
+ * Records the inside of this session's OWN loop (enclosure.ts groundOfRun,
+ * the rule Local Leaders has counted since 2026-09-30) for the server's
+ * Local Leaders scoring. Own loop only, never enclosure against held
+ * territory: that union is Board 1's, and per-session is what stops six
+ * months of perimeter from claiming a city.
+ *
+ * `visited` must be the cells the claim wrote to tile_visits, which is
+ * exactly what readers used to rebuild this ground from.
+ *
+ * True only when the server confirmed it. The server records a session
+ * once, bounds it like a claim and drops cells far from the loop.
+ */
+export async function recordRunGround(runId: string, visited: string[]): Promise<boolean> {
+  const own = new Set(visited);
+  let enclosed: string[];
+  try {
+    enclosed = groundOfRun(visited, DEFAULT_TILE_RES).filter((c) => !own.has(c));
+  } catch {
+    // A cell set the dissolve can't handle: record the crossed tiles alone,
+    // as sessionGroundVisits always fell back to. Retrying would throw the
+    // same way forever.
+    enclosed = [];
+  }
+  // Never throws: claimTiles awaits this inside a successful claim, and a
+  // throw there would report the claim itself as failed and queue a retry.
+  try {
+    const { error } = await supabase.rpc('record_run_ground', { p_run_id: runId, p_enclosed: enclosed });
+    return !error;
+  } catch {
+    // Left unrecorded on purpose; recordMissingGround picks it up next open.
+    return false;
+  }
+}
+
+let groundCheckedThisSession = false;
+
+/**
+ * Records enclosure for the runner's own sessions inside the Local Leaders
+ * window that don't have it yet: claims made before 20261023120000, and any
+ * whose recordRunGround failed. Once per app session; a failed read lets
+ * the next open try again.
+ */
+export async function recordMissingGround(now: number = Date.now()): Promise<{ recorded: number }> {
+  if (groundCheckedThisSession) return { recorded: 0 };
+  groundCheckedThisSession = true;
+  const outcome = await withSession<{ recorded: number }>(async (session) => {
+    const since = new Date(now - MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const { data: pending, error } = await supabase
+      .from('run_sessions')
+      .select('run_id')
+      .eq('user_id', session.user.id)
+      .eq('enclosure_recorded', false)
+      .gte('session_at', since)
+      .order('run_id', { ascending: true })
+      .range(0, 999);
+    if (error || !pending) return { ok: false, reason: 'network' };
+
+    let recorded = 0;
+    for (const { run_id: id } of pending as { run_id: string }[]) {
+      const cells: string[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error: visitsError } = await supabase
+          .from('tile_visits')
+          .select('h3')
+          .eq('run_id', id)
+          .order('h3', { ascending: true })
+          .range(offset, offset + 999);
+        if (visitsError || !data) return { ok: false, reason: 'network' };
+        for (const row of data as { h3: string }[]) if (isCurrentTileRes(row.h3)) cells.push(row.h3);
+        if (data.length < 1000) break;
+      }
+      if (await recordRunGround(id, cells)) recorded++;
+    }
+    return { ok: true, recorded };
+  });
+  if (!outcome.ok) groundCheckedThisSession = false;
+  return outcome.ok ? { recorded: outcome.recorded } : { recorded: 0 };
 }
 
 /** Retry one queued claim (claim-queue.ts). */

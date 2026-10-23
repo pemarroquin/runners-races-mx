@@ -52,12 +52,14 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
     "sharp": "^0.35.5",
     "source-map": "^0.8.0",
     "typescript": "~6.0.3",
+    "vite-node": "^6.0.0",
     "vitest": "^5.0.5"
   },
   "scripts": {
@@ -77,6 +79,8 @@
     "convert-tile-res": "vite-node --config vitest.config.ts scripts/convert-tile-res.ts",
     "verify-claims": "vite-node --config vitest.config.ts scripts/verify-claims.ts",
     "measure-holes": "vite-node --config vitest.config.ts scripts/measure-holes.ts",
+    "backfill-run-ground": "vite-node --config vitest.config.ts scripts/backfill-run-ground.ts",
+    "verify-tile-visits-closed": "node scripts/verify-tile-visits-closed.mjs",
     "measure-laps": "vite-node --config vitest.config.ts scripts/measure-laps.ts",
     "extract-park-paths": "vite-node --config vitest.config.ts scripts/extract-park-paths.ts",
     "extract-subdivisions": "vite-node --config vitest.config.ts scripts/extract-subdivisions.ts",
