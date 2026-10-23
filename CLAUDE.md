@@ -40,7 +40,9 @@ So, when a sweep finds something:
 ### `statusNote` is user-facing
 
 It renders verbatim in the orange banner on the race detail screen, for
-`changed` and `canceled` only. Keep it to a few plain sentences a runner can
+`changed` and `canceled` only. Max 400 chars (`statusNote` and `statusNoteEs`),
+a hard error in `verify-sweep` since 2026-10-23 — an `ok` record's note is
+invisible today and on screen the moment its status flips. Keep it to a few plain sentences a runner can
 act on. Everything about *how* you verified — which site was blocked, which
 calendars disagreed, confidence changes — goes in `sourceNotes`, which users
 never see. Same split as `notes` vs `sourceNotes`.
@@ -396,8 +398,10 @@ indistinguishable from one reading 0% because nobody ran.
   only because every carousel mounts inside `FadeInDown` (opacity 0 on frame
   one), so nothing is painted before the width is known. Check that a fade
   actually covers the first frame before copying the pattern.
-  `filter-popover.tsx` and `buy-sheet.tsx` still read `useWindowDimensions()`
-  and carry the same latent exposure.
+  `filter-popover.tsx` (now `left`/`right` + `maxWidth`) and `buy-sheet.tsx`
+  (percentage height, `onLayout` for the slide maths) were moved off it on
+  2026-10-23, and `eslint.config.js` now bans importing `useWindowDimensions`
+  or `Dimensions` from react-native outright.
 
 ## Project shape
 

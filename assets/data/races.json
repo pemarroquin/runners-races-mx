@@ -2554,10 +2554,10 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Date confirmed Aug 9, 2026 via asdeporte, OEM/El Occidental news, and Milenio. Note: start/finish moved to El Occidental newspaper offices (Calz. Independencia Sur 324), routed through Centro Histórico Guadalajara — a change from the prior edition's Parque Metropolitano venue. Start time per asdeporte convocatoria: 12:30h (an older 6:30am reference in one article could not be corroborated). Re-checked 2026-08-07: OEM/El Occidental still confirms Aug 9, ~800 runners expected, route via Calle Héroes and Paseo Alcalde, kit pickup Aug 8 at the newspaper's offices. No cancellation/postponement/aviso signals found.",
+      "statusNote": "Confirmed for Aug 9, 2026. Start and finish at the El Occidental offices (Calz. Independencia Sur 324), through the Centro Histórico. Kit pickup Aug 8 at the same offices.",
       "lastVerified": "2026-08-07",
       "notes": null,
-      "sourceNotes": "On tritour + runera (asdeporte slug ...-wl7); not individually rendered."
+      "sourceNotes": "On tritour + runera (asdeporte slug ...-wl7); not individually rendered. statusNote trimmed 2026-10-23 (was a 616-char research trail). Date confirmed Aug 9, 2026 via asdeporte, OEM/El Occidental news, and Milenio. Start/finish moved to El Occidental offices from the prior edition's Parque Metropolitano venue. 12:30 start per asdeporte convocatoria; an older 6:30am reference in one article could not be corroborated. Re-checked 2026-08-07: OEM/El Occidental still confirmed Aug 9, ~800 runners expected, route via Calle Héroes and Paseo Alcalde; no cancellation/postponement signals."
     },
     {
       "id": "10k-internacional-comude-guadalajara-2026",
@@ -3823,10 +3823,10 @@
       "sourceUrl": "https://carrerasmx.com.mx/eventos/501",
       "confidence": "medium",
       "status": "ok",
-      "statusNote": "Confirmed 9th edition for Aug 9, 2026, 07:30, Blvd. Constitución (CANACINTRA Torreón), per El Siglo de Torreón and Vanguardia. Registration already sold out (500 slots) — does not affect the event date. Re-checked 2026-08-07: web search found no cancellation/postponement/aviso signals; no new independent source surfaced beyond the prior El Siglo de Torreón/Vanguardia confirmation (direct site fetch remains blocked by network policy).",
+      "statusNote": "Confirmed 9th edition for Aug 9, 2026, 07:30. Registration sold out (500 places).",
       "lastVerified": "2026-08-07",
       "notes": null,
-      "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna). Distinct from the Monclova CANACINTRA race."
+      "sourceNotes": "Price not published. Single-calendar source (Carreras Laguna). Distinct from the Monclova CANACINTRA race. statusNote trimmed 2026-10-23 (was a 437-char research trail). Confirmed via El Siglo de Torreón and Vanguardia. Re-checked 2026-08-07: no cancellation/postponement signals; no new independent source beyond those two; direct site fetch blocked by network policy."
     },
     {
       "id": "10k-simsa-2026",
@@ -4420,11 +4420,11 @@
       "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun",
       "confidence": "high",
       "status": "ok",
-      "statusNote": "Date conflict resolved in favor of Aug 9, 2026: kora180.mx and La Chispa independently confirm the 5th-anniversary edition on Aug 9, starting Blvd. Bahía, Chetumal. Could not reach TriTour's dedicated event page directly (blocked) to confirm/deny its 'Sep 8' listing, but targeted searches found no corroborating source anywhere for a Sep 8 date. Re-checked 2026-08-03: kora180.mx still confirms Aug 9, no new postponement/cancellation signals. Re-checked 2026-08-07: web search found no cancellation/postponement/aviso signals; 2026-specific listings did not resurface in this pass, but nothing contradicts the previously confirmed Aug 9 date.",
+      "statusNote": "Confirmed for Aug 9, 2026 (5th edition), starting on Blvd. Bahía, Chetumal.",
       "lastVerified": "2026-08-07",
       "notes": "5th edition; prior editions broke local participation records.",
       "notesEs": "5ª edición; ediciones anteriores rompieron récords locales de participación.",
-      "sourceNotes": "Date conflict RESOLVED 2026-07-27: Aug 9, 2026 confirmed by kora180.mx and La Chispa, independent of the TriTour calendar listing. TriTour's own dedicated event page states Sep 8 but could not be directly verified (site blocked); no independent source supports Sep 8, so Aug 9 is treated as correct pending further confirmation."
+      "sourceNotes": "Date conflict RESOLVED 2026-07-27: Aug 9, 2026 confirmed by kora180.mx and La Chispa, independent of the TriTour calendar listing. TriTour's own dedicated event page states Sep 8 but could not be directly verified (site blocked); no independent source supports Sep 8, so Aug 9 is treated as correct pending further confirmation. statusNote trimmed 2026-10-23 (was a 644-char research trail). kora180.mx and La Chispa independently confirmed Aug 9. Re-checked 2026-08-03 (kora180.mx still Aug 9) and 2026-08-07 (no cancellation/postponement signals; 2026 listings did not resurface, nothing contradicted Aug 9)."
     },
     {
       "id": "medio-maraton-bacalar-2026",

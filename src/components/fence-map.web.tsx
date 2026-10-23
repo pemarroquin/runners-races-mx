@@ -1,7 +1,7 @@
 // The end-of-session territory map — WEB. Mapbox GL JS, same split rationale
 // as track-map.web.tsx (the custom Studio style only renders in GL). Fully
-// interactive; every captured fence is drawn (muted, each in its run's own
-// colour), the run just finished gets a stronger fill, the ACTUAL RECORDED
+// interactive; only the run just finished is drawn (past fences were
+// dropped — see fence-map.tsx's header): its tiles get the fill, the ACTUAL RECORDED
 // PATH is drawn as the vibrant gradient line, and the camera fits to it with
 // an animated sweep.
 //
@@ -46,7 +46,6 @@ import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import { createLapMarkerElement } from '@/lib/lap-marker-web';
 import {
   EMISSIVE_STRENGTH_FULL,
-  fenceColorForRun,
   MAP_SLOT_FILL,
   MAP_SLOT_ROUTE,
   MAP_STYLE_GL,
@@ -65,13 +64,11 @@ import {
 import { lineGradientExpression } from '@/lib/fence-draw';
 import { startGradientFlow } from '@/lib/gradient-flow';
 import { outerRings } from '@/lib/territory';
-import type { MyFence } from '@/lib/territory-sync';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_CSS_URL = `https://api.mapbox.com/mapbox-gl-js/v${mapboxGlPkg.version}/mapbox-gl.css`;
 const NEW_OUTLINE_SRC = 'fence-new-outline';
 const NEW_ROUTE_SRC = 'fence-new-route';
-const PAST_SRC = 'fence-past';
 const TILES_SRC = 'fence-tiles';
 const RIVAL_TILES_SRC = 'fence-rival-tiles';
 
@@ -159,8 +156,6 @@ interface FenceMapProps {
    *  `label` is pre-translated, same convention as `takenClusters` above. */
   lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   color: string;
-  others: MyFence[];
-  excludeId?: string | null;
   /** Zoom +/- and re-fit controls, bottom-right — same visual language as
    *  the live Track map's camera controls (track-map.web.tsx's MapButton).
    *  Optional: the Territories map (a future caller showing every fence at
@@ -213,8 +208,6 @@ export function FenceMap({
   takenClusters,
   lapMarker,
   color,
-  others,
-  excludeId,
   controls,
   active = true,
 }: FenceMapProps) {
@@ -225,8 +218,7 @@ export function FenceMap({
   // effect (the trap track-map.web.tsx's own mapReady comment records). Every
   // update effect below bails until the map has loaded, and all three of them
   // are driven by data that arrives from ONE claimTiles() round trip after
-  // the run saved (rivalTiles, takenClusters) or not at all (others is
-  // always [] from index.tsx). So none of them re-runs on its own afterwards:
+  // the run saved (rivalTiles, takenClusters). So none of them re-runs on its own afterwards:
   // whichever of the map load and the claim finished second, the other side's
   // effect had already bailed on a false ref and would never run again — no
   // rival tiles and no "+N" conquest bubbles for the whole screen. Reachable
@@ -248,10 +240,10 @@ export function FenceMap({
   // The freshest props, for the load callback — the map builds once, but
   // fences/colour may have arrived after mount kicked off the async import.
   // Written from an effect, not during render (react-hooks/refs).
-  const dataRef = useRef({ geometry, path, tiles, rivalTiles, color, others, excludeId });
+  const dataRef = useRef({ geometry, path, tiles, rivalTiles, color });
   useEffect(() => {
-    dataRef.current = { geometry, path, tiles, rivalTiles, color, others, excludeId };
-  }, [geometry, path, tiles, rivalTiles, color, others, excludeId]);
+    dataRef.current = { geometry, path, tiles, rivalTiles, color };
+  }, [geometry, path, tiles, rivalTiles, color]);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current) return;
@@ -275,42 +267,7 @@ export function FenceMap({
 
       map.on('load', () => {
         if (cancelled) return;
-        const { geometry: g, path: p, color: c, others: past, excludeId: skip } = dataRef.current;
-
-        map.addSource(PAST_SRC, {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: past
-              .filter((f) => f.id !== skip && f.geometry !== null)
-              .map(
-                (f): Feature => ({
-                  type: 'Feature',
-                  properties: { color: fenceColorForRun(f.startedAtMs).color },
-                  geometry: f.geometry!,
-                }),
-              ),
-          },
-        });
-        map.addLayer({
-          id: PAST_SRC,
-          type: 'fill',
-          source: PAST_SRC,
-          slot: MAP_SLOT_FILL,
-          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.16, 'fill-emissive-strength': EMISSIVE_STRENGTH_FULL },
-        });
-        map.addLayer({
-          id: `${PAST_SRC}-line`,
-          type: 'line',
-          source: PAST_SRC,
-          slot: MAP_SLOT_ROUTE,
-          paint: {
-            'line-color': ['get', 'color'],
-            'line-opacity': 0.5,
-            'line-width': 1,
-            'line-emissive-strength': EMISSIVE_STRENGTH_FULL,
-          },
-        });
+        const { geometry: g, path: p, color: c } = dataRef.current;
 
         // Tile Coverage brief §6 step 4 — this run's real fill. Replaces
         // the enclosure polygon's fill (NEW_SRC used to be a fill layer
@@ -536,25 +493,6 @@ export function FenceMap({
     };
     // Built once; data updates go through the sources below.
   }, []);
-
-  // Past fences can finish loading after the map does.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !readyRef.current) return;
-    const src = map.getSource(PAST_SRC) as GeoJSONSource | undefined;
-    src?.setData({
-      type: 'FeatureCollection',
-      features: others
-        .filter((f) => f.id !== excludeId && f.geometry !== null)
-        .map(
-          (f): Feature => ({
-            type: 'Feature',
-            properties: { color: fenceColorForRun(f.startedAtMs).color },
-            geometry: f.geometry!,
-          }),
-        ),
-    });
-  }, [others, excludeId, mapReady]);
 
   // rivalTiles resolves AFTER the map (and usually after this component's
   // first paint) — claimTiles() is a network round trip that only finishes

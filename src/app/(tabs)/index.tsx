@@ -131,7 +131,6 @@ export default function TrackScreen() {
       return next > prev ? next : prev;
     });
   }, []);
-  const [savedRunId, setSavedRunId] = useState<string | null>(null);
   // The route/stats share sheet — closed by default even once a run
   // finishes; opening it is an explicit tap, never automatic.
   const [shareOpen, setShareOpen] = useState(false);
@@ -359,7 +358,7 @@ export default function TrackScreen() {
         // flush above runs independently of what's on screen — it drains
         // the whole on-disk queue, not just "the run the summary is
         // currently displaying" — so if the run on screen is the one that
-        // just resolved, local state (saveState/savedRunId/queuedId) would
+        // just resolved, local state (saveState/queuedId) would
         // otherwise go stale. The session-end screen no longer has any
         // Delete/Retry UI to defend (that lives in Profile › Places I've been —
         // see achievements-view.tsx), but `saveState === 'saved'` still gates the
@@ -371,7 +370,6 @@ export default function TrackScreen() {
         const resolved = result.resolved.find((r) => r.id === current);
         if (resolved) {
           setSaveState('saved');
-          setSavedRunId(resolved.runId);
           setQueuedId(null);
           clearCheckpoint();
           // NOT refreshing tileClaim/tilesFailure/districtPlaceName here — a
@@ -758,7 +756,6 @@ export default function TrackScreen() {
     if (token !== saveTokenRef.current) return;
     if (outcome.ok) {
       setSaveState('saved');
-      setSavedRunId(outcome.runId);
       // This run may already be queued from an earlier failed attempt. Take
       // it out now that it is safely on the server, or the next app open
       // uploads it a second time — a duplicate row whose fence carves
@@ -878,7 +875,6 @@ export default function TrackScreen() {
     // Let the NEXT run auto-save too.
     autoSavedRef.current = false;
     setSaveState('idle');
-    setSavedRunId(null);
     setMasked(null);
     setFence(null);
     setSessionTiles([]);
@@ -1005,8 +1001,6 @@ export default function TrackScreen() {
             // detected as a genuine loop (laps.ts); see summaryLapMarker.
             lapMarker={summaryLapMarker}
             color={fenceColor}
-            others={[]}
-            excludeId={savedRunId}
             controls={{
               zoomInLabel: t('track.zoomIn'),
               zoomOutLabel: t('track.zoomOut'),

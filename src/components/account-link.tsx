@@ -31,6 +31,7 @@ import {
   type AccountStatus,
 } from '@/lib/account';
 import { useI18n } from '@/lib/i18n';
+import { getCachedAccountStatus } from '@/lib/profile-cache';
 import { Spacing, type ThemeColor } from '@/constants/theme';
 
 type Step =
@@ -46,8 +47,16 @@ type Step =
 export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
   const { t } = useI18n();
 
-  const [step, setStep] = useState<Step>('loading');
-  const [status, setStatus] = useState<AccountStatus | null>(null);
+  // Seeded from the last status this device confirmed, so the section paints
+  // on the first frame instead of popping in under its heading once
+  // ensureSession() answers (profile-cache.ts). The fetch below still runs
+  // and reconciles; the cache is never the source of truth. A lazy
+  // initializer because it reads storage.
+  const [cached] = useState(() => getCachedAccountStatus());
+  const [step, setStep] = useState<Step>(() =>
+    cached === null ? 'loading' : cached.linked ? 'linked' : 'email',
+  );
+  const [status, setStatus] = useState<AccountStatus | null>(cached);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [mode, setMode] = useState<'link' | 'signin' | null>(null);
@@ -81,12 +90,16 @@ export function AccountLink({ c }: { c: Record<ThemeColor, string> }) {
           // tell right now) — same fail-quiet reasoning as NamePrompt: this
           // is a settings screen, not a blocking gate, so an unreadable
           // status just hides the form rather than showing a scary error.
-          setStep('hidden');
+          // Except when a cached status is already on screen: an offline
+          // open would otherwise paint the section and then take it away,
+          // which is the flicker the cache exists to remove. Sending a code
+          // still needs the network, and reports its own failure.
+          if (outcome.reason === 'disabled' || stepRef.current === 'loading') setStep('hidden');
           return;
         }
         setStatus(outcome.status);
         // Never yank a half-finished form out from under the runner. On
-        // mount `step` is 'loading' and this always applies; on an
+        // mount `step` is 'loading' or a cached step and this always applies; on an
         // identity-change refetch the runner may be staring at a code
         // field, and resetting them to the email step would throw away a
         // code they are mid-way through typing. The status itself is still

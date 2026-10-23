@@ -30,6 +30,7 @@
 // Both branches use email OTP codes, never a magic-link click — the app has
 // no deep-link/callback route to land on, and a 6-digit code works
 // identically on web and native.
+import { setCachedAccountStatus } from '@/lib/profile-cache';
 import { supabase, TERRITORY_ENABLED } from '@/lib/supabase';
 import { withSession } from '@/lib/territory-sync';
 
@@ -45,7 +46,11 @@ export type AccountStatusOutcome =
 export async function fetchAccountStatus(): Promise<AccountStatusOutcome> {
   return withSession<{ status: AccountStatus }>(async (session) => {
     const email = session.user.email;
-    return { ok: true, status: email ? { linked: true, email } : { linked: false } };
+    const status: AccountStatus = email ? { linked: true, email } : { linked: false };
+    // Cached here, like fetchMyProfile caches the name, so Profile › Account
+    // can paint the section on its first frame (profile-cache.ts).
+    setCachedAccountStatus(status);
+    return { ok: true, status };
   });
 }
 
@@ -139,6 +144,7 @@ export async function verifyEmailAuth(
     // is the fallback GoTrue uses for some email_change responses.
     const confirmedEmail = data.session?.user.email ?? data.user?.email ?? null;
     if (!confirmedEmail) return { ok: false, reason: 'network' };
+    setCachedAccountStatus({ linked: true, email: confirmedEmail });
     return { ok: true, email: confirmedEmail };
   });
 }

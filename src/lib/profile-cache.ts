@@ -24,6 +24,7 @@
 // screen that seeds from here also refetches and reconciles (see
 // settings/profile.tsx), because the name can be changed from another device
 // or from NamePrompt while a screen sits mounted.
+import type { AccountStatus } from '@/lib/account';
 import { getPref, initDb, setPref } from '@/lib/db';
 
 const PREF_DISPLAY_NAME = 'profileDisplayName';
@@ -52,4 +53,29 @@ export function getCachedDisplayName(): string | null {
 export function setCachedDisplayName(name: string | null): void {
   initDb();
   setPref(PREF_DISPLAY_NAME, name ?? NO_NAME);
+}
+
+// The account-link status, same reasoning as the name: Profile › Account's
+// "Your account" section rendered NOTHING until fetchAccountStatus() came
+// back, then popped in under its heading. That fetch makes no query — its
+// whole cost is ensureSession(), which on a cold open with an expired access
+// token waits for the refresh (see supabase.ts) — so the section appeared
+// late on exactly the opens where the name, already cached, did not.
+//
+// Stored as the email itself, '' meaning "checked: not linked", so the same
+// three states hold: null = never checked (wait), '' = anonymous (show the
+// form now), anything else = linked to that address. The email was already
+// on this device: the persisted Supabase session carries it.
+const PREF_ACCOUNT_EMAIL = 'accountEmail';
+
+export function getCachedAccountStatus(): AccountStatus | null {
+  initDb();
+  const stored = getPref(PREF_ACCOUNT_EMAIL);
+  if (stored === null) return null;
+  return stored === NO_NAME ? { linked: false } : { linked: true, email: stored };
+}
+
+export function setCachedAccountStatus(status: AccountStatus): void {
+  initDb();
+  setPref(PREF_ACCOUNT_EMAIL, status.linked ? status.email : NO_NAME);
 }

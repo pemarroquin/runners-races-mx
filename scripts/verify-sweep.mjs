@@ -43,6 +43,8 @@ const isSafeUrl = (u) =>
 // Fields a sweep is allowed to touch WITHOUT that counting as a real data
 // change. If `status: 'changed'` is declared and only these moved, the sweep
 // recorded a finding it never applied — the exact defect this gate exists for.
+// Longest statusNote a runner should have to read in the banner.
+const STATUS_NOTE_MAX = 400;
 const PROSE_FIELDS = new Set(['status', 'statusNote', 'statusNoteEs', 'sourceNotes', 'lastVerified']);
 
 const errors = [];
@@ -152,8 +154,14 @@ for (const r of races) {
   }
   // The banner is user-facing: research trail belongs in sourceNotes. Length is
   // a blunt proxy, but every note that blew past this was an audit paragraph.
-  if (r.statusNote && r.statusNote.length > 420) {
-    warn(id, `statusNote is ${r.statusNote.length} chars — move the research trail to sourceNotes`);
+  // An error, not a warning, since 2026-10-23: as a warning it let three
+  // re-check logs of 437-644 chars sit in `ok` records, where no banner shows
+  // them, so nobody noticed — until a status flip would have put one on screen.
+  // Every note in the data was under 330 chars once those were trimmed.
+  for (const key of ['statusNote', 'statusNoteEs']) {
+    if (r[key] && r[key].length > STATUS_NOTE_MAX) {
+      err(id, `${key} is ${r[key].length} chars (max ${STATUS_NOTE_MAX}) — keep the finding, move the research trail to sourceNotes`);
+    }
   }
 }
 
