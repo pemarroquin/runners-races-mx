@@ -9,12 +9,19 @@ import {
   daysPresent,
   frameOf,
   holdingsOf,
-  mayorHoldings,
   runnerTotals,
   sessionGroundVisits,
   withMineElsewhere,
 } from '../src/lib/local-leaders';
-import { mayorByCell, rankMayors, type TileVisitRow } from '../src/lib/mayorship';
+import { mayorByCell, rankMayors, scopeVisits, type RunStats, type TileVisitRow } from '../src/lib/mayorship';
+
+/** Mayor cells per runner inside an arena, from the reference rule. */
+const mayorHoldings = (
+  visits: TileVisitRow[],
+  arena: Parameters<typeof scopeVisits>[1],
+  now: number,
+  stats?: Map<string, RunStats>,
+) => holdingsOf(mayorByCell(scopeVisits(visits, arena), now, stats));
 
 const MTY = { lat: 25.6866, lng: -100.3161 };
 const FAR = { lat: 25.6866, lng: -100.5161 };

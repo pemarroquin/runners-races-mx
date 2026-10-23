@@ -1294,8 +1294,15 @@ export async function recordRunGround(runId: string, visited: string[]): Promise
     // same way forever.
     enclosed = [];
   }
-  const { error } = await supabase.rpc('record_run_ground', { p_run_id: runId, p_enclosed: enclosed });
-  return !error;
+  // Never throws: claimTiles awaits this inside a successful claim, and a
+  // throw there would report the claim itself as failed and queue a retry.
+  try {
+    const { error } = await supabase.rpc('record_run_ground', { p_run_id: runId, p_enclosed: enclosed });
+    return !error;
+  } catch {
+    // Left unrecorded on purpose; recordMissingGround picks it up next open.
+    return false;
+  }
 }
 
 let groundCheckedThisSession = false;

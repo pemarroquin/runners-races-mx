@@ -246,8 +246,6 @@ const translations = {
       // Dos frases, no una: 0/0 no es 0%. Un distrito sin datos de parques
       // no puede decirle a alguien que acaba de cubrir su colonia que no
       // tiene nada.
-      // El número que une las dos tablas: la tienes, pero alguien viene más
-      // seguido. Ver contestedCells.
       // Tabla 1. Cada sección dice qué mide — así las dos caben en una sola
       // pantalla sin que dos números que no se comparan parezcan un ranking.
       conquestTitle: 'CONQUISTA · AHORA MISMO',

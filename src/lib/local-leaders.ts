@@ -2,42 +2,17 @@
 // point the camera.
 //
 // Pure, on rows already fetched, so vitest (no renderer) covers all of it.
-// Scoping mirrors rankMayors exactly — filter visits to the arena FIRST, then
-// decide mayors — so a runner's shape on the map always has the same cell
-// count as their row on the card. A test holds the two together.
+// Scoping filters visits to the arena FIRST, then decides mayors, exactly
+// as the server's local_leader_mayors does.
 import { cellToBoundary, isValidCell } from 'h3-js';
 
 import { groundOfRun } from '@/lib/enclosure';
 import { DEFAULT_TILE_RES } from '@/lib/tiles';
 
 import type { ArenaScope } from '@/lib/district';
-import {
-  MAYORSHIP_WINDOW_DAYS,
-  mayorByCell,
-  scopeVisits,
-  type RunStats,
-  type TileVisitRow,
-} from '@/lib/mayorship';
+import { MAYORSHIP_WINDOW_DAYS, scopeVisits, type RunStats, type TileVisitRow } from '@/lib/mayorship';
 
 const WINDOW_MS = MAYORSHIP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-
-/** Cells each runner is mayor of inside the arena, keyed by user id. */
-export function mayorHoldings(
-  visits: TileVisitRow[],
-  arena: string | ArenaScope | null,
-  now: number = Date.now(),
-  /** Same stats rankMayors gets, or a tie broken by effort would draw one
-   *  runner's shape under another's row. */
-  stats?: Map<string, RunStats>,
-): Map<string, string[]> {
-  const out = new Map<string, string[]>();
-  for (const [h3, { userId }] of mayorByCell(scopeVisits(visits, arena), now, stats)) {
-    const cells = out.get(userId);
-    if (cells) cells.push(h3);
-    else out.set(userId, [h3]);
-  }
-  return out;
-}
 
 /**
  * Distinct UTC days each runner set foot anywhere in the arena, inside the

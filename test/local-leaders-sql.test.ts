@@ -269,12 +269,18 @@ describe('access', () => {
 
   it('the anon role cannot call the scoring functions, and nobody can call the internal one', async () => {
     await as(db, null, async () => {
-      await expect(db.query("select local_leaders_cells(array['8c48a2'])")).rejects.toThrow(/permission denied/);
+      await expect(db.query("select local_leaders_cells(array['8c48a2a1a'])")).rejects.toThrow(/permission denied/);
       await expect(db.query('select my_mayor_cells()')).rejects.toThrow(/permission denied/);
     });
     await as(db, USERS[0], async () => {
       await expect(db.query('select * from local_leader_mayors(null, null)')).rejects.toThrow(/permission denied/);
       await expect(db.query('select mirror_run_visits(null)')).rejects.toThrow(/permission denied/);
+    });
+  });
+
+  it('refuses a prefix that is not exactly one district', async () => {
+    await as(db, USERS[0], async () => {
+      await expect(db.query("select local_leaders_cells(array['8c4'])")).rejects.toThrow(/9-character/);
     });
   });
 

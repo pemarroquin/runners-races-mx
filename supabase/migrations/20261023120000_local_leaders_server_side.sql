@@ -262,16 +262,27 @@ stable
 security definer
 set search_path = public
 as $$
-  with ground as (
+  -- Two ways in, one rule. Cells are JOINED, not matched with = any():
+  -- an arena's cell list runs to thousands, and = any() scans the whole
+  -- array once per ground row.
+  with wanted as (
+    select distinct c as h3 from unnest(p_cells) c
+  ),
+  ground as (
     select g.h3, s.user_id, s.run_id, s.session_at
     from run_sessions s
     join run_ground g on g.run_id = s.run_id
+    where p_prefixes is not null
+      and s.session_at >= now() - interval '30 days'
+      and s.session_at <= now()
+      and g.h3 like any (array(select p || '%' from unnest(p_prefixes) p))
+    union
+    select g.h3, s.user_id, s.run_id, s.session_at
+    from wanted w
+    join run_ground g on g.h3 = w.h3
+    join run_sessions s on s.run_id = g.run_id
     where s.session_at >= now() - interval '30 days'
       and s.session_at <= now()
-      and (
-        (p_prefixes is not null and g.h3 like any (array(select p || '%' from unnest(p_prefixes) p)))
-        or (p_cells is not null and g.h3 = any (p_cells))
-      )
   ),
   per_runner as (
     select gr.h3, gr.user_id,
@@ -307,8 +318,10 @@ begin
   if coalesce(array_length(p_prefixes, 1), 0) > 2000 then
     raise exception 'LOCAL_LEADERS: at most 2000 districts per call';
   end if;
-  if exists (select 1 from unnest(coalesce(p_prefixes, '{}')) p where p !~ '^8c[0-9a-f]{1,13}$') then
-    raise exception 'LOCAL_LEADERS: a prefix must be the start of a res-12 H3 index';
+  -- Exactly a district's prefix (district.ts districtCellPattern: '8c' +
+  -- DISTRICT_RES digits). A shorter one would ask for a whole country.
+  if exists (select 1 from unnest(coalesce(p_prefixes, '{}')) p where p !~ '^8c[0-9a-f]{7}$') then
+    raise exception 'LOCAL_LEADERS: a prefix must be one district''s 9-character cell prefix';
   end if;
   return coalesce(
     (select jsonb_agg(jsonb_build_array(m.h3, m.user_id, m.days) order by m.h3)
@@ -340,14 +353,17 @@ begin
     with mayors as (
       select distinct m.user_id from local_leader_mayors(null, coalesce(p_cells, '{}')) m
     ),
+    wanted as (
+      select distinct c as h3 from unnest(coalesce(p_cells, '{}')) c
+    ),
     ground as (
       select distinct s.user_id, s.run_id, s.session_at
-      from run_sessions s
-      join run_ground g on g.run_id = s.run_id
+      from wanted w
+      join run_ground g on g.h3 = w.h3
+      join run_sessions s on s.run_id = g.run_id
       join mayors my on my.user_id = s.user_id
       where s.session_at >= now() - interval '30 days'
         and s.session_at <= now()
-        and g.h3 = any (coalesce(p_cells, '{}'))
     ),
     per_runner as (
       select gr.user_id,
@@ -408,12 +424,12 @@ grant execute on function public.my_mayor_cells() to authenticated;
 --          (select count(*) from tile_visits)               as visits,
 --          (select count(*) from run_ground where not enclosed) as crossed_mirrored;
 --   -- expect sessions_in_visits = sessions_mirrored and visits = crossed_mirrored
---   select jsonb_array_length(local_leaders_cells(array['8c48a2']));
+--   select jsonb_array_length(local_leaders_cells(array['8c48a2a1a']));
 --   -- expect a number (0 is honest only if nobody ran there in 30 days)
 --   select tgname from pg_trigger where tgrelid = 'tile_visits'::regclass and not tgisinternal;
 --   -- expect tile_visits_mirror_ground AND tile_visits_plausibility_guard
 -- And with the publishable key, no session (expect 401/permission errors,
 -- never rows):
---   POST /rest/v1/rpc/local_leaders_cells  {"p_prefixes":["8c48a2"]}
+--   POST /rest/v1/rpc/local_leaders_cells  {"p_prefixes":["8c48a2a1a"]}
 --   GET  /rest/v1/run_ground?select=*&limit=1   -> []
 -- ============================================================================

@@ -44,7 +44,7 @@ for (const table of ['tile_visits', 'run_ground', 'run_sessions', 'runs']) {
   const r = await get(`${table}?select=*&limit=5`);
   check(`no session: ${table}`, Array.isArray(r.body) ? r.body.length === 0 : r.status >= 400, `${r.status}, ${Array.isArray(r.body) ? r.body.length + ' rows' : 'error'}`);
 }
-const anonRpc = await rpc('local_leaders_cells', { p_prefixes: ['8c48a2'] });
+const anonRpc = await rpc('local_leaders_cells', { p_prefixes: ['8c48a2a1a'] });
 check('no session: local_leaders_cells refused', anonRpc.status >= 400, String(anonRpc.status));
 
 // 2. A brand-new anonymous session: owns nothing, so must see nothing.
@@ -61,7 +61,7 @@ if (token) {
     check(`fresh anonymous: ${table}`, Array.isArray(r.body) && r.body.length === 0, `${r.status}, ${Array.isArray(r.body) ? r.body.length + ' rows' : 'error'}`);
   }
   // The board itself still works for a signed-in runner: mayors only.
-  const board = await rpc('local_leaders_cells', { p_prefixes: ['8c48a2'] }, token);
+  const board = await rpc('local_leaders_cells', { p_prefixes: ['8c48a2a1a'] }, token);
   check(
     'fresh anonymous: local_leaders_cells answers with [h3, user, days] only',
     Array.isArray(board.body) && board.body.every((row) => Array.isArray(row) && row.length === 3),

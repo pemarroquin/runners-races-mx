@@ -20,12 +20,18 @@
 -- Rollback (restores the exposure; only if a board is broken):
 --   drop policy "tile_visits: select own" on public.tile_visits;
 --   create policy "tile_visits: read all" on public.tile_visits for select using (true);
+--   (and re-run run_stats from 20260930120000)
 
 drop policy if exists "tile_visits: read all" on public.tile_visits;
 drop policy if exists "tile_visits: read authenticated" on public.tile_visits;
 drop policy if exists "tile_visits: select own" on public.tile_visits;
 create policy "tile_visits: select own" on public.tile_visits
   for select using (auth.uid() = user_id);
+
+-- run_stats (20260930120000) existed to give the old on-device board other
+-- runners' run numbers, keyed by run ids read from tile_visits. Nothing
+-- calls it now, and without other runners' run ids it has no honest use.
+drop function if exists public.run_stats(uuid[]);
 
 -- VERIFY (applying is not verifying):
 --   select policyname, cmd, qual from pg_policies where tablename = 'tile_visits';
