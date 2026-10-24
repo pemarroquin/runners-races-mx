@@ -1,0 +1,93 @@
+[
+  {
+    "id": "ultra-coahuila-2026",
+    "name": "Ultra Coahuila 2026",
+    "date": "2026-07-25",
+    "city": "Arteaga",
+    "sourceUrl": "https://asdeporte.com/evento/ultra-coahuila-2026-h34/datos-del-evento"
+  },
+  {
+    "id": "luchadores-5k-1a-edicion",
+    "name": "Luchadores 5K (1a edición)",
+    "date": "2026-07-26",
+    "city": "Torreón",
+    "sourceUrl": "https://carrerasmx.com.mx/eventos/493"
+  },
+  {
+    "id": "5k-nlr-2026-6a-edicion",
+    "name": "5K NLR 2026 (6a edición)",
+    "date": "2026-08-02",
+    "city": "Monclova",
+    "sourceUrl": "https://www.asdeporte.com/evento/5k-nlr-2026-kgi/datos-del-evento"
+  },
+  {
+    "id": "bob-espuma-piedras-negras",
+    "name": "Bob Espuma Piedras Negras",
+    "date": "2026-08-02",
+    "city": "Piedras Negras",
+    "sourceUrl": "https://carrerasmx.com.mx/eventos/506"
+  },
+  {
+    "id": "canacintra-torreon-5k-y-10k-2026",
+    "name": "CANACINTRA Torreón 5K y 10K 2026",
+    "date": "2026-08-09",
+    "city": "Torreón",
+    "sourceUrl": "https://carrerasmx.com.mx/eventos/501"
+  },
+  {
+    "id": "10k-simsa-2026",
+    "name": "10K SIMSA 2026",
+    "date": "2026-08-30",
+    "city": "Torreón",
+    "sourceUrl": "https://carrerasmx.com.mx/eventos/509"
+  },
+  {
+    "id": "carrera-colegio-de-contadores-publicos-de-saltil",
+    "name": "Carrera Colegio de Contadores Públicos de Saltillo 2026",
+    "date": "2026-08-30",
+    "city": "Saltillo",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo"
+  },
+  {
+    "id": "carrera-industrial-canacintra-monclova-2026",
+    "name": "Carrera Industrial CANACINTRA (Monclova) 2026",
+    "date": "2026-09-06",
+    "city": "Monclova",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo"
+  },
+  {
+    "id": "dino-run-5k-saltillo-2026",
+    "name": "Dino Run 5k Saltillo 2026",
+    "date": "2026-09-20",
+    "city": "Saltillo",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo"
+  },
+  {
+    "id": "maraton-saltillo-la-moderna-2026-gran-reto",
+    "name": "Maratón Saltillo La Moderna 2026 (Gran Reto)",
+    "date": "2026-10-11",
+    "city": "Saltillo",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-saltillo"
+  },
+  {
+    "id": "carrera-del-desierto-2026-museo-del-desierto-8a",
+    "name": "Carrera del Desierto 2026 (Museo del Desierto, 8a edición)",
+    "date": "2026-11-08",
+    "city": "Saltillo",
+    "sourceUrl": "https://playersoflife.com/saltillo/cuando-es-la-carrera-del-desierto-2026-saltillo-confirma-la-fecha-y-detalles-de-inscripciones/"
+  },
+  {
+    "id": "maraton-internacional-lala-comarca-lagunera-edic",
+    "name": "Maratón Internacional Lala (Comarca Lagunera) — edición 2027",
+    "date": null,
+    "city": "Torreón",
+    "sourceUrl": "https://maratonlala.org/"
+  },
+  {
+    "id": "medio-maraton-21k-coahuila-edicion-2027",
+    "name": "Medio Maratón 21K Coahuila — edición 2027",
+    "date": "2027-06-13",
+    "city": "Saltillo",
+    "sourceUrl": "https://www.21kcoahuila.org/"
+  }
+]
