@@ -1,0 +1,44 @@
+[
+ {
+  "name": "Barbie Run Puebla 2026",
+  "date": "2026-10-25",
+  "time": "06:30",
+  "distances": [
+   "3K",
+   "5K",
+   "10K"
+  ],
+  "city": "Puebla",
+  "state": "Puebla",
+  "venue": "Parque Sendela (Estrella de Puebla), Av. Osa Mayor, next to Centro Comercial Angelópolis",
+  "organizer": "Asdeporte",
+  "signupUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
+  "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
+  "confidence": "high",
+  "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX.",
+  "sourceNotes": "venue: null -> \"Parque Sendela, Estrella de Puebla (Av. Osa Mayor, next to Angelópolis)\" read on https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento . Page also shows 12:30 h header vs detail starts 6:30/6:40/6:45; kept 06:30. Page says registration sold out (coupon holders only); signupUrl kept. Prior sourceNotes: 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); haid.app and espartanasmx.com confirm Barbie Run's Puebla stop Sun Oct 25 2026, cap 2,500, start 6:30am, kit pickup Sat Oct 24. Start/finish venue listed 'por confirmar' on the aggregator — normal pre-race TBD, not a reported change. No cancellation/postponement news.",
+  "notesEs": "Salida/meta 'por confirmar'. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX.",
+  "kind": "correction",
+  "existingId": "barbie-run-puebla-2026"
+ },
+ {
+  "name": "Travesía de las Tres Culturas 2026",
+  "date": "2026-11-13",
+  "time": null,
+  "distances": [
+   "60K"
+  ],
+  "city": "Pantepec",
+  "state": "Puebla",
+  "venue": "Pantepec, Sierra Norte de Puebla",
+  "organizer": "Ultra-Trail de México (UTMX)",
+  "signupUrl": "https://travesiatresculturas.com/incripciones/",
+  "sourceUrl": "https://travesiatresculturas.com",
+  "confidence": "medium",
+  "notes": "Two-stage mountain race, 60 km total with 2,550 m of climbing, camping between stages. Runs 13 to 15 November.",
+  "sourceNotes": "signupUrl null -> https://travesiatresculturas.com/incripciones/ (read; 2026 edition, link slug ttc26, registration window Jan 26 - Oct 31 2026; page does not state if open today). Date Nov 13-15 2026 on https://travesiatresculturas.com consistent with row (13th = stage start); no start time published. Prior sourceNotes: Official site says '2da edición 13 al 15 de noviembre, 2026'; stage day/date of the first stage taken as 13 Nov. Registration link not extractable from the page, signupUrl null. No price/start time published on fetched page.",
+  "notesEs": "Carrera de montaña por etapas, 60 km en total con 2,550 m de desnivel positivo y campamento entre etapas. Del 13 al 15 de noviembre.",
+  "kind": "correction",
+  "existingId": "travesia-de-las-tres-culturas-2026"
+ }
+]

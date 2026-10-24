@@ -1,0 +1,24 @@
+[
+ {
+  "name": "Binational Race 2026",
+  "date": "2026-10-25",
+  "time": "06:50",
+  "distances": [
+   "10K",
+   "12K",
+   "21K"
+  ],
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Finish: Faro de Playas de Tijuana (21K/12K start at Las Americas Premium Outlets, San Ysidro CA; 10K starts in Tijuana)",
+  "organizer": null,
+  "signupUrl": "https://raceroster.com/events/2026/111897/2026-binational-race",
+  "sourceUrl": "https://running.life/es/carrera/binational-race",
+  "confidence": "high",
+  "notes": "Cross-border race San Diego to Tijuana; 21K = 13.1 mi half. Passport/Global Entry/SENTRI needed for border crossing. running.life + Race Roster 2026 event page agree.",
+  "sourceNotes": "time null -> 06:50 (6:50 AM PDT) read on https://raceroster.com/events/2026/111897/2026-binational-race . Half and 12K start at Las Americas Premium Outlets, 10K at Blvd Sanchez Taboada bridge (Costco), Tijuana; page time presumably applies to the event start; per-distance times not given. 12K sold out; half and 10K open. Venue, date unchanged. Prior sourceNotes: 2026-10-23 race-watch: direct fetch of running.life/raceroster.com blocked (DNS/network policy this run); sandiego.org, letsdothis.com and a Zeta Tijuana article all confirm the 2026 Binational Race (half/12K/10K) for Sun Oct 25 2026. No cancellation/postponement signals. Minor unresolved detail: start times differ between aggregators (6:50am vs TBC) — not status-relevant.",
+  "notesEs": "Carrera binacional de San Diego a Tijuana; el 21K equivale al medio maratón de 13.1 mi. Se necesita pasaporte/Global Entry/SENTRI para cruzar la frontera. running.life + la página del evento 2026 en Race Roster coinciden.",
+  "kind": "correction",
+  "existingId": "binational-race-2026"
+ }
+]

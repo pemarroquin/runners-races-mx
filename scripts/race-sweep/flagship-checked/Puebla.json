@@ -1,0 +1,69 @@
+[
+ {
+  "id": "marat-n-de-puebla-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.milenio.com/deportes/puebla-40-carreras-atleticas-2026-calendario"
+  ],
+  "note": "Article: last Sunday of November (=Nov 29) ; no venue/time/signup published. Nulls kept."
+ },
+ {
+  "id": "3a-carrera-pericos",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.chronostart.com.mx/registrate/categorias_disponibles/501"
+  ],
+  "note": "Dec 13, 07:00, Estadio Hermanos Serdan; form active."
+ },
+ {
+  "id": "barbie-run-puebla-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento"
+  ],
+  "note": "Venue null -> Parque Sendela (Estrella de Puebla); sold out."
+ },
+ {
+  "id": "superman-supergirl-run-puebla-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/superman-run-2027-9q0/datos-del-evento"
+  ],
+  "note": "Feb 28 2027, 7:00, Parque Sendela; open."
+ },
+ {
+  "id": "el-cruce-de-los-volcanes-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://running.life/es/carrera/el-cruce-de-los-volcanes",
+   "https://dashport.run/evento_1236"
+  ],
+  "note": "Mar 12-14 2027 stage race; consistent. dashport page returned empty (JS shell) so signupUrl left null."
+ },
+ {
+  "id": "reto-vulcano-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://carrerasmexico.com/registro/reto-vulcano-2026"
+  ],
+  "note": "Nov 7, 07:00, Atzitzintla; online sales closed Oct 19, all distances sold out; signupUrl null consistent."
+ },
+ {
+  "id": "cerro-rojo-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://running.life/es/carrera/cerro-rojo",
+   "https://dashport.run/evento_1314"
+  ],
+  "note": "Apr 23 2027 Tlatlauquitepec; no time. dashport page empty (JS shell) so signupUrl left null."
+ },
+ {
+  "id": "travesia-de-las-tres-culturas-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://travesiatresculturas.com",
+   "https://travesiatresculturas.com/incripciones/"
+  ],
+  "note": "signupUrl filled; no start time published."
+ }
+]

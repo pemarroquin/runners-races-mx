@@ -1,0 +1,46 @@
+[
+ {
+  "name": "C. de las Estaciones Otoño Guadalajara 2026",
+  "date": "2026-10-25",
+  "time": "06:30",
+  "distances": [
+   "5K",
+   "10K",
+   "15K"
+  ],
+  "city": "Guadalajara",
+  "state": "Jalisco",
+  "venue": "Frente a Expo Guadalajara, Av. Mariano Otero 1499, Verde Valle",
+  "organizer": "Asdeporte",
+  "signupUrl": "https://asdeporte.com/evento/oton-o-guadalajara-2026-6r9/datos-del-evento",
+  "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+  "confidence": "high",
+  "notes": null,
+  "sourceNotes": "Read on https://asdeporte.com/evento/oton-o-guadalajara-2026-6r9/datos-del-evento : time null -> 06:30 (15K 6:30, 10K 6:40, 5K 6:50; header says 12:30 h, detail schedule used); venue null -> Frente a Expo Guadalajara, Av. Mariano Otero 1499, Verde Valle; signupUrl null -> that page (Inscribirme button active, current 2026 edition; signup link also listed on https://www.tritour.org/calendario-carreras-guadalajara). Page also has a virtual mode 24-25 Oct. Prior sourceNotes: Date agrees across tritour + runera (asdeporte slug oton-o-...-6r9). Venue not rendered. 2026-10-23 race-watch: direct fetch of tritour.org blocked (DNS/network policy this run); haid.app confirms Asdeporte's event runs Sun Oct 25 2026, 5/10/15K, start/finish Expo Guadalajara (Av. Mariano Otero 1499, Verde Valle), plus a virtual modality Oct 24-25. No cancellation/postponement news.",
+  "notesEs": null,
+  "kind": "correction",
+  "existingId": "c-de-las-estaciones-oto-o-guadalajara-2026"
+ },
+ {
+  "name": "C. de las Estaciones Invierno Guadalajara 2026",
+  "date": "2026-12-13",
+  "time": "06:30",
+  "distances": [
+   "5K",
+   "10K",
+   "15K"
+  ],
+  "city": "Zapopan",
+  "state": "Jalisco",
+  "venue": "Estadio Akron, Zapopan",
+  "organizer": "Asdeporte",
+  "signupUrl": "https://asdeporte.com/evento/invierno-guadalajara-2026-07h/datos-del-evento",
+  "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
+  "confidence": "high",
+  "notes": "Held at Estadio Akron, Zapopan.",
+  "sourceNotes": "Read on https://asdeporte.com/evento/invierno-guadalajara-2026-07h/datos-del-evento : time null -> 06:30 (15K 6:30, 10K 6:40, 5K 6:50; header 12:30 h ignored); signupUrl null -> that page (Inscribirme active, 2026 edition). Venue Estadio Akron, Zapopan unchanged; date 2026-12-13 confirmed. Prior sourceNotes: Date agrees across tritour + runera (asdeporte slug invierno-...-07h).",
+  "notesEs": "Se realiza en el Estadio Akron, Zapopan.",
+  "kind": "correction",
+  "existingId": "c-de-las-estaciones-invierno-guadalajara-2026"
+ }
+]

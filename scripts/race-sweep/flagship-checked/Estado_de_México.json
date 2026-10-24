@@ -1,0 +1,50 @@
+[
+ {
+  "id": "ultra-valle-bravo-utms-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.ultrailmexicoseries.com/ultra-valle-de-bravo/"
+  ],
+  "note": "Page says Nov 27-28 2026, San Mateo Acatitlan, Active registration link; no time published; no notices. Row 11-28 retained."
+ },
+ {
+  "id": "medio-maraton-santa-claus-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/medio-marato-n-santa-claus-2026-v3e/datos-del-evento"
+  ],
+  "note": "Dec 20, 07:00 (detail), Parque Bicentenario Metepec, Inscribirme active."
+ },
+ {
+  "id": "carrera-d-teotihuacan-2027-corazon-de-guerrero",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.marcate.com.mx/evento/SPTMCAR1791308771/"
+  ],
+  "note": "Mar 14 2027, 05:00 Sunday races, Teotihuacan, registration buttons present."
+ },
+ {
+  "id": "travesia-en-las-sierras-2027-16-edicion",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.tritour.org/eventos/travesia-en-las-sierras-2027"
+  ],
+  "note": "May 15 2027, 06:00 (50mi/100K/100mi; 50K at 08:00), Plaza Hidalgo Villa del Carbon; signup link matches."
+ },
+ {
+  "id": "medio-maraton-metepec-dia-de-muertos-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/medio-marato-n-metepec-di-a-de-muertos-2026-5al/datos-del-evento"
+  ],
+  "note": "Nov 15, 07:00, Parque Bicentenario; open."
+ },
+ {
+  "id": "medio-maraton-con-encanto-temoaya-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/medio-marato-n-con-encanto-temoaya-2026-hxu/datos-del-evento"
+  ],
+  "note": "Nov 8, 21K at 08:00, Plaza Sagitario; open."
+ }
+]
