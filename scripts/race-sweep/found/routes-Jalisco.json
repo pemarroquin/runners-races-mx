@@ -1,0 +1,188 @@
+[
+ {
+  "id": "v-carrera-top-care-store-october-urban-park-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Page names Parque Metropolitano only; no map, coords or link."
+ },
+ {
+  "id": "3ra-carrera-neufeld-2026",
+  "start": {
+   "lat": 20.6817764,
+   "lng": -103.4626455,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/3ra--carrera-neufeld-2026-nbu/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/20.6817764,-103.4626455 for Estadio Akron (start listed as interior del Estadio Akron); venue pin, not an explicit start-line coordinate.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "14-carrera-contra-el-cancer-de-mama-gdl-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue text only (UAG); convocatoria PDF not loaded."
+ },
+ {
+  "id": "4-carrera-move-wellness-5k-y-10k",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Address text only; no map/coords."
+ },
+ {
+  "id": "carrera-mtq-run-2026-25-aniversario",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "No venue coordinates; only organizer office address."
+ },
+ {
+  "id": "x-maraton-por-relevos-guadalajara-2026",
+  "start": {
+   "lat": 20.6937747,
+   "lng": -103.4161456,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786651665/",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/20.6937747,-103.4161456 for Coliseo GNP Seguros (start/finish venue); venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "g15k-gatorade-guadalajara-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only a Google Maps text search for La Gran Plaza (no coordinates)."
+ },
+ {
+  "id": "hello-kitty-and-friends-fun-run-guadalajara-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue only (Unidad López Mateos); no map."
+ },
+ {
+  "id": "3-carrera-dia-mundial-de-la-diabetes-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Start TBD (\"Por confirmar\"); route map to be published later."
+ },
+ {
+  "id": "vivo-47-family-run-2026",
+  "start": {
+   "lat": 20.678667,
+   "lng": -103.430806,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.everesp.com/eventos/evento/61/vivo-47-family-run",
+  "evidence": "Sede listed as 20°40'43.2\"N 103°25'50.9\"W (Parque Metropolitano de Guadalajara); venue coordinate, not start line.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "adidas-split-10k-gdl-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only maps.app.goo.gl short link (coordinates not in page text); no map image."
+ },
+ {
+  "id": "carrera-mvs-radio-guadalajara-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue only (CUCS); no map."
+ },
+ {
+  "id": "13-carrera-hecho-udg-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only a Google Maps text-query link (no coordinates)."
+ },
+ {
+  "id": "carrera-ruba-race-guadalajara-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Convocatoria PDF not loaded; no map/coords on page."
+ },
+ {
+  "id": "17-aniversario-panteras-tlaquepaque-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only a Google Maps text-query link for Parque Metropolitano (no coordinates)."
+ },
+ {
+  "id": "el-reto-final-guadalajara-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "No map/coords on page."
+ },
+ {
+  "id": "carrera-mcdonald-s-guadalajara-2026",
+  "start": {
+   "lat": 20.6817764,
+   "lng": -103.4626455,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-mcdonalds-guadalajara-2026-2bw/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/20.6817764,-103.4626455 for Circuito Estadio Akron; venue pin, not labeled as start line.",
+  "fetchStatus": "loaded",
+  "reason": null
+ }
+]

@@ -1,0 +1,120 @@
+[
+ {
+  "id": "serial-atletico-delegacional-de-tijuana-2026-etapa-9",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "serial-atletico-delegacional-rosarito-2026-11-14",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "milla-internacional-de-tijuana-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "el-regreso-de-los-corredores-vivientes-5k-2026",
+  "start": {
+   "lat": 32.5346528,
+   "lng": -116.9632642
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/el-regreso-de-los-corredores-vivientes-5k",
+  "evidence": "SportsEvent JSON-LD geo on the event page (event location coordinates; page gives no separate start-line coordinate).",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-dia-de-muertos-cdt-crowe-5k-2026",
+  "start": {
+   "lat": 32.448475,
+   "lng": -116.9108295
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
+  "evidence": "SportsEvent JSON-LD geo latitude/longitude on the event page (event location).",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "start": {
+   "lat": 32.5345064,
+   "lng": -116.9634688
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "evidence": "SportsEvent JSON-LD geo latitude/longitude on the event page (event location).",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "medio-maraton-rosarito-puerto-nuevo-2026-puerto",
+  "start": {
+   "lat": 32.3664107,
+   "lng": -117.0614795
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/medio-maraton-rosarito-puerto-nuevo-2026",
+  "evidence": "SportsEvent JSON-LD geo latitude/longitude on the event page (event location).",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "rd-trail-half-marathon-2026-run-dirty-cowboy",
+  "start": {
+   "lat": 32.34116612355486,
+   "lng": -116.9562403144393
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://ultrasignup.com/register.aspx?eid=15630",
+  "evidence": "Venue/Directions Google Maps link on the UltraSignup page: maps?q=32.34116612355486,-116.9562403144393 (Corredor Tijuana-Rosarito 2000 km 31).",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "maraton-baja-california-2026-60-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "gran-carrera-atletica-la-enchilada-12k-2027",
+  "start": {
+   "lat": 32.5279359,
+   "lng": -117.0131915
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/gran-carrera-atletica-la-enchilada-12k-2027",
+  "evidence": "SportsEvent JSON-LD geo latitude/longitude on the event page (event location).",
+  "fetchStatus": "loaded",
+  "reason": null
+ }
+]

@@ -1,0 +1,42 @@
+[
+ {
+  "id": "medio-maraton-la-capital-del-deporte-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "News article; start text only, no map/coords."
+ },
+ {
+  "id": "carrera-atletica-el-sol-de-san-luis-2026-7",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "News article; start text only."
+ },
+ {
+  "id": "celebremos-la-vida-5k-y-10k-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "News article; start at Planetario by text only."
+ },
+ {
+  "id": "spartan-san-luis-potosi-parque-tangamanga-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Aggregator page; venue text only."
+ }
+]

@@ -1,0 +1,38 @@
+[
+ {
+  "id": "21k-tres-presas-3ra-edicion",
+  "start": {
+   "lat": 28.6120835,
+   "lng": -106.1209934
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.primeroactivocuu.com/event/21k-las-tres-presa-3ra-edicin",
+  "evidence": "Directions link on event page: maps/dir/?api=1&destination=28.6120835,-106.1209934.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "run-internacional-the-u-s-mexico-10k-2027-8",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "copper-canyons-endurance-runs-2026",
+  "start": {
+   "lat": 27.298927677328066,
+   "lng": -108.05634717527687
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://ultrasignup.com/register.aspx?eid=10237",
+  "evidence": "Location/Directions Google Maps link on the 2026 UltraSignup page: maps?q=27.298927677328066,-108.05634717527687.",
+  "fetchStatus": "loaded",
+  "reason": null
+ }
+]

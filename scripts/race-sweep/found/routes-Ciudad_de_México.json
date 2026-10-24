@@ -1,0 +1,402 @@
+[
+ {
+  "id": "corre-llorona-5k-2026",
+  "start": {
+   "lat": 19.2907936,
+   "lng": -99.098584,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/corre-llorona-5k-2026-8et/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Parque Ecológico Xochimilco (event venue)); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "1-carrera-esencia-viva-con-mascotas-2026",
+  "start": {
+   "lat": 19.4149803,
+   "lng": -99.19549699999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/1--carrera-esencia-viva-2026-ab9/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Bosque de Chapultepec II Sección (event venue)); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "super-villains-run-cdmx-2026-dc",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page states start at Fuente Xochipilli (Av. de los Compositores) but its only coordinate pin (19.3787437,-99.1898929) is ~4 km from the pins on sibling Xochipilli-start pages (19.4138,-99.2007); conflict, not filled.",
+  "fetchStatus": "loaded",
+  "reason": "Page states start at Fuente Xochipilli (Av. de los Compositores) but its only coordinate pin (19.3787437,-99.1898929) is ~4 km from the pins on sibling Xochipilli-start pages (19.4138,-99.2007); conflict, not filled."
+ },
+ {
+  "id": "3a-carrera-petalo-dejando-huella-cdmx-2026",
+  "start": {
+   "lat": 19.30027960952569,
+   "lng": -99.19271204563371,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/3a--carrera-pe-talo--dejando-huella-cdmx-2026-2ju/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start is Av. Zacatépetl esq. Calle Alborada); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-farmarun-by-farmatodo-2026",
+  "start": {
+   "lat": 19.4194815,
+   "lng": -99.18945579999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-farmatodo-2026-a1s/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start arch on Gran Avenida near Calz. del Rey, Chapultepec 1a Sección); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "xxiii-pumathon-universitario-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "News article names Estadio Olímpico Universitario only; no coordinates or map."
+ },
+ {
+  "id": "halloween-race-5k-2026",
+  "start": {
+   "lat": 19.4628845,
+   "lng": -99.0656197,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/halloween-race-5k-2026-02t/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Bosque de Aragón invernadero area); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "calacas-on-the-run-under-armour-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Only short maps.app.goo.gl links (no coordinates in text); route text-only (1a Sección Chapultepec)."
+ },
+ {
+  "id": "calaveritas-run-2026",
+  "start": {
+   "lat": 19.409276716067588,
+   "lng": -99.22716362475799,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/calaveritas-run-2026-s7d/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Complejo Cultural Los Pinos); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-espn-2026-21k-y-10k",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Page gives only \"Paseo de la Reforma\"; route link has no target; no coordinates."
+ },
+ {
+  "id": "capibaras-5k-2026",
+  "start": {
+   "lat": 19.4218546,
+   "lng": -99.1871364,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/capibaras-5k-2025-2kf/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Primera sección del Bosque de Chapultepec); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "12a-karrera-snoopy-un-kilo-de-ayuda-2026",
+  "start": {
+   "lat": 19.4229704,
+   "lng": -99.1756764,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/12va--karrera-snoopy-un-kilo-de-ayuda-2026-43p/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start near Estela de Luz); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "10a-carrera-escucha-a-fondo-2026",
+  "start": {
+   "lat": 19.3265633,
+   "lng": -99.1868126,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/10a-carrera-escucha-a-fondo-2026-hre/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Estadio de prácticas Roberto Tapatío Méndez, Ciudad Universitaria); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "bob-esponja-cdmx-2026",
+  "start": {
+   "lat": 19.41384113541878,
+   "lng": -99.20066086088258,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/bob-esponja-cdmx-2026-yun/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start is Av. de los Compositores at Fuente Xochipilli); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "10-carrera-up-huellas-que-inspiran-2026",
+  "start": {
+   "lat": 19.4218546,
+   "lng": -99.1871364,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/10--carrera-up--huellas-que-inspiran-r9a/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Bosque de Chapultepec (Primera sección)); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "perroton-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Only a short maps link under package pickup; text venue Hipódromo de las Américas; no coordinates."
+ },
+ {
+  "id": "carrera-vuela-run-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text only (Bosque de Chapultepec); no map links."
+ },
+ {
+  "id": "womanup-run-2026",
+  "start": {
+   "lat": 19.41325695984699,
+   "lng": -99.20077510953979,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start is Av. de los Compositores near Fuente Xochipilli); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-del-ring-2026",
+  "start": {
+   "lat": 19.4361328,
+   "lng": -99.154658,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-del-ring-2026-k5c/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start at Monumento a la Revolución); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-platano-run-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Only package-pickup short link without coordinates; text venue Estela de Luz/Reforma."
+ },
+ {
+  "id": "circuito-de-las-estaciones-invierno-penafiel",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Only pin (19.4326077,-99.133208) is unlabeled and sits in the centro histórico, inconsistent with stated start on Av. Zacatépetl; conflict, not filled.",
+  "fetchStatus": "loaded",
+  "reason": "Only pin (19.4326077,-99.133208) is unlabeled and sits in the centro histórico, inconsistent with stated start on Av. Zacatépetl; conflict, not filled."
+ },
+ {
+  "id": "carrera-uvm-2026",
+  "start": {
+   "lat": 19.4243358,
+   "lng": -99.1752954,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start on Paseo de la Reforma at Torre Mayor); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "jingle-bells-5-km-2026",
+  "start": {
+   "lat": 19.4214535,
+   "lng": -99.18710139999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/jingle-bells-5-km-2026-o0f/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text Primera sección del Bosque de Chapultepec); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "oysho-rock-n-roll-mexico-city-2026",
+  "start": {
+   "lat": 19.426038711831758,
+   "lng": -99.1943719916664,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/rock-n-roll-mexico-city-2026-ubr/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start on Reforma between Auditorio Nacional and Campo Marte); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "marvel-run-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text address Av. Zacatépetl only; route download \"próximamente\"; no coordinates."
+ },
+ {
+  "id": "rave-run-by-carrera-nocturna-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue Estadio Universitario CU; only pickup short link; no coordinates."
+ },
+ {
+  "id": "carrera-flor-de-nochebuena-5k-2026",
+  "start": {
+   "lat": 19.2907936,
+   "lng": -99.098584,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-flor-de-nochebuena-5k-2026-12k/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (Parque Ecológico Xochimilco (event venue)); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "christmas-run-2026",
+  "start": {
+   "lat": 19.4229704,
+   "lng": -99.1756764,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/christmas-run-2026-z3r/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text Paseo de la Reforma); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "human-21k-2027",
+  "start": {
+   "lat": 19.4266705,
+   "lng": -99.1984188,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/human-21k-2027-dx3/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text Reforma esq. Anatole France); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-coffee-run-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text only (Paseo de la Reforma); no map links."
+ },
+ {
+  "id": "15-carrera-kardias-tudn-2027",
+  "start": {
+   "lat": 19.423416951850996,
+   "lng": -99.17563777514245,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/15--carrera-kardias-tudn-2027-hso/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; page text start at Reforma and Estela de Luz); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-del-dia-del-padre-21k-edicion-45-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text start only (Periférico Sur frente a Hotel Radisson Paraíso); no coordinates or map."
+ }
+]

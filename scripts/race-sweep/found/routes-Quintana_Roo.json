@@ -1,0 +1,53 @@
+[
+ {
+  "id": "11va-carrera-cumbres-2026",
+  "start": {
+   "lat": 21.0791803,
+   "lng": -86.8792049,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/11va-carrera-cumbres-2026-zun/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/21.0791803,-86.87920489999999 (Residencial ALTAI); venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "we-ru-sirenis-2026",
+  "start": {
+   "lat": 20.4283098,
+   "lng": -87.2953328,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/we-ru-sirenis-2026-36r/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/20.4283098,-87.2953328 beside Hotel Sirenis; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "cancun-marathon-2026",
+  "start": {
+   "lat": 21.1470553,
+   "lng": -86.8174276
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/cancu-n-night-marathon-2026-cfz/datos-del-evento",
+  "evidence": "Location listed as Av. Rambla Fonatur esq. Calle Yum-Balam; both \"cómo llegar\" Google Maps links carry marker 21.1470553,-86.8174276 for that address.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "medio-maraton-playa-del-carmen-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Start \"Portal Maya\" by text only; convocatoria PDF not loaded."
+ }
+]

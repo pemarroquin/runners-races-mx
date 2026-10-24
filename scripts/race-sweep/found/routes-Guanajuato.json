@@ -1,0 +1,95 @@
+[
+ {
+  "id": "carrera-monclair-2026-run-to-the-future",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Page links Google My Maps route maps (10K: mid=16XHUg532sxvi2IhkPB1aZs8ztoqHqow; 5K: mid=1BI4sANdx7KC4Wfs2H4FDiszaFhH2wEQ) but these are not course-map image URLs and give no stated start coordinate; left null."
+ },
+ {
+  "id": "9-carrera-nissan-vegusa-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-nocturna-corre-entre-la-vida-y-la",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "la-nocturna-2026-corre-tras-la-luna-21-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "6-ultra-manada-trail-run-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "medio-maraton-bachoco-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-flexi-2026",
+  "start": {
+   "lat": 21.108634,
+   "lng": -101.6588614
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-flexi-2026-td1/datos-del-evento",
+  "evidence": "Page Google Maps link maps/place/21.108634,-101.6588614.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-el-sol-del-bajio-san-miguel-de-allende",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "69-carrera-de-los-barrios-guiar-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ }
+]
