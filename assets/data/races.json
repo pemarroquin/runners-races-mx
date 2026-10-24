@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro. 2027 calendar sweep 2026-10-20: Baja California, Guanajuato, Yucatán. 2027 calendar sweep 2026-10-20: Chihuahua, Nuevo León, Jalisco.",
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro. 2027 calendar sweep 2026-10-20: Baja California, Guanajuato, Yucatán. 2027 calendar sweep 2026-10-20: Chihuahua, Nuevo León, Jalisco. 2027 calendar sweep 2026-10-20: Puebla, Coahuila, San Luis Potosí.",
     "generatedOn": "2026-08-10",
-    "count": 324,
+    "count": 353,
     "distanceTags": [
       "3K",
       "5K",
@@ -2414,7 +2414,7 @@
     {
       "id": "3a-carrera-pericos",
       "name": "3a Carrera Pericos",
-      "date": "2026-12-06",
+      "date": "2026-12-13",
       "time": "07:00",
       "distances": [
         "3K",
@@ -2428,13 +2428,18 @@
       ],
       "city": "Puebla",
       "state": "Puebla",
-      "venue": "Estadio de Beisbol Hermanos Serdán",
+      "venue": "Estadio de Béisbol Hermanos Serdán",
       "organizer": "Chronostart",
       "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
       "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/501",
       "confidence": "high",
-      "notes": "$352 MXN per distance. Pericos de Puebla baseball club race.",
-      "notesEs": "$352 MXN por distancia. Carrera del club de beisbol Pericos de Puebla."
+      "notes": "3K, 5K and 10K at the Hermanos Serdán baseball stadium, a race by the Pericos de Puebla baseball club. $418 MXN per distance.",
+      "notesEs": "Carrera de 3K, 5K y 10K en el Estadio de Béisbol Hermanos Serdán, del club de béisbol Pericos de Puebla. $418 MXN por distancia.",
+      "sourceNotes": "Existing row has 2026-12-06 (tritour.org; a search snippet also said 6 Dec). Chronostart's own registration page and running.life both say 13 Dec 2026 at 07:00; Chronostart is the timing company so 13 Dec used. Organizer inferred from venue/name. Conflict unresolved with tritour.",
+      "status": "changed",
+      "statusNote": "New date: Sunday 13 December 2026 at 7:00 a.m. (was 6 December).",
+      "statusNoteEs": "Nueva fecha: domingo 13 de diciembre de 2026 a las 7:00 a.m. (antes 6 de diciembre).",
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "marat-n-de-puebla-2026",
@@ -3975,8 +3980,8 @@
     {
       "id": "maraton-internacional-lala-comarca-lagunera-edic",
       "name": "Maratón Internacional Lala (Comarca Lagunera) — edición 2027",
-      "date": null,
-      "time": null,
+      "date": "2027-03-07",
+      "time": "06:30",
       "distances": [
         "42K"
       ],
@@ -3985,20 +3990,20 @@
       ],
       "city": "Torreón",
       "state": "Coahuila",
-      "venue": "Meta: Bosque Venustiano Carranza, Torreón",
+      "venue": "Salida: Parque Industrial de Gómez Palacio, Durango; meta: Bosque Venustiano Carranza, Torreón",
       "organizer": "Grupo Lala",
-      "signupUrl": null,
-      "sourceUrl": "https://maratonlala.org/",
-      "confidence": "low",
-      "notes": "Flagship Comarca Lagunera marathon, held annually in early March, 4,500-runner cap. Course starts in Gómez Palacio, Durango (Grupo Lala plant) and finishes in Torreón, Coahuila (tagged here under Coahuila for the finish/host city).",
-      "notesEs": "Maratón insignia de la Comarca Lagunera, se realiza anualmente a inicios de marzo, cupo de 4,500 corredores. La ruta arranca en Gómez Palacio, Durango (planta de Grupo Lala) y termina en Torreón, Coahuila (etiquetada aquí bajo Coahuila por ser la ciudad de meta/sede).",
-      "sourceNotes": "37th edition (2026) ran Mar 1, 2026 — before this research window; the 38th (2027) edition is not yet dated/opened. Signup not published until the 2027 edition page goes live (current site still shows the past 2026 edition)."
+      "signupUrl": "https://in.njuko.com/maraton-lala-20271787096733177?currentPage=select-competition",
+      "sourceUrl": "https://www.tritour.org/eventos/maraton-lala",
+      "confidence": "medium",
+      "notes": "XXXVIII edition. Flagship Comarca Lagunera marathon. Starts in Gómez Palacio, Durango; finishes in Torreón (tagged under Coahuila for the finish city). Capped at 4,500 runners, 6 h 30 min time limit. Registration 15 October to 13 November 2026: $1,275 MXN until 31 October, $1,450 after. Kit pickup 5 and 6 March at the Centro de Convenciones Torreón.",
+      "notesEs": "XXXVIII edición. Maratón insignia de la Comarca Lagunera. Sale de Gómez Palacio, Durango, y termina en Torreón (etiquetada bajo Coahuila por la ciudad de meta). Cupo de 4,500 corredores, tiempo límite de 6 h 30 min. Inscripciones del 15 de octubre al 13 de noviembre de 2026: $1,275 MXN hasta el 31 de octubre, $1,450 después. Entrega de kits el 5 y 6 de marzo en el Centro de Convenciones Torreón.",
+      "sourceNotes": "Date/time/venue from Tri Tour event page (cites the official convocatoria). maratonlala.org itself shows no date; its INSCRIPCIONES button links to the njuko 2027 slug (signupUrl taken from there; njuko page is a JS shell, not rendered). Start is in Durango, finish in Torreon; city set to Torreon (finish). (Earlier: 37th edition (2026) ran Mar 1, 2026 — before this research window; the 38th (2027) edition is not yet dated/opened. Signup not published until the 2027 edition page goes live (current site still shows the past 2026 edition).)"
     },
     {
       "id": "medio-maraton-21k-coahuila-edicion-2027",
       "name": "Medio Maratón 21K Coahuila — edición 2027",
       "date": "2027-06-13",
-      "time": null,
+      "time": "06:00",
       "distances": [
         "21K"
       ],
@@ -4007,14 +4012,14 @@
       ],
       "city": "Saltillo",
       "state": "Coahuila",
-      "venue": "Centro de Saltillo (2026 salida: Teatro de la Ciudad Fernando Soler)",
+      "venue": "Teatro de la Ciudad Fernando Soler, Xicoténcatl y Blvd. Francisco Coss",
       "organizer": "Gobierno de Coahuila / 21K Coahuila",
       "signupUrl": null,
-      "sourceUrl": "https://www.21kcoahuila.org/",
-      "confidence": "medium",
-      "notes": "Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
-      "notesEs": "Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
-      "sourceNotes": "Official site previously showed only a 'PRE 2027' teaser with no date published. Resolved via web search 2026-09-14: search results (Finishers.com event page) name Sunday June 13, 2027, with preventa registration reportedly open at the official site (same domain as sourceUrl). Direct WebFetch of 21kcoahuila.org was blocked by network egress policy this run, so this rests on search-result corroboration rather than a live page load; signupUrl left null since a distinct registration URL wasn't confirmed. Confidence raised low→medium. 2026 edition ran May 31, 2026 — before this research window.",
+      "sourceUrl": "https://idemsport.com/evento/21k-coahuila-2027/",
+      "confidence": "high",
+      "notes": "Wheelchair start 5:45, general start 6:00. Presale 650 MXN until folios run out; online payment adds a fee. Kit pickup dates to be announced. Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
+      "notesEs": "Salida de silla de ruedas a las 5:45 y del resto a las 6:00. Preventa de 650 MXN hasta agotar folios; el pago en línea tiene cargo extra. Fechas de entrega de kits por anunciar. Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
+      "sourceNotes": "Existing date 2027-06-13 confirmed on Idemsport event page and Tri Tour; this fills time/venue. Registration pointer is www.21kcoahuila.org / idemsport.com but the exact checkout URL was not rendered, so signupUrl left null. 21kcoahuila.org shows only a PRE 2027 shell. (Earlier: Official site previously showed only a 'PRE 2027' teaser with no date published. Resolved via web search 2026-09-14: search results (Finishers.com event page) name Sunday June 13, 2027, with preventa registration reportedly open at the official site (same domain as sourceUrl). Direct WebFetch of 21kcoahuila.org was blocked by network egress policy this run, so this rests on search-result corroboration rather than a live page load; signupUrl left null since a distinct registration URL wasn't confirmed. Confidence raised low→medium. 2026 edition ran May 31, 2026 — before this research window.)",
       "status": "ok",
       "statusNote": "Date resolved: Sunday, June 13, 2027.",
       "lastVerified": "2026-09-14"
@@ -8388,6 +8393,720 @@
       "notes": "Moved to 31 January 2027 but keeps the 2026 name. 10K at 6:30, 5K and 2.5K recreational at 6:40, wheelchair athletes at 6:25. From $700 MXN.",
       "notesEs": "Se cambió de fecha al 31 de enero de 2027 aunque conserva el nombre 2026. 10K a las 6:30, 5K y 2.5K recreativo a las 6:40, paratletas en silla de ruedas a las 6:25. Desde $700 MXN.",
       "sourceNotes": "Asdeporte page says organizer announced a date change to 2027-01-31; runera + tritour agree. Header 12:25 = UTC artifact. Coords 20.6817764,-103.4626455 (Akron)."
+    },
+    {
+      "id": "carrera-latido-rosa-2026",
+      "name": "Carrera Latido Rosa 2026",
+      "date": "2026-10-24",
+      "time": "19:00",
+      "distances": [
+        "4K",
+        "8K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Parque del Arte",
+      "organizer": null,
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/550",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/550",
+      "confidence": "high",
+      "notes": "Evening 4K and 8K run. Registration is $275 per distance.",
+      "notesEs": "Carrera nocturna de 4K y 8K. La inscripción cuesta $275 por distancia.",
+      "sourceNotes": "Time/venue/prices from Chronostart's own registration page. tritour.org and running.life list the same date. running.life puts it in San Bernardino Tlaxcalancingo; city left as Puebla per tritour."
+    },
+    {
+      "id": "social-run-adidas-puebla-2026",
+      "name": "Social Run Adidas Puebla 2026",
+      "date": "2026-10-24",
+      "time": "07:00",
+      "distances": [
+        "7K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Centro Comercial Angelópolis",
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://www.asdeporte.com/evento/social-run-adidas-puebla-2026-0os/datos-del-evento",
+      "confidence": "high",
+      "notes": "Non-competitive social run, 7K at your own pace, limited to 1,000 runners. Waves start 7:00, 7:05 and 7:10 by pace. From $400.",
+      "notesEs": "Social run no competitivo de 7K a tu propio ritmo, cupo de 1,000 corredores. Salidas a las 7:00, 7:05 y 7:10 según ritmo. Desde $400.",
+      "sourceNotes": "Event page has no /inscripcion link rendered, so signupUrl left null. Page header shows a generic '13:00 h' that conflicts with the 7:00 am schedule in the body; body schedule used. Organizer from contact email (keeprunning)."
+    },
+    {
+      "id": "carrera-de-las-iglesias-2026",
+      "name": "Carrera de las Iglesias 2026",
+      "date": "2026-10-31",
+      "time": "17:30",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "San Andrés Cholula",
+      "state": "Puebla",
+      "venue": "San Francisco Acatepec",
+      "organizer": null,
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/557",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/557",
+      "confidence": "high",
+      "notes": "Afternoon run with 3K, 5K and 10K options. Registration is $275 per distance.",
+      "notesEs": "Carrera vespertina con opciones de 3K, 5K y 10K. La inscripción cuesta $275 por distancia.",
+      "sourceNotes": "Chronostart page gives venue 'San Francisco Acatepec'. running.life labels it San Luis Tehuiloyocan; both are in San Andrés Cholula municipality (tritour: San Andrés Cholula)."
+    },
+    {
+      "id": "social-run-sportico-puebla-2026",
+      "name": "Social Run Sportico Puebla 2026",
+      "date": "2026-11-07",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "7K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Centro Comercial Vía San Ángel",
+      "organizer": "Sportico",
+      "signupUrl": "https://www.asdeporte.com/evento/social-run-sportico-puebla-2026-l64/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/social-run-sportico-puebla-2026-l64/datos-del-evento",
+      "confidence": "high",
+      "notes": "Non-competitive social run with 3K and 7K options, limited to 1,000 runners, in support of CRIT Teletón Puebla. Waves start 7:00, 7:05 and 7:10. From $350.",
+      "notesEs": "Social run no competitivo con opciones de 3K y 7K, cupo de 1,000 corredores, a favor del CRIT Teletón Puebla. Salidas a las 7:00, 7:05 y 7:10. Desde $350.",
+      "sourceNotes": "Asdeporte page header shows generic '13:00 h'; body says 07:00 am, body used. Also on running.life."
+    },
+    {
+      "id": "reto-vulcano-2026",
+      "name": "Reto Vulcano 2026",
+      "date": "2026-11-07",
+      "time": "07:00",
+      "distances": [
+        "14K",
+        "30K",
+        "40K"
+      ],
+      "distanceTags": [
+        "15K",
+        "30K",
+        "Full"
+      ],
+      "city": "Atzitzintla",
+      "state": "Puebla",
+      "venue": "Hacienda Sandoval (start), Atzitzintla, Puebla",
+      "organizer": "Gabo Monkey",
+      "signupUrl": null,
+      "sourceUrl": "https://carrerasmexico.com/registro/reto-vulcano-2026",
+      "confidence": "medium",
+      "notes": "Trail race at the foot of Pico de Orizaba with 14K, 30K and 40K options plus free kids' races. Online sales have closed and the main distances are sold out.",
+      "notesEs": "Carrera de trail al pie del Pico de Orizaba con 14K, 30K y 40K, más carreras infantiles gratuitas. La venta en línea cerró y las distancias principales están agotadas.",
+      "sourceNotes": "carrerasmexico page rendered: 7 Nov 2026, salida 07:00, prices 750/1050/1400, venta cerrada 19-Oct. running.life adds a 6K 'Los Gentiles' and start at Hacienda Sandoval / finish at auditorio municipal; 6K not on the registration page so omitted. signupUrl null because online sale is closed."
+    },
+    {
+      "id": "4a-carrera-trozmer-2026",
+      "name": "4a Carrera Trozmer 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Angelópolis",
+      "organizer": null,
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/542",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/542",
+      "confidence": "high",
+      "notes": "5K and 10K run at Angelópolis. Registration is $330 per distance.",
+      "notesEs": "Carrera de 5K y 10K en Angelópolis. La inscripción cuesta $330 por distancia.",
+      "sourceNotes": "Chronostart own page; tritour and running.life agree on date."
+    },
+    {
+      "id": "mistercarrera-atlixco-2026-edicion-25",
+      "name": "Mistercarrera Atlixco 2026 (Edición 25)",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "6K",
+        "15K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K"
+      ],
+      "city": "Atlixco",
+      "state": "Puebla",
+      "venue": "Zócalo de Atlixco",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/mistercarrera-atlixco--edicio-n-25-2026-3u3/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/mistercarrera-atlixco--edicio-n-25-2026-3u3/datos-del-evento",
+      "confidence": "high",
+      "notes": "15K and 6K run starting and finishing at the Atlixco zócalo, with cash prizes in the 15K. From $395.",
+      "notesEs": "Carrera de 15K y 6K con salida y meta en el zócalo de Atlixco, con premios en efectivo en los 15K. Desde $395.",
+      "sourceNotes": "Asdeporte page header shows generic '13:00 h'; body says 7:00 am, body used. Organizer inferred from contact email domain (mtsport)."
+    },
+    {
+      "id": "travesia-de-las-tres-culturas-2026",
+      "name": "Travesía de las Tres Culturas 2026",
+      "date": "2026-11-13",
+      "time": null,
+      "distances": [
+        "60K"
+      ],
+      "distanceTags": [
+        "Ultra"
+      ],
+      "city": "Pantepec",
+      "state": "Puebla",
+      "venue": "Pantepec, Sierra Norte de Puebla",
+      "organizer": "Ultra-Trail de México (UTMX)",
+      "signupUrl": null,
+      "sourceUrl": "https://travesiatresculturas.com",
+      "confidence": "medium",
+      "notes": "Two-stage mountain race, 60 km total with 2,550 m of climbing, camping between stages. Runs 13 to 15 November.",
+      "notesEs": "Carrera de montaña por etapas, 60 km en total con 2,550 m de desnivel positivo y campamento entre etapas. Del 13 al 15 de noviembre.",
+      "sourceNotes": "Official site says '2da edición 13 al 15 de noviembre, 2026'; stage day/date of the first stage taken as 13 Nov. Registration link not extractable from the page, signupUrl null. No price/start time published on fetched page."
+    },
+    {
+      "id": "borregos-think-feel-run-puebla-2026",
+      "name": "Borregos Think Feel Run Puebla 2026",
+      "date": "2026-11-22",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Tec de Monterrey Campus Puebla",
+      "organizer": null,
+      "signupUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/545",
+      "sourceUrl": "https://www.chronostart.com.mx/registrate/categorias_disponibles/545",
+      "confidence": "high",
+      "notes": "3K, 5K and 10K run at Tec de Monterrey Campus Puebla, plus kids' 400 m and 800 m races. Registration is $400 (kids $200).",
+      "notesEs": "Carrera de 3K, 5K y 10K en el Tec de Monterrey Campus Puebla, más carreras infantiles de 400 m y 800 m. La inscripción cuesta $400 (infantil $200).",
+      "sourceNotes": "Chronostart own page. running.life places it in San Bernardino Tlaxcalancingo; city kept as Puebla per tritour."
+    },
+    {
+      "id": "the-santa-run-puebla-2026",
+      "name": "The Santa Run Puebla 2026",
+      "date": "2026-12-20",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Parque del Arte, Reserva Territorial Atlixcáyotl",
+      "organizer": "The Santa Run México",
+      "signupUrl": "https://www.asdeporte.com/evento/the-santa-run-puebla-2026-usy/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/the-santa-run-puebla-2026-usy/datos-del-evento",
+      "confidence": "high",
+      "notes": "Recreational Christmas-themed run with 1K, 5K and 10K and a post-race holiday experience; every runner gets a raffle entry. From $490.",
+      "notesEs": "Carrera recreativa navideña de 1K, 5K y 10K con experiencia navideña al final; cada corredor participa en una rifa. Desde $490.",
+      "sourceNotes": "Page header shows generic '13:00 h'; body says arranque 7:00 am, body used."
+    },
+    {
+      "id": "13-carrera-amanc-puebla-2027",
+      "name": "13.ª Carrera AMANC Puebla 2027",
+      "date": "2027-02-07",
+      "time": "07:00",
+      "distances": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "San Andrés Cholula",
+      "state": "Puebla",
+      "venue": "Parque de la Niñez, Blvd. del Niño Poblano",
+      "organizer": "AMANC Puebla",
+      "signupUrl": "https://www.asdeporte.com/evento/13---carrera-amanc-puebla-2027--porque-la-magia-ma-s-grande-se-crea-juntos---y3a/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/13---carrera-amanc-puebla-2027--porque-la-magia-ma-s-grande-se-crea-juntos---y3a/datos-del-evento",
+      "confidence": "high",
+      "notes": "Charity run for children and teens with cancer: 3K, 5K and 10K. From $300.",
+      "notesEs": "Carrera a beneficio de niñas, niños y adolescentes con cáncer: 3K, 5K y 10K. Desde $300.",
+      "sourceNotes": "Asdeporte page; header '13:00 h' generic, body says arranque 7:00 am. Venue address is San Bernardino Tlaxcalancingo (San Andrés Cholula municipality)."
+    },
+    {
+      "id": "superman-supergirl-run-puebla-2027",
+      "name": "Superman & Supergirl Run Puebla 2027",
+      "date": "2027-02-28",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "Puebla",
+      "state": "Puebla",
+      "venue": "Parque Sendela (Estrella de Puebla)",
+      "organizer": null,
+      "signupUrl": "https://www.asdeporte.com/evento/superman-run-2027-9q0/inscripcion",
+      "sourceUrl": "https://www.asdeporte.com/evento/superman-run-2027-9q0/datos-del-evento",
+      "confidence": "high",
+      "notes": "5K and 10K run (plus a 3K walk) at Parque Sendela, next to Angelópolis. Top three finishers per rama are awarded. From $840.",
+      "notesEs": "Carrera de 5K y 10K (más caminata de 3K) en el Parque Sendela, junto a Angelópolis. Se premia a los tres primeros de cada rama. Desde $840.",
+      "sourceNotes": "Asdeporte page; header '13:00 h' generic, body says from 7:00 a.m. Organizer not named on page."
+    },
+    {
+      "id": "desafio-en-las-nubes-2027",
+      "name": "Desafío en las Nubes 2027",
+      "date": "2027-02-19",
+      "time": null,
+      "distances": [
+        "2.5K",
+        "5K",
+        "11K",
+        "26K",
+        "34K",
+        "48K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K",
+        "30K",
+        "Ultra"
+      ],
+      "city": "Xicotepec",
+      "state": "Puebla",
+      "venue": "Xicotepec de Juárez",
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/es/carrera/desafio-en-las-nubes",
+      "confidence": "low",
+      "notes": "Trail running weekend in Xicotepec with distances from 2.5K to 48K. The 48K requires proof of mountain-race experience.",
+      "notesEs": "Fin de semana de trail en Xicotepec con distancias de 2.5K a 48K. Para los 48K se requiere acreditar experiencia en carreras de montaña.",
+      "sourceNotes": "Only source is running.life (19-20 Feb 2027); its description says 19 to 21 Feb. Dates unverified on organizer page; welcu registration link not loaded. Start date used = 19 Feb."
+    },
+    {
+      "id": "niebla-trail-2027-5-edicion",
+      "name": "Niebla Trail 2027 (5ª edición)",
+      "date": "2027-02-28",
+      "time": null,
+      "distances": [
+        "7K",
+        "13K",
+        "23K"
+      ],
+      "distanceTags": [
+        "5K",
+        "15K",
+        "Half"
+      ],
+      "city": "Huauchinango",
+      "state": "Puebla",
+      "venue": "Cbtis 86, Huauchinango",
+      "organizer": "Runners Huauchinango",
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/es/carrera/niebla-trail",
+      "confidence": "low",
+      "notes": "Trail race during the Feria de las Flores with 7K, 13K and 23K options.",
+      "notesEs": "Carrera de trail durante la Feria de las Flores con opciones de 7K, 13K y 23K.",
+      "sourceNotes": "Only source is running.life. Boletopolis event 40869 is JS-rendered (empty shell), so signupUrl left null."
+    },
+    {
+      "id": "el-cruce-de-los-volcanes-2027",
+      "name": "El Cruce de los Volcanes 2027",
+      "date": "2027-03-12",
+      "time": null,
+      "distances": [
+        "28K",
+        "42K"
+      ],
+      "distanceTags": [
+        "30K",
+        "Full"
+      ],
+      "city": "San Pedro Cholula",
+      "state": "Puebla",
+      "venue": "Zona del Iztaccíhuatl y Popocatépetl",
+      "organizer": "FTMX Frogs Trail México",
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/es/carrera/el-cruce-de-los-volcanes",
+      "confidence": "low",
+      "notes": "Three-day stage race between the volcanoes: 28K and 42K stages, or the full race.",
+      "notesEs": "Carrera por etapas entre los volcanes: etapas de 28K y 42K, o la carrera completa.",
+      "sourceNotes": "Only source is running.life (12-14 Mar 2027, 3rd edition). dashport.run is a JS SPA, not verified; signupUrl null. Municipality given by running.life."
+    },
+    {
+      "id": "cerro-rojo-2027",
+      "name": "Cerro Rojo 2027",
+      "date": "2027-04-23",
+      "time": null,
+      "distances": [
+        "5K",
+        "10K",
+        "17K",
+        "36K",
+        "55K",
+        "80K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "15K",
+        "30K",
+        "Ultra"
+      ],
+      "city": "Tlatlauquitepec",
+      "state": "Puebla",
+      "venue": "Ciudad de Tlatlauquitepec",
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://running.life/es/carrera/cerro-rojo",
+      "confidence": "low",
+      "notes": "Trail event in Tlatlauquitepec with distances from 5K to 80K.",
+      "notesEs": "Evento de trail en Tlatlauquitepec con distancias de 5K a 80K.",
+      "sourceNotes": "Only source is running.life; dashport.run link is a JS SPA, unverified; signupUrl null."
+    },
+    {
+      "id": "medio-maraton-del-sarape-2027",
+      "name": "Medio Maratón del Sarape 2027",
+      "date": "2027-01-31",
+      "time": null,
+      "distances": [
+        "7K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "Half"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": null,
+      "organizer": null,
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/medio-maraton-del-sarape-2027",
+      "confidence": "medium",
+      "notes": "21K and 7K. Published prices: 21K 600 MXN, 7K 300 MXN, 21K for ages 60+ 400 MXN.",
+      "notesEs": "21K y 7K. Cuotas publicadas: 21K 600 MXN, 7K 300 MXN, 21K para mayores de 60 años 400 MXN.",
+      "sourceNotes": "Tri Tour page and playersoflife.com article agree on 2027-01-31. Venue conflict: Tri Tour says calendar announced Estadio Francisco I. Madero; playersoflife says that was the 2026 venue and 2027 is not confirmed, so venue left null. Prices on Tri Tour only. Registration is chronosport.dashport.run/evento_1424 (JS SPA, not rendered) so signupUrl null."
+    },
+    {
+      "id": "daimler-truck-5k-carrera-por-la-cura-2026",
+      "name": "Daimler Truck 5K — Carrera por la Cura 2026",
+      "date": "2026-10-25",
+      "time": "07:00",
+      "distances": [
+        "1K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+      "organizer": "Go Time",
+      "signupUrl": "https://daimler2026.boletopolis.com",
+      "sourceUrl": "https://www.tritour.org/eventos/daimler-truck-5k-carrera-por-la-cura-2026",
+      "confidence": "medium",
+      "notes": "Benefit for Casa Rosa, Unidos Contra el Cáncer de Mama A.C. Adult fee 220 MXN, kids 50 MXN (kids tickets listed as sold out). Includes Dry-Fit shirt, medal and recovery kit.",
+      "notesEs": "A beneficio de Casa Rosa, Unidos Contra el Cáncer de Mama A.C. Cuota de adultos 220 MXN, infantil 50 MXN (boletos infantiles agotados). Incluye playera Dry-Fit, medalla y kit de recuperación.",
+      "sourceNotes": "Date/time/venue from Tri Tour; Go Time page (gotime.mx/corriendoporlacura) is a poster and shows only an INSCRIPCIONES button to daimler2026.boletopolis.com (not rendered). Tri Tour calendar row linked gotime.mx/corriendoporlacura."
+    },
+    {
+      "id": "viesca-5k-55-aniversario-2026",
+      "name": "Viesca 5K — 55 Aniversario 2026",
+      "date": "2026-11-01",
+      "time": "08:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+      "organizer": "Go Time",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/viesca-5k-55-aniversario-2026",
+      "confidence": "medium",
+      "notes": "55th anniversary of Secundaria General Andrés S. Viesca. 350 MXN. Dry-Fit shirt, medal and recovery kit.",
+      "notesEs": "Por el 55 aniversario de la Secundaria General Andrés S. Viesca. Cuota de 350 MXN. Incluye playera Dry-Fit, medalla y kit de recuperación.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page gotime.mx/viesca5k has no text details; Boletopolis link not captured."
+    },
+    {
+      "id": "carrera-80-aniversario-fcq-uadec-2026",
+      "name": "Carrera 80 Aniversario FCQ UAdeC 2026",
+      "date": "2026-11-08",
+      "time": "08:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": null,
+      "organizer": "Facultad de Ciencias Químicas, UAdeC",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-80-aniversario-fcq-uadec-2026",
+      "confidence": "medium",
+      "notes": "80th anniversary of the Facultad de Ciencias Químicas, UAdeC. 350 MXN at FCQ, 385 MXN online. Kit pickup Friday 6 November, 12:00 to 16:00.",
+      "notesEs": "Por el 80 aniversario de la Facultad de Ciencias Químicas de la UAdeC. 350 MXN en FCQ, 385 MXN en línea. Entrega de kits el viernes 6 de noviembre de 12:00 a 16:00.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Venue not stated. Registration is Chronosport dashport evento_1411 (SPA, not rendered)."
+    },
+    {
+      "id": "carrera-vaquera-por-la-juventud-5k-2026",
+      "name": "Carrera Vaquera por la Juventud 5K 2026",
+      "date": "2026-11-20",
+      "time": "18:30",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "La Madriguera Casa del Adolescente, calle 2 de Abril s/n, Nuevo Centro Metropolitano",
+      "organizer": "Go Time / A Pasos de Gigante",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/carrera-vaquera-por-la-juventud-5k-2026",
+      "confidence": "medium",
+      "notes": "Night 5K for the ninth anniversary of A Pasos de Gigante. Warm-up 18:15. Presale 150 MXN, general 199 MXN.",
+      "notesEs": "Carrera nocturna de 5 km por el noveno aniversario de A Pasos de Gigante. Calentamiento a las 18:15. Preventa 150 MXN, general 199 MXN.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page has no text details."
+    },
+    {
+      "id": "5k-rumbo-al-exito-2026",
+      "name": "5K Rumbo al Éxito 2026",
+      "date": "2026-11-22",
+      "time": "08:00",
+      "distances": [
+        "1K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+      "organizer": "Go Time / IMEF Coahuila Sureste",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/5k-rumbo-al-exito-2026",
+      "confidence": "medium",
+      "notes": "5K plus a kids 1K. General fee 300 MXN. Dry-Fit shirt, bib, medal and recovery.",
+      "notesEs": "5K y prueba infantil de 1 km. Cuota general de 300 MXN. Incluye playera Dry-Fit, número, medalla y recuperación.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page (imef2026) poster only."
+    },
+    {
+      "id": "taco-race-saltillo-2026-3a-edicion",
+      "name": "Taco Race Saltillo 2026 (3a edición)",
+      "date": "2026-11-29",
+      "time": "07:30",
+      "distances": [
+        "1K",
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K",
+        "10K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Taco Tl Light, sucursal Los Pastores",
+      "organizer": "Taco Tl Light",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/taco-race-saltillo-2026",
+      "confidence": "medium",
+      "notes": "Third edition. 300 MXN presale, 320 MXN general. Shirt, medal and four barbacoa tacos at the finish. Kit pickup Saturday 28 November, 10:00 to 14:00 at the Metroból branch.",
+      "notesEs": "Tercera edición. Preventa 300 MXN, venta 320 MXN. Incluye playera, medalla y cuatro tacos de barbacoa al final. Entrega de kits el sábado 28 de noviembre de 10:00 a 14:00 en la sucursal Metroból.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Registration is Chronosport dashport evento_1423 (SPA, not rendered)."
+    },
+    {
+      "id": "campanitas-navidenas-2026",
+      "name": "Campanitas Navideñas 2026",
+      "date": "2026-12-20",
+      "time": "12:00",
+      "distances": [
+        "5K"
+      ],
+      "distanceTags": [
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Calle Bellavista 268, colonia Bellavista",
+      "organizer": "Club de Corredores Gato Araiza / Go Time",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/campanitas-navidenas-2026",
+      "confidence": "medium",
+      "notes": "5K plus kids and youth races from 100 m to 1,500 m. Adults 300 MXN, kids 50 MXN. Cap 500 runners; shirt only for the first 350 adults and 100 kids.",
+      "notesEs": "5K y pruebas infantiles y juveniles de 100 m a 1,500 m. Adultos 300 MXN, niños 50 MXN. Cupo de 500 corredores; playera solo para los primeros 350 adultos y 100 niños.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page has no text details."
+    },
+    {
+      "id": "football-run-2027",
+      "name": "Football Run 2027",
+      "date": "2027-02-14",
+      "time": "08:00",
+      "distances": [
+        "1K",
+        "5K"
+      ],
+      "distanceTags": [
+        "3K",
+        "5K"
+      ],
+      "city": "Saltillo",
+      "state": "Coahuila",
+      "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+      "organizer": "Go Time",
+      "signupUrl": null,
+      "sourceUrl": "https://www.tritour.org/eventos/football-run-2027",
+      "confidence": "medium",
+      "notes": "5K plus a mixed kids 1K up to age 14. Presale 300 MXN, general 320 MXN. Kit pickup Saturday 13 February, 10:00 to 13:00.",
+      "notesEs": "5K y prueba infantil mixta de 1 km hasta 14 años. Preventa 300 MXN, venta 320 MXN. Entrega de kits el sábado 13 de febrero de 10:00 a 13:00.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page footballrun5k has no text details; fr2027.boletopolis.com link not rendered."
+    },
+    {
+      "id": "medio-maraton-la-capital-del-deporte-2026",
+      "name": "Medio Maratón La Capital del Deporte 2026",
+      "date": "2026-11-08",
+      "time": "07:00",
+      "distances": [
+        "5K",
+        "10K",
+        "21K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K",
+        "Half"
+      ],
+      "city": "San Luis Potosí",
+      "state": "San Luis Potosí",
+      "venue": "Jardín Hidalgo, frente a Palacio Municipal (Plaza de Armas)",
+      "organizer": "Dirección de Deporte Municipal, Gobierno de la Capital",
+      "signupUrl": null,
+      "sourceUrl": "https://sanluisinforma.com/?p=22666",
+      "confidence": "medium",
+      "notes": "Free entry. Registration runs Oct 7 to Nov 4, 2026 (or until spots run out), in person at Palacio Municipal, Mon-Fri 9:00-18:00 and Sat 9:00-13:00; bring a copy of your official ID. Each registrant may sign up one additional person. The 5K is a fun run. Kit pickup Nov 6 (8:00-18:00) and Nov 7 (8:00-15:00) at Auditorio Socorro Blanc, Blvd. Salvador Nava Martínez 1580.",
+      "notesEs": "Inscripción gratuita. El registro va del 7 de octubre al 4 de noviembre de 2026 (o hasta agotar lugares), en persona en Palacio Municipal, de lunes a viernes de 9:00 a 18:00 y sábados de 9:00 a 13:00; lleva copia de tu identificación oficial. Cada persona registrada puede inscribir a una más. El 5K es de convivencia. Entrega de kits el 6 de noviembre (8:00 a 18:00) y el 7 (8:00 a 15:00) en el Auditorio Socorro Blanc, Blvd. Salvador Nava Martínez 1580.",
+      "sourceNotes": "Single local news source (sanluisinforma.com), fetched. No online registration page; the convocatoria is a Google Doc linked from the article (not fetched). signupUrl left null on purpose. Not on runera/asdeporte/tritour/marcate/tim3."
+    },
+    {
+      "id": "carrera-atletica-el-sol-de-san-luis-2026-7",
+      "name": "Carrera Atlética El Sol de San Luis 2026 (7ª edición)",
+      "date": "2026-11-29",
+      "time": "08:00",
+      "distances": [
+        "3K",
+        "10K"
+      ],
+      "distanceTags": [
+        "3K",
+        "10K"
+      ],
+      "city": "San Luis Potosí",
+      "state": "San Luis Potosí",
+      "venue": "Frente al edificio de El Sol de San Luis, Av. Universidad 565, Centro",
+      "organizer": "El Sol de San Luis (Circuito Running OEM 2026)",
+      "signupUrl": null,
+      "sourceUrl": "https://planoinformativo.com/planodeportivo/340867/presentan-la-septima-carrera-atletica-de-el-sol-de-san-luis-repartira-150-mil-pesos-en-premios",
+      "confidence": "medium",
+      "notes": "Part of the Circuito Running OEM 2026. Fee 400 pesos from Sep 16 to Nov 28. Register at El Sol de San Luis offices and authorized points in the city; questions to running@oem.com.mx. Total purse 150,000 pesos. Kit includes a Nemik shirt and a finisher medal. Chip timing.",
+      "notesEs": "Parte del Circuito Running OEM 2026. Cuota de 400 pesos del 16 de septiembre al 28 de noviembre. Inscríbete en las oficinas de El Sol de San Luis y en puntos autorizados de la ciudad; dudas a running@oem.com.mx. Bolsa total de 150 mil pesos. El kit incluye playera Nemik y medalla para quienes terminen. Cronometraje con chip.",
+      "sourceNotes": "Source is a Plano Informativo article dated 2026-08-04 (fetched); a web search summary reported the same date, distances and a 2,500-runner cap, but only the one article was loaded. In-person registration only found; no online signup URL. A search snippet mentioned a cap of 2,500 runners (not loaded from the page, so not in notes)."
+    },
+    {
+      "id": "celebremos-la-vida-5k-y-10k-2026",
+      "name": "Celebremos la Vida 5K y 10K 2026",
+      "date": "2026-12-06",
+      "time": "08:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Luis Potosí",
+      "state": "San Luis Potosí",
+      "venue": "Planetario (salida y meta)",
+      "organizer": "Funerales Hernández",
+      "signupUrl": null,
+      "sourceUrl": "https://planoinformativo.com/planodeportivo/345027/celebremos-la-vida-llegara-el-6-de-diciembre-conoce-los-costos-horarios-e-inscripciones",
+      "confidence": "medium",
+      "notes": "Fee 100 pesos for the 5K and 200 pesos for the 10K. Prize purse over 200,000 pesos. Registration opened Oct 22, 2026.",
+      "notesEs": "Cuota de 100 pesos para el 5K y 200 pesos para el 10K. Bolsa de premios superior a 200 mil pesos. El registro abrió el 22 de octubre de 2026.",
+      "sourceNotes": "Single article (Plano Informativo, 2026-10-22), fetched. The article gives no online link or physical registration point. Year inferred from the article's timeline (published Oct 2026, 'Sunday December 6' matches 2026). A sanluisatiempo.com headline also names the race (seen in nav only, not loaded as an article)."
+    },
+    {
+      "id": "spartan-san-luis-potosi-parque-tangamanga-2026",
+      "name": "Spartan San Luis Potosí Parque Tangamanga 2026",
+      "date": "2026-10-31",
+      "time": "08:00",
+      "distances": [
+        "5K",
+        "10K"
+      ],
+      "distanceTags": [
+        "5K",
+        "10K"
+      ],
+      "city": "San Luis Potosí",
+      "state": "San Luis Potosí",
+      "venue": "Parque Tangamanga",
+      "organizer": "Spartan Race México",
+      "signupUrl": null,
+      "sourceUrl": "https://haid.app/en/events/spartan-san-luis-potosi-parque-tangamanga-2026-164663",
+      "confidence": "low",
+      "notes": "Obstacle course race: Sprint (5 km, 20 obstacles) and Super (10 km, 25 obstacles), plus a Spartan Kids race for ages 4 to 13. Check-in from 7:00.",
+      "notesEs": "Carrera de obstáculos: Sprint (5 km, 20 obstáculos) y Super (10 km, 25 obstáculos), más carrera Spartan Kids para edades de 4 a 13 años. Registro desde las 7:00.",
+      "sourceNotes": "Fetched only the haid.app aggregator listing; the official spartan.com 2026 page was not found (mx.spartan.com/es/races/tangamanga2026 is 404; a search surfaced the 2026 date only on 'nearby events' lists of other Spartan pages). The 565 MXN start price matches Spartan's Kids price on the Texcoco 2026 page, so it is likely the Kids price; price omitted from notes. Distances in the tag list are the Sprint/Super lengths; the Kids race is not tagged separately. signupUrl null: haid external link is not a confirmed official registration."
     }
   ]
 }
