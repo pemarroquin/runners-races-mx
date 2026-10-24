@@ -1,6 +1,6 @@
 # 2027 Calendar Sweep — Discovery Brief (shared by every state agent)
 
-Today is 2026-10-20. Window: **2026-10-20 through 2027-12-31**.
+Today is 2026-10-24. Window: **2026-10-24 through 2027-12-31**.
 
 Read first (method + traps):
 - scripts/race-sweep/method/references/sources.md
@@ -12,7 +12,7 @@ Your state's EXISTING races (id, name, date, city, sourceUrl) are in
 1. **Date the undated.** Every existing race with `date: null` — find its date
    if it's now published (for the next edition inside the window).
 2. **Next editions.** Every existing race whose date is already PAST
-   (before 2026-10-20): find its next edition (usually 2027) if a date, page
+   (before 2026-10-24): find its next edition (usually 2027) if a date, page
    or registration is published. If nothing is published yet, skip it — do not
    project a date from last year's.
 3. **New races.** Races in the window that aren't in the existing list at all.

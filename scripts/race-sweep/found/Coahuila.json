@@ -1,0 +1,228 @@
+[
+  {
+    "name": "Maratón Internacional Lala (Comarca Lagunera) — edición 2027",
+    "date": "2027-03-07",
+    "time": "06:30",
+    "distances": [
+      "42K"
+    ],
+    "city": "Torreón",
+    "state": "Coahuila",
+    "venue": "Salida: Parque Industrial de Gómez Palacio, Durango; meta: Bosque Venustiano Carranza, Torreón",
+    "organizer": "Grupo Lala",
+    "signupUrl": "https://in.njuko.com/maraton-lala-20271787096733177?currentPage=select-competition",
+    "sourceUrl": "https://www.tritour.org/eventos/maraton-lala",
+    "confidence": "medium",
+    "notes": "XXXVIII edition. Start in Gómez Palacio, Durango; finish in Torreón. Cap 4,500 runners, 6:30 h limit. Registration 15 Oct to 13 Nov 2026: 1,275 MXN until 31 Oct, 1,450 MXN after. Kit pickup 5-6 March at the Centro de Convenciones Torreón.",
+    "sourceNotes": "Date/time/venue from Tri Tour event page (cites the official convocatoria). maratonlala.org itself shows no date; its INSCRIPCIONES button links to the njuko 2027 slug (signupUrl taken from there; njuko page is a JS shell, not rendered). Start is in Durango, finish in Torreon; city set to Torreon (finish).",
+    "notesEs": "XXXVIII edición. Salida en Gómez Palacio, Durango; meta en Torreón. Cupo de 4,500 corredores, tiempo límite de 6 h 30 min. Inscripciones del 15 de octubre al 13 de noviembre de 2026: 1,275 MXN hasta el 31 de octubre, 1,450 MXN después. Entrega de kits el 5 y 6 de marzo en el Centro de Convenciones Torreón.",
+    "kind": "date-undated",
+    "existingId": "maraton-internacional-lala-comarca-lagunera-edic"
+  },
+  {
+    "name": "21K Coahuila 2027",
+    "date": "2027-06-13",
+    "time": "06:00",
+    "distances": [
+      "21K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Teatro de la Ciudad Fernando Soler, Xicoténcatl y Blvd. Francisco Coss",
+    "organizer": null,
+    "signupUrl": null,
+    "sourceUrl": "https://idemsport.com/evento/21k-coahuila-2027/",
+    "confidence": "high",
+    "notes": "Wheelchair start 5:45, general start 6:00. Presale 650 MXN until folios run out; online payment adds a fee. Kit pickup dates to be announced.",
+    "sourceNotes": "Existing date 2027-06-13 confirmed on Idemsport event page and Tri Tour; this fills time/venue. Registration pointer is www.21kcoahuila.org / idemsport.com but the exact checkout URL was not rendered, so signupUrl left null. 21kcoahuila.org shows only a PRE 2027 shell.",
+    "notesEs": "Salida de silla de ruedas a las 5:45 y del resto a las 6:00. Preventa de 650 MXN hasta agotar folios; el pago en línea tiene cargo extra. Fechas de entrega de kits por anunciar.",
+    "kind": "correction",
+    "existingId": "medio-maraton-21k-coahuila-edicion-2027"
+  },
+  {
+    "name": "Medio Maratón del Sarape 2027",
+    "date": "2027-01-31",
+    "time": null,
+    "distances": [
+      "21K",
+      "7K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": null,
+    "organizer": null,
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/medio-maraton-del-sarape-2027",
+    "confidence": "medium",
+    "notes": "21K and 7K. Published prices: 21K 600 MXN, 7K 300 MXN, 21K for ages 60+ 400 MXN.",
+    "sourceNotes": "Tri Tour page and playersoflife.com article agree on 2027-01-31. Venue conflict: Tri Tour says calendar announced Estadio Francisco I. Madero; playersoflife says that was the 2026 venue and 2027 is not confirmed, so venue left null. Prices on Tri Tour only. Registration is chronosport.dashport.run/evento_1424 (JS SPA, not rendered) so signupUrl null.",
+    "notesEs": "21K y 7K. Cuotas publicadas: 21K 600 MXN, 7K 300 MXN, 21K para mayores de 60 años 400 MXN.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Daimler Truck 5K — Carrera por la Cura 2026",
+    "date": "2026-10-25",
+    "time": "07:00",
+    "distances": [
+      "5K",
+      "1K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+    "organizer": "Go Time",
+    "signupUrl": "https://daimler2026.boletopolis.com",
+    "sourceUrl": "https://www.tritour.org/eventos/daimler-truck-5k-carrera-por-la-cura-2026",
+    "confidence": "medium",
+    "notes": "Benefit for Casa Rosa, Unidos Contra el Cáncer de Mama A.C. Adult fee 220 MXN, kids 50 MXN (kids tickets listed as sold out). Includes Dry-Fit shirt, medal and recovery kit.",
+    "sourceNotes": "Date/time/venue from Tri Tour; Go Time page (gotime.mx/corriendoporlacura) is a poster and shows only an INSCRIPCIONES button to daimler2026.boletopolis.com (not rendered). Tri Tour calendar row linked gotime.mx/corriendoporlacura.",
+    "notesEs": "A beneficio de Casa Rosa, Unidos Contra el Cáncer de Mama A.C. Cuota de adultos 220 MXN, infantil 50 MXN (boletos infantiles agotados). Incluye playera Dry-Fit, medalla y kit de recuperación.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Viesca 5K — 55 Aniversario 2026",
+    "date": "2026-11-01",
+    "time": "08:00",
+    "distances": [
+      "5K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+    "organizer": "Go Time",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/viesca-5k-55-aniversario-2026",
+    "confidence": "medium",
+    "notes": "55th anniversary of Secundaria General Andrés S. Viesca. 350 MXN. Dry-Fit shirt, medal and recovery kit.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page gotime.mx/viesca5k has no text details; Boletopolis link not captured.",
+    "notesEs": "Por el 55 aniversario de la Secundaria General Andrés S. Viesca. Cuota de 350 MXN. Incluye playera Dry-Fit, medalla y kit de recuperación.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Carrera 80 Aniversario FCQ UAdeC 2026",
+    "date": "2026-11-08",
+    "time": "08:00",
+    "distances": [
+      "5K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": null,
+    "organizer": "Facultad de Ciencias Químicas, UAdeC",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/carrera-80-aniversario-fcq-uadec-2026",
+    "confidence": "medium",
+    "notes": "80th anniversary of the Facultad de Ciencias Químicas, UAdeC. 350 MXN at FCQ, 385 MXN online. Kit pickup Friday 6 November, 12:00 to 16:00.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Venue not stated. Registration is Chronosport dashport evento_1411 (SPA, not rendered).",
+    "notesEs": "Por el 80 aniversario de la Facultad de Ciencias Químicas de la UAdeC. 350 MXN en FCQ, 385 MXN en línea. Entrega de kits el viernes 6 de noviembre de 12:00 a 16:00.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Carrera Vaquera por la Juventud 5K 2026",
+    "date": "2026-11-20",
+    "time": "18:30",
+    "distances": [
+      "5K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "La Madriguera Casa del Adolescente, calle 2 de Abril s/n, Nuevo Centro Metropolitano",
+    "organizer": "Go Time / A Pasos de Gigante",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/carrera-vaquera-por-la-juventud-5k-2026",
+    "confidence": "medium",
+    "notes": "Night 5K for the ninth anniversary of A Pasos de Gigante. Warm-up 18:15. Presale 150 MXN, general 199 MXN.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page has no text details.",
+    "notesEs": "Carrera nocturna de 5 km por el noveno aniversario de A Pasos de Gigante. Calentamiento a las 18:15. Preventa 150 MXN, general 199 MXN.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "5K Rumbo al Éxito 2026",
+    "date": "2026-11-22",
+    "time": "08:00",
+    "distances": [
+      "5K",
+      "1K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+    "organizer": "Go Time / IMEF Coahuila Sureste",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/5k-rumbo-al-exito-2026",
+    "confidence": "medium",
+    "notes": "5K plus a kids 1K. General fee 300 MXN. Dry-Fit shirt, bib, medal and recovery.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page (imef2026) poster only.",
+    "notesEs": "5K y prueba infantil de 1 km. Cuota general de 300 MXN. Incluye playera Dry-Fit, número, medalla y recuperación.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Taco Race Saltillo 2026 (3a edición)",
+    "date": "2026-11-29",
+    "time": "07:30",
+    "distances": [
+      "5K",
+      "10K",
+      "1K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Taco Tl Light, sucursal Los Pastores",
+    "organizer": "Taco Tl Light",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/taco-race-saltillo-2026",
+    "confidence": "medium",
+    "notes": "Third edition. 300 MXN presale, 320 MXN general. Shirt, medal and four barbacoa tacos at the finish. Kit pickup Saturday 28 November, 10:00 to 14:00 at the Metroból branch.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Registration is Chronosport dashport evento_1423 (SPA, not rendered).",
+    "notesEs": "Tercera edición. Preventa 300 MXN, venta 320 MXN. Incluye playera, medalla y cuatro tacos de barbacoa al final. Entrega de kits el sábado 28 de noviembre de 10:00 a 14:00 en la sucursal Metroból.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Campanitas Navideñas 2026",
+    "date": "2026-12-20",
+    "time": "12:00",
+    "distances": [
+      "5K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Calle Bellavista 268, colonia Bellavista",
+    "organizer": "Club de Corredores Gato Araiza / Go Time",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/campanitas-navidenas-2026",
+    "confidence": "medium",
+    "notes": "5K plus kids and youth races from 100 m to 1,500 m. Adults 300 MXN, kids 50 MXN. Cap 500 runners; shirt only for the first 350 adults and 100 kids.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page has no text details.",
+    "notesEs": "5K y pruebas infantiles y juveniles de 100 m a 1,500 m. Adultos 300 MXN, niños 50 MXN. Cupo de 500 corredores; playera solo para los primeros 350 adultos y 100 niños.",
+    "kind": "new",
+    "existingId": null
+  },
+  {
+    "name": "Football Run 2027",
+    "date": "2027-02-14",
+    "time": "08:00",
+    "distances": [
+      "5K",
+      "1K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+    "organizer": "Go Time",
+    "signupUrl": null,
+    "sourceUrl": "https://www.tritour.org/eventos/football-run-2027",
+    "confidence": "medium",
+    "notes": "5K plus a mixed kids 1K up to age 14. Presale 300 MXN, general 320 MXN. Kit pickup Saturday 13 February, 10:00 to 13:00.",
+    "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page footballrun5k has no text details; fr2027.boletopolis.com link not rendered.",
+    "notesEs": "5K y prueba infantil mixta de 1 km hasta 14 años. Preventa 300 MXN, venta 320 MXN. Entrega de kits el sábado 13 de febrero de 10:00 a 13:00.",
+    "kind": "new",
+    "existingId": null
+  }
+]
