@@ -37,7 +37,7 @@ import {
   Text,
   View,
   useColorScheme,
-  useWindowDimensions,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -60,7 +60,10 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { isSafeUrl } from '@/lib/races';
 
-const SHEET_RATIO = 0.9;
+const SHEET_HEIGHT = '90%';
+// Where the sheet waits before its first layout pass has told us how tall it
+// is: far enough below any screen that nothing paints. See `sheetH`.
+const UNMEASURED_OFFSET = 10_000;
 const DISMISS_DISTANCE_RATIO = 0.3;
 const DISMISS_VELOCITY = 800; // px/s — fast short flicks should dismiss too
 // How long a web checkout gets before we offer the browser as a way out. Long
@@ -92,8 +95,22 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
-  const { height: windowH } = useWindowDimensions();
-  const sheetH = windowH * SHEET_RATIO;
+  // The sheet's height comes from flex (SHEET_HEIGHT of the modal), and the
+  // NUMBER the slide and the drag-to-dismiss threshold need is measured off
+  // the sheet's own onLayout — NOT computed from useWindowDimensions(). On
+  // web that reading is react-native-web's
+  // `Math.round(visualViewport.height * visualViewport.scale)`, which stops
+  // matching the layout viewport once a pinch-zoom is in play and stays
+  // wrong (the tab bar's bug — see (tabs)/_layout.tsx's FloatingTabBar).
+  // onLayout reports the real Yoga box, the same coordinate system the
+  // sheet lays out in, so the two cannot disagree. 0 until the first layout
+  // pass, which is why the open animation waits for `measured` and the
+  // sheet starts parked at UNMEASURED_OFFSET instead of at 0.
+  const [sheetH, setSheetH] = useState(0);
+  const measured = sheetH > 0;
+  const onSheetLayout = useCallback((e: LayoutChangeEvent) => {
+    setSheetH(e.nativeEvent.layout.height);
+  }, []);
   const reduced = useReducedMotion();
 
   // Keep the Modal mounted while the exit animation plays.
@@ -113,7 +130,7 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
   // checkout from a blocked one and offers the browser either way once the
   // deadline passes.
   const [frameTimedOut, setFrameTimedOut] = useState(false);
-  const translateY = useSharedValue(sheetH);
+  const translateY = useSharedValue(UNMEASURED_OFFSET);
   const backdrop = useSharedValue(0);
   // Loading feedback: progress 0..1 (scaleX), bar fades out on completion,
   // checkout content fades in.
@@ -135,6 +152,7 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
 
   useEffect(() => {
     if (visible) {
+      if (!measured) return;
       translateY.value = sheetH;
       backdrop.value = 0;
       // Reset loading state for this open. A touch of initial progress reads
@@ -162,16 +180,21 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
         duration: reduced ? 0 : 200,
         easing: Easing.out(Easing.quad),
       });
+      // Closed before the first layout landed: sheetH is still 0, and
+      // animating to it would slide the parked sheet INTO view on its way out.
       translateY.value = withTiming(
-        sheetH,
+        measured ? sheetH : UNMEASURED_OFFSET,
         { duration: reduced ? 0 : 220, easing: Easing.in(Easing.cubic) },
         (finished) => {
           if (finished) runOnJS(setMounted)(false);
         },
       );
     }
+    // `measured`, not `sheetH`: a later re-measure (rotation, a resized
+    // window) must not replay the whole open animation. The values read
+    // here are the current render's either way.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, sheetH, reduced]);
+  }, [visible, measured, reduced]);
 
   const close = useCallback(() => onClose(), [onClose]);
 
@@ -244,9 +267,10 @@ export function BuySheet({ visible, url, title, onClose }: BuySheetProps) {
         </Animated.View>
 
         <Animated.View
+          onLayout={onSheetLayout}
           style={[
             styles.sheet,
-            { height: sheetH, backgroundColor: c.background },
+            { height: SHEET_HEIGHT, backgroundColor: c.background },
             sheetStyle,
           ]}>
           <GestureDetector gesture={pan}>

@@ -16,9 +16,12 @@
 // flat-coloured outline that still communicates the claimed shape without
 // competing with the route for "this is where I ran".
 //
-// Past fences render muted, each in ITS run's colour (fenceColorForRun of
-// its stored started_at — the same derivation every other screen uses), so
-// territories stay tellable apart without a legend.
+// Only THIS run's ground is drawn. Past fences used to render here too, each
+// in fenceColorForRun of its own start — a bare start-second-mod-6 hash, so
+// they repeated colours (see assignFenceColors) — but the only caller always
+// passed none, and every saved territory together lives on Profile ›
+// Places I've been, which de-collides. The prop was removed rather than
+// re-coloured for a screen that never shows it.
 import { cellToBoundary, cellsToMultiPolygon } from 'h3-js';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -34,7 +37,6 @@ import { BottomTabInset, Spacing } from '@/constants/theme';
 import { conquestMarkerGeometry, lapMarkerGeometry } from '@/lib/conquest-marker';
 import { splitLegs, type TimedPoint } from '@/lib/gap-policy';
 import {
-  fenceColorForRun,
   GOOGLE_DARK_MAP_STYLE,
   ROUTE_LINE_COLOR,
   ROUTE_LINE_WIDTH,
@@ -46,7 +48,6 @@ import {
   ZOOM_STEP,
 } from '@/constants/map';
 import { gradientStrokeColors, polygonRings, ringToCoords, type MapCoord } from '@/lib/fence-draw';
-import type { MyFence } from '@/lib/territory-sync';
 
 interface FenceMapProps {
   /** Whether this map's screen is on top. Gates the route's colour flow
@@ -94,11 +95,6 @@ interface FenceMapProps {
   lapMarker?: { laps: number; center: { lat: number; lng: number }; label: string } | null;
   /** Its colour ('#rrggbb'), derived from the session's startedAt. */
   color: string;
-  /** Previously-captured fences, rendered muted in their own colours. May
-   *  include the just-saved run itself after a successful upload — pass its
-   *  id via `excludeId` so it isn't drawn twice. */
-  others: MyFence[];
-  excludeId?: string | null;
   /** Zoom +/- and re-fit controls, bottom-right — see fence-map.web.tsx's
    *  own doc comment on the same prop. */
   controls?: { zoomInLabel: string; zoomOutLabel: string; recenterLabel: string };
@@ -106,8 +102,8 @@ interface FenceMapProps {
 
 const FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 // The fence boundary's subordinate weight, now that the route carries the
-// gradient — mirrors the muted "past fence" outline treatment (strokeWidth
-// 1, alpha 0.5) so the just-finished fence's boundary reads as claimed
+// gradient — close to the muted outline past fences used to get here
+// (strokeWidth 1, alpha 0.5) so the just-finished fence's boundary reads as claimed
 // territory, not as the run.
 const OUTLINE_WIDTH = 1.5;
 const OUTLINE_ALPHA = 0.55;
@@ -128,8 +124,6 @@ export function FenceMap({
   takenClusters,
   lapMarker,
   color,
-  others,
-  excludeId,
   controls,
 }: FenceMapProps) {
   const mapRef = useRef<MapView | null>(null);
@@ -208,24 +202,6 @@ export function FenceMap({
         .filter((leg) => leg.length >= 2)
         .map((leg): MapCoord[] => leg.map((pt) => ({ latitude: pt.lat, longitude: pt.lng }))),
     [path],
-  );
-
-  const pastPolys = useMemo(
-    () =>
-      others
-        // A null geometry is a fully-overtaken run — real history, but
-        // there is no ground left to draw.
-        .filter((f) => f.id !== excludeId && f.geometry !== null)
-        .flatMap((f) => {
-          const tint = fenceColorForRun(f.startedAtMs).color;
-          return polygonRings(f.geometry!).map((rings, i) => ({
-            key: `${f.id}:${i}`,
-            outer: ringToCoords(rings[0]),
-            holes: rings.slice(1).map(ringToCoords),
-            tint,
-          }));
-        }),
-    [others, excludeId],
   );
 
   // Frame the new fence once the map is laid out. fitToCoordinates with
@@ -309,16 +285,6 @@ export function FenceMap({
         userInterfaceStyle="dark"
         customMapStyle={GOOGLE_DARK_MAP_STYLE}
       >
-        {pastPolys.map((p) => (
-          <Polygon
-            key={p.key}
-            coordinates={p.outer}
-            holes={p.holes.length > 0 ? p.holes : undefined}
-            fillColor={withAlpha(p.tint, 0.16)}
-            strokeColor={withAlpha(p.tint, 0.5)}
-            strokeWidth={1}
-          />
-        ))}
         {/* Tile Coverage brief §6 step 4 — this run's real, honest fill.
             Replaces the enclosure polygon's fill (used to render here as a
             plain, uniform Polygon over `highlightPolys` — see the removed

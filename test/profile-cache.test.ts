@@ -9,7 +9,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getPref, setPref } from '@/lib/db';
-import { getCachedDisplayName, setCachedDisplayName } from '@/lib/profile-cache';
+import {
+  getCachedAccountStatus,
+  getCachedDisplayName,
+  setCachedAccountStatus,
+  setCachedDisplayName,
+} from '@/lib/profile-cache';
 
 const KEY = 'profileDisplayName';
 
@@ -49,5 +54,36 @@ describe('profile display-name cache', () => {
     // leaderboard value disagree.
     setCachedDisplayName('  spaced  ');
     expect(getCachedDisplayName()).toBe('  spaced  ');
+  });
+});
+
+// Same three states for the account-link status, which Profile › Account's
+// "Your account" section seeds from. Here the empty string means "checked:
+// anonymous" and must render the link form at once, not wait.
+describe('account status cache', () => {
+  const ACCOUNT_KEY = 'accountEmail';
+
+  it('reads "never checked" as null, so the section waits for the server', () => {
+    // First in this block and nothing above writes this key, so this is a
+    // fresh device's store (the stub has no delete to reset it with).
+    expect(getPref(ACCOUNT_KEY)).toBeNull();
+    expect(getCachedAccountStatus()).toBeNull();
+  });
+
+  it('keeps "anonymous" distinct from "never checked"', () => {
+    setCachedAccountStatus({ linked: false });
+    expect(getPref(ACCOUNT_KEY)).toBe('');
+    expect(getCachedAccountStatus()).toEqual({ linked: false });
+  });
+
+  it('round-trips a linked email', () => {
+    setCachedAccountStatus({ linked: true, email: 'runner@example.com' });
+    expect(getCachedAccountStatus()).toEqual({ linked: true, email: 'runner@example.com' });
+  });
+
+  it('follows an identity change instead of keeping the old address', () => {
+    setCachedAccountStatus({ linked: true, email: 'first@example.com' });
+    setCachedAccountStatus({ linked: false });
+    expect(getCachedAccountStatus()).toEqual({ linked: false });
   });
 });

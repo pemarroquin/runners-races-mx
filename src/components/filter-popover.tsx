@@ -8,9 +8,14 @@
 //
 // Anchoring: `top` is computed by the caller from the facet chip row's own
 // onLayout height (see index.tsx) — good enough to land the card just below
-// the row without measureInWindow gymnastics. The card sizes to its content
-// up to a capped width, left-aligned under the chip row rather than
-// edge-to-edge.
+// the row without measureInWindow gymnastics. The card spans the screen
+// minus its side margins up to a capped width, left-aligned under the chip
+// row rather than edge-to-edge.
+//
+// That width is pure layout (`left` + `right` + `maxWidth`), never a number
+// computed from useWindowDimensions(): on web that reading drifts from the
+// real layout viewport after a pinch-zoom and stays wrong — the bug that
+// stretched the tab bar (see (tabs)/_layout.tsx's FloatingTabBar).
 import { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
@@ -20,7 +25,6 @@ import {
   Text,
   View,
   useColorScheme,
-  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -137,7 +141,6 @@ export function FilterPopover({
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { t } = useI18n();
-  const { width: windowW } = useWindowDimensions();
   const reduced = useReducedMotion();
   const visible = facet !== null;
 
@@ -183,7 +186,6 @@ export function FilterPopover({
   const isDistance = facet === 'distance';
   const title = isDistance ? t('filters.distance') : t('filters.date');
   const onReset = isDistance ? onResetDistances : onResetMonths;
-  const cardWidth = Math.min(windowW - Spacing.three * 2, CARD_MAX_WIDTH);
 
   const presets: { key: string; label: string; keys: string[] }[] = [
     { key: 'thisMonth', label: t('filters.presetThisMonth'), keys: [currentMonthKey()] },
@@ -203,7 +205,7 @@ export function FilterPopover({
           />
         </Animated.View>
 
-        <Animated.View style={[styles.cardWrap, { top, width: cardWidth }, cardStyle]}>
+        <Animated.View style={[styles.cardWrap, { top }, cardStyle]}>
           <GlassSurface scheme={scheme} radius={GlassRadii.card} contentStyle={styles.cardContent}>
             <Text style={[styles.title, { color: c.text }]}>{title}</Text>
 
@@ -302,6 +304,8 @@ const styles = StyleSheet.create({
   cardWrap: {
     position: 'absolute',
     left: Spacing.three,
+    right: Spacing.three,
+    maxWidth: CARD_MAX_WIDTH,
   },
   cardContent: { padding: Spacing.three },
   title: { fontSize: 15, fontWeight: '700', marginBottom: Spacing.two },
