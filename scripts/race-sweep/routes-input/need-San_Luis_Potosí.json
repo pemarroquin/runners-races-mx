@@ -1,0 +1,46 @@
+[
+ {
+  "id": "medio-maraton-la-capital-del-deporte-2026",
+  "name": "Medio Maratón La Capital del Deporte 2026",
+  "date": "2026-11-08",
+  "city": "San Luis Potosí",
+  "state": "San Luis Potosí",
+  "venue": "Jardín Hidalgo, frente a Palacio Municipal (Plaza de Armas)",
+  "sourceUrl": "https://sanluisinforma.com/?p=22666",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "carrera-atletica-el-sol-de-san-luis-2026-7",
+  "name": "Carrera Atlética El Sol de San Luis 2026 (7ª edición)",
+  "date": "2026-11-29",
+  "city": "San Luis Potosí",
+  "state": "San Luis Potosí",
+  "venue": "Frente al edificio de El Sol de San Luis, Av. Universidad 565, Centro",
+  "sourceUrl": "https://planoinformativo.com/planodeportivo/340867/presentan-la-septima-carrera-atletica-de-el-sol-de-san-luis-repartira-150-mil-pesos-en-premios",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "celebremos-la-vida-5k-y-10k-2026",
+  "name": "Celebremos la Vida 5K y 10K 2026",
+  "date": "2026-12-06",
+  "city": "San Luis Potosí",
+  "state": "San Luis Potosí",
+  "venue": "Planetario (salida y meta)",
+  "sourceUrl": "https://planoinformativo.com/planodeportivo/345027/celebremos-la-vida-llegara-el-6-de-diciembre-conoce-los-costos-horarios-e-inscripciones",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "spartan-san-luis-potosi-parque-tangamanga-2026",
+  "name": "Spartan San Luis Potosí Parque Tangamanga 2026",
+  "date": "2026-10-31",
+  "city": "San Luis Potosí",
+  "state": "San Luis Potosí",
+  "venue": "Parque Tangamanga",
+  "sourceUrl": "https://haid.app/en/events/spartan-san-luis-potosi-parque-tangamanga-2026-164663",
+  "signupUrl": null,
+  "hasStart": false
+ }
+]
