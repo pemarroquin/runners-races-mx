@@ -1,0 +1,51 @@
+[
+  {
+    "id": "medio-maraton-de-cancun-2027",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.cancun-half-marathon.com/mx/infos.html"
+    ],
+    "note": "Date 2027-03-07, 06:30, Bonampak/La Rambla match. njuko signup link not re-verified on page."
+  },
+  {
+    "id": "cancun-marathon-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.asdeporte.com/evento/cancu-n-night-marathon-2026-cfz/datos-del-evento"
+    ],
+    "note": "Date 2026-12-05, 18:00, venue match; page header says Dec 6 but event details say Dec 5, kept."
+  },
+  {
+    "id": "maya-wildmarathon-of-mexico",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.finishers.com/en/event/maya-wildmarathon-in-mexico"
+    ],
+    "note": "Date 2026-12-13 confirmed, start at water edge Cozumel; no time listed."
+  },
+  {
+    "id": "medio-maraton-tulum-2026",
+    "result": "unverifiable",
+    "urlsFetched": [
+      "https://www.42cal.com/races/medio-marat-n-tulum"
+    ],
+    "note": "42cal calls 2026-12-06 and 06:30 projected/2025-based, organizer unconfirmed, registration not open. Cannot confirm or refute; no cancellation notice. No official page fetched."
+  },
+  {
+    "id": "medio-maraton-bahia-chetumal-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.tritour.org/calendario-carreras-cancun",
+      "https://dashport.run/evento_1173"
+    ],
+    "note": "Date 2026-11-15 and dashport link match tritour calendar; dashport page is an empty JS shell."
+  },
+  {
+    "id": "medio-maraton-playa-del-carmen-2027",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.khronometraje.com/inscribirmeNueva.php?id=PLAYA27"
+    ],
+    "note": "Fecha field 2027-01-31, 06:00, Portal Maya, registration open. Page header shows stale template date 22 Nov 2026; ignored."
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Medio Maratón 21K Coahuila — edición 2027",
+    "date": "2027-06-13",
+    "time": "06:00",
+    "distances": [
+      "21K"
+    ],
+    "city": "Saltillo",
+    "state": "Coahuila",
+    "venue": "Teatro de la Ciudad Fernando Soler, Xicoténcatl y Blvd. Francisco Coss",
+    "organizer": "Gobierno de Coahuila / 21K Coahuila",
+    "signupUrl": "https://idemsport.com/21k-coahuila-2027-inscripciones/",
+    "sourceUrl": "https://idemsport.com/evento/21k-coahuila-2027/",
+    "confidence": "high",
+    "notes": "Wheelchair start 5:45, general start 6:00. Presale 650 MXN until folios run out; online payment adds a fee. Kit pickup dates to be announced. Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
+    "notesEs": "Salida de silla de ruedas a las 5:45 y del resto a las 6:00. Preventa de 650 MXN hasta agotar folios; el pago en línea tiene cargo extra. Fechas de entrega de kits por anunciar. Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
+    "sourceNotes": "signupUrl null -> https://idemsport.com/21k-coahuila-2027-inscripciones/ . Read 2026-10-24: page titled '21K Coahuila 2027- Inscripciones' with active sign-up form and 'Inscribirme y pagar' button; linked from the event page https://idemsport.com/evento/21k-coahuila-2027/ (which states date Sunday 2027-06-13, 06:00 start, Teatro de la Ciudad Fernando Soler venue, registration open at 21kcoahuila.org / idemsport.com, 21K $650 presale). Inscripciones page itself shows no date. Date/time/venue unchanged and confirmed.",
+    "kind": "correction",
+    "existingId": "medio-maraton-21k-coahuila-edicion-2027"
+  }
+]

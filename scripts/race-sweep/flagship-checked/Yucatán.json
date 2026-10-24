@@ -1,0 +1,35 @@
+[
+  {
+    "id": "marat-hon-merida-2027",
+    "result": "unverifiable",
+    "urlsFetched": [
+      "https://www.merida.gob.mx/marathon/",
+      "https://marathonmerida.dashport.run/"
+    ],
+    "note": "merida.gob.mx returned 403; dashport page empty JS shell. Nothing verifiable."
+  },
+  {
+    "id": "xxxiv-carrera-del-pavo-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.tritour.org/eventos/carrera-del-pavo-2026"
+    ],
+    "note": "Date 2026-12-13, 21K 05:30, Parque de las Américas, signup link match."
+  },
+  {
+    "id": "carrera-megamedia-dunosusa-progreso-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.yucatan.com.mx/deportes/2026/09/24/la-carrera-megamedia-dunosusa-2026-con-un-botin-de-152-mil-pesos.html"
+    ],
+    "note": "Date 2026-11-08 in Progreso, registration to Nov 7 match; no start time published. Dashport link not rendered."
+  },
+  {
+    "id": "20k-camino-del-jaguar",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K"
+    ],
+    "note": "Fecha field 2026-10-31, Salida 17:30, kits Oct 30, registration open; match. An unlabeled line says 22 Nov 2026 6:00 am (same template artifact as Playa page); ignored. Venue given as Parque Infantil, Yaxhá."
+  }
+]

@@ -1,0 +1,107 @@
+[
+ {
+  "id": "san-silvestre-cdmx-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.emociondeportiva.com/detalle-evento/carrera-san-silvestre-2026/ciudad-de-m%C3%A9xico"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "oysho-rock-n-roll-mexico-city-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/rock-n-roll-mexico-city-2026-ubr/datos-del-evento"
+  ],
+  "note": "Match; page shows open register button but row signupUrl deliberately null (runera reports closed, conflict in existing sourceNotes); left."
+ },
+ {
+  "id": "carrera-espn-2026-21k-y-10k",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.espnrun.mx/"
+  ],
+  "note": "Date/venue match; start time not stated on page, row 06:30 kept."
+ },
+ {
+  "id": "human-21k-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/human-21k-2027-dx3/datos-del-evento"
+  ],
+  "note": "Match (6:30 21K)."
+ },
+ {
+  "id": "15-carrera-kardias-tudn-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/15--carrera-kardias-tudn-2027-hso/datos-del-evento"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "carrera-del-dia-del-padre-21k-edicion-45-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://fhinix.com/carrera-del-dia-del-padre-21k-edicion-45-2027.html",
+   "https://runera.mx/carreras/detalle/carrera-del-da-del-padre-21k-edicin-45-2027"
+  ],
+  "note": "Fhinix page is JS shell; runera.mx page matches date, 5:50, venue, inscripciones abiertas."
+ },
+ {
+  "id": "barbie-run-cdmx-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/barbie-run-cdmx-2026-49f/datos-del-evento"
+  ],
+  "note": "Match; sold out, signupUrl already null."
+ },
+ {
+  "id": "shrek-run-cdmx-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/shrek-run-cdmx-2027-m8a/datos-del-evento"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "marvel-run-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.marvelrun.mx/"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "womanup-run-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "rave-run-by-carrera-nocturna-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.emociondeportiva.com/detalle-evento/rave-run-by-carrera-nocturna-2026/ciudad-de-m%C3%A9xico"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "bob-esponja-cdmx-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/bob-esponja-cdmx-2026-yun/datos-del-evento"
+  ],
+  "note": "Match."
+ },
+ {
+  "id": "xxiii-pumathon-universitario-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.cronica.com.mx/deportes/2026/10/01/pumathon-universitario-2026-precios-fechas-como-y-cuando-inscribirte-a-la-carrera-por-cu-este-25-de-octubre/"
+  ],
+  "note": "Match; registration closed 16 Oct, signupUrl null."
+ }
+]
