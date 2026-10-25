@@ -35,6 +35,7 @@ import {
   Text,
   useColorScheme,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -691,7 +692,7 @@ function BoardCard({
 }) {
   const { t } = useI18n();
   const [showNote, setShowNote] = useState(false);
-  const listRef = useRef<ScrollView | null>(null);
+  const listRef = useRef<ScrollViewInstance | null>(null);
   const myIndex = rows.findIndex((r) => r.userId === meUserId);
 
   useEffect(() => {

@@ -9,12 +9,11 @@
 // practice this decode is near-instant and the pulse rarely gets seen — kept
 // anyway since it's still correct on a slow device and this component makes
 // no assumption about where `source` comes from.
-import { Image } from 'expo-image';
+import { Image, type ImageProps } from 'expo-image';
 import { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
-  type ImageSourcePropType,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -33,7 +32,7 @@ interface ShimmerImageProps {
   /** A bundled require() asset today (region art is local, not remote) — typed
    * broadly since expo-image's own `source` prop already accepts a remote
    * `{ uri }` too, so this component works unchanged if that ever changes. */
-  source: ImageSourcePropType;
+  source: ImageProps['source'];
   accent: string;
   /** Base surface color underneath the shimmer/image — a themed neutral, not a hardcoded gray. */
   tint: string;

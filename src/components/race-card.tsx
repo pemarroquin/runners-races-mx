@@ -1,4 +1,5 @@
-import { Alert, Pressable, StyleSheet, Text, View, useColorScheme, type ImageSourcePropType } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import type { ImageProps } from 'expo-image';
 
 import { Icon } from '@/components/ui/icon';
 import { ShimmerImage } from '@/components/ui/shimmer-image';
@@ -20,7 +21,7 @@ interface RaceCardProps {
   race: Race;
   onPress: () => void;
   /** Bundled region-art asset for this race's region, or undefined to stay text-only (the real-world default for regions with no art yet, e.g. chih). */
-  imageSource?: ImageSourcePropType;
+  imageSource?: ImageProps['source'];
   variant?: 'hero' | 'compact';
   /** The single image on screen that should load first (eager, high
    * priority). Only the FIRST hero a screen shows passes this — a hero

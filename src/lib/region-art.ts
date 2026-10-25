@@ -36,7 +36,7 @@
 // illustrations, so both variants are encoded at WebP quality 72 (not 82):
 // visually identical at 1:1, 5.1 MiB for the whole set instead of 7.1.
 // An empty array is still handled by pickRegionArt() as a text-only card.
-import type { ImageSourcePropType } from 'react-native';
+import type { ImageProps } from 'expo-image';
 
 import { REGIONS } from '@/lib/regions';
 
@@ -49,8 +49,8 @@ export const COMPACT_IMAGE_RATIO = 3 / 2; // a shorter crop, see compactSource n
 
 export interface RegionArtEntry {
   key: string; // e.g. 'mty-fundidora'
-  heroSource: ImageSourcePropType;
-  compactSource: ImageSourcePropType;
+  heroSource: ImageProps['source'];
+  compactSource: ImageProps['source'];
 }
 
 export const REGION_ART: Record<string, RegionArtEntry[]> = {
@@ -486,7 +486,7 @@ export function pickRegionArt(
   regionId: string,
   raceId: string,
   variant: 'hero' | 'compact',
-): ImageSourcePropType | undefined {
+): ImageProps['source'] | undefined {
   const entries = REGION_ART[regionId];
   if (!entries || entries.length === 0) return undefined;
   const index = fnv1a(raceId) % entries.length;

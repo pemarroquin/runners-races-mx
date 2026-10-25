@@ -18,6 +18,7 @@
 //   - reminders fire and lapse -> recomputed from scratch next launch
 // It is idempotent, so calling it too often is only wasted work, never wrong.
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { getPref, initDb, setPref } from '@/lib/db';
@@ -33,7 +34,7 @@ const PREF_ENABLED = 'remindersEnabled';
 if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('race-reminders', {
     name: 'Race reminders',
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: AndroidImportance.DEFAULT,
   }).catch((e) => console.warn('[reminders] channel setup failed', e));
 }
 

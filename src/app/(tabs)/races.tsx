@@ -651,7 +651,7 @@ export default function FeedScreen() {
                   </View>
                 )}
               </View>
-            ) : null
+            ) : undefined
           }
           renderSectionHeader={({ section }) => (
             <Text style={[styles.sectionTitle, { color: c.text }]}>{section.title}</Text>
