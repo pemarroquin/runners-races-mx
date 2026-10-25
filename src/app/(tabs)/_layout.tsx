@@ -144,7 +144,7 @@ export default function TabsLayout() {
 // is exactly `barWidth` on anything at least `barWidth + 32` wide and
 // shrinks gracefully below that — the same two outcomes the arithmetic was
 // reaching for, minus the coordinate-system mismatch that made it flap.
-function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
+function FloatingTabBar({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
   const barWidth = state.routes.length * ITEM_WIDTH + BAR_PADDING_H * 2;
 
   return (
@@ -160,8 +160,10 @@ function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBar
             const color: ColorValue = focused ? '#ffffff' : 'rgba(255,255,255,0.55)';
 
             const onPress = () => {
-              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+              // SDK 58 tab bars get `emitter` + `navigateToTab` instead of `navigation`
+              // (same shape as expo-router's own BottomTabBar).
+              const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigateToTab(route.key);
             };
 
             return (

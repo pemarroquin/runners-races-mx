@@ -26,12 +26,12 @@
 // never isolated) — landing ONLY the CSS-pulse conversion this time, alone,
 // so a live PSI measurement actually tells us whether this specific change
 // helps or hurts, instead of being confounded with the lazy-split.
-import { Image } from 'expo-image';
+import { Image, type ImageProps } from 'expo-image';
 import { useState } from 'react';
-import { StyleSheet, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 interface ShimmerImageProps {
-  source: ImageSourcePropType;
+  source: ImageProps['source'];
   accent: string;
   tint: string;
   style?: StyleProp<ViewStyle>;

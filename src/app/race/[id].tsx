@@ -1,4 +1,6 @@
-import * as Calendar from 'expo-calendar';
+// SDK 58: the bare 'expo-calendar' entry is the new object API, and its
+// legacy-named exports are stubs that THROW at runtime (types still pass).
+import * as Calendar from 'expo-calendar/legacy';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { lazy, Suspense, useMemo, useState } from 'react';
