@@ -72,6 +72,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify-sweep": "node scripts/verify-sweep.mjs",
+    "course-maps": "node scripts/fetch-course-maps.mjs",
+    "import-route": "node scripts/import-route-kml.mjs",
     "check-env": "node scripts/check-web-env.mjs",
     "tiles-preview": "vite-node --config vitest.config.ts scripts/tiles-preview.ts",
     "geometry-audit": "vite-node --config vitest.config.ts scripts/geometry-audit.ts",

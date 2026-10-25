@@ -35,7 +35,33 @@ So, when a sweep finds something:
 | Postponed, new date unknown | `date: null`, `status: 'changed'` **and** `signupUrl: null` | note it |
 | Start time found or corrected | `time` | note it |
 | Current-edition registration found | `signupUrl` | note it |
+| Course map / elevation chart found | `courseMaps` (append `{ url, distance, kind }`) | note it in `sourceNotes` |
+| Course line found (Google My Maps) | `routeCoords` via `npm run import-route` | the script notes it |
 | Nothing changed | `status: 'ok'` | short note |
+
+### Course maps and route lines
+
+`courseMaps: [{ url, distance, kind: 'route' | 'elevation' }]` holds every
+official course image, one per distance (`distance` is the organizer's label,
+"5K" or "5K/10K", or `null`). It replaced the single `courseMapUrl`, which is
+now a `verify-sweep` error: it couldn't hold a second map, so Verano
+Monterrey's 5K map ended up as a link in `notes`. A course-image or My Maps
+link in `notes`/`notesEs` is an error too: write the field, and put the link
+in `sourceNotes` if it's worth keeping.
+
+- **Asdeporte races are covered by a script, not by you.**
+  `npm run course-maps` reads each upcoming race's `/evento/<slug>/ruta` page
+  and appends new maps (never removes one). `.github/workflows/course-maps.yml`
+  runs it every Wednesday and opens a PR on `bot/course-maps`. A sweep doesn't
+  need to hunt Asdeporte maps by hand: the 2026-10-24 agent pass read
+  `datos-del-evento` instead of `/ruta` and missed all 8 that existed.
+- **Other sites:** add the map to `courseMaps` yourself, with the distance the
+  image is labelled for.
+- **A Google My Maps course** becomes a real line with
+  `npm run import-route -- <raceId> <my-maps-url>`. It refuses to write when
+  the line's length is more than 3% off the advertised distance (that's the
+  wrong line), and moves an approx `start` to the line's first point only when
+  it's within 300 m.
 
 ### `statusNote` is user-facing
 
