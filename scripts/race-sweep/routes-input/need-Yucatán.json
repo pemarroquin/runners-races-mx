@@ -1,0 +1,189 @@
+[
+ {
+  "id": "run-rotary-2026",
+  "name": "Run Rotary 2026",
+  "date": "2026-10-24",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Paseo Verde",
+  "sourceUrl": "https://www.tritour.org/eventos/run-rotary-2026",
+  "signupUrl": "https://dashport.run/evento_1371",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-normalista-2026",
+  "name": "Carrera Normalista 2026",
+  "date": "2026-10-24",
+  "city": "Valladolid",
+  "state": "Yucatán",
+  "venue": "Escuela Normal Juan de Dios Rodríguez Heredia",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=NORMALISTA",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=NORMALISTA",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-rosa-telchac-puerto-2026",
+  "name": "Carrera Rosa Telchac Puerto 2026",
+  "date": "2026-10-25",
+  "city": "Telchac Puerto",
+  "state": "Yucatán",
+  "venue": "Calle 20 con 21-A",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-rosa-telchac-puerto-2026",
+  "signupUrl": "https://proximos.eventosvolare.com/evento_1421",
+  "hasStart": false
+ },
+ {
+  "id": "20k-camino-del-jaguar",
+  "name": "20K Camino del Jaguar",
+  "date": "2026-10-31",
+  "city": "Muna",
+  "state": "Yucatán",
+  "venue": "Comisaría de Yaxhá",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
+  "hasStart": false
+ },
+ {
+  "id": "sendero-de-las-animas-merida-2026",
+  "name": "Sendero de las Ánimas Mérida 2026",
+  "date": "2026-10-31",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Hacienda San Ignacio",
+  "sourceUrl": "https://www.tritour.org/eventos/sendero-de-las-animas-merida-2026",
+  "signupUrl": "https://dashport.run/evento_1399",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-megamedia-dunosusa-progreso-2026",
+  "name": "Carrera Megamedia Dunosusa Progreso 2026",
+  "date": "2026-11-08",
+  "city": "Progreso",
+  "state": "Yucatán",
+  "venue": "Playón de Progreso",
+  "sourceUrl": "https://www.yucatan.com.mx/deportes/2026/09/24/la-carrera-megamedia-dunosusa-2026-con-un-botin-de-152-mil-pesos.html",
+  "signupUrl": "https://dashport.run/evento_1386",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-aniversario-uman-2026",
+  "name": "Carrera Aniversario Umán 2026",
+  "date": "2026-11-15",
+  "city": "Umán",
+  "state": "Yucatán",
+  "venue": "Palacio Municipal de Umán",
+  "sourceUrl": "https://www.khronometraje.com/",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "la-gran-carrera-yellow-run-2026",
+  "name": "La Gran Carrera Yellow Run 2026",
+  "date": "2026-11-15",
+  "city": "Izamal",
+  "state": "Yucatán",
+  "venue": "Plaza frente al convento",
+  "sourceUrl": "https://www.tritour.org/eventos/la-gran-carrera-yellow-run-2026",
+  "signupUrl": "https://dashport.run/evento_1331",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-upp-tekax-2026",
+  "name": "Carrera UPP Tekax 2026",
+  "date": "2026-11-22",
+  "city": "Tekax",
+  "state": "Yucatán",
+  "venue": "Av. Ricardo Palmerín, frente a la antigua estación de ferrocarril",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=UPP",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=UPP",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-marista-merida-2026",
+  "name": "Carrera Marista Mérida 2026",
+  "date": "2026-11-29",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Universidad Marista",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-marista-merida-2026",
+  "signupUrl": "https://dashport.run/evento_1416",
+  "hasStart": false
+ },
+ {
+  "id": "20-carrera-y-caminata-centro-guadalupano",
+  "name": "20 Carrera y Caminata Centro Guadalupano",
+  "date": "2026-12-06",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Centro Guadalupano de Evangelización y Promoción Social",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CARGUA26",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CARGUA26",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-126-aniversario-de-cacalchen-2026",
+  "name": "Carrera 126 Aniversario de Cacalchén 2026",
+  "date": "2026-12-06",
+  "city": "Cacalchén",
+  "state": "Yucatán",
+  "venue": null,
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-126-aniversario-de-cacalchen-2026",
+  "signupUrl": "https://dashport.run/evento_1436",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-chacmultun-tekax-2026",
+  "name": "Carrera Chacmultún–Tekax 2026",
+  "date": "2026-12-06",
+  "city": "Tekax",
+  "state": "Yucatán",
+  "venue": "Salida: zona arqueológica de Chacmultún; meta: centro de Tekax",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-chacmultuntekax-2026",
+  "signupUrl": "https://dashport.run/evento_1438",
+  "hasStart": false
+ },
+ {
+  "id": "5k-ox-2026",
+  "name": "5K OX 2026",
+  "date": "2026-12-12",
+  "city": "Oxkutzcab",
+  "state": "Yucatán",
+  "venue": "Palacio Municipal de Oxkutzcab",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CNARANJA26",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=CNARANJA26",
+  "hasStart": false
+ },
+ {
+  "id": "xxxiv-carrera-del-pavo-2026",
+  "name": "XXXIV Carrera del Pavo 2026",
+  "date": "2026-12-13",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Parque de las Américas",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-del-pavo-2026",
+  "signupUrl": "https://proximos.eventosvolare.com/evento_1325",
+  "hasStart": false
+ },
+ {
+  "id": "corre-con-santa-2026",
+  "name": "Corre con Santa 2026",
+  "date": "2026-12-20",
+  "city": "Mérida",
+  "state": "Yucatán",
+  "venue": "Parque de las Américas",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=SANTA26",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=SANTA26",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-tunel-de-los-arboles-2027",
+  "name": "Carrera Túnel de los Árboles 2027",
+  "date": "2027-01-24",
+  "city": "Muna",
+  "state": "Yucatán",
+  "venue": "Tienda La Curvita (salida de 13.8K en Choyob)",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-tunel-de-los-arboles-2027",
+  "signupUrl": "https://dashport.run/evento_1327",
+  "hasStart": false
+ }
+]

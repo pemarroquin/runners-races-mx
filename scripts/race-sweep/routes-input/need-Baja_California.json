@@ -1,0 +1,112 @@
+[
+ {
+  "id": "serial-atletico-delegacional-de-tijuana-2026-etapa-9",
+  "name": "Serial Atlético Delegacional de Tijuana 2026 – Etapa 9 (Zona Centro)",
+  "date": "2026-12-12",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Zona Centro, Tijuana",
+  "sourceUrl": "https://zetatijuana.com/2025/12/imdet-presenta-calendario-deportivo-del-2026/",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "serial-atletico-delegacional-rosarito-2026-11-14",
+  "name": "Serial Atlético Delegacional Rosarito 2026 (14 de noviembre)",
+  "date": "2026-11-14",
+  "city": "Playas de Rosarito",
+  "state": "Baja California",
+  "venue": null,
+  "sourceUrl": "https://tjrun.com.mx/calendario-de-carreras/serial-atletico-delegacional-rosarito/",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "milla-internacional-de-tijuana-2026",
+  "name": "Milla Internacional de Tijuana 2026",
+  "date": "2026-10-23",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "CREA, Tijuana",
+  "sourceUrl": "https://zetatijuana.com/2026/10/correran-la-milla-internacional-de-tijuana-2/",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "el-regreso-de-los-corredores-vivientes-5k-2026",
+  "name": "El regreso de los corredores vivientes 5K 2026",
+  "date": "2026-10-25",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Otay, Tijuana",
+  "sourceUrl": "https://web.rockthesport.com/es/event/el-regreso-de-los-corredores-vivientes-5k",
+  "signupUrl": "https://web.rockthesport.com/es/event/el-regreso-de-los-corredores-vivientes-5k",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-dia-de-muertos-cdt-crowe-5k-2026",
+  "name": "Carrera Día de Muertos CDT – Crowe 5K 2026",
+  "date": "2026-11-01",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Parque Esperanto (Av. Hermosillo, Fracc. Sonora, Presa Rodríguez)",
+  "sourceUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
+  "signupUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
+  "hasStart": false
+ },
+ {
+  "id": "tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "name": "Tercera Edición Medio Maratón UABC Tijuana 2026",
+  "date": "2026-11-08",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Facultad de Deportes, UABC Campus Tijuana (Universidad 14418)",
+  "sourceUrl": "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "signupUrl": "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "hasStart": false
+ },
+ {
+  "id": "medio-maraton-rosarito-puerto-nuevo-2026-puerto",
+  "name": "Medio Maratón Rosarito – Puerto Nuevo 2026 (Puerto Nuevo 21K Corazón del Mar)",
+  "date": "2026-11-15",
+  "city": "Playas de Rosarito",
+  "state": "Baja California",
+  "venue": "Hacienda Floresta del Mar (Piña 134), finish at Puerto Nuevo Baja Hotel & Villas",
+  "sourceUrl": "https://web.rockthesport.com/es/event/medio-maraton-rosarito-puerto-nuevo-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "rd-trail-half-marathon-2026-run-dirty-cowboy",
+  "name": "RD Trail Half Marathon 2026 (Run Dirty – Cowboy Edition)",
+  "date": "2026-11-22",
+  "city": "Playas de Rosarito",
+  "state": "Baja California",
+  "venue": "Rancho Dagninos, Corredor 2000 km 31",
+  "sourceUrl": "https://ultrasignup.com/register.aspx?eid=15630",
+  "signupUrl": "https://ultrasignup.com/register.aspx?eid=15630",
+  "hasStart": false
+ },
+ {
+  "id": "maraton-baja-california-2026-60-edicion",
+  "name": "Maratón Baja California 2026 (60ª edición)",
+  "date": "2026-11-29",
+  "city": "Mexicali",
+  "state": "Baja California",
+  "venue": null,
+  "sourceUrl": "https://www.elimparcial.com/tij/columnas/2026/07/29/lo-adelantan/",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "gran-carrera-atletica-la-enchilada-12k-2027",
+  "name": "Gran Carrera Atlética La Enchilada 12K 2027",
+  "date": "2027-02-28",
+  "city": "Tijuana",
+  "state": "Baja California",
+  "venue": "Cañón Aviación s/n, Centro, Tijuana",
+  "sourceUrl": "https://web.rockthesport.com/es/event/gran-carrera-atletica-la-enchilada-12k-2027",
+  "signupUrl": "https://web.rockthesport.com/es/event/gran-carrera-atletica-la-enchilada-12k-2027",
+  "hasStart": false
+ }
+]

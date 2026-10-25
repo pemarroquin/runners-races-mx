@@ -1,0 +1,46 @@
+[
+ {
+  "id": "11va-carrera-cumbres-2026",
+  "name": "11va Carrera Cumbres 2026",
+  "date": "2026-11-01",
+  "city": "Cancún",
+  "state": "Quintana Roo",
+  "venue": "Residencial ALTAI",
+  "sourceUrl": "https://www.asdeporte.com/evento/11va-carrera-cumbres-2026-zun/datos-del-evento",
+  "signupUrl": "https://www.asdeporte.com/evento/11va-carrera-cumbres-2026-zun/datos-del-evento",
+  "hasStart": false
+ },
+ {
+  "id": "we-ru-sirenis-2026",
+  "name": "We Ru Sirenis 2026",
+  "date": "2026-11-22",
+  "city": "Akumal",
+  "state": "Quintana Roo",
+  "venue": "Hotel Sirenis",
+  "sourceUrl": "https://www.asdeporte.com/evento/we-ru-sirenis-2026-36r/datos-del-evento",
+  "signupUrl": "https://www.asdeporte.com/evento/we-ru-sirenis-2026-36r/datos-del-evento",
+  "hasStart": false
+ },
+ {
+  "id": "cancun-marathon-2026",
+  "name": "Cancún Marathon 2026",
+  "date": "2026-12-05",
+  "city": "Cancún",
+  "state": "Quintana Roo",
+  "venue": "Av. Rambla Fonatur esq. Calle Yum-Balam, Zona Hotelera",
+  "sourceUrl": "https://www.asdeporte.com/evento/cancu-n-night-marathon-2026-cfz/datos-del-evento",
+  "signupUrl": "https://www.asdeporte.com/evento/cancu-n-night-marathon-2026-cfz/datos-del-evento",
+  "hasStart": false
+ },
+ {
+  "id": "medio-maraton-playa-del-carmen-2027",
+  "name": "Medio Maratón Playa del Carmen 2027",
+  "date": "2027-01-31",
+  "city": "Playa del Carmen",
+  "state": "Quintana Roo",
+  "venue": "Portal Maya",
+  "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=PLAYA27",
+  "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=PLAYA27",
+  "hasStart": false
+ }
+]

@@ -1,0 +1,115 @@
+[
+ {
+  "id": "berrendo-bakpak-race-trail-nocturno-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Tritour page and bakpakrace.mx/14k loaded; map link is by place name only (Parque Ecologico Chipinque), no coordinates, no route image."
+ },
+ {
+  "id": "corre-x-la-diabetes-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "2-carrera-unidos-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "lululemon-10k-mty-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-reto-solidario-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-run-4-mind-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "corremos-contigo-conchita-2026-2-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "mini-maraton-monterrey-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "shrek-run-monterrey-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Page links coordinates 25.6866142,-100.3161126 under \"como llegar\" but lists start/finish as \"Por confirmar\"; not accepted as start line."
+ },
+ {
+  "id": "21k-las-desgraciadas-2027-4-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "5k-10k-club-deportivo-el-fenix-2027",
+  "start": {
+   "lat": 25.6654228,
+   "lng": -100.3106535
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://asdeporte.com/evento/5k-10k-club-deportivo-el-fe-nix-2027-inv/datos-del-evento",
+  "evidence": "Page Google Maps link maps/place/25.6654228,-100.3106535; route text says Via Deportiva Monterrey (point is the page-linked location, not a labelled start line).",
+  "fetchStatus": "loaded",
+  "reason": null
+ }
+]

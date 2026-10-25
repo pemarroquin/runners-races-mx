@@ -1,0 +1,35 @@
+[
+ {
+  "id": "21k-tres-presas-3ra-edicion",
+  "name": "21K Tres Presas 3ra Edición",
+  "date": "2026-11-21",
+  "city": "Chihuahua",
+  "state": "Chihuahua",
+  "venue": "Parque Metropolitano Tres Presas (El Reliz), Av. Prol. Teófilo Borunda s/n",
+  "sourceUrl": "https://www.primeroactivocuu.com/event/21k-las-tres-presa-3ra-edicin",
+  "signupUrl": "https://www.primeroactivocuu.com/event/21k-las-tres-presa-3ra-edicin",
+  "hasStart": false
+ },
+ {
+  "id": "run-internacional-the-u-s-mexico-10k-2027-8",
+  "name": "Run Internacional: The U.S.-México 10K 2027 (8ª edición)",
+  "date": "2027-04-04",
+  "city": "Ciudad Juárez",
+  "state": "Chihuahua",
+  "venue": "Binational route through downtown El Paso and Ciudad Juárez; finish at the boundary line on the Paso del Norte International Bridge",
+  "sourceUrl": "https://epcf.org/news/run-internacional-returns-sunday-april-4-2027",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "copper-canyons-endurance-runs-2026",
+  "name": "Copper Canyons Endurance Runs 2026",
+  "date": "2026-10-25",
+  "city": "Urique",
+  "state": "Chihuahua",
+  "venue": "Camp Corre Libre, Cerocahui (half marathon starts at Mirador Cerro del Gallego)",
+  "sourceUrl": "https://ultrasignup.com/register.aspx?eid=10237",
+  "signupUrl": null,
+  "hasStart": false
+ }
+]

@@ -1,0 +1,175 @@
+[
+ {
+  "id": "run-rotary-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-normalista-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-rosa-telchac-puerto-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "20k-camino-del-jaguar",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "sendero-de-las-animas-merida-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-megamedia-dunosusa-progreso-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-aniversario-uman-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Only a generic khronometraje.com listing (venue text: Palacio Municipal de Uman); no dedicated event page.",
+  "fetchStatus": "no-page",
+  "reason": "No dedicated event page found; sourceUrl is the site homepage."
+ },
+ {
+  "id": "la-gran-carrera-yellow-run-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-upp-tekax-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-marista-merida-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "20-carrera-y-caminata-centro-guadalupano",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-126-aniversario-de-cacalchen-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-chacmultun-tekax-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "5k-ox-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "xxxiv-carrera-del-pavo-2026",
+  "start": {
+   "lat": 20.9875087,
+   "lng": -89.6332176
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.tritour.org/eventos/carrera-del-pavo-2026",
+  "evidence": "Page metadata line carries Google Maps link maps?q=20.9875087,-89.6332176; Mapa section says venue reference Parque de las Americas, Merida.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "corre-con-santa-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ },
+ {
+  "id": "carrera-tunel-de-los-arboles-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Event page loaded; no stated start coordinate or course-map image found.",
+  "fetchStatus": "loaded",
+  "reason": "Loaded page gives venue as text only (or map link by place name without coordinates); no course map or coordinates."
+ }
+]

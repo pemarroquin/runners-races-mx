@@ -16,6 +16,8 @@ for (const f of readdirSync(foundDir).filter(f => f.endsWith('.json'))) {
   for (const it of JSON.parse(readFileSync(`${foundDir}/${f}`, 'utf8'))) {
     if (it.kind === 'new' || it.kind === 'next-edition') expNew++;
     else if (it.existingId) { expUpdated.add(it.existingId); if (it.kind === 'correction') for (const k of Object.keys(it)) if (it[k] === null) explicitNull.add(`${it.existingId}.${k}`); }
+    // route pass (found/routes-<State>.json): rows keyed by `id`, an update only when it supplies a pin/map
+    else if (f.startsWith('routes-') && it.id && (it.start || it.courseMapUrl || it.routeCoords)) expUpdated.add(it.id);
   }
 }
 

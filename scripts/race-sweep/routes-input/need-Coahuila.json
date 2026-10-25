@@ -1,0 +1,101 @@
+[
+ {
+  "id": "medio-maraton-del-sarape-2027",
+  "name": "Medio Maratón del Sarape 2027",
+  "date": "2027-01-31",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": null,
+  "sourceUrl": "https://www.tritour.org/eventos/medio-maraton-del-sarape-2027",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "daimler-truck-5k-carrera-por-la-cura-2026",
+  "name": "Daimler Truck 5K — Carrera por la Cura 2026",
+  "date": "2026-10-25",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+  "sourceUrl": "https://www.tritour.org/eventos/daimler-truck-5k-carrera-por-la-cura-2026",
+  "signupUrl": "https://daimler2026.boletopolis.com",
+  "hasStart": false
+ },
+ {
+  "id": "viesca-5k-55-aniversario-2026",
+  "name": "Viesca 5K — 55 Aniversario 2026",
+  "date": "2026-11-01",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+  "sourceUrl": "https://www.tritour.org/eventos/viesca-5k-55-aniversario-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "carrera-80-aniversario-fcq-uadec-2026",
+  "name": "Carrera 80 Aniversario FCQ UAdeC 2026",
+  "date": "2026-11-08",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": null,
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-80-aniversario-fcq-uadec-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "carrera-vaquera-por-la-juventud-5k-2026",
+  "name": "Carrera Vaquera por la Juventud 5K 2026",
+  "date": "2026-11-20",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "La Madriguera Casa del Adolescente, calle 2 de Abril s/n, Nuevo Centro Metropolitano",
+  "sourceUrl": "https://www.tritour.org/eventos/carrera-vaquera-por-la-juventud-5k-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "5k-rumbo-al-exito-2026",
+  "name": "5K Rumbo al Éxito 2026",
+  "date": "2026-11-22",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+  "sourceUrl": "https://www.tritour.org/eventos/5k-rumbo-al-exito-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "taco-race-saltillo-2026-3a-edicion",
+  "name": "Taco Race Saltillo 2026 (3a edición)",
+  "date": "2026-11-29",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Taco Tl Light, sucursal Los Pastores",
+  "sourceUrl": "https://www.tritour.org/eventos/taco-race-saltillo-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "campanitas-navidenas-2026",
+  "name": "Campanitas Navideñas 2026",
+  "date": "2026-12-20",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Calle Bellavista 268, colonia Bellavista",
+  "sourceUrl": "https://www.tritour.org/eventos/campanitas-navidenas-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "football-run-2027",
+  "name": "Football Run 2027",
+  "date": "2027-02-14",
+  "city": "Saltillo",
+  "state": "Coahuila",
+  "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
+  "sourceUrl": "https://www.tritour.org/eventos/football-run-2027",
+  "signupUrl": null,
+  "hasStart": false
+ }
+]

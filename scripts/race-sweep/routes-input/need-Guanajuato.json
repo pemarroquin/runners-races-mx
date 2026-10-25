@@ -1,0 +1,101 @@
+[
+ {
+  "id": "carrera-monclair-2026-run-to-the-future",
+  "name": "Carrera Monclair 2026 – Run to the Future",
+  "date": "2026-10-25",
+  "city": "León",
+  "state": "Guanajuato",
+  "venue": "Colegio Monclair Campus Las Torres, Blvd. Juan Alonso de Torres 3505, Col. La Esperanza de Alfaro",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786134767/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786134767/",
+  "hasStart": false
+ },
+ {
+  "id": "9-carrera-nissan-vegusa-2026",
+  "name": "9ª Carrera Nissan Vegusa 2026",
+  "date": "2026-10-25",
+  "city": "Irapuato",
+  "state": "Guanajuato",
+  "venue": "Agencia Nissan Vegusa Villas, Av. Villas de Irapuato 2065",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786988331/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786988331/",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-nocturna-corre-entre-la-vida-y-la",
+  "name": "Carrera Nocturna \"Corre entre la vida y la memoria\" 2026 (3ª edición)",
+  "date": "2026-11-07",
+  "city": "Irapuato",
+  "state": "Guanajuato",
+  "venue": "Calle Sor Juana Inés de la Cruz, Centro Histórico",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787782172/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787782172/",
+  "hasStart": false
+ },
+ {
+  "id": "la-nocturna-2026-corre-tras-la-luna-21-edicion",
+  "name": "La Nocturna 2026 \"Corre Tras la Luna\" (21ª edición)",
+  "date": "2026-11-07",
+  "city": "León",
+  "state": "Guanajuato",
+  "venue": "Fórum Cultural de León",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1781307400/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1781307400/",
+  "hasStart": false
+ },
+ {
+  "id": "6-ultra-manada-trail-run-2026",
+  "name": "6ª Ultra Manada Trail Run 2026",
+  "date": "2026-11-08",
+  "city": "Guanajuato",
+  "state": "Guanajuato",
+  "venue": "Teatro Cervantes, Plaza Allende, Guanajuato capital",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787852451/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787852451/",
+  "hasStart": false
+ },
+ {
+  "id": "medio-maraton-bachoco-2026",
+  "name": "Medio Maratón Bachoco 2026",
+  "date": "2026-11-08",
+  "city": "Celaya",
+  "state": "Guanajuato",
+  "venue": null,
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787171939/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1787171939/",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-flexi-2026",
+  "name": "Carrera Flexi 2026",
+  "date": "2026-11-29",
+  "city": "León",
+  "state": "Guanajuato",
+  "venue": "Av. de los Niños, frente a la empresa Flexi (a la altura de la locomotora del Parque Explora)",
+  "sourceUrl": "https://www.asdeporte.com/evento/carrera-flexi-2026-td1/datos-del-evento",
+  "signupUrl": "https://www.asdeporte.com/evento/carrera-flexi-2026-td1/datos-del-evento",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-el-sol-del-bajio-san-miguel-de-allende",
+  "name": "Carrera El Sol del Bajío – San Miguel de Allende 2026",
+  "date": "2026-12-05",
+  "city": "San Miguel de Allende",
+  "state": "Guanajuato",
+  "venue": null,
+  "sourceUrl": "https://running.life/en/event/carrera-el-sol-del-bajio-san-miguel-de-allende",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "69-carrera-de-los-barrios-guiar-2027",
+  "name": "69ª Carrera de los Barrios Guiar 2027",
+  "date": "2027-02-07",
+  "city": "León",
+  "state": "Guanajuato",
+  "venue": "Arco de la Calzada",
+  "sourceUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786738100/",
+  "signupUrl": "https://www.marcate.com.mx/evento/SPTMCAR1786738100/",
+  "hasStart": false
+ }
+]

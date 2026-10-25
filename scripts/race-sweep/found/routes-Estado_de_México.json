@@ -1,0 +1,256 @@
+[
+ {
+  "id": "carrera-al-inframundo-teotihuacano-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Venue Deportivo Tepalcates, Teotihuacán in text; no coordinates (generic googleMaps.png only)."
+ },
+ {
+  "id": "carrera-catrinas-2026-huixquilucan",
+  "start": {
+   "lat": 19.360244442502154,
+   "lng": -99.35117576987115,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://web.rockthesport.com/es/event/catrinas-2026",
+  "evidence": "Page JSON-LD location.geo gives these coordinates (JSON-LD location.geo of the event (no venue named; town Huixquilucan only)); not labeled as start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "medio-maraton-alfenique-2026-2-edicion",
+  "start": {
+   "lat": 19.2920347,
+   "lng": -99.65637219999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/2da-edicio-n-medio-marato-n-alfen-ique-2026-kbv/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (labeled Palacio municipal de Toluca; start text \"Frente a Palacio Municipal de Toluca\"); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-las-animas-de-metepec-2026",
+  "start": {
+   "lat": 19.2528864,
+   "lng": -99.598551,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-las-a-nimas-de-metepec-2026-sry/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled, venue blank on page; text only \"Metepec\"); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-atletica-jonnatan-morales-10k-2026",
+  "start": {
+   "lat": 19.2701603,
+   "lng": -99.60804000000002,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/carrera-atle-tica-jonnatan-morales-10k-2026-0zg/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (beside venue Parque Providencia Metepec); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "medio-maraton-con-encanto-temoaya-2026",
+  "start": {
+   "lat": 19.5314966,
+   "lng": -99.5223506,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/medio-marato-n-con-encanto-temoaya-2026-hxu/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (beside venue Centro Ceremonial Otomí; start text Plaza Sagitario inside it); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "medio-maraton-metepec-dia-de-muertos-2026",
+  "start": {
+   "lat": 19.2500939,
+   "lng": -99.58164579999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/medio-marato-n-metepec-di-a-de-muertos-2026-5al/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (beside venue Parque Bicentenario Metepec); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "13-carrera-cruz-roja-delegacion-toluca-2026",
+  "start": {
+   "lat": 19.271624,
+   "lng": -99.65850789999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/13---edicio-n-carrera-cruz-roja-delegacio-n-toluca-2026-6gp/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; venue text Cruz Roja Delegación Toluca); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "12-carrera-por-las-vocaciones-artesanos-de-la",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Explanada Gustavo Baz, Tlalnepantla in text only; no map/coordinates."
+ },
+ {
+  "id": "1-carrera-del-musico-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Cuautlacingo, Otumba\" only; no coordinates."
+ },
+ {
+  "id": "loop-12-horas-de-montana-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Valle de la Tortuga, La Marquesa in text only; no coordinates or map link."
+ },
+ {
+  "id": "neon-xperience-2026",
+  "start": {
+   "lat": 19.1037465,
+   "lng": -99.5916652,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/neo-n-xperience-2026-xxf/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (beside venue Palacio Municipal de Tenango del Valle); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "unicornio-run-2026-naucalpan",
+  "start": {
+   "lat": 19.4940897,
+   "lng": -99.2418927,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/unicornio-run----2026-lq7/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; venue text Parque Naucalli); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "el-sendero-oscuro-de-malinalxochitl-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Malinalco, Campamento Huixtla\" only; no coordinates."
+ },
+ {
+  "id": "medio-maraton-santa-claus-2026",
+  "start": {
+   "lat": 19.2500939,
+   "lng": -99.58164579999999,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/medio-marato-n-santa-claus-2026-v3e/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; start text Parque Bicentenario Metepec (same pin as the Metepec Día de Muertos page)); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-navidena-cerrando-el-ano-con-mit",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Texcoco\" only; no coordinates."
+ },
+ {
+  "id": "6-trail-guadalupe-nopala-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Centro Guadalupe Nopala\" only; convocatoria PDF not loaded; no coordinates."
+ },
+ {
+  "id": "10-gran-carrera-fin-de-ano-toluca-2026",
+  "start": {
+   "lat": 19.2849387,
+   "lng": -99.6762522,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/10ma-edicio-n-la-gran-carrera-fin-de-an-o-toluca-2026-y8d/datos-del-evento",
+  "evidence": "Event page's \"¿Cómo llegar?\" Google Maps link carries these coordinates (unlabeled; text next to it: Av. Vicente Guerrero beside Estadio Universitario Alberto Chivo Córdoba); not labeled as the start line, so approx.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "backyard-ftmx-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Corral de Piedra, Amanalco in text only; \"Mapa\" section empty."
+ },
+ {
+  "id": "carrera-d-teotihuacan-2027-corazon-de-guerrero",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Teotihuacan\" only; no coordinates."
+ },
+ {
+  "id": "travesia-en-las-sierras-2027-16-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Only a Google Maps CID link (no lat/lng); text start centro de Villa del Carbón."
+ }
+]

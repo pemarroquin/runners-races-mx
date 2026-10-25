@@ -1,0 +1,112 @@
+[
+ {
+  "id": "carrera-con-causa-hito-2026",
+  "name": "Carrera con Causa HITO 2026",
+  "date": "2026-10-25",
+  "city": "Santiago de Querétaro",
+  "state": "Querétaro",
+  "venue": "Facultad de Lenguas y Letras, UAQ Campus Aeropuerto",
+  "sourceUrl": "https://www.everesp.com/eventos/evento/58/carrera-con-causa-hito-2026",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "borregos-think-feel-run-queretaro-2026",
+  "name": "Borregos Think Feel Run Querétaro 2026",
+  "date": "2026-10-25",
+  "city": "Santiago de Querétaro",
+  "state": "Querétaro",
+  "venue": "Estadio Borregos, Tecnológico de Monterrey Campus Querétaro",
+  "sourceUrl": "https://running.life/es/carrera/borregos-think-feel-run-queretaro",
+  "signupUrl": null,
+  "hasStart": false
+ },
+ {
+  "id": "iv-circuito-de-carreras-skarch-5k-y-10k",
+  "name": "IV Circuito de Carreras Skarch 5K y 10K Querétaro 2026",
+  "date": "2026-11-15",
+  "city": "Santiago de Querétaro",
+  "state": "Querétaro",
+  "venue": "Parque Bicentenario Querétaro",
+  "sourceUrl": "https://www.tim3.com.mx/evento/44",
+  "signupUrl": "https://www.tim3.com.mx/evento/44",
+  "hasStart": false
+ },
+ {
+  "id": "midnight-run-club-2026",
+  "name": "Midnight Run Club 2026",
+  "date": "2026-11-21",
+  "city": "El Marqués",
+  "state": "Querétaro",
+  "venue": "Universidad Anáhuac Querétaro, Circuito Universidades 1 km 7",
+  "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=midnight-run-club",
+  "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=midnight-run-club",
+  "hasStart": false
+ },
+ {
+  "id": "run-rave-5k-wellness-weekend-2026",
+  "name": "Run & Rave 5K — Wellness Weekend 2026",
+  "date": "2026-11-22",
+  "city": "El Marqués",
+  "state": "Querétaro",
+  "venue": "Bodega Barrigona",
+  "sourceUrl": "https://carrerasmexico.com/registro/the-wellness-weekend",
+  "signupUrl": "https://carrerasmexico.com/registro/the-wellness-weekend",
+  "hasStart": false
+ },
+ {
+  "id": "xtrail-dog-series-rancho-la-providencia-2026",
+  "name": "Xtrail Dog Series Rancho La Providencia 2026",
+  "date": "2026-12-06",
+  "city": "Ezequiel Montes",
+  "state": "Querétaro",
+  "venue": "Rancho La Providencia",
+  "sourceUrl": "https://xtrailmexico.com/eventos/evento.php?e=xtrail-dog-series-rancho-la-providencia",
+  "signupUrl": "https://xtrailmexico.com/eventos/evento.php?e=xtrail-dog-series-rancho-la-providencia",
+  "hasStart": false
+ },
+ {
+  "id": "san-ildefonso-green-walker-trail-series-2026",
+  "name": "San Ildefonso Green Walker Trail Series 2026",
+  "date": "2026-12-06",
+  "city": "Amealco de Bonfil",
+  "state": "Querétaro",
+  "venue": "Centro de San Ildefonso Tultepec",
+  "sourceUrl": "https://carrerasmexico.com/registro/san-ildefonso-green-walker-trail-series",
+  "signupUrl": "https://carrerasmexico.com/registro/san-ildefonso-green-walker-trail-series",
+  "hasStart": false
+ },
+ {
+  "id": "ruba-race-queretaro-2026",
+  "name": "Ruba Race Querétaro 2026",
+  "date": "2026-12-13",
+  "city": "El Marqués",
+  "state": "Querétaro",
+  "venue": "Fraccionamiento Ciudad Marqués, carretera 420 s/n, El Rosario",
+  "sourceUrl": "https://carrerasmexico.com/registro/ruba-race-2026",
+  "signupUrl": "https://carrerasmexico.com/registro/ruba-race-2026",
+  "hasStart": false
+ },
+ {
+  "id": "corre-por-el-pavo-qro-2026",
+  "name": "Corre por el Pavo QRO 2026",
+  "date": "2026-12-13",
+  "city": "Corregidora",
+  "state": "Querétaro",
+  "venue": "Plaza Gran Cué, Camino al Cerrito, El Pueblito",
+  "sourceUrl": "https://www.everesp.com/eventos/evento/53/corre-por-el-pavo-qro-2026",
+  "signupUrl": "https://www.everesp.com/eventos/evento/53/corre-por-el-pavo-qro-2026",
+  "hasStart": false
+ },
+ {
+  "id": "carrera-san-silvestre-hercules-2026-6-edicion",
+  "name": "Carrera San Silvestre Hércules 2026 (6ª edición)",
+  "date": "2026-12-27",
+  "city": "Santiago de Querétaro",
+  "state": "Querétaro",
+  "venue": "Unidad Deportiva La Purísima, calle del Deporte 7, col. Hércules",
+  "sourceUrl": "https://carrerasmexico.com/registro/carrera-san-silvestre-hercules-2026",
+  "signupUrl": "https://carrerasmexico.com/registro/carrera-san-silvestre-hercules-2026",
+  "hasStart": false
+ }
+]

@@ -1,0 +1,102 @@
+[
+ {
+  "id": "carrera-con-causa-hito-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Rutas images are everesp placeholder default.png (not a map); no coordinates. Venue in text only."
+ },
+ {
+  "id": "borregos-think-feel-run-queretaro-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text circuit description only; organizer route page (aqsports.com.mx) not loaded; no coordinates."
+ },
+ {
+  "id": "iv-circuito-de-carreras-skarch-5k-y-10k",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Venue Parque Bicentenario Querétaro in text only; no map link."
+ },
+ {
+  "id": "midnight-run-club-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Venue address in text; map to be published later per page; no coordinates."
+ },
+ {
+  "id": "run-rave-5k-wellness-weekend-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue only (page names Barbaro Asador de Campo); no coordinates."
+ },
+ {
+  "id": "xtrail-dog-series-rancho-la-providencia-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Only short maps.app.goo.gl link without coordinates in text."
+ },
+ {
+  "id": "san-ildefonso-green-walker-trail-series-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Amealco\" only; no coordinates."
+ },
+ {
+  "id": "ruba-race-queretaro-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Text \"Ciudad Marqués\" only; no coordinates."
+ },
+ {
+  "id": "corre-por-el-pavo-qro-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Rutas images are placeholder default.png; Plaza Gran Cué in text only."
+ },
+ {
+  "id": "carrera-san-silvestre-hercules-2026-6-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no start coordinates, course-map image or polyline stated.",
+  "fetchStatus": "loaded",
+  "reason": "Venue Unidad Deportiva La Purísima in text only; no coordinates."
+ }
+]

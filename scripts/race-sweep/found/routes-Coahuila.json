@@ -1,0 +1,92 @@
+[
+ {
+  "id": "medio-maraton-del-sarape-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue name only (Estadio Francisco I. Madero); Mapa section empty."
+ },
+ {
+  "id": "daimler-truck-5k-carrera-por-la-cura-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only an OSM way link described as general road reference; no coordinates."
+ },
+ {
+  "id": "viesca-5k-55-aniversario-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only OSM way link (road reference); no coordinates."
+ },
+ {
+  "id": "carrera-80-aniversario-fcq-uadec-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text only; Mapa section empty."
+ },
+ {
+  "id": "carrera-vaquera-por-la-juventud-5k-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text address only; Mapa empty."
+ },
+ {
+  "id": "5k-rumbo-al-exito-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only OSM way link (road reference); no coordinates."
+ },
+ {
+  "id": "taco-race-saltillo-2026-3a-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue only; Mapa empty."
+ },
+ {
+  "id": "campanitas-navidenas-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only OSM way link (street reference); no coordinates."
+ },
+ {
+  "id": "football-run-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text venue only; Mapa empty."
+ }
+]

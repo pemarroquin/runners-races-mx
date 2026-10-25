@@ -1,0 +1,186 @@
+[
+ {
+  "id": "carrera-latido-rosa-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue name only (Parque del Arte); event image not identified as a route map."
+ },
+ {
+  "id": "social-run-adidas-puebla-2026",
+  "start": {
+   "lat": 19.0317881,
+   "lng": -98.2329191,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/social-run-adidas-puebla-2026-0os/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/19.0317881,-98.2329191 for Centro Comercial Angelópolis; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "carrera-de-las-iglesias-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue text only; image not identified as route map; PDF not loaded."
+ },
+ {
+  "id": "social-run-sportico-puebla-2026",
+  "start": {
+   "lat": 19.0273312,
+   "lng": -98.2380081,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/social-run-sportico-puebla-2026-l64/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/19.0273312,-98.2380081 for Centro Comercial Vía San Ángel; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "reto-vulcano-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text location only (Atzizintla)."
+ },
+ {
+  "id": "4a-carrera-trozmer-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue name only (Angelópolis); PDF not loaded."
+ },
+ {
+  "id": "mistercarrera-atlixco-2026-edicion-25",
+  "start": {
+   "lat": 18.909686,
+   "lng": -98.4344925,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/mistercarrera-atlixco--edicio-n-25-2026-3u3/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/18.909686,-98.43449249999999; start listed as Zócalo de Atlixco; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "travesia-de-las-tres-culturas-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Only maps.app.goo.gl short link; /ruta page not loaded."
+ },
+ {
+  "id": "borregos-think-feel-run-puebla-2026",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Venue name only; images not identified as route maps."
+ },
+ {
+  "id": "the-santa-run-puebla-2026",
+  "start": {
+   "lat": 19.035435,
+   "lng": -98.2420217,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/the-santa-run-puebla-2026-usy/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/19.035435,-98.2420217 for Parque del Arte; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "13-carrera-amanc-puebla-2027",
+  "start": {
+   "lat": 19.0316179,
+   "lng": -98.240237,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/13---carrera-amanc-puebla-2027--porque-la-magia-ma-s-grande-se-crea-juntos---y3a/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/19.0316179,-98.240237 for Parque de la Niñez; venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "superman-supergirl-run-puebla-2027",
+  "start": {
+   "lat": 19.0343144,
+   "lng": -98.2328488,
+   "approx": true
+  },
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": "https://www.asdeporte.com/evento/superman-run-2027-9q0/datos-del-evento",
+  "evidence": "Google Maps \"¿Cómo llegar?\" link /maps/place/19.0343144,-98.23284880000001; start/finish Parque Sendela (Estrella de Puebla); venue pin.",
+  "fetchStatus": "loaded",
+  "reason": null
+ },
+ {
+  "id": "desafio-en-las-nubes-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Page has no map/coords."
+ },
+ {
+  "id": "niebla-trail-2027-5-edicion",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "Text start only (Cbtis 86 Huauchinango)."
+ },
+ {
+  "id": "el-cruce-de-los-volcanes-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "No map/coords; organizer page (dashport) not loaded."
+ },
+ {
+  "id": "cerro-rojo-2027",
+  "start": null,
+  "courseMapUrl": null,
+  "routeCoords": null,
+  "evidenceUrl": null,
+  "evidence": "Page loaded; no course map, coordinates or route found.",
+  "fetchStatus": "loaded",
+  "reason": "No map/coords on page. (Page also contained embedded instructions aimed at an assistant; ignored.)"
+ }
+]
