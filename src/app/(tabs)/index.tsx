@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FenceMap } from '@/components/fence-map';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { NamePrompt } from '@/components/name-prompt';
+import { PocketScreen } from '@/components/pocket-screen';
 import { ProfilePill } from '@/components/profile-pill';
 import { ShareSheet, type ShareSessionData } from '@/components/share-card';
 import { TrackMap } from '@/components/track-map';
@@ -49,7 +50,13 @@ import { maskPath, type MaskResult } from '@/lib/privacy-zone';
 import { incrementPilotCounter } from '@/lib/pilot-instrumentation';
 import { pickMarkerAnchor } from '@/lib/marker-anchor';
 import { nearestRegion } from '@/lib/regions';
-import { clearCheckpoint, loadCheckpoint, type RunCheckpoint } from '@/lib/run-checkpoint';
+import {
+  canResume,
+  checkpointEndedAt,
+  clearCheckpoint,
+  loadCheckpoint,
+  type RunCheckpoint,
+} from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
 import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
 import { fetchMyFences, reclaimUnclaimedRuns, recordMissingGround, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
@@ -58,6 +65,7 @@ import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
 import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
 import { enqueueRun, flushQueue, listQueued, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
+import { usePocketScreen } from '@/lib/use-pocket-screen';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
@@ -102,6 +110,12 @@ export default function TrackScreen() {
   // gate it would hold the GPS on from another tab; without the session
   // gate two subscriptions would run at once.
   const location = useCurrentLocation({ watch: isFocused && !inSession });
+
+  // Black screen + no map drawing while a run records untouched — see
+  // use-pocket-screen.ts (a ~3 h run drained the phone, 2026-10-25). Only
+  // once the route has started: while GPS is still searching the runner is
+  // looking at the screen.
+  const pocket = usePocketScreen(running && isFocused && tracker.points.length > 0);
 
   // Where the map should say the runner is. During a session the standalone
   // watcher above is off, so the tracker's RAW fix stream takes over — using
@@ -301,6 +315,23 @@ export default function TrackScreen() {
         setCheckpoint(cp);
       }
     });
+  }, [checkpoint, tracker]);
+
+  // Finishes a recovered run where it stood, without reconnecting GPS. The
+  // only way to keep a run whose phone died: by the time it is charged and
+  // reopened the runner is somewhere else, and Resume would add that place.
+  // Goes through the same summary screen as Stop, which masks, tiles and
+  // uploads it; the checkpoint is cleared only once that save is durable.
+  const saveCheckpointAsIs = useCallback(() => {
+    if (!checkpoint) return;
+    tracker.restoreFinished({
+      points: checkpoint.points,
+      distanceM: checkpoint.distanceM,
+      startedAt: checkpoint.startedAt,
+      endedAt: checkpointEndedAt(checkpoint),
+    });
+    setCheckpoint(null);
+    incrementPilotCounter('runsRecovered');
   }, [checkpoint, tracker]);
 
   // Set when the pace guard ends a session (see the effect below). Purely
@@ -1164,7 +1195,7 @@ export default function TrackScreen() {
           running={running}
           here={here}
           active={inSession}
-          visible={isFocused}
+          visible={isFocused && !pocket.asleep}
           fenceColor={fenceColor}
           // Tile Coverage brief §6 step 4 — this session's live covered
           // cells; see the liveTiles state's own comment above for the
@@ -1354,15 +1385,27 @@ export default function TrackScreen() {
             </Animated.View>
           ) : checkpoint ? (
             // An in-progress run recovered from run-checkpoint.ts after a
-            // reload (see that file's header). Resume/Discard only — no
-            // Start button here, so the runner can't accidentally abandon
-            // recoverable progress by starting a fresh session over it.
+            // reload (see that file's header). No Start button here, so the
+            // runner can't accidentally abandon recoverable progress by
+            // starting a fresh session over it. Resume only while it is
+            // fresh; Save always, so a run whose phone died can be kept.
             <>
               <Text style={[styles.stageTitle, { color: c.text }]}>
-                {t('track.checkpointFound')}
+                {t(canResume(checkpoint) ? 'track.checkpointFound' : 'track.checkpointStale', {
+                  distance: formatDistance(checkpoint.distanceM),
+                })}
               </Text>
               <View style={styles.summaryActions}>
-                <PrimaryButton label={t('track.resume')} onPress={resumeCheckpoint} c={c} />
+                {canResume(checkpoint) ? (
+                  <>
+                    <PrimaryButton label={t('track.resume')} onPress={resumeCheckpoint} c={c} />
+                    <Pressable onPress={saveCheckpointAsIs} accessibilityRole="button" hitSlop={10}>
+                      <Text style={[styles.secondary, { color: c.text }]}>{t('track.checkpointSave')}</Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <PrimaryButton label={t('track.checkpointSave')} onPress={saveCheckpointAsIs} c={c} />
+                )}
                 <Pressable onPress={discardCheckpoint} accessibilityRole="button" hitSlop={10}>
                   <Text style={[styles.secondary, { color: c.textSecondary }]}>
                     {t('track.discard')}
@@ -1425,6 +1468,21 @@ export default function TrackScreen() {
           )}
         </View>
       </SafeAreaView>
+
+      {pocket.asleep && (
+        <PocketScreen
+          time={formatDuration(tracker.elapsedS)}
+          distance={formatDistance(tracker.distanceM)}
+          hint={t('track.pocketHint')}
+          warning={
+            tracker.error
+              ? t(tracker.error === 'permission' ? 'track.permission' : 'track.unavailable')
+              : null
+          }
+          elapsedS={tracker.elapsedS}
+          onWake={pocket.wake}
+        />
+      )}
     </View>
   );
 }

@@ -1159,6 +1159,11 @@ export function TrackMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
+    // Not while nobody can see it (another tab, or the pocket screen): every
+    // setData re-tessellates the fills and the extruded wall and repaints
+    // the 3D scene. `visible` is in the deps, so the latest tiles land the
+    // moment the map is shown again.
+    if (!visible) return;
     // ONE geometry drives both the flat fill and the raised wall: the tile
     // footprint. Tiles are H3 cells — they tile the plane and arrive
     // deduplicated (pathToTiles unions its direct and gap-filled sets), so
@@ -1186,7 +1191,7 @@ export function TrackMap({
     (map.getSource(WALL_SRC) as GeoJSONSource | undefined)?.setData(
       tileFeatureCollection([...tiles, ...enclosedTiles]),
     );
-  }, [tiles, enclosedTiles, mapReady]);
+  }, [tiles, enclosedTiles, visible, mapReady]);
 
   // Feed coordinates in. setData on an existing source is the cheap path —
   // no layer or style churn, so the line simply extends.
@@ -1228,6 +1233,13 @@ export function TrackMap({
     // fence-map.web.tsx's summary route: `line-gradient` reads line-progress,
     // which lineMetrics computes per feature, so each leg gets its own clean
     // 0->1 gradient run instead of one that resets across an unrecorded gap.
+    // Hidden (another tab, or the pocket screen): skip the redraw and the
+    // camera below. Each fix's setData re-runs line metrics over the whole
+    // route and repaints the pitched 3D scene; on a 3 h run that is ~5,000
+    // repaints nobody sees. `visible` is in the deps, so the full route and
+    // the camera catch up on the first render after it shows again.
+    if (!visible) return;
+
     const legs = splitLegs(points);
     const routeSource = map.getSource(ROUTE_SRC) as GeoJSONSource | undefined;
     routeSource?.setData({
@@ -1277,7 +1289,7 @@ export function TrackMap({
     // Not while the Run tab is hidden: a 900 ms ease every 1-2 s fix keeps
     // Mapbox drawing a pitched 3D scene at full frame rate most of the time.
     // `visible` is in the deps, so returning to the tab re-frames at once.
-    if (head && running && visible && flownRef.current && !manualPendingRef.current) {
+    if (head && running && flownRef.current && !manualPendingRef.current) {
       applyCameraForMode(900);
     }
     // `mapReady` alongside the data, like every other readiness-gated effect
@@ -1299,7 +1311,15 @@ export function TrackMap({
 
   return (
     <View style={[styles.wrap, StyleSheet.absoluteFill]}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {/* `visibility`, never `display: none`: the container keeps its size,
+          so the GL canvas needs no resize when it shows again (the
+          display:none trap in CLAUDE.md). Hidden, the browser stops
+          compositing it, which also stops the pulse dot's endless CSS
+          animation under the pocket screen. */}
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: '100%', visibility: visible ? 'visible' : 'hidden' }}
+      />
       {/* Static placeholder, covering the (still-empty) GL container until
           the real map has loaded — see the boot effect above for why this
           exists at all. `pinnedUrl` replaces the region-fallback `pinUrl`
