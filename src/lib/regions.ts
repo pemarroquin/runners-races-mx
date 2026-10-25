@@ -4,6 +4,7 @@
 // so filtering by race.state keeps the whole metro calendar together.
 // Only Monterrey has race data today; the others are wired and waiting for
 // data compiled via the Race Research Playbook.
+import { CITY_CENTROIDS } from '@/lib/city-centroids';
 import type { Race } from '@/lib/races';
 
 export interface Region {
@@ -69,6 +70,40 @@ function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number): num
     Math.sin(dLat / 2) ** 2 +
     Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+/**
+ * Where a race actually is, best evidence first: its own start pin, then its
+ * city's centroid (city-centroids.ts, sourced from OSM), then its metro
+ * centre. The last one isn't a location claim — it means "we don't know", and
+ * it deliberately measures as 0 km from the metro so an unknown never shows a
+ * distance.
+ */
+export function raceLocation(
+  race: Race,
+  region: Region,
+): { lat: number; lng: number; source: 'start' | 'city' | 'region' } {
+  if (race.start) return { lat: race.start.lat, lng: race.start.lng, source: 'start' };
+  const city = CITY_CENTROIDS[`${race.city}|${race.state}`];
+  if (city) return { lat: city[0], lng: city[1], source: 'city' };
+  return { lat: region.lat, lng: region.lng, source: 'region' };
+}
+
+/** Past this, a race is outside the metro, not across town. Santiago NL (~25 km) stays local; Toluca (~55 km from CDMX) doesn't. */
+export const FAR_FROM_METRO_KM = 40;
+
+/**
+ * How far a race is from its metro's centre, rounded to 10 km, or null when
+ * it's within FAR_FROM_METRO_KM (or its location is unknown). A region is a
+ * set of STATES, so the Saltillo region holds Torreón (~260 km away) and the
+ * Chihuahua one holds Ciudad Juárez (~350 km): without this, both read as
+ * local races.
+ */
+export function kmFromMetro(race: Race, region: Region): number | null {
+  const loc = raceLocation(race, region);
+  if (loc.source === 'region') return null;
+  const km = distanceKm(region.lat, region.lng, loc.lat, loc.lng);
+  return km > FAR_FROM_METRO_KM ? Math.round(km / 10) * 10 : null;
 }
 
 /**
