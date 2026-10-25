@@ -1,0 +1,34 @@
+[
+  {
+    "id": "barbie-run-quer-taro-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento"
+    ],
+    "note": "Nov 29, 06:30, Plaza Gran Cue; sold out (coupon holders)."
+  },
+  {
+    "id": "san-ildefonso-green-walker-trail-series-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://carrerasmexico.com/registro/san-ildefonso-green-walker-trail-series"
+    ],
+    "note": "time filled 07:00. | REJECTED correction time null->07:00: Runera says 07:50, unresolved conflict, time stays null."
+  },
+  {
+    "id": "borregos-think-feel-run-queretaro-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://running.life/es/carrera/borregos-think-feel-run-queretaro"
+    ],
+    "note": "Oct 25, Estadio Borregos; no time or signup published."
+  },
+  {
+    "id": "midnight-run-club-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://xtrailmexico.com/eventos/evento.php?e=midnight-run-club"
+    ],
+    "note": "Nov 21, 20:00, Anahuac Queretaro."
+  }
+]

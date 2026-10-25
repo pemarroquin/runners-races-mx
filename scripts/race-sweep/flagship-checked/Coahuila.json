@@ -1,0 +1,28 @@
+[
+  {
+    "id": "maraton-internacional-lala-comarca-lagunera-edic",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.tritour.org/eventos/maraton-lala"
+    ],
+    "note": "Date 2027-03-07, 06:30, venues, njuko signup (open 15 Oct-13 Nov 2026) match."
+  },
+  {
+    "id": "medio-maraton-21k-coahuila-edicion-2027",
+    "result": "corrected",
+    "urlsFetched": [
+      "https://idemsport.com/evento/21k-coahuila-2027/",
+      "https://idemsport.com/21k-coahuila-2027-inscripciones/"
+    ],
+    "note": "Date/time/venue match; signupUrl found on live 2027 inscripciones page (was null)."
+  },
+  {
+    "id": "medio-maraton-del-sarape-2027",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.tritour.org/eventos/medio-maraton-del-sarape-2027",
+      "https://chronosport.dashport.run/evento_1424"
+    ],
+    "note": "Date 2027-01-31 and Estadio Francisco I. Madero match calendar; time not listed. Dashport signup link is a JS shell (empty) so signupUrl left null."
+  }
+]

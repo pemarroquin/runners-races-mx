@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro. 2027 calendar sweep 2026-10-20: Baja California, Guanajuato, Yucatán. 2027 calendar sweep 2026-10-20: Chihuahua, Nuevo León, Jalisco. 2027 calendar sweep 2026-10-20: Puebla, Coahuila, San Luis Potosí. 2027 calendar sweep 2026-10-24: Quintana Roo.",
+    "description": "Seed race data for Runners' Races MX (Running App MVP). Real 2026-2027 races in Monterrey / Nuevo León, compiled via research agents and deduped across three sources (AANL calendar, Idemsport, Asdeporte, Hub Sports, TriTour, official race sites). Second sweep 2026-07-04: added Idemsport/AANL calendar races missed in the first pass (excluded one employees-only private event). CDMX/EdoMex sweep 2026-07-05: 3-angle fan-out per the Race Research Playbook (flagship, aggregators, trail), deduped. Third sweep 2026-07-13: added 7 more metros (Mérida/Yucatán, Tijuana+Ensenada/Baja California, León+Guanajuato-state, Cancún+Quintana Roo, San Luis Potosí, Saltillo+Coahuila-state, Chihuahua+Juárez) via race-research skill, 81 races. Bundled seed synced from the upstream race-watch repository (pemarroquin/runners-races-mx) on 2026-08-07. Verification sweep 2026-08-10 (second pass): verified the Aug 23-30 window and back-filled structured fields (venue/time/date/signupUrl/start) that earlier race-watch runs had recorded only in statusNote prose. 2027 calendar sweep 2026-10-20: Ciudad de México, Estado de México, Querétaro. 2027 calendar sweep 2026-10-20: Baja California, Guanajuato, Yucatán. 2027 calendar sweep 2026-10-20: Chihuahua, Nuevo León, Jalisco. 2027 calendar sweep 2026-10-20: Puebla, Coahuila, San Luis Potosí. 2027 calendar sweep 2026-10-24: Quintana Roo. 2027 flagship verify pass 2026-10-24: Baja California, Chihuahua, Ciudad de México, Coahuila, Estado de México, Guanajuato, Jalisco, Nuevo León, Puebla, Querétaro, Quintana Roo, San Luis Potosí, Yucatán.",
     "generatedOn": "2026-08-10",
     "count": 357,
     "distanceTags": [
@@ -476,7 +476,7 @@
       "id": "21k-nuevo-leon-2026",
       "name": "21K Nuevo León 2026 (24ª Edición)",
       "date": "2026-11-15",
-      "time": null,
+      "time": "07:00",
       "distances": [
         "21K"
       ],
@@ -492,7 +492,9 @@
       "confidence": "medium",
       "notes": "24th edition of the Nuevo León half marathon, organized by AANL and timed by Trotime.",
       "notesEs": "24ª edición del medio maratón de Nuevo León, organizado por AANL y cronometrado por Trotime.",
-      "sourceNotes": "Date pending final confirmation. Candidate Trotime ficha exists (edicionEventoId=eddbd1ca-06ef-4e3d-9c75-3988be1e27ca) but could not be verified as the Nov 15, 2026 edition — not published as a signup link. Distinct from the May 2026 \"21K Trotime\"."
+      "sourceNotes": "Date pending final confirmation. Candidate Trotime ficha exists (edicionEventoId=eddbd1ca-06ef-4e3d-9c75-3988be1e27ca) but could not be verified as the Nov 15, 2026 edition — not published as a signup link. Distinct from the May 2026 \"21K Trotime\". | time null -> 07:00 per https://runmx.com/events/21k-nuevo-leon-2026/ (event calendar listing 7:00 am-12:00 pm; no separate official page read). Page also says sign-ups via https://www.trotime.com.mx/ (generic site, not an edition link) so signupUrl stays null.",
+      "status": "ok",
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "carrera-batman-2026",
@@ -559,7 +561,7 @@
       "id": "barbie-run-monterrey-2026",
       "name": "Barbie Run Monterrey 10K y 5K",
       "date": "2026-12-06",
-      "time": null,
+      "time": "07:00",
       "distances": [
         "5K",
         "10K",
@@ -577,9 +579,12 @@
       "signupUrl": "https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3",
       "sourceUrl": "https://idemsport.com/calendario-2026/",
       "confidence": "high",
-      "notes": "Registration open (Asdeporte, 2026-07-04). From $869 MXN, cap 3,500 participants. VENUE TBC: Asdeporte page says salida/meta \"Por confirmar\" (Idemsport calendar had said Fundidora).",
-      "notesEs": "Registro abierto (Asdeporte, 2026-07-04). Desde $869 MXN, cupo de 3,500 participantes. SEDE POR CONFIRMAR: la página de Asdeporte indica salida/meta \"Por confirmar\" (el calendario de Idemsport había dicho Fundidora).",
-      "start": null
+      "notes": "Sold out: registration now only accepts coupons bought in advance. From $869 MXN, cap 3,500 participants. Start/finish venue still to be confirmed by the organizer.",
+      "notesEs": "Inscripciones agotadas: el registro solo admite cupones comprados con anticipación. Desde $869 MXN, cupo de 3,500 participantes. La sede de salida y meta aún está por confirmar.",
+      "start": null,
+      "sourceNotes": "time null -> 07:00 ('A partir de las 7:00 a.m.') and 'INSCRIPCIONES AGOTADAS' read on https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3 (page header also shows 13:00 h, a timezone-style artifact seen on all Asdeporte pages; start/finish still 'Por confirmar'). Conflict: https://idemsport.com/calendario-2026/ lists venue Fundidora; venue kept null because the organizer page says Por confirmar. signupUrl kept (page says button still open for pre-bought coupons, not proof registration is dead). notes updated: previous 'Registration open' sentence was false.",
+      "status": "ok",
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "maraton-powerade-monterrey-2026",
@@ -2374,17 +2379,17 @@
       ],
       "city": "Puebla",
       "state": "Puebla",
-      "venue": null,
+      "venue": "Parque Sendela (Estrella de Puebla), Av. Osa Mayor, junto a Centro Comercial Angelópolis",
       "organizer": "Asdeporte",
       "signupUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento",
       "confidence": "high",
-      "notes": "Salida/meta 'por confirmar'. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX.",
-      "notesEs": "Salida/meta 'por confirmar'. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX.",
+      "notes": "Registration is sold out; only coupon holders can still enter. From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX.",
+      "notesEs": "Inscripciones agotadas; solo pueden entrar quienes ya compraron cupón. Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX.",
       "status": "ok",
       "statusNote": "No change found — still Oct 25, Puebla leg of the 2026 tour.",
-      "lastVerified": "2026-10-23",
-      "sourceNotes": "2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); haid.app and espartanasmx.com confirm Barbie Run's Puebla stop Sun Oct 25 2026, cap 2,500, start 6:30am, kit pickup Sat Oct 24. Start/finish venue listed 'por confirmar' on the aggregator — normal pre-race TBD, not a reported change. No cancellation/postponement news."
+      "lastVerified": "2026-10-24",
+      "sourceNotes": "venue: null -> \"Parque Sendela, Estrella de Puebla (Av. Osa Mayor, next to Angelópolis)\" read on https://asdeporte.com/evento/barbie-run-puebla-2026-kwq/datos-del-evento . Page also shows 12:30 h header vs detail starts 6:30/6:40/6:45; kept 06:30. Page says registration sold out (coupon holders only); signupUrl kept. Prior sourceNotes: 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); haid.app and espartanasmx.com confirm Barbie Run's Puebla stop Sun Oct 25 2026, cap 2,500, start 6:30am, kit pickup Sat Oct 24. Start/finish venue listed 'por confirmar' on the aggregator — normal pre-race TBD, not a reported change. No cancellation/postponement news."
     },
     {
       "id": "carrera-canacine",
@@ -2774,7 +2779,7 @@
       "id": "c-de-las-estaciones-oto-o-guadalajara-2026",
       "name": "C. de las Estaciones Otoño Guadalajara 2026",
       "date": "2026-10-25",
-      "time": null,
+      "time": "06:30",
       "distances": [
         "5K",
         "10K",
@@ -2787,16 +2792,16 @@
       ],
       "city": "Guadalajara",
       "state": "Jalisco",
-      "venue": null,
+      "venue": "Frente a Expo Guadalajara, Av. Mariano Otero 1499, Verde Valle",
       "organizer": "Asdeporte",
-      "signupUrl": null,
+      "signupUrl": "https://asdeporte.com/evento/oton-o-guadalajara-2026-6r9/datos-del-evento",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "high",
       "notes": null,
-      "sourceNotes": "Date agrees across tritour + runera (asdeporte slug oton-o-...-6r9). Venue not rendered. 2026-10-23 race-watch: direct fetch of tritour.org blocked (DNS/network policy this run); haid.app confirms Asdeporte's event runs Sun Oct 25 2026, 5/10/15K, start/finish Expo Guadalajara (Av. Mariano Otero 1499, Verde Valle), plus a virtual modality Oct 24-25. No cancellation/postponement news.",
+      "sourceNotes": "Read on https://asdeporte.com/evento/oton-o-guadalajara-2026-6r9/datos-del-evento : time null -> 06:30 (15K 6:30, 10K 6:40, 5K 6:50; header says 12:30 h, detail schedule used); venue null -> Frente a Expo Guadalajara, Av. Mariano Otero 1499, Verde Valle; signupUrl null -> that page (Inscribirme button active, current 2026 edition; signup link also listed on https://www.tritour.org/calendario-carreras-guadalajara). Page also has a virtual mode 24-25 Oct. Prior sourceNotes: Date agrees across tritour + runera (asdeporte slug oton-o-...-6r9). Venue not rendered. 2026-10-23 race-watch: direct fetch of tritour.org blocked (DNS/network policy this run); haid.app confirms Asdeporte's event runs Sun Oct 25 2026, 5/10/15K, start/finish Expo Guadalajara (Av. Mariano Otero 1499, Verde Valle), plus a virtual modality Oct 24-25. No cancellation/postponement news.",
       "status": "ok",
       "statusNote": "No change found — still Oct 25, Expo Guadalajara.",
-      "lastVerified": "2026-10-23"
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "xlii-marat-n-internacional-guadalajara-2026-elec",
@@ -2824,7 +2829,7 @@
       "id": "c-de-las-estaciones-invierno-guadalajara-2026",
       "name": "C. de las Estaciones Invierno Guadalajara 2026",
       "date": "2026-12-13",
-      "time": null,
+      "time": "06:30",
       "distances": [
         "5K",
         "10K",
@@ -2839,12 +2844,14 @@
       "state": "Jalisco",
       "venue": "Estadio Akron, Zapopan",
       "organizer": "Asdeporte",
-      "signupUrl": null,
+      "signupUrl": "https://asdeporte.com/evento/invierno-guadalajara-2026-07h/datos-del-evento",
       "sourceUrl": "https://www.tritour.org/calendario-carreras-guadalajara",
       "confidence": "high",
       "notes": "Held at Estadio Akron, Zapopan.",
       "notesEs": "Se realiza en el Estadio Akron, Zapopan.",
-      "sourceNotes": "Date agrees across tritour + runera (asdeporte slug invierno-...-07h)."
+      "sourceNotes": "Read on https://asdeporte.com/evento/invierno-guadalajara-2026-07h/datos-del-evento : time null -> 06:30 (15K 6:30, 10K 6:40, 5K 6:50; header 12:30 h ignored); signupUrl null -> that page (Inscribirme active, 2026 edition). Venue Estadio Akron, Zapopan unchanged; date 2026-12-13 confirmed. Prior sourceNotes: Date agrees across tritour + runera (asdeporte slug invierno-...-07h).",
+      "status": "ok",
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "shrek-run-guadalajara-2027",
@@ -3280,7 +3287,7 @@
       "id": "binational-race-2026",
       "name": "Binational Race 2026",
       "date": "2026-10-25",
-      "time": null,
+      "time": "06:50",
       "distances": [
         "10K",
         "12K",
@@ -3302,8 +3309,8 @@
       "notesEs": "Carrera binacional de San Diego a Tijuana; el 21K equivale al medio maratón de 13.1 mi. Se necesita pasaporte/Global Entry/SENTRI para cruzar la frontera. running.life + la página del evento 2026 en Race Roster coinciden.",
       "status": "ok",
       "statusNote": "No change found — still Oct 25, San Diego-Tijuana.",
-      "lastVerified": "2026-10-23",
-      "sourceNotes": "2026-10-23 race-watch: direct fetch of running.life/raceroster.com blocked (DNS/network policy this run); sandiego.org, letsdothis.com and a Zeta Tijuana article all confirm the 2026 Binational Race (half/12K/10K) for Sun Oct 25 2026. No cancellation/postponement signals. Minor unresolved detail: start times differ between aggregators (6:50am vs TBC) — not status-relevant."
+      "lastVerified": "2026-10-24",
+      "sourceNotes": "time null -> 06:50 (6:50 AM PDT) read on https://raceroster.com/events/2026/111897/2026-binational-race . Half and 12K start at Las Americas Premium Outlets, 10K at Blvd Sanchez Taboada bridge (Costco), Tijuana; page time presumably applies to the event start; per-distance times not given. 12K sold out; half and 10K open. Venue, date unchanged. Prior sourceNotes: 2026-10-23 race-watch: direct fetch of running.life/raceroster.com blocked (DNS/network policy this run); sandiego.org, letsdothis.com and a Zeta Tijuana article all confirm the 2026 Binational Race (half/12K/10K) for Sun Oct 25 2026. No cancellation/postponement signals. Minor unresolved detail: start times differ between aggregators (6:50am vs TBC) — not status-relevant."
     },
     {
       "id": "medio-maraton-internacional-de-tecate",
@@ -4014,15 +4021,15 @@
       "state": "Coahuila",
       "venue": "Teatro de la Ciudad Fernando Soler, Xicoténcatl y Blvd. Francisco Coss",
       "organizer": "Gobierno de Coahuila / 21K Coahuila",
-      "signupUrl": null,
+      "signupUrl": "https://idemsport.com/21k-coahuila-2027-inscripciones/",
       "sourceUrl": "https://idemsport.com/evento/21k-coahuila-2027/",
       "confidence": "high",
       "notes": "Wheelchair start 5:45, general start 6:00. Presale 650 MXN until folios run out; online payment adds a fee. Kit pickup dates to be announced. Flagship Saltillo half marathon (21K individual + relay teams). 2026 edition started 06:00 from Teatro de la Ciudad Fernando Soler, entry $700-800 MXN.",
       "notesEs": "Salida de silla de ruedas a las 5:45 y del resto a las 6:00. Preventa de 650 MXN hasta agotar folios; el pago en línea tiene cargo extra. Fechas de entrega de kits por anunciar. Medio maratón insignia de Saltillo (21K individual + equipos de relevos). La edición 2026 salió a las 06:00 desde el Teatro de la Ciudad Fernando Soler, inscripción de $700-800 MXN.",
-      "sourceNotes": "Existing date 2027-06-13 confirmed on Idemsport event page and Tri Tour; this fills time/venue. Registration pointer is www.21kcoahuila.org / idemsport.com but the exact checkout URL was not rendered, so signupUrl left null. 21kcoahuila.org shows only a PRE 2027 shell. (Earlier: Official site previously showed only a 'PRE 2027' teaser with no date published. Resolved via web search 2026-09-14: search results (Finishers.com event page) name Sunday June 13, 2027, with preventa registration reportedly open at the official site (same domain as sourceUrl). Direct WebFetch of 21kcoahuila.org was blocked by network egress policy this run, so this rests on search-result corroboration rather than a live page load; signupUrl left null since a distinct registration URL wasn't confirmed. Confidence raised low→medium. 2026 edition ran May 31, 2026 — before this research window.)",
+      "sourceNotes": "signupUrl null -> https://idemsport.com/21k-coahuila-2027-inscripciones/ . Read 2026-10-24: page titled '21K Coahuila 2027- Inscripciones' with active sign-up form and 'Inscribirme y pagar' button; linked from the event page https://idemsport.com/evento/21k-coahuila-2027/ (which states date Sunday 2027-06-13, 06:00 start, Teatro de la Ciudad Fernando Soler venue, registration open at 21kcoahuila.org / idemsport.com, 21K $650 presale). Inscripciones page itself shows no date. Date/time/venue unchanged and confirmed. (Earlier: Existing date 2027-06-13 confirmed on Idemsport event page and Tri Tour; this fills time/venue. Registration pointer is www.21kcoahuila.org / idemsport.com but the exact checkout URL was not rendered, so signupUrl left null. 21kcoahuila.org shows only a PRE 2027 shell. (Earlier: Official site previously showed only a 'PRE 2027' teaser with no date published. Resolved via web search 2026-09-14: search results (Finishers.com event page) name Sunday June 13, 2027, with preventa registration reportedly open at the official site (same domain as sourceUrl). Direct WebFetch of 21kcoahuila.org was blocked by network egress policy this run, so this rests on search-result corroboration rather than a live page load; signupUrl left null since a distinct registration URL wasn't confirmed. Confidence raised low→medium. 2026 edition ran May 31, 2026 — before this research window.))",
       "status": "ok",
       "statusNote": "Date resolved: Sunday, June 13, 2027.",
-      "lastVerified": "2026-09-14"
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "serial-rutas-y-trail-magico-2026-fecha-aquismon",
@@ -8579,12 +8586,14 @@
       "state": "Puebla",
       "venue": "Pantepec, Sierra Norte de Puebla",
       "organizer": "Ultra-Trail de México (UTMX)",
-      "signupUrl": null,
+      "signupUrl": "https://travesiatresculturas.com/incripciones/",
       "sourceUrl": "https://travesiatresculturas.com",
       "confidence": "medium",
       "notes": "Two-stage mountain race, 60 km total with 2,550 m of climbing, camping between stages. Runs 13 to 15 November.",
       "notesEs": "Carrera de montaña por etapas, 60 km en total con 2,550 m de desnivel positivo y campamento entre etapas. Del 13 al 15 de noviembre.",
-      "sourceNotes": "Official site says '2da edición 13 al 15 de noviembre, 2026'; stage day/date of the first stage taken as 13 Nov. Registration link not extractable from the page, signupUrl null. No price/start time published on fetched page."
+      "sourceNotes": "signupUrl null -> https://travesiatresculturas.com/incripciones/ (read; 2026 edition, link slug ttc26, registration window Jan 26 - Oct 31 2026; page does not state if open today). Date Nov 13-15 2026 on https://travesiatresculturas.com consistent with row (13th = stage start); no start time published. Prior sourceNotes: Official site says '2da edición 13 al 15 de noviembre, 2026'; stage day/date of the first stage taken as 13 Nov. Registration link not extractable from the page, signupUrl null. No price/start time published on fetched page.",
+      "status": "ok",
+      "lastVerified": "2026-10-24"
     },
     {
       "id": "borregos-think-feel-run-puebla-2026",

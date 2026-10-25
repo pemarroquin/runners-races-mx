@@ -1,0 +1,42 @@
+[
+  {
+    "id": "medio-maraton-la-capital-del-deporte-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://sanluisinforma.com/?p=22666"
+    ],
+    "note": "Date 2026-11-08, 07:00, Jardín Hidalgo match; free registration through municipal office, no URL."
+  },
+  {
+    "id": "spartan-san-luis-potosi-parque-tangamanga-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://haid.app/en/events/spartan-san-luis-potosi-parque-tangamanga-2026-164663"
+    ],
+    "note": "Date 2026-10-31, 08:00, Parque Tangamanga match; organizer registration only via aggregator link, signupUrl left null."
+  },
+  {
+    "id": "marathon-tv-tu-tiempo-a-tiempo",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.asdeporte.com/evento/marathon-tv---tu-tiempo-a-tiempo-3po/datos-del-evento"
+    ],
+    "note": "Date 2026-11-15, 07:00 popular races, Tangamanga II, registration open; matches (page has a stray 2025 typo and 13:00 listing header)."
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-rioverde",
+    "result": "correct",
+    "urlsFetched": [
+      "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-rio-verde/"
+    ],
+    "note": "Date 2026-11-07 19:00 Río Verde match; no registration info."
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-soledad-d",
+    "result": "correct",
+    "urlsFetched": [
+      "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-soledad/"
+    ],
+    "note": "Date 2026-12-05 19:00 Jardín Hidalgo Soledad match; no registration info."
+  }
+]

@@ -1,0 +1,59 @@
+[
+  {
+    "id": "maraton-internacional-dolores-hidalgo-2027-2-edi",
+    "result": "correct",
+    "urlsFetched": [
+      "https://maratonmoroleon.metaxpro.com/"
+    ],
+    "note": "Date 2027-01-10, Moroleón, registration open match. Page shows start '05:59 hrs' (prior sweep judged it an artifact); time left null. Venue not named on page."
+  },
+  {
+    "id": "bjx21k-medio-maraton-bajio-2027",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.marcate.com.mx/evento/SPTMCAR1776803113/"
+    ],
+    "note": "Date 2027-04-25, 06:30, Poliforum León, registration button present; matches."
+  },
+  {
+    "id": "maraton-capital-ciudad-de-guanajuato-iv-edicion",
+    "result": "correct",
+    "urlsFetched": [
+      "https://maratoncapital.com/",
+      "https://registro.maratoncapital.com/registro"
+    ],
+    "note": "Date 2027-02-07 confirmed; registration form live (Maratón Capital 2027). Time and venue not stated on pages; existing values retained."
+  },
+  {
+    "id": "ultra-maraton-leon-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://estadoluz.com/2025/12/31/leon-se-pone-los-tenis-confirman-66-carreras-atleticas-para-2026/"
+    ],
+    "note": "Date 2026-11-07 confirmed by calendar article; no venue/registration published."
+  },
+  {
+    "id": "la-nocturna-2026-corre-tras-la-luna-21-edicion",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.marcate.com.mx/evento/SPTMCAR1781307400/"
+    ],
+    "note": "Date 2026-11-07, 20:00, Fórum Cultural, registration open; matches."
+  },
+  {
+    "id": "medio-maraton-bachoco-2026",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.marcate.com.mx/evento/SPTMCAR1787171939/"
+    ],
+    "note": "Date 2026-11-08, 07:00, Celaya, registration open; matches."
+  },
+  {
+    "id": "69-carrera-de-los-barrios-guiar-2027",
+    "result": "correct",
+    "urlsFetched": [
+      "https://www.marcate.com.mx/evento/SPTMCAR1786738100/"
+    ],
+    "note": "Date 2027-02-07, 06:30, Arco de la Calzada, registration open; matches."
+  }
+]

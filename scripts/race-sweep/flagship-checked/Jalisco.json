@@ -1,0 +1,76 @@
+[
+ {
+  "id": "xlii-marat-n-internacional-guadalajara-2026-elec",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.marcate.com.mx/evento/SPTMCAR1769458381/"
+  ],
+  "note": "Nov 8, 06:30; open; no specific venue on page."
+ },
+ {
+  "id": "g15k-gatorade-guadalajara-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/g15k-gatorade-guadalajara-2026-ksw/datos-del-evento"
+  ],
+  "note": "Nov 15, 06:30, Coliseo GNP Seguros, Zapopan."
+ },
+ {
+  "id": "shrek-run-guadalajara-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://asdeporte.com/evento/shrek-run-guadalajara-2026-frm/datos-del-evento"
+  ],
+  "note": "Jan 24 2027, 06:30, venue por confirmar (null kept)."
+ },
+ {
+  "id": "adidas-split-10k-gdl-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.hubsports.mx/eventos/adidas-split-10k-gdl-2026"
+  ],
+  "note": "Nov 29, 06:30, venue por confirmar; inscripciones abiertas."
+ },
+ {
+  "id": "carrera-mcdonald-s-guadalajara-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/carrera-mcdonalds-guadalajara-2026-2bw/datos-del-evento"
+  ],
+  "note": "Date moved to Jan 31 2027 already reflected; 06:30; Circuito Estadio Akron."
+ },
+ {
+  "id": "c-de-las-estaciones-oto-o-guadalajara-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://www.tritour.org/calendario-carreras-guadalajara",
+   "https://asdeporte.com/evento/oton-o-guadalajara-2026-6r9/datos-del-evento"
+  ],
+  "note": "time, venue, signupUrl filled."
+ },
+ {
+  "id": "c-de-las-estaciones-invierno-guadalajara-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://www.tritour.org/calendario-carreras-guadalajara",
+   "https://asdeporte.com/evento/invierno-guadalajara-2026-07h/datos-del-evento"
+  ],
+  "note": "time, signupUrl filled."
+ },
+ {
+  "id": "x-maraton-por-relevos-guadalajara-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.marcate.com.mx/evento/SPTMCAR1786651665/"
+  ],
+  "note": "Nov 8, 07:00; venue not published."
+ },
+ {
+  "id": "hello-kitty-and-friends-fun-run-guadalajara-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.tritour.org/eventos/hello-kitty-and-friends-fun-run-guadalajara-2026"
+  ],
+  "note": "Nov 22, 06:30, La Gran Plaza; enrolit link matches."
+ }
+]

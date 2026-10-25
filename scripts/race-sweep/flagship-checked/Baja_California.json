@@ -1,0 +1,42 @@
+[
+ {
+  "id": "maraton-baja-california-2026-60-edicion",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.elimparcial.com/tij/columnas/2026/07/29/lo-adelantan/"
+  ],
+  "note": "Nov 29; column only presumes Ciudad Deportiva Mexicali, not confirmed; venue null kept."
+ },
+ {
+  "id": "tercera-edicion-medio-maraton-uabc-tijuana-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://web.rockthesport.com/es/event/tercera-edicion-medio-maraton-uabc-tijuana-2026"
+  ],
+  "note": "Nov 8, 06:30, Facultad de Deportes; page open (structured data hints SoldOut, ambiguous)."
+ },
+ {
+  "id": "medio-maraton-rosarito-puerto-nuevo-2026-puerto",
+  "result": "correct",
+  "urlsFetched": [
+   "https://web.rockthesport.com/es/event/medio-maraton-rosarito-puerto-nuevo-2026"
+  ],
+  "note": "Nov 15, 06:30, Hacienda Floresta del Mar; RockTheSport closed, spots remain via unnamed other platforms; signupUrl null kept."
+ },
+ {
+  "id": "binational-race-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://raceroster.com/events/2026/111897/2026-binational-race"
+  ],
+  "note": "time filled 06:50."
+ },
+ {
+  "id": "rd-trail-half-marathon-2026-run-dirty-cowboy",
+  "result": "correct",
+  "urlsFetched": [
+   "https://ultrasignup.com/register.aspx?eid=15630"
+  ],
+  "note": "Nov 22, 07:30, Rancho Dagninos; registration closes Nov 1."
+ }
+]

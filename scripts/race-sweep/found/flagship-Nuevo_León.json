@@ -1,0 +1,44 @@
+[
+ {
+  "name": "21K Nuevo León 2026 (24ª Edición)",
+  "date": "2026-11-15",
+  "time": "07:00",
+  "distances": [
+   "21K"
+  ],
+  "city": "Monterrey",
+  "state": "Nuevo León",
+  "venue": "Plaza Cultural, Monterrey",
+  "organizer": "Trotime",
+  "signupUrl": null,
+  "sourceUrl": "https://runmx.com/events/21k-nuevo-leon-2026/",
+  "confidence": "medium",
+  "notes": "24th edition of the Nuevo León half marathon, organized by AANL and timed by Trotime.",
+  "sourceNotes": "Date pending final confirmation. Candidate Trotime ficha exists (edicionEventoId=eddbd1ca-06ef-4e3d-9c75-3988be1e27ca) but could not be verified as the Nov 15, 2026 edition — not published as a signup link. Distinct from the May 2026 \"21K Trotime\". | time null -> 07:00 per https://runmx.com/events/21k-nuevo-leon-2026/ (event calendar listing 7:00 am-12:00 pm; no separate official page read). Page also says sign-ups via https://www.trotime.com.mx/ (generic site, not an edition link) so signupUrl stays null.",
+  "notesEs": "24ª edición del medio maratón de Nuevo León, organizado por AANL y cronometrado por Trotime.",
+  "kind": "correction",
+  "existingId": "21k-nuevo-leon-2026"
+ },
+ {
+  "name": "Barbie Run Monterrey 10K y 5K",
+  "date": "2026-12-06",
+  "time": "07:00",
+  "distances": [
+   "5K",
+   "10K",
+   "3K caminata"
+  ],
+  "city": "Monterrey",
+  "state": "Nuevo León",
+  "venue": null,
+  "organizer": "Asdeporte",
+  "signupUrl": "https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3",
+  "sourceUrl": "https://idemsport.com/calendario-2026/",
+  "confidence": "high",
+  "notes": "Sold out: registration now only accepts coupons bought in advance. From $869 MXN, cap 3,500 participants. Start/finish venue still to be confirmed by the organizer.",
+  "sourceNotes": "time null -> 07:00 ('A partir de las 7:00 a.m.') and 'INSCRIPCIONES AGOTADAS' read on https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3 (page header also shows 13:00 h, a timezone-style artifact seen on all Asdeporte pages; start/finish still 'Por confirmar'). Conflict: https://idemsport.com/calendario-2026/ lists venue Fundidora; venue kept null because the organizer page says Por confirmar. signupUrl kept (page says button still open for pre-bought coupons, not proof registration is dead). notes updated: previous 'Registration open' sentence was false.",
+  "notesEs": "Inscripciones agotadas: el registro solo admite cupones comprados con anticipación. Desde $869 MXN, cupo de 3,500 participantes. La sede de salida y meta aún está por confirmar.",
+  "kind": "correction",
+  "existingId": "barbie-run-monterrey-2026"
+ }
+]

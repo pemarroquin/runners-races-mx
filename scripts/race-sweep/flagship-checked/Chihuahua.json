@@ -1,0 +1,42 @@
+[
+ {
+  "id": "barbie-run-chihuahua-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/barbie-run-chihuahua-2026-0en/datos-del-evento"
+  ],
+  "note": "Date/time/city match; venue wording Av. Independencia 209 at Plaza de Armas vs row Explanada de Presidencia Municipal (not contradicted, left)."
+ },
+ {
+  "id": "ultra-maraton-caballo-blanco-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://ultrasignup.com/register.aspx?did=138112"
+  ],
+  "note": "Date 6-7 Mar 2027 matches; times tentative, time left null; registration open."
+ },
+ {
+  "id": "21k-tres-presas-3ra-edicion",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.primeroactivocuu.com/event/21k-las-tres-presa-3ra-edicin"
+  ],
+  "note": "Match (21 Nov, 19:00, Tres Presas), registration open."
+ },
+ {
+  "id": "run-internacional-the-u-s-mexico-10k-2027-8",
+  "result": "correct",
+  "urlsFetched": [
+   "https://epcf.org/news/run-internacional-returns-sunday-april-4-2027"
+  ],
+  "note": "Match (4 Apr 2027, 8:00 MT); registration opens 24 Oct 2026, no direct link, signupUrl stays null."
+ },
+ {
+  "id": "copper-canyons-endurance-runs-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://ultrasignup.com/register.aspx?eid=10237"
+  ],
+  "note": "Match (25 Oct, 7:00, Camp Corre Libre); registration closed, signupUrl null."
+ }
+]

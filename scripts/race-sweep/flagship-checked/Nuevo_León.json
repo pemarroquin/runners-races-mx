@@ -1,0 +1,107 @@
+[
+ {
+  "id": "tmim-triple-maraton-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.runera.mx/carreras/detalle/triple-maratn-internacional-monterrey-2026"
+  ],
+  "note": "Date/time/venue match runera page; open; no cancel notice."
+ },
+ {
+  "id": "adidas-splits-15k-30k-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.hubsports.mx/eventos/adidas-splits-15k-30k-mty-2026"
+  ],
+  "note": "All match hubsports page; open."
+ },
+ {
+  "id": "maraton-powerade-monterrey-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://maratonmonterrey.mx/convocatoria/"
+  ],
+  "note": "Date, time, venue match convocatoria; page says inscripciones totales agotadas but product page not proven dead; no cancel."
+ },
+ {
+  "id": "ultra-trail-oso-negro-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://run.matacanes.com.mx/serviceN.php?lang=esp&dest=343"
+  ],
+  "note": "Page: Ene 23 2027, 5:00 am start, Santiago; registration shows Cerrado/PRE-REGISTRO, price inconsistent; no cancel; no clear correction."
+ },
+ {
+  "id": "21k-nuevo-leon-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://runmx.com/events/21k-nuevo-leon-2026/"
+  ],
+  "note": "Time 07:00 found (calendar listing); corrected."
+ },
+ {
+  "id": "barbie-run-monterrey-2026",
+  "result": "corrected",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/barbie-run-monterrey-2026-tx3",
+   "https://idemsport.com/calendario-2026/"
+  ],
+  "note": "Time 07:00 found; sold out so notes fixed; venue still por confirmar."
+ },
+ {
+  "id": "lululemon-10k-mty-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.tritour.org/eventos/lululemon-10k-mty-2026"
+  ],
+  "note": "Match tritour page."
+ },
+ {
+  "id": "invierno-monterrey-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/invierno-monterrey-2026-9ru/datos-del-evento"
+  ],
+  "note": "Match (7:00 10K)."
+ },
+ {
+  "id": "shrek-run-monterrey-2027",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/shrek-run-monterrey-2027-252/datos-del-evento"
+  ],
+  "note": "Match (6:30, venue por confirmar)."
+ },
+ {
+  "id": "gatorade-g15k-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://idemsport.com/calendario-2026/"
+  ],
+  "note": "Only idemsport calendar fetched (25 Oct, Estadio BBVA) matches row; no time or signup published."
+ },
+ {
+  "id": "carrera-batman-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://haid.app/en/events/batman-run-monterrey-2026-164666"
+  ],
+  "note": "haid page says cancelled; row already status canceled with signupUrl null."
+ },
+ {
+  "id": "bob-esponja-2026",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.asdeporte.com/evento/bob-esponja-monterrey-2026-lzi/datos-del-evento"
+  ],
+  "note": "Match (6:45, Grúa Portal gate 7)."
+ },
+ {
+  "id": "21k-las-desgraciadas-2027-4-edicion",
+  "result": "correct",
+  "urlsFetched": [
+   "https://www.krono.mx/eventos/21-k-las-desgraciadas-2027"
+  ],
+  "note": "Match krono page; EVENTO ACTIVO."
+ }
+]
