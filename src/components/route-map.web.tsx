@@ -24,15 +24,15 @@
 // does. A runtime <link> tag, added to the document only when this
 // component actually mounts, is the one path that keeps the CSS out of that
 // global bundle entirely.
-import { Image } from 'expo-image';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import mapboxGlPkg from 'mapbox-gl/package.json';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 
+import { CourseMapImages } from '@/components/course-maps';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
-import type { Race } from '@/lib/races';
+import { courseMapsOf, type Race } from '@/lib/races';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 const ROUTE_COLOR = '#E4572E'; // matches native ROUTE_COLOR
@@ -60,7 +60,7 @@ export function RouteMap({ race }: { race: Race }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const start = race.start ?? null;
-  const courseMapUrl = race.courseMapUrl ?? null;
+  const courseMaps = courseMapsOf(race);
   const route = race.routeCoords && race.routeCoords.length > 1 ? race.routeCoords : null;
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export function RouteMap({ race }: { race: Race }) {
     // Re-init on race change or light/dark switch.
   }, [race.id, scheme, start, route]);
 
-  if (!start && !courseMapUrl) return null;
+  if (!start && courseMaps.length === 0) return null;
 
   return (
     <View style={styles.field}>
@@ -135,14 +135,7 @@ export function RouteMap({ race }: { race: Race }) {
         <Text style={[styles.hint, { color: c.textSecondary }]}>{t('detail.approxLocation')}</Text>
       )}
 
-      {courseMapUrl && (
-        <Image
-          source={{ uri: courseMapUrl }}
-          style={styles.courseImg}
-          contentFit="contain"
-          accessibilityLabel={t('common.route')}
-        />
-      )}
+      <CourseMapImages maps={courseMaps} captionColor={c.textSecondary} />
     </View>
   );
 }
@@ -152,5 +145,4 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
   mapWrap: { borderRadius: Spacing.two, overflow: 'hidden', height: 220 },
   hint: { fontSize: 12 },
-  courseImg: { width: '100%', height: 220, borderRadius: Spacing.two, marginTop: Spacing.one },
 });

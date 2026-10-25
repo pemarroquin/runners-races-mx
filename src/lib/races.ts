@@ -91,6 +91,19 @@ export interface StartPoint {
   approx?: boolean;
 }
 
+/**
+ * One official course image. Organizers publish one per distance (a 3K map
+ * and a 5K map) and often an elevation chart beside them, which a single
+ * `courseMapUrl` couldn't hold — so the second map ended up in `notes` prose,
+ * the "narrated, not applied" defect the sweep contract bans.
+ */
+export interface CourseMap {
+  url: string;
+  /** Distance the image is for, as the organizer labels it ("5K", "5K/10K"); null = unlabelled. */
+  distance: string | null;
+  kind: 'route' | 'elevation';
+}
+
 export interface Race {
   id: string;
   name: string;
@@ -111,7 +124,8 @@ export interface Race {
   // Route data (optional — only present when verified from a source)
   start?: StartPoint | null;
   routeCoords?: [number, number][] | null; // [lat, lng] pairs along the course
-  courseMapUrl?: string | null; // official course-map image
+  courseMaps?: CourseMap[] | null; // official course images, per distance
+  courseMapUrl?: string | null; // LEGACY single image — read as a fallback only; data writes courseMaps
   // Pre-race verification (written by the weekly race-watch agent; absent = ok)
   status?: 'ok' | 'changed' | 'canceled' | null;
   statusNote?: string | null; // what changed, with source — shown to the user
@@ -165,10 +179,70 @@ export function isSafeUrl(u: unknown): u is string {
 function sanitizeRace(race: Race): Race {
   const signupUrl = isSafeUrl(race.signupUrl) ? race.signupUrl : null;
   const courseMapUrl = isSafeUrl(race.courseMapUrl) ? race.courseMapUrl : null;
-  if (signupUrl === race.signupUrl && courseMapUrl === (race.courseMapUrl ?? null)) {
+  const courseMaps = race.courseMaps == null ? null : sanitizeCourseMaps(race.courseMaps);
+  // A malformed route line degrades to "no line" (the start pin still shows)
+  // rather than dropping the race or throwing inside the map's GeoJSON.
+  const routeCoords = isValidRouteCoords(race.routeCoords) ? race.routeCoords : null;
+  if (
+    signupUrl === race.signupUrl &&
+    courseMapUrl === (race.courseMapUrl ?? null) &&
+    courseMaps === (race.courseMaps ?? null) &&
+    routeCoords === (race.routeCoords ?? null)
+  ) {
     return race; // untouched — keep the original object identity
   }
-  return { ...race, signupUrl, courseMapUrl };
+  return { ...race, signupUrl, courseMapUrl, courseMaps, routeCoords };
+}
+
+const COURSE_MAP_KINDS = new Set(['route', 'elevation']);
+
+/**
+ * Keep only well-formed course maps with a safe URL. One bad entry is dropped,
+ * never the race and never its sibling maps. Returns the SAME array when
+ * nothing was dropped, so sanitizeRace can keep object identity.
+ */
+export function sanitizeCourseMaps(maps: unknown): CourseMap[] | null {
+  if (!Array.isArray(maps)) return null;
+  const kept = maps.filter(
+    (m): m is CourseMap =>
+      typeof m === 'object' &&
+      m !== null &&
+      isSafeUrl((m as CourseMap).url) &&
+      COURSE_MAP_KINDS.has((m as CourseMap).kind) &&
+      ((m as CourseMap).distance === null || typeof (m as CourseMap).distance === 'string'),
+  );
+  return kept.length === maps.length ? (maps as CourseMap[]) : kept;
+}
+
+/** [lat, lng] pairs, at least two, every value a finite in-range number. */
+export function isValidRouteCoords(coords: unknown): coords is [number, number][] {
+  return (
+    Array.isArray(coords) &&
+    coords.length > 1 &&
+    coords.every(
+      (p) =>
+        Array.isArray(p) &&
+        p.length === 2 &&
+        Number.isFinite(p[0]) &&
+        Number.isFinite(p[1]) &&
+        Math.abs(p[0]) <= 90 &&
+        Math.abs(p[1]) <= 180,
+    )
+  );
+}
+
+/**
+ * Every course image to show for a race: route maps first, then elevation
+ * charts. Falls back to the legacy single `courseMapUrl` so a remote payload
+ * or device cache written before courseMaps existed still shows its map.
+ */
+export function courseMapsOf(race: Race): CourseMap[] {
+  const maps = race.courseMaps && race.courseMaps.length > 0
+    ? race.courseMaps
+    : race.courseMapUrl
+      ? [{ url: race.courseMapUrl, distance: null, kind: 'route' as const }]
+      : [];
+  return [...maps].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'route' ? -1 : 1));
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   type Race,
 } from '@/lib/races';
 import { COMPACT_IMAGE_RATIO, HERO_IMAGE_RATIO } from '@/lib/region-art';
+import { REGIONS, kmFromMetro, raceInRegion } from '@/lib/regions';
 import { useSaved } from '@/lib/saved';
 import { useToday } from '@/lib/today';
 
@@ -55,12 +56,17 @@ export function RaceCard({
         ? t('common.changed')
         : countdown(days);
   const cityLabel = `${race.city}, ${abbreviateState(race.state)}`;
+  // A region is a set of states, so a Torreón race sits in the Saltillo feed
+  // ~260 km away. Say so on the card instead of letting it read as local.
+  const metro = REGIONS.find((r) => raceInRegion(race, r));
+  const farKm = metro ? kmFromMetro(race, metro) : null;
+  const farLabel = farKm !== null && metro ? t('feed.kmFromMetro', { km: farKm, city: metro.name }) : null;
   // Whether registration is actually reachable. 80 of 195 races have no
   // signup link, and that was only discoverable by opening the race and
   // reading a greyed-out button — a wasted tap on 40% of the catalog.
   const registrationOpen = Boolean(race.signupUrl) && race.status !== 'canceled';
   const registrationLabel = registrationOpen ? t('feed.regOpen') : t('detail.noLink');
-  const accessibilityLabel = [race.name, displayDate, cityLabel, statusText, registrationLabel]
+  const accessibilityLabel = [race.name, displayDate, cityLabel, farLabel, statusText, registrationLabel]
     .filter(Boolean)
     .join(', ');
   const isHero = variant === 'hero';
@@ -151,6 +157,14 @@ export function RaceCard({
             numberOfLines={isHero ? undefined : 1}>
             {cityLabel}
           </Text>
+          {farKm !== null && (
+            // Its own Text with no shrink, so the city truncates first and the
+            // distance — the one thing a runner can't infer — always survives
+            // the compact card's single line. No extra line, no ragged rows.
+            <Text style={[isHero ? styles.city : styles.cityCompact, { color: c.textSecondary }]}>
+              {t('feed.kmShort', { km: farKm })}
+            </Text>
+          )}
         </View>
 
         <View style={styles.tagRow}>

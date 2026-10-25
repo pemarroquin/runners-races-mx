@@ -1,0 +1,75 @@
+name: Course maps (Asdeporte /ruta)
+
+# Organizers post course maps 20-111 days before race day (median 53,
+# measured from the upload timestamps in Asdeporte's filenames), so a
+# one-shot pass is always early for most races. This re-checks every week.
+#
+# Deterministic on purpose: scripts/fetch-course-maps.mjs fetches each
+# upcoming race's /ruta page and regex-matches the CDN filenames. The agent
+# route pass of 2026-10-24 read the wrong page and missed all 8 maps that
+# existed; a script can't do that.
+#
+# Never pushes to main (main auto-deploys, deploy.yml). It opens or updates
+# ONE pull request on the fixed branch below, which Pedro merges. Runs
+# Wednesday 05:00 Monterrey, clear of the Mon+Fri race-watch commits that
+# also touch races.json; create-pull-request rebuilds the branch from main on
+# every run, so it never carries a stale copy of the file.
+#
+# Needs repo Settings → Actions → General → "Allow GitHub Actions to create
+# and approve pull requests" ON. Without it this job pushes the branch and
+# then fails at the PR step, loudly.
+#
+# A PR opened with GITHUB_TOKEN does not trigger other workflows, so
+# data-check.yml won't run on it: the data gate runs here instead, before the
+# PR is opened, and a red gate means no PR.
+
+on:
+  schedule:
+    - cron: '0 11 * * 3'
+  workflow_dispatch:
+    inputs:
+      within_days:
+        description: Only races in the next N days
+        default: '60'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: course-maps
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The script and the gate are plain Node with no dependencies, so no
+      # npm ci: a lockfile problem elsewhere can't stop the maps landing.
+      - name: Fetch course maps
+        run: node scripts/fetch-course-maps.mjs --within-days "${{ github.event.inputs.within_days || '60' }}"
+
+      - name: Verify race data
+        run: node scripts/verify-sweep.mjs --base origin/main
+
+      - name: Open or update the PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: bot/course-maps
+          delete-branch: true
+          add-paths: assets/data/races.json
+          commit-message: 'Data: course maps from Asdeporte /ruta pages'
+          title: 'Data: new course maps from Asdeporte'
+          body: |
+            Weekly run of `scripts/fetch-course-maps.mjs` (races in the next ${{ github.event.inputs.within_days || '60' }} days).
+            Additive only: new `courseMaps` entries, plus one provenance line in each race's `sourceNotes`. Nothing removed.
+            The data gate (`verify-sweep --base origin/main`) passed before this PR was opened.
+            Check the distance labels against the images, then merge.

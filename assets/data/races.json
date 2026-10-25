@@ -38,14 +38,26 @@
       "signupUrl": "https://www.asdeporte.com/evento/verano-monterrey-2026-7wa/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/verano-monterrey-2026-7wa/datos-del-evento",
       "confidence": "high",
-      "notes": "Asdeporte seasonal circuit. 10K 06:45 / 5K 07:05. Virtual option available. Official 10K route map shown; 5K map: https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg (Asdeporte /ruta tab).",
-      "notesEs": "Circuito de temporada de Asdeporte. 10K 06:45 / 5K 07:05. Opción virtual disponible. Se muestra el mapa de ruta oficial del 10K; mapa del 5K: https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg (pestaña /ruta de Asdeporte).",
+      "notes": "Asdeporte seasonal circuit. 10K 06:45 / 5K 07:05. Virtual option available. Official 10K and 5K route maps shown.",
+      "notesEs": "Circuito de temporada de Asdeporte. 10K 06:45 / 5K 07:05. Opción virtual disponible. Se muestran los mapas de ruta oficiales del 10K y del 5K.",
       "start": {
         "lat": 25.7226,
         "lng": -100.3122,
         "approx": true
       },
-      "courseMapUrl": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832802615_Verano-MTY-26-Ruta-10k.jpg"
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832802615_Verano-MTY-26-Ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1782832777596_Verano-MTY-26-Ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        }
+      ],
+      "sourceNotes": "Both route maps from the Asdeporte /ruta tab; moved from notes prose into courseMaps 2026-10-25."
     },
     {
       "id": "super-heroes-run-2026",
@@ -100,13 +112,598 @@
       "status": "ok",
       "statusNote": "Confirmed for Aug 9, 2026 via Runera, Asdeporte, Compite.mx and Soloatletas. Plaza Principal, Montemorelos. 21K 06:00 / 5K 07:00. Re-checked 2026-08-07: still listed as scheduled via Compite.mx, Más Natación, Soloatletas, Runera (registration closed Aug 5). No cancellation/postponement/aviso signals found via web search.",
       "lastVerified": "2026-08-07",
-      "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course image is the official altimetry; interactive route: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
-      "notesEs": "Medio maratón en la 'Capital de la Naranja' de NL. Ruta urbana. La imagen de la ruta es la altimetría oficial; ruta interactiva: https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Coordenadas de salida tomadas de la página de Asdeporte. 21K 06:00 / 5K 07:00.",
+      "notes": "Half marathon in the 'Orange Capital' of NL. Street course. Course map and elevation chart are the official ones. Start coords from Asdeporte page. 21K 06:00 / 5K 07:00.",
+      "notesEs": "Medio maratón en la 'Capital de la Naranja' de NL. Ruta urbana. El mapa del recorrido y la altimetría son los oficiales. Coordenadas de salida tomadas de la página de Asdeporte. 21K 06:00 / 5K 07:00.",
       "start": {
         "lat": 25.1892288,
         "lng": -99.826321
       },
-      "courseMapUrl": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1780343105594_Altimetr%C3%83%C2%ADa%20MMM2026.jpg"
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/6/1780343105594_Altimetr%C3%83%C2%ADa%20MMM2026.jpg",
+          "distance": "21K",
+          "kind": "elevation"
+        }
+      ],
+      "sourceNotes": "Interactive route (Google My Maps): https://www.google.com/maps/d/edit?mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY. Elevation chart moved from courseMapUrl into courseMaps 2026-10-25. Course line imported from Google My Maps (mid=1B1qd0uO8zqnl4DhkWIO9Ou8MPobVsaY): 21.19 km measured vs 21.0975 km advertised.",
+      "routeCoords": [
+        [
+          25.18936,
+          -99.82677
+        ],
+        [
+          25.18892,
+          -99.82681
+        ],
+        [
+          25.18895,
+          -99.82969
+        ],
+        [
+          25.1891,
+          -99.83181
+        ],
+        [
+          25.18903,
+          -99.83215
+        ],
+        [
+          25.18905,
+          -99.83289
+        ],
+        [
+          25.18921,
+          -99.83662
+        ],
+        [
+          25.18893,
+          -99.83205
+        ],
+        [
+          25.18876,
+          -99.83193
+        ],
+        [
+          25.18796,
+          -99.83194
+        ],
+        [
+          25.18793,
+          -99.83188
+        ],
+        [
+          25.18811,
+          -99.83085
+        ],
+        [
+          25.18813,
+          -99.82893
+        ],
+        [
+          25.18856,
+          -99.82885
+        ],
+        [
+          25.18823,
+          -99.8264
+        ],
+        [
+          25.18772,
+          -99.82337
+        ],
+        [
+          25.18706,
+          -99.82288
+        ],
+        [
+          25.18606,
+          -99.82197
+        ],
+        [
+          25.18529,
+          -99.82148
+        ],
+        [
+          25.18437,
+          -99.82019
+        ],
+        [
+          25.18299,
+          -99.81871
+        ],
+        [
+          25.1819,
+          -99.81729
+        ],
+        [
+          25.17958,
+          -99.81654
+        ],
+        [
+          25.178,
+          -99.8158
+        ],
+        [
+          25.17554,
+          -99.8144
+        ],
+        [
+          25.17487,
+          -99.81378
+        ],
+        [
+          25.17396,
+          -99.81391
+        ],
+        [
+          25.17336,
+          -99.81409
+        ],
+        [
+          25.17078,
+          -99.81523
+        ],
+        [
+          25.17001,
+          -99.81548
+        ],
+        [
+          25.16852,
+          -99.81418
+        ],
+        [
+          25.16814,
+          -99.81369
+        ],
+        [
+          25.1678,
+          -99.81295
+        ],
+        [
+          25.16774,
+          -99.80992
+        ],
+        [
+          25.16728,
+          -99.80815
+        ],
+        [
+          25.16743,
+          -99.80575
+        ],
+        [
+          25.16749,
+          -99.80517
+        ],
+        [
+          25.16797,
+          -99.80278
+        ],
+        [
+          25.16824,
+          -99.80199
+        ],
+        [
+          25.16946,
+          -99.80117
+        ],
+        [
+          25.16957,
+          -99.80104
+        ],
+        [
+          25.16957,
+          -99.80084
+        ],
+        [
+          25.16714,
+          -99.79974
+        ],
+        [
+          25.16521,
+          -99.79926
+        ],
+        [
+          25.16224,
+          -99.79833
+        ],
+        [
+          25.16199,
+          -99.79821
+        ],
+        [
+          25.16185,
+          -99.79792
+        ],
+        [
+          25.16248,
+          -99.79527
+        ],
+        [
+          25.16278,
+          -99.79472
+        ],
+        [
+          25.16362,
+          -99.79442
+        ],
+        [
+          25.16478,
+          -99.79417
+        ],
+        [
+          25.16515,
+          -99.79432
+        ],
+        [
+          25.16592,
+          -99.7948
+        ],
+        [
+          25.1664,
+          -99.79466
+        ],
+        [
+          25.168,
+          -99.79348
+        ],
+        [
+          25.16812,
+          -99.79319
+        ],
+        [
+          25.16814,
+          -99.79237
+        ],
+        [
+          25.16835,
+          -99.79209
+        ],
+        [
+          25.17032,
+          -99.79068
+        ],
+        [
+          25.17154,
+          -99.79052
+        ],
+        [
+          25.17339,
+          -99.78966
+        ],
+        [
+          25.17368,
+          -99.78937
+        ],
+        [
+          25.17392,
+          -99.78874
+        ],
+        [
+          25.17425,
+          -99.78829
+        ],
+        [
+          25.17479,
+          -99.78788
+        ],
+        [
+          25.1763,
+          -99.78723
+        ],
+        [
+          25.17644,
+          -99.786
+        ],
+        [
+          25.17645,
+          -99.78443
+        ],
+        [
+          25.17638,
+          -99.7842
+        ],
+        [
+          25.17605,
+          -99.78376
+        ],
+        [
+          25.17594,
+          -99.78342
+        ],
+        [
+          25.17604,
+          -99.78315
+        ],
+        [
+          25.17638,
+          -99.78291
+        ],
+        [
+          25.17665,
+          -99.7824
+        ],
+        [
+          25.17696,
+          -99.78048
+        ],
+        [
+          25.17708,
+          -99.78008
+        ],
+        [
+          25.17861,
+          -99.77762
+        ],
+        [
+          25.17957,
+          -99.77656
+        ],
+        [
+          25.18169,
+          -99.77444
+        ],
+        [
+          25.18279,
+          -99.773
+        ],
+        [
+          25.18365,
+          -99.7717
+        ],
+        [
+          25.18422,
+          -99.77008
+        ],
+        [
+          25.18627,
+          -99.76789
+        ],
+        [
+          25.18681,
+          -99.76702
+        ],
+        [
+          25.18791,
+          -99.76467
+        ],
+        [
+          25.18839,
+          -99.76397
+        ],
+        [
+          25.18902,
+          -99.76342
+        ],
+        [
+          25.18948,
+          -99.76337
+        ],
+        [
+          25.18963,
+          -99.76329
+        ],
+        [
+          25.18977,
+          -99.7631
+        ],
+        [
+          25.18985,
+          -99.76284
+        ],
+        [
+          25.18999,
+          -99.76306
+        ],
+        [
+          25.1913,
+          -99.76445
+        ],
+        [
+          25.19134,
+          -99.7647
+        ],
+        [
+          25.19121,
+          -99.76493
+        ],
+        [
+          25.19041,
+          -99.7663
+        ],
+        [
+          25.18981,
+          -99.76717
+        ],
+        [
+          25.18964,
+          -99.76764
+        ],
+        [
+          25.18896,
+          -99.76887
+        ],
+        [
+          25.18844,
+          -99.7696
+        ],
+        [
+          25.18727,
+          -99.77082
+        ],
+        [
+          25.18662,
+          -99.77127
+        ],
+        [
+          25.18629,
+          -99.7717
+        ],
+        [
+          25.18573,
+          -99.77267
+        ],
+        [
+          25.18554,
+          -99.77337
+        ],
+        [
+          25.18496,
+          -99.77432
+        ],
+        [
+          25.18362,
+          -99.77543
+        ],
+        [
+          25.18197,
+          -99.77729
+        ],
+        [
+          25.18158,
+          -99.77796
+        ],
+        [
+          25.18081,
+          -99.77975
+        ],
+        [
+          25.18008,
+          -99.78288
+        ],
+        [
+          25.18005,
+          -99.78354
+        ],
+        [
+          25.17959,
+          -99.78438
+        ],
+        [
+          25.17907,
+          -99.78501
+        ],
+        [
+          25.17877,
+          -99.78594
+        ],
+        [
+          25.17876,
+          -99.78729
+        ],
+        [
+          25.17896,
+          -99.78897
+        ],
+        [
+          25.17897,
+          -99.78972
+        ],
+        [
+          25.1791,
+          -99.79017
+        ],
+        [
+          25.17905,
+          -99.79079
+        ],
+        [
+          25.17769,
+          -99.79381
+        ],
+        [
+          25.17757,
+          -99.7943
+        ],
+        [
+          25.17744,
+          -99.79549
+        ],
+        [
+          25.17728,
+          -99.79604
+        ],
+        [
+          25.1767,
+          -99.79679
+        ],
+        [
+          25.17543,
+          -99.79911
+        ],
+        [
+          25.17409,
+          -99.80123
+        ],
+        [
+          25.17363,
+          -99.8027
+        ],
+        [
+          25.17336,
+          -99.80395
+        ],
+        [
+          25.17316,
+          -99.80683
+        ],
+        [
+          25.17344,
+          -99.80945
+        ],
+        [
+          25.17346,
+          -99.81184
+        ],
+        [
+          25.17363,
+          -99.81234
+        ],
+        [
+          25.17384,
+          -99.81259
+        ],
+        [
+          25.17534,
+          -99.81422
+        ],
+        [
+          25.17723,
+          -99.81535
+        ],
+        [
+          25.17965,
+          -99.81653
+        ],
+        [
+          25.18192,
+          -99.81727
+        ],
+        [
+          25.1828,
+          -99.81845
+        ],
+        [
+          25.18446,
+          -99.82025
+        ],
+        [
+          25.18511,
+          -99.82116
+        ],
+        [
+          25.18864,
+          -99.82142
+        ],
+        [
+          25.18891,
+          -99.82673
+        ],
+        [
+          25.18936,
+          -99.82673
+        ]
+      ]
     },
     {
       "id": "carrera-saba-corre-sin-tabues-2026",
@@ -5235,10 +5832,17 @@
       "confidence": "high",
       "notes": "DC super-villains themed race. From $999.",
       "notesEs": "Carrera temática de supervillanos DC. Desde $999.",
-      "sourceNotes": "Venue conflict: runera.mx lists \"Paseo de La Reforma\"; Asdeporte convocatoria says 2ª Sección de Chapultepec (Fuente Xochipilli) — used Asdeporte. Time 06:30 from Asdeporte event date field. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); running.life/haid.app confirm the race on Paseo de la Reforma, Sun Oct 25 2026 (5K/10K, 3,000-runner cap), matching stored date/city. No cancellation/postponement evidence.",
+      "sourceNotes": "Venue conflict: runera.mx lists \"Paseo de La Reforma\"; Asdeporte convocatoria says 2ª Sección de Chapultepec (Fuente Xochipilli) — used Asdeporte. Time 06:30 from Asdeporte event date field. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); running.life/haid.app confirm the race on Paseo de la Reforma, Sun Oct 25 2026 (5K/10K, 3,000-runner cap), matching stored date/city. No cancellation/postponement evidence. Course maps from https://www.asdeporte.com/evento/super-villains-run-cdmx-2026-sk1/ruta (uploaded 2026-09-28), added 2026-10-25 by fetch-course-maps.",
       "status": "ok",
       "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found."
+      "statusNote": "Verified 2026-10-23: no changes found.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/9/1790631826020_Villanos-26-ruta-5y10k.jpg",
+          "distance": "5K/10K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "3a-carrera-petalo-dejando-huella-cdmx-2026",
@@ -5262,7 +5866,7 @@
       "confidence": "high",
       "notes": "5K run and 3K, with a category for runners with their pets. From $310.",
       "notesEs": "Carrera de 5K y 3K, con categoría para correr con tu mascota. Desde $310.",
-      "sourceNotes": "Time conflict: runera.mx says 07:00; Asdeporte convocatoria says 5K starts 6:15 a.m. — used Asdeporte. Organizer inferred from race brand name. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); cdmxsecreta.com confirms the convocatoria is open (5K + 3K walk, pets allowed, no top-place awards) but did not independently corroborate the Oct 25 date against a second source. No cancellation/postponement evidence found.",
+      "sourceNotes": "Time conflict: runera.mx says 07:00; Asdeporte convocatoria says 5K starts 6:15 a.m. — used Asdeporte. Organizer inferred from race brand name. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); cdmxsecreta.com confirms the convocatoria is open (5K + 3K walk, pets allowed, no top-place awards) but did not independently corroborate the Oct 25 date against a second source. No cancellation/postponement evidence found. Course maps from https://www.asdeporte.com/evento/3a--carrera-pe-talo--dejando-huella-cdmx-2026-2ju/ruta (uploaded 2026-10-05), added 2026-10-25 by fetch-course-maps.",
       "status": "ok",
       "lastVerified": "2026-10-23",
       "statusNote": "Verified 2026-10-23: no changes found.",
@@ -5270,7 +5874,19 @@
         "lat": 19.30027960952569,
         "lng": -99.19271204563371,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791224868974_Petalo-26-ruta-3k.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791225336674_Petalo-26-ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "carrera-farmarun-by-farmatodo-2026",
@@ -5296,7 +5912,7 @@
       "confidence": "high",
       "notes": "Capped at 1,200 runners. From $300.",
       "notesEs": "Cupo limitado a 1,200 participantes. Desde $300.",
-      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no independent source describing a 'FarmaRun by Farmatodo' CDMX race for 2026 at all (only an unrelated Farmatodo Colombia activity). No cancellation/postponement evidence either — absence of coverage is not itself evidence of a change, so status stays ok, but this is the least-verified race in this sweep.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no independent source describing a 'FarmaRun by Farmatodo' CDMX race for 2026 at all (only an unrelated Farmatodo Colombia activity). No cancellation/postponement evidence either — absence of coverage is not itself evidence of a change, so status stays ok, but this is the least-verified race in this sweep. Course maps from https://www.asdeporte.com/evento/carrera-farmatodo-2026-a1s/ruta (uploaded 2026-09-02), added 2026-10-25 by fetch-course-maps.",
       "status": "ok",
       "lastVerified": "2026-10-23",
       "statusNote": "Verified 2026-10-23: no changes found; least-corroborated of this sweep.",
@@ -5304,7 +5920,19 @@
         "lat": 19.4194815,
         "lng": -99.18945579999999,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/9/1788365579333_Farmatodo-26-ruta-3K.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/9/1788365609093_Farmatodo-26-rutas-5y10K.jpg",
+          "distance": "5K/10K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "xxiii-pumathon-universitario-2026",
@@ -5753,7 +6381,19 @@
       "confidence": "high",
       "notes": "Winter stop of the Circuito de las Estaciones. From $755; a virtual option is also available.",
       "notesEs": "Fecha de invierno del Circuito de las Estaciones. Desde $755; también hay opción virtual.",
-      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop)."
+      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop). Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-10-12), added 2026-10-25 by fetch-course-maps.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843851621_Invierno-CDMX-26-ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843884572_Invierno-CDMX-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "carrera-uvm-2026",
@@ -5779,12 +6419,29 @@
       "confidence": "high",
       "notes": "Capped at 4,000 runners. From $400.",
       "notesEs": "Cupo limitado a 4,000 participantes. Desde $400.",
-      "sourceNotes": "Asdeporte + runera.mx agree.",
+      "sourceNotes": "Asdeporte + runera.mx agree. Course maps from https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/ruta (uploaded 2026-10-20), added 2026-10-25 by fetch-course-maps.",
       "start": {
         "lat": 19.4243358,
         "lng": -99.1752954,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1792523600411_UVM-26-ruta-3k.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1792523578675_UVM-26-ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1792523651310_UVM-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "jingle-bells-5-km-2026",
@@ -5835,12 +6492,19 @@
       "confidence": "high",
       "notes": "Half marathon from Reforma to Campo Marte with Rock 'n' Roll series live music.",
       "notesEs": "Medio maratón de Reforma a Campo Marte con la música en vivo de la serie Rock 'n' Roll.",
-      "sourceNotes": "runera.mx: \"Inscripciones cerradas\", 06:30; Asdeporte convocatoria: 6:15, external registration runrocknroll.com/events/mexico-city/register — signupUrl left null because runera reports registration closed.",
+      "sourceNotes": "runera.mx: \"Inscripciones cerradas\", 06:30; Asdeporte convocatoria: 6:15, external registration runrocknroll.com/events/mexico-city/register — signupUrl left null because runera reports registration closed. Course maps from https://www.asdeporte.com/evento/rock-n-roll-mexico-city-2026-ubr/ruta (uploaded 2026-09-03), added 2026-10-25 by fetch-course-maps.",
       "start": {
         "lat": 19.426038711831758,
         "lng": -99.1943719916664,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/9/1788454407936_RR-Mexico-26-ruta-1500x852-sep-3.jpg",
+          "distance": null,
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "marvel-run-2026",
@@ -6238,12 +6902,29 @@
       "confidence": "high",
       "notes": "Half marathon inside the Centro Ceremonial Otomí. Staggered starts: 21K 8:00, 10K 8:05, 5K 8:10. From $250 MXN.",
       "notesEs": "Medio maratón dentro del Centro Ceremonial Otomí. Salidas escalonadas: 21K 8:00, 10K 8:05, 5K 8:10. Desde $250 MXN.",
-      "sourceNotes": "Coords 19.5314966,-99.5223506.",
+      "sourceNotes": "Coords 19.5314966,-99.5223506. Course maps from https://www.asdeporte.com/evento/medio-marato-n-con-encanto-temoaya-2026-hxu/ruta (uploaded 2026-10-05), added 2026-10-25 by fetch-course-maps.",
       "start": {
         "lat": 19.5314966,
         "lng": -99.5223506,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791221675114_ruta%205%20kmt.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791221715208_RUTA%2010%20KMt.jpg",
+          "distance": "10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791221751350_RUTA%2021%20KMt.jpg",
+          "distance": "21K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "medio-maraton-metepec-dia-de-muertos-2026",
@@ -8890,12 +9571,24 @@
       "confidence": "high",
       "notes": "Recreational Christmas-themed run with 1K, 5K and 10K and a post-race holiday experience; every runner gets a raffle entry. From $490.",
       "notesEs": "Carrera recreativa navideña de 1K, 5K y 10K con experiencia navideña al final; cada corredor participa en una rifa. Desde $490.",
-      "sourceNotes": "Page header shows generic '13:00 h'; body says arranque 7:00 am, body used.",
+      "sourceNotes": "Page header shows generic '13:00 h'; body says arranque 7:00 am, body used. Course maps from https://www.asdeporte.com/evento/the-santa-run-puebla-2026-usy/ruta (uploaded 2026-08-31), added 2026-10-25 by fetch-course-maps.",
       "start": {
         "lat": 19.035435,
         "lng": -98.2420217,
         "approx": true
-      }
+      },
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/8/1788210559636_Ruta%20Puebla%205k%20y%2010k.png",
+          "distance": "5K/10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/8/1788210574259_Ruta%20Puebla%201K.png",
+          "distance": "1K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "13-carrera-amanc-puebla-2027",

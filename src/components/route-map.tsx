@@ -5,10 +5,11 @@
 import { Image } from 'expo-image';
 import { Linking, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
+import { CourseMapImages } from '@/components/course-maps';
 import { Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { buildStaticMapUrl } from '@/lib/mapbox';
-import type { Race } from '@/lib/races';
+import { courseMapsOf, type Race } from '@/lib/races';
 
 function openInMaps(lat: number, lng: number, label: string) {
   const url = Platform.select({
@@ -24,9 +25,9 @@ export function RouteMap({ race }: { race: Race }) {
   const { t } = useI18n();
 
   const start = race.start ?? null;
-  const courseMapUrl = race.courseMapUrl ?? null;
+  const courseMaps = courseMapsOf(race);
   const mapUrl = buildStaticMapUrl(race, scheme === 'dark');
-  if (!start && !courseMapUrl) return null;
+  if (!start && courseMaps.length === 0) return null;
 
   return (
     <View style={styles.field}>
@@ -48,14 +49,7 @@ export function RouteMap({ race }: { race: Race }) {
         <Text style={[styles.hint, { color: c.textSecondary }]}>{t('detail.approxLocation')}</Text>
       )}
 
-      {courseMapUrl && (
-        <Image
-          source={{ uri: courseMapUrl }}
-          style={styles.courseImg}
-          contentFit="contain"
-          accessibilityLabel={t('common.route')}
-        />
-      )}
+      <CourseMapImages maps={courseMaps} captionColor={c.textSecondary} />
     </View>
   );
 }
@@ -66,5 +60,4 @@ const styles = StyleSheet.create({
   mapWrap: { borderRadius: Spacing.two, overflow: 'hidden', height: 200 },
   map: { width: '100%', height: '100%' },
   hint: { fontSize: 12 },
-  courseImg: { width: '100%', height: 220, borderRadius: Spacing.two, marginTop: Spacing.one },
 });

@@ -35,7 +35,14 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // an iframe or Linking.openURL, and the sweep agent harvests signupUrl from
 // third-party race-calendar sites — so a hostile scheme has a real path in.
 // The app sanitizes at the trust boundary; this stops one being COMMITTED.
-const URL_FIELDS = ['sourceUrl', 'signupUrl', 'courseMapUrl'];
+const URL_FIELDS = ['sourceUrl', 'signupUrl'];
+const COURSE_MAP_KINDS = new Set(['route', 'elevation']);
+// Route data written as a link in user-facing prose instead of the field the
+// map renders: a course image, a Google My Maps course, an image/PDF file.
+// Verano Monterrey's 5K map sat in `notes` like this because the old single
+// `courseMapUrl` couldn't hold a second map — courseMaps can.
+const ROUTE_LINK_IN_PROSE =
+  /https?:\/\/\S*(?:cloudfront\.net\/upload\/|google\.[a-z.]+\/maps\/d\/|\.(?:jpe?g|png|webp|pdf)\b)/i;
 const CONTROL_RE = /[\u0000-\u001f\u007f]/;
 const isSafeUrl = (u) =>
   typeof u === 'string' && !CONTROL_RE.test(u.trim()) && /^https?:\/\/[^\s]+$/i.test(u.trim());
@@ -99,13 +106,46 @@ for (const r of races) {
   if (!str(r.sourceUrl)) err(id, 'sourceUrl is required — no race without a fetched source');
   // A non-http(s) URL here is a live sink, not a typo: these values are handed
   // to a WebView, an iframe and Linking.openURL. `isValidRace` drops a race
-  // with an unsafe sourceUrl and nulls an unsafe signupUrl/courseMapUrl at
+  // with an unsafe sourceUrl and nulls an unsafe signupUrl at
   // runtime, so committing one means silently losing a listing or a link.
   for (const f of URL_FIELDS) {
     const u = r[f];
     if (u == null) continue;
     if (!isSafeUrl(u)) {
       err(id, `${f} must be an absolute http(s) URL with no control characters, got ${JSON.stringify(String(u).slice(0, 60))}`);
+    }
+  }
+  // Mirrors sanitizeCourseMaps()/isValidRouteCoords() in src/lib/races.ts,
+  // which DEGRADE a bad entry at runtime (drop that map, drop the line) —
+  // committing one means a map silently missing from the race page.
+  if (r.courseMapUrl != null) {
+    err(id, 'courseMapUrl is legacy — write courseMaps: [{ url, distance, kind }] instead');
+  }
+  if (r.courseMaps != null) {
+    if (!Array.isArray(r.courseMaps)) err(id, 'courseMaps must be an array');
+    else {
+      const urls = new Set();
+      for (const m of r.courseMaps) {
+        if (!m || !isSafeUrl(m.url)) err(id, `courseMaps entry needs a safe http(s) url, got ${JSON.stringify(m?.url ?? m).slice(0, 60)}`);
+        else if (urls.has(m.url)) err(id, `courseMaps lists ${m.url} twice`);
+        else urls.add(m.url);
+        if (!m || !COURSE_MAP_KINDS.has(m.kind)) err(id, `courseMaps kind must be route|elevation, got ${JSON.stringify(m?.kind)}`);
+        if (!m || !(m.distance === null || str(m.distance))) err(id, `courseMaps distance must be null or a label, got ${JSON.stringify(m?.distance)}`);
+      }
+    }
+  }
+  if (r.routeCoords != null) {
+    const ok =
+      Array.isArray(r.routeCoords) &&
+      r.routeCoords.length > 1 &&
+      r.routeCoords.every(
+        (p) => Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180,
+      );
+    if (!ok) err(id, 'routeCoords must be 2+ [lat, lng] pairs with lat within ±90 and lng within ±180');
+  }
+  for (const key of ['notes', 'notesEs']) {
+    if (r[key] && ROUTE_LINK_IN_PROSE.test(r[key])) {
+      err(id, `${key} links a course map or route file — narrated, not applied. Write it into courseMaps / routeCoords (the link can go in sourceNotes)`);
     }
   }
   if (!Array.isArray(r.distances)) err(id, 'distances must be an array');
