@@ -6,7 +6,6 @@
 // change. `expo-location` is used for one-shot calls only here — never to
 // WATCH position; see src/lib/geolocation.ts for why that distinction is
 // load-bearing on web.
-import * as Location from 'expo-location';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -14,6 +13,7 @@ import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-nati
 import { Hint, SettingRow, SettingsPage, settingsStyles, useSettingsColors } from '@/components/settings-ui';
 import { Spacing, type ThemeColor } from '@/constants/theme';
 import {
+  getCurrent,
   getPermissionState,
   onPermissionStateChange,
   requestPermission,
@@ -22,6 +22,12 @@ import {
 import { clearHomeZone, getHomeZone, setHomeZone } from '@/lib/home-point';
 import { useI18n } from '@/lib/i18n';
 import type { PrivacyZone } from '@/lib/privacy-zone';
+import { haversineM } from '@/lib/territory';
+import { formatDistance } from '@/lib/tracking';
+
+// Worst fix accuracy (m) a home may be pinned from. Same bar as the
+// tracker's MIN_ACCURACY_M: past it, the fix is noise about the block.
+const ZONE_MAX_ACCURACY_M = 100;
 
 export default function LocationSettingsScreen() {
   const { c } = useSettingsColors();
@@ -106,59 +112,91 @@ export default function LocationSettingsScreen() {
   // theme/locale), so there is no loading flash.
   const [zone, setZone] = useState<PrivacyZone | null>(() => getHomeZone());
   const [zoneBusy, setZoneBusy] = useState(false);
-  const [zoneError, setZoneError] = useState(false);
+  // 'imprecise': a fix arrived but too coarse to pin a home on.
+  const [zoneError, setZoneError] = useState<'failed' | 'imprecise' | null>(null);
   // Removing the zone is one tap away from uploading the exact start and end
   // of every future session, so it asks first — the same two-step the run
   // delete uses (myraces.tsx's DetailCard), not a modal. SETTING it stays
   // frictionless: only the destructive direction is guarded.
   const [confirmingRemove, setConfirmingRemove] = useState(false);
 
+  // How far the zone is from where the runner stands now. The zone is a
+  // point nobody can see — the screen used to say only "On" — so a zone set
+  // in the wrong place was invisible until runs started losing ground. A
+  // distance needs no map and sends the point nowhere. Only once location
+  // is already granted: this screen must not prompt just by being opened.
+  const [zoneDistanceM, setZoneDistanceM] = useState<number | null>(null);
+
   const setZoneHere = useCallback(async () => {
     setZoneBusy(true);
-    setZoneError(false);
+    setZoneError(null);
     try {
       // Through the app's OWN layer, for the same reason readPermission above
-      // does — and this call was the last one on this screen that still
-      // wasn't. `Location.requestForegroundPermissionsAsync()` awaits
+      // does. `Location.requestForegroundPermissionsAsync()` awaits
       // `navigator.permissions.query({ name: 'geolocation' })` with no catch
       // of its own (ExpoLocation.web.js, getPermissionsAsync), and Safari has
       // no 'geolocation' entry in the Permissions API — so that query rejects
-      // and takes the whole call with it. The catch below then painted
-      // "couldn't set your zone" on a phone that had never been asked for
-      // anything, which made the privacy zone unsettable on iOS Safari, this
-      // app's primary web target. requestPermission() falls through to a real
-      // getCurrentPosition probe there (geolocation.web.ts); on native it IS
-      // this same expo-location call, so nothing changes on a phone build.
-      //
-      // The position read below stays on expo-location: a ONE-SHOT call is
-      // the case the web shim maps correctly (see src/lib/geolocation.ts).
+      // and takes the whole call with it, which made the privacy zone
+      // unsettable on iOS Safari. requestPermission() falls through to a real
+      // getCurrentPosition probe there (geolocation.web.ts).
       if ((await requestPermission()) !== 'granted') {
-        setZoneError(true);
+        setZoneError('failed');
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const ok = setHomeZone({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      // The position too, never expo-location's own getCurrentPositionAsync.
+      // On web that shim asks the browser with `maximumAge: Infinity`
+      // (ExpoLocation.web.js), i.e. "any position you have cached, however
+      // old" — and with Balanced accuracy, without GPS. Tapped at home, it
+      // could hand back the last fix of a RUN. That is how a zone ended up
+      // on a running route 2026-10-25: every run through it lost the inside
+      // of its loops there, with nothing on screen saying why.
+      // getCurrent() is the app's fresh, high-accuracy, maximumAge: 0 call.
+      const fix = await getCurrent();
+      if (!fix) {
+        setZoneError('failed');
+        return;
+      }
+      // A home pinned from a fix this coarse could be on the wrong block; a
+      // zone in the wrong place hides the wrong ground and protects nothing.
+      if (fix.accuracyM !== null && fix.accuracyM > ZONE_MAX_ACCURACY_M) {
+        setZoneError('imprecise');
+        return;
+      }
+      const ok = setHomeZone({ lat: fix.lat, lng: fix.lng });
       // setPref returning false means blocked storage — reporting success
       // there would leave the runner believing they are masked when they
       // are not, which is the worst possible failure for this feature.
       if (!ok) {
-        setZoneError(true);
+        setZoneError('failed');
         return;
       }
       setZone(getHomeZone());
+      setZoneDistanceM(0);
     } catch {
-      setZoneError(true);
+      setZoneError('failed');
     } finally {
       setZoneBusy(false);
     }
   }, []);
 
+  useEffect(() => {
+    if (!isFocused || !zone || locPerm !== 'granted') return;
+    let stale = false;
+    getCurrent()
+      .then((fix) => {
+        if (!stale && fix) setZoneDistanceM(haversineM(zone.home, fix));
+      })
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [isFocused, zone, locPerm]);
+
   const clearZone = useCallback(() => {
     clearHomeZone();
     setZone(getHomeZone());
-    setZoneError(false);
+    setZoneDistanceM(null);
+    setZoneError(null);
     setConfirmingRemove(false);
   }, []);
 
@@ -182,12 +220,21 @@ export default function LocationSettingsScreen() {
           <Status on={zone !== null} label={zone ? t('settings.zoneOn') : t('settings.zoneOff')} c={c} />
         </SettingRow>
         <Hint c={c}>
-          {zoneError
+          {zoneError === 'failed'
             ? t('settings.zoneFailed')
-            : zone
-              ? t('settings.zoneOnHint', { m: zone.radiusM })
-              : t('settings.zoneOffHint')}
+            : zoneError === 'imprecise'
+              ? t('settings.zoneImprecise')
+              : zone
+                ? t('settings.zoneOnHint', { m: zone.radiusM })
+                : t('settings.zoneOffHint')}
         </Hint>
+        {zone && zoneDistanceM !== null && (
+          <Hint c={c}>
+            {zoneDistanceM < 50
+              ? t('settings.zoneHere')
+              : t('settings.zoneDistance', { distance: formatDistance(zoneDistanceM) })}
+          </Hint>
+        )}
         {confirmingRemove && zone ? (
           <View style={styles.confirm}>
             <Text style={[settingsStyles.hint, { color: c.textSecondary }]}>
