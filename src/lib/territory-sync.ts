@@ -21,6 +21,7 @@ import { announceClaim } from '@/lib/live-territory';
 import { enclosedCells, groundOfRun } from '@/lib/enclosure';
 import { MAYORSHIP_WINDOW_DAYS } from '@/lib/mayorship';
 import { DEFAULT_TILE_RES, isCurrentTileRes, pathToTiles } from '@/lib/tiles';
+import { activeDurationS, type TimedPoint } from '@/lib/gap-policy';
 import type { TrackPoint } from '@/lib/tracking';
 
 /** Every outcome type below is this same shape with a different `ok: true`
@@ -436,8 +437,14 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
       region,
       started_at: new Date(run.startedAt).toISOString(),
       ended_at: new Date(run.endedAt).toISOString(),
+      // The WHOLE run's distance, including the home end the privacy zone
+      // trims out of raw_path below. So distance_m > the length of raw_path
+      // on any run that starts or ends at home — by design, not drift (15 of
+      // 30 real runs on 2026-10-25). Never "correct" it from the masked
+      // path: that would under-report real kilometres.
       distance_m: Math.round(run.distanceM),
-      duration_s: Math.round((run.endedAt - run.startedAt) / 1000),
+      // Running time, not finish minus start — see activeDurationS.
+      duration_s: activeDurationS(run.points, (run.endedAt - run.startedAt) / 1000),
       raw_path: run.points.map((p) => [p.lat, p.lng, p.ts]),
       // PostGIS accepts GeoJSON geometry as text for a geometry column.
       // Still written every upload — buildFence/area_m2 are NOT deleted
@@ -678,7 +685,7 @@ export interface MyFence {
    * route line; this must NOT bump `skipped`, same defensive posture as the
    * null-fence case below.
    */
-  route: LatLng[] | null;
+  route: RoutePoint[] | null;
   /** The tiles this run's stored (privacy-trimmed) route crosses — the same
    *  algorithm and the same route a claim uses, so for a run that claimed
    *  these ARE its visit rows. Present for every saved run, claimed or not,
@@ -688,10 +695,11 @@ export interface MyFence {
   pathCells: string[];
   areaM2: number;
   distanceM: number;
-  /** Wall-clock seconds from start to finish (`duration_s`, stored on every
-   *  run since Territory Mode's first migration — see
-   *  20260826222037_territory_mode.sql). Feeds My Achievements' Pace/Time
-   *  stats; never used for scoring, so it carries no anti-cheat weight. */
+  /** Running seconds (`duration_s`): wall clock minus pauses and dead gaps,
+   *  per gap-policy.ts's activeDurationS — written that way at upload since
+   *  2026-10-25 and backfilled for older rows by
+   *  scripts/backfill-active-duration.ts. Feeds My Achievements' Pace/Time
+   *  stats; never used for scoring. */
   durationS: number;
   /** m² other runners have carved out of this run since it was saved. */
   lostM2: number;
@@ -780,7 +788,13 @@ export function pathCellsOf(value: unknown): string[] {
   }
 }
 
-export function parseRawPath(value: unknown): LatLng[] | null {
+/** A route point that keeps its timestamp when the row has one. The `ts` is
+ *  what lets a drawer split the route at its unrecorded gaps (splitLegs) —
+ *  dropping it, as this parser once did, drew a straight line across every
+ *  gap on the share card (three 1.8–2.2 km chords found 2026-10-25). */
+export type RoutePoint = LatLng & { ts?: number };
+
+export function parseRawPath(value: unknown): RoutePoint[] | null {
   if (typeof value === 'string') {
     try {
       value = JSON.parse(value);
@@ -790,14 +804,27 @@ export function parseRawPath(value: unknown): LatLng[] | null {
   }
   if (!Array.isArray(value)) return null;
 
-  const points: LatLng[] = [];
+  const points: RoutePoint[] = [];
+  let allTimed = true;
   for (const entry of value) {
     if (!Array.isArray(entry) || entry.length < 2) return null;
-    const [lat, lng] = entry;
+    const [lat, lng, ts] = entry;
     if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-    points.push({ lat, lng });
+    if (typeof ts === 'number') points.push({ lat, lng, ts });
+    else {
+      allTimed = false;
+      points.push({ lat, lng });
+    }
   }
-  return points;
+  // Half-timed is no better than untimed for splitting legs, and a mix would
+  // let a drawer treat it as timed and cut at the wrong places.
+  return allTimed ? points : points.map(({ lat, lng }) => ({ lat, lng }));
+}
+
+/** True when every point carries a timestamp, so it can go through the gap
+ *  plan (splitLegs, activeDurationS). */
+export function isTimedPath(points: readonly RoutePoint[]): points is TimedPoint[] {
+  return points.every((p) => typeof p.ts === 'number');
 }
 
 /**

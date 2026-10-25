@@ -44,6 +44,7 @@ import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { useI18n } from '@/lib/i18n';
 import { onIdentityChanged } from '@/lib/auth-events';
 import { groundOfRun } from '@/lib/enclosure';
+import { activeDurationS } from '@/lib/gap-policy';
 import { onRunSaved, notifyRunSaved } from '@/lib/save-events';
 import {
   fetchMyClaimedCells,
@@ -361,7 +362,11 @@ function DetailCard({
       : [];
   const areaM2 = tiled.length ? tilesAreaM2(tiled) : (fence?.areaM2 ?? queued?.run.fence.areaM2 ?? 0);
   const distanceM = fence?.distanceM ?? queued?.run.distanceM ?? 0;
-  const durationS = fence?.durationS ?? (queued ? (queued.run.endedAt - queued.run.startedAt) / 1000 : 0);
+  // A queued run has no stored duration yet; give it the same running time
+  // uploadRun will write, so its pace doesn't change once it saves.
+  const durationS =
+    fence?.durationS ??
+    (queued ? activeDurationS(queued.run.points, (queued.run.endedAt - queued.run.startedAt) / 1000) : 0);
   const pace = formatPace(distanceM, durationS);
   const date = new Date(startedAtMs).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
     day: 'numeric',

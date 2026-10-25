@@ -3,6 +3,7 @@
 // share-card.tsx). Pure and react-native-svg-free, same testing philosophy
 // as territory.ts's geometry pipeline: safe to unit-test directly against
 // known tracks with no UI or native module involved.
+import { planGapClosures, type TimedPoint } from './gap-policy';
 import type { LatLng } from './territory';
 
 export interface RouteShape {
@@ -21,9 +22,14 @@ const EMPTY_SHAPE: RouteShape = { d: '', empty: true };
  * uses; the output is decorative, not a map, so a true projection buys
  * nothing) and fits the result inside `width` x `height` minus `padding` on
  * every side, preserving aspect ratio and centering.
+ *
+ * Timed points (a saved run's `[lat, lng, ts]`, a live run's TrackPoints) are
+ * cut at every gap the shared plan refuses to bridge — a new `M` instead of
+ * an `L` — so the sticker draws the same holes splitLegs leaves on the maps
+ * and the tiles leave in the territory. Untimed points draw as one line.
  */
 export function routeToSvgPath(
-  points: LatLng[],
+  points: (LatLng & { ts?: number })[],
   width: number,
   height: number,
   padding: number,
@@ -67,13 +73,17 @@ export function routeToSvgPath(
   const offsetX = padding + (boxW - drawnW) / 2;
   const offsetY = padding + (boxH - drawnH) / 2;
 
+  const timed = points.every((p) => typeof p.ts === 'number');
+  const bridged = timed ? planGapClosures(points as TimedPoint[]).bridged : null;
+
   const d = points
     .map((_, i) => {
       const x = offsetX + (xs[i] - minX) * scale;
       // Flip: increasing latitude (north) must move UP the screen, i.e.
       // toward smaller y — so it's maxY, not minY, that maps to the top.
       const y = offsetY + (maxY - ys[i]) * scale;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      const move = i === 0 || (bridged !== null && !bridged[i]);
+      return `${move ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
     })
     .join(' ');
 

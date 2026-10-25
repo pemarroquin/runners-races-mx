@@ -72,3 +72,27 @@ describe('routeToSvgPath', () => {
     expect(yNorth).toBeLessThan(ySouth);
   });
 });
+
+describe('routeToSvgPath — unrecorded gaps', () => {
+  const leg = (fromTs: number, fromLng: number, n: number) =>
+    Array.from({ length: n }, (_, i) => ({ lat: 25.66, lng: fromLng + i * 0.00006, ts: fromTs + i * 2000 }));
+
+  it('starts a new subpath across a gap the shared plan refuses to bridge', () => {
+    const a = leg(0, -100.3, 50);
+    const b = leg(a[a.length - 1].ts + 600_000, -100.28, 50); // ~2 km jump, 10 min
+    const { d } = routeToSvgPath([...a, ...b], 100, 100, 0);
+    expect(d.match(/M /g)).toHaveLength(2);
+  });
+
+  it('draws one line for a continuous timed run', () => {
+    const { d } = routeToSvgPath(leg(0, -100.3, 50), 100, 100, 0);
+    expect(d.match(/M /g)).toHaveLength(1);
+  });
+
+  it('draws one line for untimed points, as before', () => {
+    const a = leg(0, -100.3, 5).map(({ lat, lng }) => ({ lat, lng }));
+    const b = leg(0, -100.28, 5).map(({ lat, lng }) => ({ lat, lng }));
+    const { d } = routeToSvgPath([...a, ...b], 100, 100, 0);
+    expect(d.match(/M /g)).toHaveLength(1);
+  });
+});
