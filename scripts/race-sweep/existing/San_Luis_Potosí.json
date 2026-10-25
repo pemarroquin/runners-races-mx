@@ -1,0 +1,79 @@
+[
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-aquismon",
+    "name": "Serial Rutas y Trail Mágico 2026 — Fecha Aquismón",
+    "date": "2026-07-18",
+    "city": "Aquismón",
+    "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-mágico-en-aquismón/"
+  },
+  {
+    "id": "corriendo-por-una-vida-digna-2026-xvi-edicion",
+    "name": "Corriendo por una Vida Digna 2026 (XVI edición)",
+    "date": "2026-07-19",
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://planoinformativo.com/planodeportivo/338748/todo-listo-para-la-xvi-edicion-de-la-carrera-corriendo-por-una-vida-digna"
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-ruta-de-los-bar",
+    "name": "Serial Rutas y Trail Mágico 2026 — Ruta de los Barrios (San Luis Potosí capital)",
+    "date": "2026-08-23",
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-de-los-barrios/"
+  },
+  {
+    "id": "medio-maraton-uaslp-2026-sede-san-luis-potosi",
+    "name": "Medio Maratón UASLP 2026 (sede San Luis Potosí)",
+    "date": "2026-09-27",
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://www.pulsoslp.com.mx/amp/meta/abren-inscripciones-para-el-medio-maraton-/2053391"
+  },
+  {
+    "id": "medio-maraton-uaslp-2026-sede-ciudad-valles",
+    "name": "Medio Maratón UASLP 2026 (sede Ciudad Valles)",
+    "date": "2026-09-27",
+    "city": "Ciudad Valles",
+    "sourceUrl": "https://www.pulsoslp.com.mx/amp/meta/abren-inscripciones-para-el-medio-maraton-/2053391"
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-villa-de",
+    "name": "Serial Rutas y Trail Mágico 2026 — Fecha Villa de Pozos",
+    "date": "2026-10-04",
+    "city": "Villa de Pozos",
+    "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-villa-de-pozos/"
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-rioverde",
+    "name": "Serial Rutas y Trail Mágico 2026 — Fecha Rioverde",
+    "date": "2026-11-07",
+    "city": "Rioverde",
+    "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-rio-verde/"
+  },
+  {
+    "id": "marathon-tv-tu-tiempo-a-tiempo",
+    "name": "Marathon.TV - Tu Tiempo a Tiempo",
+    "date": "2026-11-15",
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://www.asdeporte.com/evento/marathon-tv---tu-tiempo-a-tiempo-3po/datos-del-evento"
+  },
+  {
+    "id": "serial-rutas-y-trail-magico-2026-fecha-soledad-d",
+    "name": "Serial Rutas y Trail Mágico 2026 — Fecha Soledad de Graciano Sánchez (cierre)",
+    "date": "2026-12-05",
+    "city": "Soledad de Graciano Sánchez",
+    "sourceUrl": "https://inpode.slp.gob.mx/eventos/2026/4/21/serial-trail-magico-en-soledad/"
+  },
+  {
+    "id": "carrera-juntos-avanzamos-2027",
+    "name": "Carrera Juntos Avanzamos 2027",
+    "date": "2027-01-31",
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://diariopotosi.com/la-carrera-juntos-avanzamos-2026-vuelve-a-unir-a-san-luis-en-favor-de-la-inclusion/"
+  },
+  {
+    "id": "bmw-maraton-internacional-tangamanga-2027",
+    "name": "BMW Maratón Internacional Tangamanga 2027",
+    "date": null,
+    "city": "San Luis Potosí",
+    "sourceUrl": "https://www.finishers.com/es/d/america-del-norte/mexico/estado-de-san-luis-potosi"
+  }
+]
