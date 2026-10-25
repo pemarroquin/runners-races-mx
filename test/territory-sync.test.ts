@@ -21,12 +21,19 @@ vi.mock('@/lib/supabase', () => ({
 const { groupVisitsByRun, parseRawPath } = await import('@/lib/territory-sync');
 
 describe('parseRawPath', () => {
-  it('parses valid [lat, lng, ts] triples into LatLng points', () => {
+  it('parses valid [lat, lng, ts] triples and keeps the timestamps', () => {
     const raw = [
       [25.67, -100.31, 1000],
       [25.671, -100.309, 2000],
     ];
     expect(parseRawPath(raw)).toEqual([
+      { lat: 25.67, lng: -100.31, ts: 1000 },
+      { lat: 25.671, lng: -100.309, ts: 2000 },
+    ]);
+  });
+
+  it('drops every timestamp when only some points have one, so nobody splits on a half-timed path', () => {
+    expect(parseRawPath([[25.67, -100.31, 1000], [25.671, -100.309]])).toEqual([
       { lat: 25.67, lng: -100.31 },
       { lat: 25.671, lng: -100.309 },
     ]);
@@ -34,7 +41,7 @@ describe('parseRawPath', () => {
 
   it('accepts a JSON-text encoded array, the same recoverable case parseFenceGeometry handles', () => {
     const raw = JSON.stringify([[25.67, -100.31, 1000]]);
-    expect(parseRawPath(raw)).toEqual([{ lat: 25.67, lng: -100.31 }]);
+    expect(parseRawPath(raw)).toEqual([{ lat: 25.67, lng: -100.31, ts: 1000 }]);
   });
 
   it('returns an empty array for an empty path rather than null', () => {
@@ -69,7 +76,7 @@ describe('parseRawPath', () => {
     expect(parseRawPath([['25.67', '-100.31', 1000]])).toBeNull();
   });
 
-  it('ignores a missing/non-numeric timestamp — only lat/lng are used', () => {
+  it('accepts a row with no timestamps as untimed lat/lng points', () => {
     expect(parseRawPath([[25.67, -100.31]])).toEqual([{ lat: 25.67, lng: -100.31 }]);
   });
 });

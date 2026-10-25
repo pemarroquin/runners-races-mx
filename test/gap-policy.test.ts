@@ -14,12 +14,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  activeDurationS,
   evaluateGap,
   GAP_CLOSURE_BUDGET_FRACTION,
   MAX_BRIDGE_DISTANCE_M,
   MAX_BRIDGE_SPEED_MS,
   planGapClosures,
   splitLegs,
+  type TimedPoint,
 } from '@/lib/gap-policy';
 import { pathToTiles } from '@/lib/tiles';
 import type { LatLng } from '@/lib/territory';
@@ -240,5 +242,50 @@ describe('planGapClosures', () => {
     // No usable dt AND far — the fallback must not become a way through.
     const plan = planGapClosures([at(0, 0), at(0.01, 0)]);
     expect(plan.bridged[1]).toBe(false);
+  });
+});
+
+describe('activeDurationS', () => {
+  // ~3 m/s east along a latitude line, one fix every 2 s.
+  const run = (fromTs: number, n: number, fromLng = -100.3): TimedPoint[] =>
+    Array.from({ length: n }, (_, i) => ({ lat: 25.66, lng: fromLng + i * 0.00006, ts: fromTs + i * 2000 }));
+
+  it('is the wall clock for a run with no long gaps', () => {
+    const pts = run(0, 301); // 600 s
+    expect(activeDurationS(pts, 600)).toBe(600);
+  });
+
+  it('drops a forgotten-Finish stop: hours standing in one place are not running time', () => {
+    const first = run(0, 301);
+    const last = first[first.length - 1];
+    // 3 h later, same spot, then 2 more minutes of running.
+    const after = run(last.ts + 3 * 3600_000, 61, last.lng);
+    const wall = (after[after.length - 1].ts - first[0].ts) / 1000;
+    expect(activeDurationS([...first, ...after], wall)).toBe(Math.round(wall - 3 * 3600));
+  });
+
+  it('drops a gap the shared plan refuses to bridge, matching the distance it leaves out', () => {
+    const first = run(0, 301);
+    const last = first[first.length - 1];
+    // 10 min later, 2 km away (~3.3 m/s, plausible) — but far over the bridge
+    // distance and budget, so distanceM excludes it and so must the clock.
+    const after = run(last.ts + 600_000, 31, last.lng + 0.02);
+    const wall = (after[after.length - 1].ts - first[0].ts) / 1000;
+    expect(activeDurationS([...first, ...after], wall)).toBe(Math.round(wall - 600));
+  });
+
+  it('keeps a bridged gap covered at running speed: credited distance keeps its time', () => {
+    const first = run(0, 301);
+    const last = first[first.length - 1];
+    // 90 s later, ~130 m on (1.4 m/s): under MAX_BRIDGE_DISTANCE_M, bridged.
+    const after = run(last.ts + 90_000, 31, last.lng + 0.0013);
+    const wall = (after[after.length - 1].ts - first[0].ts) / 1000;
+    expect(activeDurationS([...first, ...after], wall)).toBe(Math.round(wall));
+  });
+
+  it('keeps time outside the path (privacy-trimmed home end) and is idempotent on the wall clock', () => {
+    const pts = run(300_000, 151); // path covers 300 s of a 900 s run
+    expect(activeDurationS(pts, 900)).toBe(900);
+    expect(activeDurationS(pts, 900)).toBe(activeDurationS(pts, 900));
   });
 });

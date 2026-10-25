@@ -46,7 +46,9 @@ import type { LatLng } from '@/lib/territory';
 import { formatDistance, formatDuration, formatPace } from '@/lib/tracking';
 
 export interface ShareSessionData {
-  route: LatLng[];
+  /** Keep the timestamps when there are any: routeToSvgPath cuts the line at
+   *  unrecorded gaps only for timed points. */
+  route: (LatLng & { ts?: number })[];
   distanceM: number;
   durationS: number;
   tiles: number;

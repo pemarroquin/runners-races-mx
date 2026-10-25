@@ -293,3 +293,42 @@ export function splitLegs<T extends TimedPoint>(points: T[]): T[][] {
   legs.push(current);
   return legs;
 }
+
+/** A gap longer than this is a candidate pause rather than a missed fix or
+ *  two — the tracker samples every 2 s, so a minute of silence is a stop, a
+ *  backgrounded tab, or a forgotten Finish. */
+export const PAUSE_GAP_S = 60;
+/** Below this across a long gap the runner did not plausibly keep moving:
+ *  the two ends are where they stood, not two points on a run. */
+export const MIN_MOVING_SPEED_MS = 0.5;
+
+/**
+ * Seconds the runner was actually running: wall clock minus every long gap
+ * that was not running time. Feeds `duration_s` and therefore every pace on
+ * screen, which used to divide by finish minus start — a run left recording
+ * for 3 h after a 6.9 km loop showed 46 min/km (2026-09-27, found 2026-10-25).
+ *
+ * A gap counts as stopped time when it is longer than PAUSE_GAP_S and either
+ * the shared plan refuses to bridge it (its distance is not in distanceM, so
+ * its time must not be either) or nobody plausibly moved across it. A
+ * bridged gap covered at running speed stays in: that distance is credited,
+ * so its time is too. Short pauses under a minute are kept — a known,
+ * small overcount, far better than guessing.
+ *
+ * Takes the WALL CLOCK, never a stored duration, so it is idempotent: the
+ * backfill can run twice and land on the same number. Time outside the
+ * path (the privacy zone trims the home end before upload) is kept, because
+ * the distance for it is kept too.
+ */
+export function activeDurationS(points: TimedPoint[], wallClockS: number): number {
+  if (points.length < 2) return Math.max(0, Math.round(wallClockS));
+  const { bridged } = planGapClosures(points);
+  let stoppedS = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dtS = (points[i].ts - points[i - 1].ts) / 1000;
+    if (dtS <= PAUSE_GAP_S) continue;
+    const speedMs = haversineM(points[i - 1], points[i]) / dtS;
+    if (!bridged[i] || speedMs < MIN_MOVING_SPEED_MS) stoppedS += dtS;
+  }
+  return Math.max(0, Math.round(wallClockS - stoppedS));
+}
