@@ -60,7 +60,10 @@ const translations = {
       pause: 'Pausar',
       resume: 'Reanudar',
       paused: 'En pausa',
-      checkpointFound: 'Tienes una sesión sin terminar. ¿La continuamos o la descartamos?',
+      checkpointFound: 'Tienes una sesión sin terminar ({{distance}}). ¿La continúas, la guardas como está o la descartas?',
+      checkpointStale: 'Tienes una sesión sin terminar ({{distance}}). ¿La guardas como está o la descartas?',
+      checkpointSave: 'Guardar como está',
+      pocketHint: 'Ahorro de batería: el mapa no se dibuja. Toca para verlo.',
       close: 'Cerrar',
       // Session-end map screen (2026-09-02 redesign): the ✓ that closes the
       // just-finished-run map and readies the app for a new session — a
@@ -681,7 +684,10 @@ const translations = {
       pause: 'Pause',
       resume: 'Resume',
       paused: 'Paused',
-      checkpointFound: 'You have an unfinished session. Continue it or discard it?',
+      checkpointFound: 'You have an unfinished session ({{distance}}). Continue it, save it as it is, or discard it?',
+      checkpointStale: 'You have an unfinished session ({{distance}}). Save it as it is, or discard it?',
+      checkpointSave: 'Save as it is',
+      pocketHint: 'Battery saver: the map is not drawing. Tap to show it.',
       close: 'Close',
       // Session-end map screen — see the ES entry's comment.
       done: 'Done',

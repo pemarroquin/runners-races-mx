@@ -21,11 +21,17 @@ const PREF_CHECKPOINT = 'run.checkpoint.v1';
 // the checkpoint separately (see RunCheckpoint), so trimming the route's
 // tail costs the recovered map's precision, never the stats.
 export const MAX_POINTS = 5000;
-// How stale a checkpoint may be and still be offered for recovery. Longer
-// than this isn't "the runner just reopened the tab" — it's a leftover from
-// a session that is genuinely over, and offering to resume a six-hour-old
-// route would be confusing, not helpful.
-export const MAX_AGE_MS = 6 * 60 * 60 * 1000;
+// How stale a checkpoint may be and still be RESUMED. Longer than this isn't
+// "the runner just reopened the tab": it's a session that is genuinely over,
+// and carrying on recording a six-hour-old route would be confusing.
+export const RESUME_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+// How long a checkpoint is kept at all, so it can still be SAVED as it
+// stands. This used to equal the resume window, and that threw real runs
+// away: a phone that dies mid-run (2026-10-25, a ~3 h run, battery empty at
+// 11:50) is usually charged and reopened hours later, and by then the only
+// copy of the run read as stale and was dropped without a word. Same window
+// as the finished-but-unsaved offer in the Track screen.
+export const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface RunCheckpoint {
   startedAt: number;
@@ -110,6 +116,20 @@ export function loadCheckpoint(): RunCheckpoint | null {
     incrementPilotCounter('runsLost');
     return null;
   }
+}
+
+/** Whether a checkpoint is recent enough to continue recording, rather than
+ *  only to save as it stands. */
+export function canResume(c: RunCheckpoint, now: number = Date.now()): boolean {
+  return now - c.savedAt <= RESUME_MAX_AGE_MS;
+}
+
+/** When the recorded part of the run ended: its last point, or the last save
+ *  if no point was ever recorded. Never "now": the time between a dead phone
+ *  and reopening the app is not running time. */
+export function checkpointEndedAt(c: RunCheckpoint): number {
+  const last = c.points[c.points.length - 1];
+  return last ? last.ts : c.savedAt;
 }
 
 export function clearCheckpoint(): boolean {

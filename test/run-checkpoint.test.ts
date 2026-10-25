@@ -11,6 +11,9 @@ import {
   clearCheckpoint,
   loadCheckpoint,
   MAX_AGE_MS,
+  RESUME_MAX_AGE_MS,
+  canResume,
+  checkpointEndedAt,
   MAX_POINTS,
   saveCheckpoint,
   type RunCheckpoint,
@@ -79,6 +82,36 @@ describe('loadCheckpoint staleness', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// 2026-10-25: a phone died ~3 h into a run and was charged and reopened
+// hours later. The resume window and the keep window used to be the same
+// 6 h, so a checkpoint past it was dropped — the only copy of the run.
+describe('a checkpoint past the resume window', () => {
+  it('is still loaded, so it can be saved as it stands', () => {
+    vi.useFakeTimers();
+    try {
+      saveCheckpoint(makeCheckpoint({ savedAt: Date.now() }));
+      vi.advanceTimersByTime(RESUME_MAX_AGE_MS + 60_000);
+      const loaded = loadCheckpoint();
+      expect(loaded).not.toBeNull();
+      expect(canResume(loaded!)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('can be resumed only inside the window', () => {
+    const c = makeCheckpoint({ savedAt: 1_000_000 });
+    expect(canResume(c, 1_000_000 + RESUME_MAX_AGE_MS)).toBe(true);
+    expect(canResume(c, 1_000_000 + RESUME_MAX_AGE_MS + 1)).toBe(false);
+  });
+
+  it('ends at its last recorded point, never at the moment it is reopened', () => {
+    const c = makeCheckpoint({ savedAt: 9_999_999 });
+    expect(checkpointEndedAt(c)).toBe(c.points[c.points.length - 1].ts);
+    expect(checkpointEndedAt({ ...c, points: [] })).toBe(9_999_999);
   });
 });
 
