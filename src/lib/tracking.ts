@@ -28,6 +28,12 @@ import { haversineM, type LatLng } from '@/lib/territory';
 
 export interface TrackPoint extends LatLng {
   ts: number;
+  /** The fix's reported accuracy, metres, when the phone gave one. Only the
+   *  pace guard reads it (pace-guard.ts's POOR_FIX_M); it is never uploaded
+   *  (raw_path is [lat, lng, ts]). Absent on points recorded before it
+   *  existed and on recovered checkpoints from then, which the guard treats
+   *  as good fixes, its old behaviour. */
+  acc?: number;
 }
 
 export type TrackStatus = 'idle' | 'starting' | 'running' | 'paused' | 'finished';
@@ -426,6 +432,7 @@ export function useRunTracker(): RunTracker {
       lat: fix.lat,
       lng: fix.lng,
       ts: fix.ts,
+      ...(accuracy !== null ? { acc: accuracy } : {}),
     };
     // The ref is advanced HERE, in the event handler — never inside a
     // setState updater. React can re-run an updater (StrictMode, and the

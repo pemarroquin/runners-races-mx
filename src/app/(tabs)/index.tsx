@@ -42,7 +42,7 @@ import {
   saveLastRunDebug,
   type LastRunDebug,
 } from '@/lib/last-run-debug';
-import { isImpossiblePace } from '@/lib/pace-guard';
+import { keptBeforeCut, paceGuardCut } from '@/lib/pace-guard';
 import { fetchDistrictParkCells } from '@/lib/boards';
 import { districtLabel, districtOf } from '@/lib/district';
 import { dropCellsInsideZone, enclosedCells } from '@/lib/enclosure';
@@ -55,6 +55,7 @@ import {
   checkpointEndedAt,
   clearCheckpoint,
   loadCheckpoint,
+  saveCheckpoint,
   type RunCheckpoint,
 } from '@/lib/run-checkpoint';
 import { notifyRunSaved } from '@/lib/save-events';
@@ -72,6 +73,9 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 // Not in constants/theme.ts: these are traffic-light semantics for one
 // control pair, not part of the app's palette.
 const PAUSE_COLOR = '#F5C518';
+// Less than this before the pace guard tripped is not a run worth saving
+// (a drive from the start); same bar as the unsaved-run offer above.
+const PACE_GUARD_MIN_KEPT_M = 300;
 const STOP_COLOR = '#E5484D';
 
 export default function TrackScreen() {
@@ -337,6 +341,10 @@ export default function TrackScreen() {
   // Set when the pace guard ends a session (see the effect below). Purely
   // presentational — the run is already gone by the time this is true.
   const [paceGuardTripped, setPaceGuardTripped] = useState(false);
+  // Set when the pace guard ENDED a session but kept what came before the
+  // fast stretch: the distance kept, shown on the summary screen so the
+  // runner knows why the session stopped. See the guard effect below.
+  const [paceGuardKeptM, setPaceGuardKeptM] = useState<number | null>(null);
 
   const discardCheckpoint = useCallback(() => {
     clearCheckpoint();
@@ -925,25 +933,32 @@ export default function TrackScreen() {
     setTilesFailure(null);
     setDistrictPlaceName(null);
     setQueuedId(null);
+    setPaceGuardKeptM(null);
     tracker.reset();
   }, [tracker]);
 
-  // PACE GUARD — end and DISCARD a session that is moving faster than anyone
-  // runs. Pedro drove a car and banked 977 565 m2 of territory (2026-09-03);
-  // this is what stops that being savable. Thresholds and the reasoning
-  // behind them live in pace-guard.ts, measured against that drive and a
-  // real run — including why it is a median over a window and never an
-  // instantaneous speed.
+  // PACE GUARD — end a session that is moving faster than anyone runs, and
+  // keep only what was recorded BEFORE that. Pedro drove a car and banked
+  // 977 565 m2 of territory (2026-09-03); the drive must never count.
+  // Thresholds and the reasoning behind them live in pace-guard.ts, measured
+  // against that drive and real runs — including why it is a median over a
+  // window and never an instantaneous speed, and why a phone standing still
+  // indoors no longer reads as fast.
   //
-  // Discarded, not finished. resetLocal() takes the tracker straight from
-  // 'running' to 'idle' WITHOUT passing through 'finished', which is what
-  // the auto-save effect below keys on — so nothing is ever built, uploaded
-  // or queued for this run. Calling tracker.stop() here instead would save
-  // it, which is the opposite of the point. The checkpoint goes too, or a
-  // reload would offer to resume the drive.
+  // It used to DISCARD the whole session. A water stop that tripped it
+  // (2026-10-25) deleted an hour of a real run, and the runner restarted
+  // from zero: 21 km run, 13.5 km recorded. The drive is what must not
+  // count, never the honest part before it, so that part is now finished
+  // and saved like any other run (restoreFinished → the summary screen's
+  // auto-save). Only when almost nothing came before the fast stretch
+  // (a drive from the start) is it discarded as before: resetLocal() takes
+  // the tracker straight to 'idle', which never auto-saves. The checkpoint
+  // is rewritten to the kept part first, so a reload before the save lands
+  // can only ever offer the kept part, never the drive.
   useEffect(() => {
     if (!running) return;
-    if (!isImpossiblePace(tracker.points)) return;
+    const cut = paceGuardCut(tracker.points);
+    if (cut === null) return;
     // Deferred a tick rather than run straight from the effect body: this
     // tears down a whole session's worth of state, and the React Compiler's
     // lint rule flags any setState an effect body can reach. Same pattern as
@@ -951,13 +966,33 @@ export default function TrackScreen() {
     // simply re-runs and re-schedules — the guard's verdict does not change.
     const id = setTimeout(() => {
       incrementPilotCounter('runsPaceGuarded');
-      clearCheckpoint();
-      setCheckpoint(null);
-      resetLocal();
-      setPaceGuardTripped(true);
+      const kept = keptBeforeCut(tracker.points, cut);
+      const startedAt = tracker.startedAt;
+      const last = kept.points[kept.points.length - 1];
+      if (!last || startedAt === null || kept.distanceM < PACE_GUARD_MIN_KEPT_M) {
+        clearCheckpoint();
+        setCheckpoint(null);
+        resetLocal();
+        setPaceGuardTripped(true);
+        return;
+      }
+      saveCheckpoint({
+        startedAt,
+        points: kept.points,
+        distanceM: kept.distanceM,
+        accumulatedMs: Math.max(0, last.ts - startedAt),
+        savedAt: Date.now(),
+      });
+      tracker.restoreFinished({
+        points: kept.points,
+        distanceM: kept.distanceM,
+        startedAt,
+        endedAt: last.ts,
+      });
+      setPaceGuardKeptM(kept.distanceM);
     }, 0);
     return () => clearTimeout(id);
-  }, [running, tracker.points, resetLocal]);
+  }, [running, tracker, resetLocal]);
 
   // The finished run gets a full-screen map of just what it captured
   // (2026-09-02 redesign, replacing the old scrolling stats-card summary):
@@ -1177,6 +1212,14 @@ export default function TrackScreen() {
           {tileClaim && tileClaim.skippedOlder > 0 && (
             <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
               {t('track.keptByNewer', { count: tileClaim.skippedOlder })}
+            </Text>
+          )}
+          {/* The pace guard ended this session and kept what came before
+              the fast stretch — say so, or a session that stopped on its
+              own reads as a crash. */}
+          {paceGuardKeptM !== null && (
+            <Text style={[styles.noticeSmall, styles.onDarkNotice]}>
+              {t('track.paceGuardKept', { distance: formatDistance(paceGuardKeptM) })}
             </Text>
           )}
         </View>

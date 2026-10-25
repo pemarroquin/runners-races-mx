@@ -105,8 +105,10 @@ const translations = {
       // to feel caught.
       paceGuardTitle: 'Parece que ya no vas corriendo',
       paceGuardBody:
-        'Llevas medio minuto moviéndote más rápido de lo que se puede correr, así que terminamos la sesión. No guardamos nada: el territorio solo cuenta si lo recorres a pie.',
+        'Llevas un minuto moviéndote más rápido de lo que se puede correr, así que terminamos la sesión. No guardamos nada: el territorio solo cuenta si lo recorres a pie.',
       paceGuardDismiss: 'Entendido',
+      paceGuardKept:
+        'Paramos la sesión en {{distance}}: por un minuto te moviste más rápido de lo que se puede correr. Lo que corriste antes quedó guardado; ese tramo no cuenta.',
       // Distance-gap instrumentation on the finished-run summary — see
       // tracking.ts's gapCount/gapDurationMs/gapChordM/creditedGapM.
       // %{duration}/%{credited}/%{uncredited} are pre-formatted strings from
@@ -715,8 +717,10 @@ const translations = {
       // See the ES entries for why this copy is worded the way it is.
       paceGuardTitle: "Looks like you're not running",
       paceGuardBody:
-        'You’ve been moving faster than a run for the last 30 seconds, so we ended the session. Nothing was saved — territory only counts when you cover it on foot.',
+        'You’ve been moving faster than a run for the last minute, so we ended the session. Nothing was saved — territory only counts when you cover it on foot.',
       paceGuardDismiss: 'Got it',
+      paceGuardKept:
+        'We stopped the session at {{distance}}: for a minute you moved faster than anyone runs. What you ran before is saved; that stretch does not count.',
       // Split credited/uncredited — see the ES entry's comment.
       gapNotice: {
         one: '1 background interruption (%{duration}) — ~%{credited} counted as a straight line, ~%{uncredited} left unrecorded.',
