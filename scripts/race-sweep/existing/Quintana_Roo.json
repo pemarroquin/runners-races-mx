@@ -1,0 +1,72 @@
+[
+  {
+    "id": "medio-maraton-de-cancun-2027",
+    "name": "Medio Maratón de Cancún 2027",
+    "date": "2027-03-07",
+    "city": "Cancún",
+    "sourceUrl": "https://www.cancun-half-marathon.com/mx/infos.html"
+  },
+  {
+    "id": "medio-maraton-nocturno-cozumel-2026-4ta-edicion",
+    "name": "Medio Maratón Nocturno Cozumel 2026 (4ta edición) / 21K Cozumel",
+    "date": "2026-07-18",
+    "city": "Cozumel",
+    "sourceUrl": "https://www.khronometraje.com/newpage/inscribeteSlim.php?id=COZUMEL26"
+  },
+  {
+    "id": "backyard-ultra-cozumel-2026",
+    "name": "Backyard Ultra Cozumel 2026",
+    "date": "2026-09-05",
+    "city": "Cozumel",
+    "sourceUrl": "https://www.khronometraje.com/"
+  },
+  {
+    "id": "21k-chetumal-2026-5ta-edicion",
+    "name": "21K Chetumal 2026 (5ta edición)",
+    "date": "2026-08-09",
+    "city": "Chetumal",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun"
+  },
+  {
+    "id": "medio-maraton-bacalar-2026",
+    "name": "Medio Maratón Bacalar 2026",
+    "date": "2026-09-13",
+    "city": "Bacalar",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun"
+  },
+  {
+    "id": "3kids-cozumel-2026",
+    "name": "3kids Cozumel 2026",
+    "date": "2026-09-26",
+    "city": "Cozumel",
+    "sourceUrl": "https://asdeporte.com/eventos"
+  },
+  {
+    "id": "10k-5k-aniversario-fcp-felipe-carrillo-puerto-fc",
+    "name": "10K/5K Aniversario FCP (Felipe Carrillo Puerto) / \"FCP 21k\"",
+    "date": "2026-10-18",
+    "city": "Felipe Carrillo Puerto",
+    "sourceUrl": "https://www.khronometraje.com/"
+  },
+  {
+    "id": "medio-maraton-bahia-chetumal-2026",
+    "name": "Medio Maratón Bahía Chetumal 2026",
+    "date": "2026-11-15",
+    "city": "Chetumal",
+    "sourceUrl": "https://www.tritour.org/calendario-carreras-cancun"
+  },
+  {
+    "id": "medio-maraton-tulum-2026",
+    "name": "Medio Maratón Tulum 2026",
+    "date": "2026-12-06",
+    "city": "Tulum",
+    "sourceUrl": "https://www.42cal.com/races/medio-marat-n-tulum"
+  },
+  {
+    "id": "maya-wildmarathon-of-mexico",
+    "name": "Maya Wildmarathon of Mexico",
+    "date": "2026-12-13",
+    "city": "Cozumel",
+    "sourceUrl": "https://www.finishers.com/en/event/maya-wildmarathon-in-mexico"
+  }
+]
