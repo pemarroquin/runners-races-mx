@@ -238,6 +238,18 @@ indistinguishable from one reading 0% because nobody ran.
 
 ## Gotchas this repo has actually shipped
 
+- **`duration_s` is running time, and pace divided by the wall clock until
+  2026-10-25.** A run left recording for hours after a 6.9 km loop showed
+  46 min/km on My Achievements, the share card and the leaderboard totals.
+  `uploadRun` now writes `activeDurationS(points, wallClockS)`
+  (gap-policy.ts): wall clock minus gaps over 60 s that `planGapClosures`
+  won't bridge or that nobody moved across. `npm run
+  backfill-active-duration` rewrote the old rows; it reads started_at/ended_at,
+  so it is safe to re-run. Never feed it an existing `duration_s`: that
+  subtracts the gaps twice. Separately, `distance_m` is LONGER than
+  `raw_path` on any run that starts or ends at home, because the privacy zone
+  trims the path but not the distance. That is by design, not drift.
+
 - **An impure function called during render gets its result CACHED by the
   React Compiler.** The i18n provider handed out
   `t: (key, options) => i18n.t(key, options)` — a closure over nothing
