@@ -1036,10 +1036,10 @@
       "confidence": "high",
       "notes": "Three days in a row (Friday 30 October to Sunday 1 November): run a marathon or half marathon each day, or complete the triple. Paved, shaded loop closed to traffic. Marathon per day $1,200, half marathon per day $1,000, triple half marathon $2,999.",
       "notesEs": "Reto de tres días seguidos (viernes 30 de octubre al domingo 1 de noviembre): corre un maratón o medio maratón cada día, o completa el triple. Circuito asfaltado, sombreado y cerrado al tráfico. Maratón por jornada $1,200, medio maratón por jornada $1,000, triple medio maratón $2,999.",
-      "sourceNotes": "Runera detail: 30 Oct 2026, 06:00, Parque Niños Héroes, inscripciones abiertas, official link tmim.com.mx (that site renders only 'tmim 2026'). Tritour event page (triple-maraton-internacional-monterrey-5a-edicion-2026) confirms 30-31 Oct + 1 Nov, Boletópolis registration and prices; Boletópolis page title = '5ta. Edición' (prices load via JS). Asociación de Atletismo NL lists 30/31 Oct + 1 Nov at Parque Niños Héroes; Idemsport calendar lists only 1 Nov (the last day). date = first day. Organizer not named; contacts Juan Antonio Guerrero / Juan Salomón Marcos per tritour. (Earlier: Listed on AANL calendar (single date not fixed in the app's date field). Distances beyond 42K unconfirmed on the official site. Rechecked via web search 2026-09-14: one indexed listing (Boletópolis, 5ª edición) named Oct 30 for the 42K specifically, matching this record's window, but a follow-up search could not independently reconfirm that specific date, and tmim.com.mx itself was not directly fetchable (network egress policy). Not confident enough to set a firm single `date` for the recorded 42K distance — left null rather than guess.) 2026-10-23 race-watch: direct fetch of runera.mx/boletopolis.com blocked (DNS/network policy this run); running.life confirms Oct 30-Nov 1 2026, Monterrey, Parque Niños Héroes (organizer also mentions possible alt venue Parque España). No cancellation/postponement signals.",
+      "sourceNotes": "Runera detail: 30 Oct 2026, 06:00, Parque Niños Héroes, inscripciones abiertas, official link tmim.com.mx (that site renders only 'tmim 2026'). Tritour event page (triple-maraton-internacional-monterrey-5a-edicion-2026) confirms 30-31 Oct + 1 Nov, Boletópolis registration and prices; Boletópolis page title = '5ta. Edición' (prices load via JS). Asociación de Atletismo NL lists 30/31 Oct + 1 Nov at Parque Niños Héroes; Idemsport calendar lists only 1 Nov (the last day). date = first day. Organizer not named; contacts Juan Antonio Guerrero / Juan Salomón Marcos per tritour. (Earlier: Listed on AANL calendar (single date not fixed in the app's date field). Distances beyond 42K unconfirmed on the official site. Rechecked via web search 2026-09-14: one indexed listing (Boletópolis, 5ª edición) named Oct 30 for the 42K specifically, matching this record's window, but a follow-up search could not independently reconfirm that specific date, and tmim.com.mx itself was not directly fetchable (network egress policy). Not confident enough to set a firm single `date` for the recorded 42K distance — left null rather than guess.) 2026-10-23 race-watch: direct fetch of runera.mx/boletopolis.com blocked (DNS/network policy this run); running.life confirms Oct 30-Nov 1 2026, Monterrey, Parque Niños Héroes (organizer also mentions possible alt venue Parque España). No cancellation/postponement signals. 2026-10-26 race-watch: runera.mx reconfirmed Oct 30 2026, 06:00, Parque Niños Héroes, registration open. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "No change found — still Oct 30-Nov 1, Monterrey."
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: no change found — still Oct 30-Nov 1, Monterrey."
     },
     {
       "id": "adidas-splits-15k-30k-2026",
@@ -1601,7 +1601,10 @@
       "distanceTags": [
         "5K"
       ],
-      "sourceNotes": "On both calendars."
+      "sourceNotes": "On both calendars. 2026-10-26 race-watch: idemsport.com/calendario-2026/ reconfirms Nov 2 2026, venue 'Niños Héroes', organizer Krono (tel. 8122351680). No time or signup link found on any page; targeted web search for the race name plus Krono/Monterrey found nothing further.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: idemsport calendar reconfirms date and venue; no dedicated event page or registration link found yet."
     },
     {
       "id": "simicarrera-2026",
@@ -3009,9 +3012,9 @@
       "notes": "Evening race, $385 MXN.",
       "notesEs": "Carrera vespertina, $385 MXN.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found.",
-      "sourceNotes": "2026-10-23 race-watch: direct fetch of chronostart.com.mx blocked (DNS/network policy this run); search found no page or news specifically matching this race (only unrelated Canacintra/Canaco races elsewhere). No cancellation/postponement evidence; could not independently confirm this one beyond the stored sourceUrl."
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page directly confirmed — date, time, venue and price unchanged.",
+      "sourceNotes": "2026-10-23 race-watch: direct fetch of chronostart.com.mx blocked (DNS/network policy this run); search found no page or news specifically matching this race (only unrelated Canacintra/Canaco races elsewhere). No cancellation/postponement evidence; could not independently confirm this one beyond the stored sourceUrl. 2026-10-26 race-watch: chronostart.com.mx page now reachable and confirms Oct 31 2026, 19:00, Zócalo de Puebla, $385 MXN, matching stored data exactly. No cancellation notice on page; web search found no postponement/cancellation news."
     },
     {
       "id": "3a-carrera-pericos",
@@ -5977,10 +5980,10 @@
       "confidence": "high",
       "notes": "Night Halloween 5K. From $470.",
       "notesEs": "5K nocturna de Halloween. Desde $470.",
-      "sourceNotes": "Asdeporte + runera.mx agree. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no results for this specific CDMX event (only unrelated US Halloween 5K races). No cancellation/postponement evidence.",
+      "sourceNotes": "Asdeporte + runera.mx agree. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no results for this specific CDMX event (only unrelated US Halloween 5K races). No cancellation/postponement evidence. 2026-10-26 race-watch: asdeporte.com page now reachable, confirms Oct 31 2026 19:00 (body text; page header shows Nov 1 01:00 UTC, the known Asdeporte UTC-offset artifact, not a real date change), venue Invernadero del Bosque de Aragón, registration open $470. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found; could not independently confirm via search.",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page directly confirmed — date, time and venue unchanged, registration open.",
       "start": {
         "lat": 19.4628845,
         "lng": -99.0656197,
@@ -6009,10 +6012,10 @@
       "confidence": "high",
       "notes": "Under Armour night race with a calaca (Day of the Dead) theme. $699, $799 late fee.",
       "notesEs": "Carrera nocturna de Under Armour con temática de calacas. $699, cuota extemporánea $799.",
-      "sourceNotes": "Emoción Deportiva convocatoria; also on runera.mx and marcate.com.mx with same date/time. 2026-10-23 race-watch: direct fetch of emociondeportiva.com blocked (DNS/network policy this run); search found no current matching results (closest hits: an unrelated Illinois race and a 2023 Under Armour Día de Muertos run in Chapultepec). No cancellation/postponement evidence.",
+      "sourceNotes": "Emoción Deportiva convocatoria; also on runera.mx and marcate.com.mx with same date/time. 2026-10-23 race-watch: direct fetch of emociondeportiva.com blocked (DNS/network policy this run); search found no current matching results (closest hits: an unrelated Illinois race and a 2023 Under Armour Día de Muertos run in Chapultepec). No cancellation/postponement evidence. 2026-10-26 race-watch: emociondeportiva.com page now reachable, confirms Oct 31 2026 19:30, Bosque de Chapultepec 1ª Sección, registration open ($699, $799 late fee Oct 31). Page's own refund policy only triggers on organizer cancellation/force-majeure, no such notice present. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found; could not independently confirm via search."
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page directly confirmed — date, time and venue unchanged, registration open."
     },
     {
       "id": "calaveritas-run-2026",
@@ -6038,12 +6041,15 @@
       "confidence": "high",
       "notes": "Day of the Dead night race through Chapultepec, plus 100–400 m kids' races.",
       "notesEs": "Carrera nocturna de Día de Muertos por Chapultepec, con carreras infantiles de 100 a 400 m.",
-      "sourceNotes": "Asdeporte + runera.mx agree. Asdeporte lists \"desde $450\" (likely kids price); Time Out (Jul 2026) listed adult $750 from Oct 1 — price not put in notes due to ambiguity.",
+      "sourceNotes": "Asdeporte + runera.mx agree. Asdeporte lists \"desde $450\" (likely kids price); Time Out (Jul 2026) listed adult $750 from Oct 1 — price not put in notes due to ambiguity. 2026-10-26 race-watch: asdeporte.com confirms Nov 1 2026 19:30 (body text; header shows Nov 2 01:30 UTC, same known Asdeporte artifact), venue Complejo Cultural Los Pinos / Bosque de Chapultepec, from $450 MXN. Independently corroborated by chilango.com and timeoutmexico.mx (Time Out names 'Segunda Sección' vs others' 'Primera Sección' — pre-existing minor discrepancy, not a change). No cancellation/postponement found.",
       "start": {
         "lat": 19.409276716067588,
         "lng": -99.22716362475799,
         "approx": true
-      }
+      },
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page and two independent local listings confirm date, time and venue."
     },
     {
       "id": "carrera-espn-2026-21k-y-10k",
@@ -6067,7 +6073,10 @@
       "confidence": "high",
       "notes": "10K $800 and 21K $900 until Oct 30 (+10% platform fee); higher price at kit pickup on Oct 31.",
       "notesEs": "10K $800 y 21K $900 hasta el 30 de octubre (más 10% de comisión); precio más alto en la entrega de kits del 31 de octubre.",
-      "sourceNotes": "Official site rendered prices; date/time/venue from runera.mx detail page and runmx calendar (Nov 1, 6:30). Search snippet cited $750 for 10K — official site says $800."
+      "sourceNotes": "Official site rendered prices; date/time/venue from runera.mx detail page and runmx calendar (Nov 1, 6:30). Search snippet cited $750 for 10K — official site says $800. 2026-10-26 race-watch: espnrun.mx reconfirms Nov 1 2026, Paseo de la Reforma, 10K $800 / 21K $900 until Oct 30 (+10% fee), kit pickup Oct 31. running.life lists slightly different prices ($750/$850) but is a secondary aggregator; official site kept per conflict rule. No cancellation/postponement found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: official site confirms date, time, venue and registration are unchanged."
     },
     {
       "id": "capibaras-5k-2026",
@@ -6839,10 +6848,10 @@
       "confidence": "high",
       "notes": "Night race on the eve of Día de Muertos. Pre-race activities from 19:30. Includes a 5K for wheelchair athletes. From $420 MXN.",
       "notesEs": "Carrera nocturna en la víspera de Día de Muertos. Actividades previas desde las 19:30. Incluye 5K de deporte adaptado en silla de ruedas. Desde $420 MXN.",
-      "sourceNotes": "Asdeporte header shows 1 Nov (01:30 UTC); body: Sábado 31 oct 2026, salida 20:00 — used body. running.life lists 1 Nov (UTC artifact). Venue line blank on page. Coords 19.2528864,-99.598551. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no matching results for this specific event (only unrelated Mérida/CDMX Día de Muertos events). No cancellation/postponement evidence.",
+      "sourceNotes": "Asdeporte header shows 1 Nov (01:30 UTC); body: Sábado 31 oct 2026, salida 20:00 — used body. running.life lists 1 Nov (UTC artifact). Venue line blank on page. Coords 19.2528864,-99.598551. 2026-10-23 race-watch: direct fetch of asdeporte.com blocked (DNS/network policy this run); search found no matching results for this specific event (only unrelated Mérida/CDMX Día de Muertos events). No cancellation/postponement evidence. 2026-10-26 race-watch: asdeporte.com re-confirms the same header/body conflict (header '01 nov 01:30h' vs body 'Sábado 31 de octubre... salida 20:00, actividades previas 19:30') — self-consistent, since 19:30 local Oct 31 = 01:30 UTC Nov 1; body (local time) is correct, date unchanged. No postponement/cancellation signal found.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found; could not independently confirm via search.",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: no change found; the page's header/body date difference is a timezone display artifact, not a real change.",
       "start": {
         "lat": 19.2528864,
         "lng": -99.598551,
@@ -7704,15 +7713,18 @@
       "organizer": "Crowe / CDT (Consejo de Desarrollo Económico de Tijuana)",
       "signupUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
       "sourceUrl": "https://web.rockthesport.com/es/event/dia-de-muertos-cdt-crowe-5k-2026",
-      "confidence": "high",
+      "confidence": "medium",
       "notes": "Second edition, benefiting Casa Hogar Niños con Fe. Entry $300 MXN. Cash prizes for the top three men and women ($10,000 / $8,000 / $5,000 MXN), plus best Catrina and best costumed pet contests. Free shirt for the first 500 registrants.",
       "notesEs": "Segunda edición, a beneficio de la Casa Hogar Niños con Fe. Inscripción $300 MXN. Premios en efectivo a los tres primeros lugares de cada rama ($10,000 / $8,000 / $5,000 MXN), además de concursos a la mejor Catrina y a la mascota mejor disfrazada. Playera de regalo para las primeras 500 personas inscritas.",
-      "sourceNotes": "Rockthesport (inscripciones abiertas, cierre 30 oct 17:00). running.life lists it on 2026-11-01 but geocodes locality as 'Buenos Aires, BC' (a Tijuana colonia near Presa Rodríguez); city set to Tijuana.",
+      "sourceNotes": "Rockthesport (inscripciones abiertas, cierre 30 oct 17:00). running.life lists it on 2026-11-01 but geocodes locality as 'Buenos Aires, BC' (a Tijuana colonia near Presa Rodríguez); city set to Tijuana. 2026-10-26 race-watch: rockthesport page reconfirms Nov 1 2026 08:00, Parque Esperanto, Tijuana, registration window through Oct 30 17:00, 'Inscripciones abiertas.' The page's structured schema data flags the ticket offer as 'sold out' while the visible UI says open — likely the registration window closing soon, not a cancellation; no notice text states sold out or canceled anywhere. Confidence kept at medium pending that discrepancy. No cancellation/postponement news found.",
       "start": {
         "lat": 32.448475,
         "lng": -116.9108295,
         "approx": true
-      }
+      },
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date, time and venue; registration appears open."
     },
     {
       "id": "tercera-edicion-medio-maraton-uabc-tijuana-2026",
@@ -8191,13 +8203,13 @@
       "organizer": null,
       "signupUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
       "sourceUrl": "https://www.khronometraje.com/inscribirmeNueva.php?id=JAGUAR20K",
-      "confidence": "high",
+      "confidence": "medium",
       "notes": "Late-afternoon race, 20K and 7K. Capped at 503. 20K 550 pesos, 7K 400.",
       "notesEs": "Carrera vespertina de 20K y 7K. Cupo de 503. 20K 550 pesos, 7K 400.",
-      "sourceNotes": "Khronometraje official registration page. Venue text also mentions a 16:00 Parque Infantil activity. 2026-10-23 race-watch: direct fetch of khronometraje.com blocked (DNS/network policy this run); search found no results naming this specific race — only the unrelated 54th Carrera Uxmal-Muna (already ran Oct 4 2026) and an unrelated January race. No cancellation/postponement evidence.",
+      "sourceNotes": "Khronometraje official registration page. Venue text also mentions a 16:00 Parque Infantil activity. 2026-10-23 race-watch: direct fetch of khronometraje.com blocked (DNS/network policy this run); search found no results naming this specific race — only the unrelated 54th Carrera Uxmal-Muna (already ran Oct 4 2026) and an unrelated January race. No cancellation/postponement evidence. 2026-10-26 race-watch: re-fetching khronometraje.com returned an internally inconsistent read — a listed 'event date' of Sunday Nov 22 2026 06:00 alongside the schedule text still showing 'Salida: 17:30' — most likely a template/countdown artifact rather than a real new date, so NOT treated as a correction (date left at 2026-10-31). Web search for 'Camino del Jaguar' + Muna/Yaxhá found zero independent results (only the unrelated Carrera Uxmal-Muna, already run Oct 4 2026). No cancellation/postponement evidence; confidence lowered from high to medium pending a cleaner re-check.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found; could not independently confirm via search."
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: no confirmed change; see sourceNotes for a registration-page inconsistency to recheck next sweep."
     },
     {
       "id": "sendero-de-las-animas-merida-2026",
@@ -8221,10 +8233,10 @@
       "confidence": "medium",
       "notes": "Day of the Dead night run: 8K and a 4K walk. 420 pesos.",
       "notesEs": "Carrera nocturna de Día de Muertos: 8K y caminata de 4K. 420 pesos.",
-      "sourceNotes": "Tri Tour gives only 'Hacienda San Ignacio, Yucatán'; municipality unconfirmed (city set to Mérida from the event name — check before pinning). 2026-10-23 race-watch: direct fetch of tritour.org/dashport.run blocked (DNS/network policy this run); search found no 2026 edition or tritour listing by this exact name — only an unrelated 2024 Xcunyá event and Mérida's unrelated Paseo/Festival de las Ánimas Día de Muertos events. No cancellation/postponement evidence.",
+      "sourceNotes": "Tri Tour gives only 'Hacienda San Ignacio, Yucatán'; municipality unconfirmed (city set to Mérida from the event name — check before pinning). 2026-10-23 race-watch: direct fetch of tritour.org/dashport.run blocked (DNS/network policy this run); search found no 2026 edition or tritour listing by this exact name — only an unrelated 2024 Xcunyá event and Mérida's unrelated Paseo/Festival de las Ánimas Día de Muertos events. No cancellation/postponement evidence. 2026-10-26 race-watch: tritour.org reconfirms '31 de octubre de 2026, a las 18:30 h', venue Hacienda San Ignacio, Yucatán (municipality still not named on the page — existing caveat stands). A separately, well-covered 2026 Mérida 'Festival de las Ánimas' (Oct 24-Nov 2) and its 'Paseo de las Ánimas' (Oct 30) do not mention this race, so it appears to be a separate, smaller event — nothing contradicts it. No cancellation/postponement found.",
       "status": "ok",
-      "lastVerified": "2026-10-23",
-      "statusNote": "Verified 2026-10-23: no changes found; could not independently confirm via search."
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: no change found; organizer page reconfirms date, time and venue."
     },
     {
       "id": "carrera-megamedia-dunosusa-progreso-2026",
@@ -8663,7 +8675,10 @@
       "confidence": "high",
       "notes": "Benefits the Asociación Mexicana de Diabetes in Nuevo León. Entry $350. Packet pickup on 31 October at the Monterrey Palacio Municipal.",
       "notesEs": "A beneficio de la Asociación Mexicana de Diabetes en Nuevo León. Inscripción $350. Entrega de paquetes el 31 de octubre en los bajos del Palacio Municipal de Monterrey.",
-      "sourceNotes": "Runera detail (inscripciones abiertas, Trotime link) + tritour event page agree; also on Asociación de Atletismo NL posts and running.life."
+      "sourceNotes": "Runera detail (inscripciones abiertas, Trotime link) + tritour event page agree; also on Asociación de Atletismo NL posts and running.life. 2026-10-26 race-watch: runera.mx reconfirms Nov 1 2026 07:30, Plaza Zaragoza, Monterrey, registration open. A secondary article (Players of Life) describes a 'Sunday Nov 2' 7:00 AM edition, but Nov 2 2026 is a Monday, so that almost certainly describes the 2025 edition, not this one — not treated as a contradiction. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date, time and venue unchanged; registration open."
     },
     {
       "id": "2-carrera-unidos-2026",
@@ -8992,7 +9007,10 @@
       "confidence": "high",
       "notes": "5K and 10K through Chapalita. $500 MXN in the final stage. Capped at 3,000 runners.",
       "notesEs": "5K y 10K por Chapalita. $500 MXN en la etapa final. Cupo de 3,000 corredores.",
-      "sourceNotes": "TIM3 page: registration close conflicts — convocatoria says Oct 29, event card says Oct 30 13:00. Tritour agrees on date."
+      "sourceNotes": "TIM3 page: registration close conflicts — convocatoria says Oct 29, event card says Oct 30 13:00. Tritour agrees on date. 2026-10-26 race-watch: tim3.com.mx reconfirms Nov 1 2026 06:30, Av. Guadalupe 1119 Chapalita, Zapopan, registration open ($500 MXN current stage, cap 3,000). Registration-close date conflict (Oct 29 convocatoria text vs Oct 30 13:00 event widget) persists unresolved by the page itself; not treated as a change. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date, time and venue unchanged; registration open."
     },
     {
       "id": "carrera-mtq-run-2026-25-aniversario",
@@ -9014,7 +9032,10 @@
       "confidence": "high",
       "notes": "5K on the Los Colomos trails, 25th-anniversary edition. $319 MXN. Registration until Friday 30 October.",
       "notesEs": "5K por los senderos de Los Colomos, edición de 25 aniversario. $319 MXN. Inscripciones hasta el viernes 30 de octubre.",
-      "sourceNotes": "TIM3 page names the entrance both 'El Chaco' and 'Chalco'. Tritour agrees on date."
+      "sourceNotes": "TIM3 page names the entrance both 'El Chaco' and 'Chalco'. Tritour agrees on date. 2026-10-26 race-watch: tim3.com.mx reconfirms Nov 1 2026 08:00, Parque Los Colomos 'entrada El Chaco', registration open ($319 MXN, closes Oct 30 13:00). Entrance-name ambiguity ('El Chaco' vs 'Chalco' elsewhere on the page) persists unresolved. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date, time and venue unchanged; registration open."
     },
     {
       "id": "x-maraton-por-relevos-guadalajara-2026",
@@ -9387,7 +9408,10 @@
       "confidence": "high",
       "notes": "Afternoon run with 3K, 5K and 10K options. Registration is $275 per distance.",
       "notesEs": "Carrera vespertina con opciones de 3K, 5K y 10K. La inscripción cuesta $275 por distancia.",
-      "sourceNotes": "Chronostart page gives venue 'San Francisco Acatepec'. running.life labels it San Luis Tehuiloyocan; both are in San Andrés Cholula municipality (tritour: San Andrés Cholula)."
+      "sourceNotes": "Chronostart page gives venue 'San Francisco Acatepec'. running.life labels it San Luis Tehuiloyocan; both are in San Andrés Cholula municipality (tritour: San Andrés Cholula). 2026-10-26 race-watch: chronostart.com.mx reconfirms Oct 31 2026 17:30, San Francisco Acatepec, registration open, $275 per category (3K/5K/10K). Page does not name San Andrés Cholula explicitly but does not contradict it. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date, time and venue unchanged; registration open."
     },
     {
       "id": "social-run-sportico-puebla-2026",
@@ -9825,12 +9849,15 @@
       "state": "Coahuila",
       "venue": "Ruta Recreativa, Av. Universidad esquina Blvd. Venustiano Carranza",
       "organizer": "Go Time",
-      "signupUrl": null,
+      "signupUrl": "https://boletopolis.com/es/evento/41131/funcion/275467/boletos",
       "sourceUrl": "https://www.tritour.org/eventos/viesca-5k-55-aniversario-2026",
       "confidence": "medium",
       "notes": "55th anniversary of Secundaria General Andrés S. Viesca. 350 MXN. Dry-Fit shirt, medal and recovery kit.",
       "notesEs": "Por el 55 aniversario de la Secundaria General Andrés S. Viesca. Cuota de 350 MXN. Incluye playera Dry-Fit, medalla y kit de recuperación.",
-      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page gotime.mx/viesca5k has no text details; Boletopolis link not captured."
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Go Time page gotime.mx/viesca5k has no text details; Boletopolis link not captured. 2026-10-26 race-watch: tritour.org reconfirms Nov 1 2026 08:00, Ruta Recreativa Av. Universidad, $350 MXN. Found a live Boletópolis registration page (https://boletopolis.com/es/evento/41131/funcion/275467/boletos) not previously captured — set as signupUrl, replacing the null; the organizer's own gotime.mx/viesca5k page remains poster-image-only. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: found a working registration link; date, time and venue unchanged."
     },
     {
       "id": "carrera-80-aniversario-fcq-uadec-2026",
@@ -10068,7 +10095,10 @@
       "confidence": "low",
       "notes": "Obstacle course race: Sprint (5 km, 20 obstacles) and Super (10 km, 25 obstacles), plus a Spartan Kids race for ages 4 to 13. Check-in from 7:00.",
       "notesEs": "Carrera de obstáculos: Sprint (5 km, 20 obstáculos) y Super (10 km, 25 obstáculos), más carrera Spartan Kids para edades de 4 a 13 años. Registro desde las 7:00.",
-      "sourceNotes": "Fetched only the haid.app aggregator listing; the official spartan.com 2026 page was not found (mx.spartan.com/es/races/tangamanga2026 is 404; a search surfaced the 2026 date only on 'nearby events' lists of other Spartan pages). The 565 MXN start price matches Spartan's Kids price on the Texcoco 2026 page, so it is likely the Kids price; price omitted from notes. Distances in the tag list are the Sprint/Super lengths; the Kids race is not tagged separately. signupUrl null: haid external link is not a confirmed official registration."
+      "sourceNotes": "Fetched only the haid.app aggregator listing; the official spartan.com 2026 page was not found (mx.spartan.com/es/races/tangamanga2026 is 404; a search surfaced the 2026 date only on 'nearby events' lists of other Spartan pages). The 565 MXN start price matches Spartan's Kids price on the Texcoco 2026 page, so it is likely the Kids price; price omitted from notes. Distances in the tag list are the Sprint/Super lengths; the Kids race is not tagged separately. signupUrl null: haid external link is not a confirmed official registration. 2026-10-26 race-watch: haid.app listing reconfirms Oct 31 2026 08:00, Parque Tangamanga, Sprint/Super/Kids formats, from $565 MXN. Still could not find an official mx.spartan.com/spartan.com page for this specific race — only aggregator/tourism listings, and a Spartan page snapshot listing it among 'nearby events' with no cancellation flag. signupUrl kept null (no confirmed official registration found); confidence kept at low. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: no change found; could not find an official Spartan registration page for this specific date."
     },
     {
       "id": "11va-carrera-cumbres-2026",
@@ -10096,12 +10126,15 @@
       "confidence": "high",
       "notes": "Kids start at 7:00 and adults at 7:25. Entry from $250 MXN.",
       "notesEs": "Los niños salen a las 7:00 y los adultos a las 7:25. Inscripción desde $250 MXN.",
-      "sourceNotes": "Asdeporte listing header shows 13:00 but event details say 7:00 kids / 7:25 adults; used details. Tritour calendar agrees on date. Maps coords 21.0791803,-86.8792049. Organizer not named on page.",
+      "sourceNotes": "Asdeporte listing header shows 13:00 but event details say 7:00 kids / 7:25 adults; used details. Tritour calendar agrees on date. Maps coords 21.0791803,-86.8792049. Organizer not named on page. 2026-10-26 race-watch: asdeporte.com reconfirms Nov 1 2026, Residencial ALTAI, distances 400m/1K/3K/6K/9K, registration open from $250 MXN. Kids 7:00 / adults 7:25 reconfirmed (the page's displayed '13:00' is a listing-template artifact, consistent with prior sourceNotes). No cancellation/postponement news found.",
       "start": {
         "lat": 21.0791803,
         "lng": -86.8792049,
         "approx": true
-      }
+      },
+      "status": "ok",
+      "lastVerified": "2026-10-26",
+      "statusNote": "Verified 2026-10-26: organizer page confirms date and venue unchanged; registration open."
     },
     {
       "id": "we-ru-sirenis-2026",
