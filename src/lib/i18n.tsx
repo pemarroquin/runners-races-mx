@@ -60,8 +60,8 @@ const translations = {
       pause: 'Pausar',
       resume: 'Reanudar',
       paused: 'En pausa',
-      checkpointFound: 'Tienes una sesión sin terminar ({{distance}}). ¿La continúas, la guardas como está o la descartas?',
-      checkpointStale: 'Tienes una sesión sin terminar ({{distance}}). ¿La guardas como está o la descartas?',
+      checkpointFound: 'Tienes una sesión sin terminar (%{distance}). ¿La continúas, la guardas como está o la descartas?',
+      checkpointStale: 'Tienes una sesión sin terminar (%{distance}). ¿La guardas como está o la descartas?',
       checkpointSave: 'Guardar como está',
       pocketHint: 'Ahorro de batería: el mapa no se dibuja. Toca para verlo.',
       close: 'Cerrar',
@@ -108,7 +108,7 @@ const translations = {
         'Llevas un minuto moviéndote más rápido de lo que se puede correr, así que terminamos la sesión. No guardamos nada: el territorio solo cuenta si lo recorres a pie.',
       paceGuardDismiss: 'Entendido',
       paceGuardKept:
-        'Paramos la sesión en {{distance}}: por un minuto te moviste más rápido de lo que se puede correr. Lo que corriste antes quedó guardado; ese tramo no cuenta.',
+        'Paramos la sesión en %{distance}: por un minuto te moviste más rápido de lo que se puede correr. Lo que corriste antes quedó guardado; ese tramo no cuenta.',
       // Distance-gap instrumentation on the finished-run summary — see
       // tracking.ts's gapCount/gapDurationMs/gapChordM/creditedGapM.
       // %{duration}/%{credited}/%{uncredited} are pre-formatted strings from
@@ -507,6 +507,9 @@ const translations = {
       zoneOffHint:
         'Sin zona privada, el inicio y el final exactos de tus sesiones se suben y cualquier persona que use la app puede verlos. Ponla donde vives.',
       zoneFailed: 'No pudimos guardar tu zona. Revisa el permiso de ubicación e inténtalo otra vez.',
+      zoneImprecise: 'La señal de GPS es muy imprecisa para fijar tu casa. Inténtalo junto a una ventana o afuera.',
+      zoneDistance: 'Tu zona está a %{distance} de donde estás ahora.',
+      zoneHere: 'Tu zona está donde estás ahora.',
       // Settings › Dónde has corrido. El registro personal permanente — el
       // contrapeso a un mapa que bajo conquista muestra solo lo que tienes
       // AHORA. Aquí no te lo puede quitar nadie.
@@ -686,8 +689,8 @@ const translations = {
       pause: 'Pause',
       resume: 'Resume',
       paused: 'Paused',
-      checkpointFound: 'You have an unfinished session ({{distance}}). Continue it, save it as it is, or discard it?',
-      checkpointStale: 'You have an unfinished session ({{distance}}). Save it as it is, or discard it?',
+      checkpointFound: 'You have an unfinished session (%{distance}). Continue it, save it as it is, or discard it?',
+      checkpointStale: 'You have an unfinished session (%{distance}). Save it as it is, or discard it?',
       checkpointSave: 'Save as it is',
       pocketHint: 'Battery saver: the map is not drawing. Tap to show it.',
       close: 'Close',
@@ -720,7 +723,7 @@ const translations = {
         'You’ve been moving faster than a run for the last minute, so we ended the session. Nothing was saved — territory only counts when you cover it on foot.',
       paceGuardDismiss: 'Got it',
       paceGuardKept:
-        'We stopped the session at {{distance}}: for a minute you moved faster than anyone runs. What you ran before is saved; that stretch does not count.',
+        'We stopped the session at %{distance}: for a minute you moved faster than anyone runs. What you ran before is saved; that stretch does not count.',
       // Split credited/uncredited — see the ES entry's comment.
       gapNotice: {
         one: '1 background interruption (%{duration}) — ~%{credited} counted as a straight line, ~%{uncredited} left unrecorded.',
@@ -1031,6 +1034,9 @@ const translations = {
       zoneOffHint:
         'Without a privacy zone, the exact start and end of your sessions are uploaded and visible to anyone using the app. Set it where you live.',
       zoneFailed: "We couldn\u2019t save your zone. Check location permission and try again.",
+      zoneImprecise: 'GPS is too imprecise to pin your home right now. Try by a window or outside.',
+      zoneDistance: 'Your zone is %{distance} from where you are now.',
+      zoneHere: 'Your zone is where you are now.',
       historyTitle: "Places I've been",
       historyNavHint: 'What you hold now, over everywhere you have run. Tap a session for its stats.',
       placesHeld: {

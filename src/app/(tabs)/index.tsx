@@ -63,7 +63,8 @@ import { buildFence, hullFence, type FenceResult } from '@/lib/territory';
 import { fetchMyFences, reclaimUnclaimedRuns, recordMissingGround, retryClaim, uploadRun, type RunUpload, type TileClaimResult } from '@/lib/territory-sync';
 import { flushClaims, listClaims } from '@/lib/claim-queue';
 import { DEFAULT_TILE_RES, pathToTiles } from '@/lib/tiles';
-import { formatDistance, formatDuration, useRunTracker } from '@/lib/tracking';
+import { formatDistance, formatDuration, useRunTracker, type TrackPoint } from '@/lib/tracking';
+import { splitLegs } from '@/lib/gap-policy';
 import { enqueueRun, flushQueue, listQueued, queuedCount, removeQueued } from '@/lib/upload-queue';
 import { useCurrentLocation } from '@/lib/use-current-location';
 import { usePocketScreen } from '@/lib/use-pocket-screen';
@@ -528,10 +529,19 @@ export default function TrackScreen() {
       // 300 m+ whose outline can't be built gets its convex hull instead —
       // legacy fence only; tiles are the territory. Under 300 m the honest
       // "too short" answer stands.
+      //
+      // From the run's LONGEST leg, not every point: legs are the stretches
+      // between gaps nothing bridges (splitLegs), and one outline across
+      // them invents ground. A run resumed after a dead battery 2.4 km away
+      // (2026-10-25) got a 3.1 km² triangle from the strip to that one point.
+      const fenceLeg = splitLegs(result.points).reduce<TrackPoint[]>(
+        (best, leg) => (leg.length > best.length ? leg : best),
+        [],
+      );
       const builtFence =
-        result.points.length > 0
-          ? (buildFence(result.points) ??
-            (tracker.distanceM >= 300 ? hullFence(result.points.map((p) => [p.lng, p.lat])) : null))
+        fenceLeg.length > 0
+          ? (buildFence(fenceLeg) ??
+            (tracker.distanceM >= 300 ? hullFence(fenceLeg.map((p) => [p.lng, p.lat])) : null))
           : null;
       setFence(builtFence);
       // This run's masked-path cells — the same set the upload actually
@@ -557,12 +567,23 @@ export default function TrackScreen() {
       // degenerate input rather than returning empty. Losing the enclosure
       // costs the runner the interior of one loop; losing the rest of this
       // effect costs them the diagnostic that explains why.
+      //
+      // And ONLY when masking actually trimmed something. The drop exists
+      // because the enclosure is computed from the UNMASKED path: near a
+      // trimmed end, enclosed cells would outline the very path masking
+      // hid. When nothing was trimmed, every cell of the path is already on
+      // the map and uploaded, so the inside of a loop near the zone reveals
+      // nothing the route doesn't — and dropping it anyway only took ground
+      // away. 2026-10-25: a zone pinned on a running route (see
+      // profile/location.tsx) emptied a 300 m circle out of a 3-lap circuit
+      // that started and ended far from it; the server, which never had
+      // this filter, held all of it.
       try {
         setSessionEnclosed(
           dropCellsInsideZone(
             enclosedCells(pathToTiles(tracker.points).cells, DEFAULT_TILE_RES),
-            getHomeZone()?.home ?? null,
-            result.cutM,
+            result.masked ? (getHomeZone()?.home ?? null) : null,
+            result.masked ? result.cutM : null,
           ),
         );
       } catch {
