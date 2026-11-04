@@ -102,7 +102,15 @@ async function main() {
       continue;
     }
     const res = await fetch(`${URL_BASE}/rest/v1/${table}`, { method: 'POST', headers, body: '{}' });
-    if (res.status === 404) continue; // not deployed to this project
+    if (res.status === 404) {
+      // An extension table that 404s is the FIXED state: PostGIS lives in
+      // `extensions` since 20261104120000, which the API does not serve.
+      // Say so, so a pass here is visible rather than a silent skip.
+      if (EXTENSION_TABLES.has(table)) {
+        console.log(`  ${table.padEnd(22)} ${'404'.padStart(6)}  not in the API (extension moved out of public)`);
+      }
+      continue; // not deployed to this project
+    }
     let code = '?';
     try {
       code = (await res.json()).code ?? '?';

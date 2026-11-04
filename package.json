@@ -87,7 +87,8 @@
     "measure-laps": "vite-node --config vitest.config.ts scripts/measure-laps.ts",
     "extract-park-paths": "vite-node --config vitest.config.ts scripts/extract-park-paths.ts",
     "extract-subdivisions": "vite-node --config vitest.config.ts scripts/extract-subdivisions.ts",
-    "verify-rls": "node scripts/verify-rls.mjs"
+    "verify-rls": "node scripts/verify-rls.mjs",
+    "verify-postgis-move": "node scripts/verify-postgis-move.mjs"
   },
   "private": true,
   "overrides": {
