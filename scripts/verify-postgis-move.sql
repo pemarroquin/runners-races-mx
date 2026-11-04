@@ -60,9 +60,7 @@ begin
   end;
 
   -- C2b: a fence far too big for its path (grown by ~5 km) must be
-  -- refused by runs_validate_fence (isoperimetric guard, 23514). NOTE: the
-  -- guard checks AREA only, not location: a fence moved away from its path
-  -- is accepted, before and after the move (pre-existing, 2026-11-03).
+  -- refused by runs_validate_fence (isoperimetric guard, 23514).
   begin
     insert into public.runs (user_id, region, started_at, ended_at, distance_m, duration_s, raw_path, fence, area_m2, laps)
     values (uid, src.region, src.started_at + interval '2 day', src.ended_at + interval '2 day', src.distance_m,
@@ -70,6 +68,19 @@ begin
     res := res || jsonb_build_object('c2b_bad_fence', jsonb_build_object('ok', true));
   exception when others then
     res := res || jsonb_build_object('c2b_bad_fence', jsonb_build_object('ok', false, 'err', sqlstate || ' ' || sqlerrm));
+  end;
+
+  -- C2c: the SAME fence moved ~5 km off its own path. Accepted until
+  -- 20261104130000_fence_must_follow_path (the area guard never checked
+  -- location); refused (23514) after it. `compare` does not compare this
+  -- key across the move; `assert-fence-guard` checks it after the fix.
+  begin
+    insert into public.runs (user_id, region, started_at, ended_at, distance_m, duration_s, raw_path, fence, area_m2, laps)
+    values (uid, src.region, src.started_at + interval '4 day', src.ended_at + interval '4 day', src.distance_m,
+            src.duration_s, src.raw_path, st_translate(src.fence, 0.05, 0.05), src.area_m2, src.laps);
+    res := res || jsonb_build_object('c2c_moved_fence', jsonb_build_object('ok', true));
+  exception when others then
+    res := res || jsonb_build_object('c2c_moved_fence', jsonb_build_object('ok', false, 'err', sqlstate || ' ' || sqlerrm));
   end;
 
   -- C3: the same path run 4x faster must trip the speed guard.
