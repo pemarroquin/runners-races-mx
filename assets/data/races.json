@@ -3661,7 +3661,25 @@
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
       "confidence": "high",
       "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL.",
-      "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL."
+      "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387277669_Barbie-QRO-26-ruta-3k.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387386585_Barbie-QRO-26-ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387429200_Barbie-QRO-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        }
+      ],
+      "sourceNotes": "Course maps from https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/ruta (uploaded 2026-10-30), added 2026-11-04 by fetch-course-maps."
     },
     {
       "id": "kilometros-por-mexico-2026",
@@ -6226,7 +6244,7 @@
       "confidence": "high",
       "notes": "SpongeBob-themed family race. From $1,069.",
       "notesEs": "Carrera familiar de Bob Esponja. Desde $1,069.",
-      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. 2026-11-02 race-watch: asdeporte.com datos-del-evento reconfirms Nov 8 2026, Av. de los Compositores / Fuente Xochipilli, Bosque de Chapultepec 2ª Sección, CDMX, registration open. Page header time (12:30h) is a template placeholder; body's 6:30am (5K/10K) / 6:35am (3K) used, matching stored 06:30. No cancellation/postponement signal found.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. 2026-11-02 race-watch: asdeporte.com datos-del-evento reconfirms Nov 8 2026, Av. de los Compositores / Fuente Xochipilli, Bosque de Chapultepec 2ª Sección, CDMX, registration open. Page header time (12:30h) is a template placeholder; body's 6:30am (5K/10K) / 6:35am (3K) used, matching stored 06:30. No cancellation/postponement signal found. Course maps from https://www.asdeporte.com/evento/bob-esponja-cdmx-2026-yun/ruta (uploaded 2026-10-30), added 2026-11-04 by fetch-course-maps.",
       "start": {
         "lat": 19.41384113541878,
         "lng": -99.20066086088258,
@@ -6234,7 +6252,24 @@
       },
       "status": "ok",
       "lastVerified": "2026-11-02",
-      "statusNote": "Verified 2026-11-02: no change found."
+      "statusNote": "Verified 2026-11-02: no change found.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793325425044_Bob-CDMX-26-ruta-3k-oct-29.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793325451435_Bob-CDMX-26-ruta-5k-oct-29.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793325474275_Bob-CDMX-26-ruta-10k-oct-29.jpg",
+          "distance": "10K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "10-carrera-up-huellas-que-inspiran-2026",
@@ -6424,7 +6459,7 @@
       "confidence": "high",
       "notes": "Winter stop of the Circuito de las Estaciones. From $755; a virtual option is also available.",
       "notesEs": "Fecha de invierno del Circuito de las Estaciones. Desde $755; también hay opción virtual.",
-      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop). Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-10-12), added 2026-10-25 by fetch-course-maps.",
+      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop). Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-10-12), added 2026-10-25 by fetch-course-maps. Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-11-03), added 2026-11-04 by fetch-course-maps.",
       "courseMaps": [
         {
           "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843851621_Invierno-CDMX-26-ruta-5k.jpg",
@@ -6433,6 +6468,16 @@
         },
         {
           "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843884572_Invierno-CDMX-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793746163513_Invierno-CDMX-26-ruta-5k-B.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793746265785_Invierno-CDMX-26-ruta-10k-B.jpg",
           "distance": "10K",
           "kind": "route"
         }
@@ -9148,7 +9193,14 @@
       "confidence": "high",
       "notes": "Fourth edition of Gatorade's 15K. From $1,200 MXN.",
       "notesEs": "Cuarta edición del 15K de Gatorade. Desde $1,200 MXN.",
-      "sourceNotes": "Asdeporte header 12:30 (UTC artifact); body 6:30 a.m. Coords 20.6937747,-103.4161456. Header says city Guadalajara, venue address is Zapopan. Listed on tritour only (not runera)."
+      "sourceNotes": "Asdeporte header 12:30 (UTC artifact); body 6:30 a.m. Coords 20.6937747,-103.4161456. Header says city Guadalajara, venue address is Zapopan. Listed on tritour only (not runera). Course maps from https://www.asdeporte.com/evento/g15k-gatorade-guadalajara-2026-ksw/ruta (uploaded 2026-10-30), added 2026-11-04 by fetch-course-maps.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793327131606_G15K-Guadalajara-26-ruta.jpg",
+          "distance": "15K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "hello-kitty-and-friends-fun-run-guadalajara-2026",
