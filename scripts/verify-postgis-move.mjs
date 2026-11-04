@@ -4,6 +4,7 @@
 //   node scripts/verify-postgis-move.mjs snapshot <out.json>   # run checks on the LINKED project, save
 //   node scripts/verify-postgis-move.mjs compare <before.json> <after.json>
 //   node scripts/verify-postgis-move.mjs api                   # stranger checks via the publishable key
+//   node scripts/verify-postgis-move.mjs assert-fence-guard <after-fix.json>  # after 20261104130000
 //
 // HOW. scripts/verify-postgis-move.sql is one DO block that inserts test
 // runs AS A REAL RUNNER through the real triggers, then raises its results
@@ -74,6 +75,7 @@ function summarize(r) {
   console.log(`  runs ${r.runs_total}, fences ${r.runs_with_fence}, 4326 rows ${r.srid_4326_rows}`);
   console.log(`  C2 copy: ${JSON.stringify(r.c2_copy)}`);
   console.log(`  C2b oversize fence refused: ${r.c2b_bad_fence?.ok === false && /23514/.test(r.c2b_bad_fence.err)}`);
+  console.log(`  C2c moved fence refused: ${r.c2c_moved_fence?.ok === false && /off the recorded path/.test(r.c2c_moved_fence.err ?? '')}`);
   console.log(`  C3 fast run flagged: ${r.c3_fast?.flagged === true}`);
 }
 
@@ -129,11 +131,27 @@ async function api() {
   console.log('PASS: PostGIS is out of the API.');
 }
 
+// After 20261104130000_fence_must_follow_path: a fence moved off its own
+// path must be refused, and an honest copy still accepted.
+function assertFenceGuard(file) {
+  const r = JSON.parse(readFileSync(file, 'utf8'));
+  const fails = [];
+  if (!(r.c2c_moved_fence?.ok === false && /off the recorded path/.test(r.c2c_moved_fence.err ?? ''))) fails.push(`C2c: moved fence not refused: ${JSON.stringify(r.c2c_moved_fence)}`);
+  if (r.c2_copy?.ok !== true) fails.push(`C2: honest copy refused: ${JSON.stringify(r.c2_copy)}`);
+  if (!(r.c2b_bad_fence?.ok === false && /23514/.test(r.c2b_bad_fence.err ?? ''))) fails.push('C2b: oversize fence no longer refused');
+  if (fails.length) {
+    console.error('FAIL\n  ' + fails.join('\n  '));
+    process.exit(1);
+  }
+  console.log('PASS: moved fence refused, honest run accepted, area guard intact.');
+}
+
 const [cmd, x, y] = process.argv.slice(2);
 if (cmd === 'snapshot' && x) snapshot(x);
 else if (cmd === 'compare' && x && y) compare(x, y);
 else if (cmd === 'api') await api();
+else if (cmd === 'assert-fence-guard' && x) assertFenceGuard(x);
 else {
-  console.error('usage: snapshot <out.json> | compare <before.json> <after.json> | api');
+  console.error('usage: snapshot <out.json> | compare <before.json> <after.json> | api | assert-fence-guard <after-fix.json>');
   process.exit(2);
 }
