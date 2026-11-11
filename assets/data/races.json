@@ -3658,7 +3658,25 @@
       "sourceUrl": "https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/datos-del-evento",
       "confidence": "high",
       "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL.",
-      "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL."
+      "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL.",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387277669_Barbie-QRO-26-ruta-3k.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387386585_Barbie-QRO-26-ruta-5k.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793387429200_Barbie-QRO-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        }
+      ],
+      "sourceNotes": "Course maps from https://asdeporte.com/evento/barbie-run-quere-taro-2026-sx5/ruta (uploaded 2026-10-30), added 2026-11-11 by fetch-course-maps."
     },
     {
       "id": "kilometros-por-mexico-2026",
@@ -6426,7 +6444,7 @@
       "confidence": "high",
       "notes": "Winter stop of the Circuito de las Estaciones. From $755; a virtual option is also available.",
       "notesEs": "Fecha de invierno del Circuito de las Estaciones. Desde $755; también hay opción virtual.",
-      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop). Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-10-12), added 2026-10-25 by fetch-course-maps.",
+      "sourceNotes": "Time conflict: runera.mx 06:30 vs Asdeporte convocatoria 6:15 — used Asdeporte. Same series as existing estaciones-otono-cdmx-2026 (different stop). Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-10-12), added 2026-10-25 by fetch-course-maps. Course maps from https://www.asdeporte.com/evento/invierno-cdmx-2026-ug4/ruta (uploaded 2026-11-03), added 2026-11-11 by fetch-course-maps.",
       "courseMaps": [
         {
           "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843851621_Invierno-CDMX-26-ruta-5k.jpg",
@@ -6435,6 +6453,16 @@
         },
         {
           "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1791843884572_Invierno-CDMX-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793746163513_Invierno-CDMX-26-ruta-5k-B.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793746265785_Invierno-CDMX-26-ruta-10k-B.jpg",
           "distance": "10K",
           "kind": "route"
         }
@@ -6464,7 +6492,7 @@
       "confidence": "high",
       "notes": "Capped at 4,000 runners. From $400.",
       "notesEs": "Cupo limitado a 4,000 participantes. Desde $400.",
-      "sourceNotes": "Asdeporte + runera.mx agree. Course maps from https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/ruta (uploaded 2026-10-20), added 2026-10-25 by fetch-course-maps.",
+      "sourceNotes": "Asdeporte + runera.mx agree. Course maps from https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/ruta (uploaded 2026-10-20), added 2026-10-25 by fetch-course-maps. Course maps from https://www.asdeporte.com/evento/carrera-uvm-2026-oqv/ruta (uploaded 2026-11-06), added 2026-11-11 by fetch-course-maps.",
       "start": {
         "lat": 19.4243358,
         "lng": -99.1752954,
@@ -6483,6 +6511,21 @@
         },
         {
           "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1792523651310_UVM-26-ruta-10k.jpg",
+          "distance": "10K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793930275375_Carrera-UVM-CDMX-2026_Ruta-3k-B.jpg",
+          "distance": "3K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793930386842_Carrera-UVM-CDMX-2026_Ruta-5k-B.jpg",
+          "distance": "5K",
+          "kind": "route"
+        },
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/11/1793930444028_UVM-26-ruta-10k-B.jpg",
           "distance": "10K",
           "kind": "route"
         }
@@ -9166,9 +9209,16 @@
       "confidence": "high",
       "notes": "Fourth edition of Gatorade's 15K. From $1,200 MXN.",
       "notesEs": "Cuarta edición del 15K de Gatorade. Desde $1,200 MXN.",
-      "sourceNotes": "Asdeporte header 12:30 (UTC artifact); body 6:30 a.m. Coords 20.6937747,-103.4161456. Header says city Guadalajara, venue address is Zapopan. Listed on tritour only (not runera). | 2026-11-09 race-watch (first verification): reconfirms Nov 15 2026, Coliseo GNP Seguros, Zapopan; same header/body time split as before (12:30 header artifact / 06:30 body kept). Tried /evento/.../inscripcion as a dedicated signup URL but it did not render event content, so signupUrl stays as the datos-del-evento page with the working Inscribirme button. Targeted search found no cancellation/postponement for this Guadalajara edition (only an unrelated CDMX G15 date change in Aug 2026). | Race-watch 2026-11-09 (first verification): asdeporte datos-del-evento page confirms Nov 15 2026, \"Horario de arranque: 6:30 a.m.\", venue Coliseo GNP Seguros / Av. Patria 1251, Lomas del Valle, Zapopan — all match stored (header \"12:30 h\"/\"Guadalajara\" are the same known UTC-header/city-label artifacts seen on other asdeporte rows). The page's own \"Inscribirme\" button links to .../evento/g15k-gatorade-guadalajara-2026-ksw/inscripcion, a real registration page distinct from datos-del-evento — signupUrl corrected from a duplicate of sourceUrl to that actual inscripcion link. No cancellation/postponement signal.",
+      "sourceNotes": "Asdeporte header 12:30 (UTC artifact); body 6:30 a.m. Coords 20.6937747,-103.4161456. Header says city Guadalajara, venue address is Zapopan. Listed on tritour only (not runera). | 2026-11-09 race-watch (first verification): reconfirms Nov 15 2026, Coliseo GNP Seguros, Zapopan; same header/body time split as before (12:30 header artifact / 06:30 body kept). Tried /evento/.../inscripcion as a dedicated signup URL but it did not render event content, so signupUrl stays as the datos-del-evento page with the working Inscribirme button. Targeted search found no cancellation/postponement for this Guadalajara edition (only an unrelated CDMX G15 date change in Aug 2026). | Race-watch 2026-11-09 (first verification): asdeporte datos-del-evento page confirms Nov 15 2026, \"Horario de arranque: 6:30 a.m.\", venue Coliseo GNP Seguros / Av. Patria 1251, Lomas del Valle, Zapopan — all match stored (header \"12:30 h\"/\"Guadalajara\" are the same known UTC-header/city-label artifacts seen on other asdeporte rows). The page's own \"Inscribirme\" button links to .../evento/g15k-gatorade-guadalajara-2026-ksw/inscripcion, a real registration page distinct from datos-del-evento — signupUrl corrected from a duplicate of sourceUrl to that actual inscripcion link. No cancellation/postponement signal. Course maps from https://www.asdeporte.com/evento/g15k-gatorade-guadalajara-2026-ksw/ruta (uploaded 2026-10-30), added 2026-11-11 by fetch-course-maps.",
       "status": "ok",
-      "lastVerified": "2026-11-09"
+      "lastVerified": "2026-11-09",
+      "courseMaps": [
+        {
+          "url": "https://d3cnkhyiyh0ve2.cloudfront.net/upload/2026/10/1793327131606_G15K-Guadalajara-26-ruta.jpg",
+          "distance": "15K",
+          "kind": "route"
+        }
+      ]
     },
     {
       "id": "hello-kitty-and-friends-fun-run-guadalajara-2026",
