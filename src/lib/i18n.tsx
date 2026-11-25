@@ -621,7 +621,7 @@ const translations = {
       collectedReminders:
         'Recordatorios: si los activas, tu teléfono programa las notificaciones localmente. No usamos notificaciones push ni servidores de mensajería — nada sale de tu dispositivo, y al desactivarlos se cancelan todas.',
       collectedTerritory:
-        'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación.',
+        'Territorio: cuando grabas una carrera en la pestaña Correr, el recorrido GPS y el área que encierra sí se guardan en nuestro servidor (Supabase). Esto es necesario para que el juego funcione: sin datos compartidos no hay tabla de posiciones ni territorios que se traslapen. Solo se guarda lo que grabas — abrir la app o ver carreras nunca envía tu ubicación. Con cada sesión también se guardan cifras técnicas sin ubicación: cuántas veces la app quedó en segundo plano, cuánto tiempo y qué distancia se perdió.',
       collectedQueue:
         'Sesiones pendientes: si falla la subida (sin señal), guardamos el recorrido en este teléfono para no perderlo y lo subimos solo cuando vuelva la señal. Se borra en cuanto se sube, o si eliminas la carrera — cerrar la pantalla de resumen no la borra.',
       collectedCheckpoint:
@@ -1130,7 +1130,7 @@ const translations = {
       collectedReminders:
         'Reminders: if you turn them on, your phone schedules the notifications locally. We use no push notifications and no messaging servers — nothing leaves your device, and turning them off cancels all of them.',
       collectedTerritory:
-        'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location.',
+        'Territory: when you record a run on the Run tab, the GPS route and the area it encloses ARE saved to our server (Supabase). The game needs that to work — without shared data there is no leaderboard and no overlapping territory. Only what you record is stored; opening the app or browsing races never sends your location. Each session also stores technical numbers with no location in them: how often the app went to the background, for how long, and how much distance was missed.',
       collectedQueue:
         'Pending sessions: if an upload fails (no signal) we store the route on this phone so it is not lost, and upload it once signal returns. It is deleted as soon as it uploads, or if you delete the run — closing the summary screen does not delete it.',
       collectedCheckpoint:
