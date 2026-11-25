@@ -801,6 +801,12 @@ export default function TrackScreen() {
       // when the effect hasn't set it (or threw): an old queued entry with
       // no `lap` field at all uploads exactly like one explicitly opted out.
       lap: sessionLap ?? undefined,
+      gaps: {
+        count: tracker.gapCount,
+        durationMs: tracker.gapDurationMs,
+        chordM: tracker.gapChordM,
+        creditedM: tracker.creditedGapM,
+      },
     };
 
     const outcome = await uploadRun(payload);
@@ -897,7 +903,7 @@ export default function TrackScreen() {
         if (id) clearCheckpoint();
       }
     }
-  }, [fence, masked, sessionEnclosed, sessionLap, queuedId, runDistrict, tracker.distanceM, tracker.startedAt, tracker.endedAt]);
+  }, [fence, masked, sessionEnclosed, sessionLap, queuedId, runDistrict, tracker.distanceM, tracker.startedAt, tracker.endedAt, tracker.gapCount, tracker.gapDurationMs, tracker.gapChordM, tracker.creditedGapM]);
 
   // Task 1 — fire save() itself, exactly once, the moment the finished run
   // has everything save() needs (fence + masked path). Gated on the REF, not

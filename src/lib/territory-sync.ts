@@ -118,6 +118,19 @@ export interface RunUpload {
      *  has none, and uploads as 0. */
     laps?: number;
   };
+  /**
+   * The recorder's backgrounding-gap counters (tracking.ts's gapCount,
+   * gapDurationMs, gapChordM, creditedGapM), so they can be reconciled with
+   * the tile builder's bridgesSkippedDistance on real runs. Counts and
+   * lengths only: no coordinates. Optional: an entry queued by an older
+   * build has none, and uploads NULLs (unknown, not zero).
+   */
+  gaps?: {
+    count: number;
+    durationMs: number;
+    chordM: number;
+    creditedM: number;
+  };
 }
 
 /**
@@ -459,17 +472,32 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // bound (laps.ts, lapsForUpload). The column defaults to 0, so an
     // ordinary run never names it.
     const laps = lapsForUpload(run.lap, run.distanceM);
-    const insertRun = (withLaps: boolean) =>
+    // Computed once, here, so the run row can carry the tile builder's gap
+    // counters; the claim below reuses the same cells.
+    const tilePath = pathToTiles(run.points);
+    const extras: Record<string, unknown> = {};
+    if (laps > 0) extras.laps = laps;
+    if (run.gaps) {
+      extras.gap_count = Math.round(run.gaps.count);
+      extras.gap_duration_ms = Math.round(run.gaps.durationMs);
+      extras.gap_chord_m = Math.round(run.gaps.chordM);
+      extras.credited_gap_m = Math.round(run.gaps.creditedM);
+      extras.bridges_skipped_distance = tilePath.bridgesSkippedDistance ?? null;
+      extras.bridges_skipped_speed = tilePath.bridgesSkippedSpeed ?? null;
+    }
+    const hasExtras = Object.keys(extras).length > 0;
+    const insertRun = (withExtras: boolean) =>
       supabase
         .from('runs')
-        .insert(withLaps ? { ...row, laps } : row)
+        .insert(withExtras ? { ...row, ...extras } : row)
         .select('id')
         .single();
-    let { data, error } = await insertRun(laps > 0);
-    // Laps are a tiebreaker; the run is the only copy of a session. If the
-    // insert with laps is refused for any reason, save the run without them
-    // rather than leave it failing in the retry queue until it is abandoned.
-    if (error && laps > 0) ({ data, error } = await insertRun(false));
+    let { data, error } = await insertRun(hasExtras);
+    // Laps are a tiebreaker and the gap counters are instrumentation; the run
+    // is the only copy of a session. If the insert with them is refused for
+    // any reason (e.g. the gap-counter migration isn't applied yet), save
+    // the run without them rather than leave it failing in the retry queue.
+    if (error && hasExtras) ({ data, error } = await insertRun(false));
 
     if (error || !data) return { ok: false, reason: 'network' };
 
@@ -483,7 +511,7 @@ export async function uploadRun(run: RunUpload): Promise<SyncOutcome> {
     // (still-written) fence column above — privacy-zone trimming applies to
     // ground claimed exactly as it applies to ground enclosed. See tiles.ts
     // §3 for why this isn't a naive per-fix conversion.
-    const cells = pathToTiles(run.points).cells;
+    const cells = tilePath.cells;
     const cellSet = new Set(cells);
 
     // Union-based enclosure: a runner who completes the 4th side of a block
