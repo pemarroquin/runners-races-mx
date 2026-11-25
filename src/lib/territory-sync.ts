@@ -835,13 +835,23 @@ export function isTimedPath(points: readonly RoutePoint[]): points is TimedPoint
  */
 export async function fetchMyFences(): Promise<FencesOutcome> {
   return withSession<{ fences: MyFence[]; skipped: number }>(async (session) => {
-    const { data, error } = await supabase
-      .from('runs')
-      .select('id, started_at, distance_m, area_m2, duration_s, fence, raw_path, flagged, flag_reason')
-      .eq('user_id', session.user.id)
-      .order('started_at', { ascending: false });
-
-    if (error || !data) return { ok: false, reason: 'network' };
+    // PAGED: PostgREST caps a response at 1000 rows, so an unpaged read
+    // silently drops a heavy runner's oldest runs. `id` breaks ties on
+    // started_at so offset pages can't skip or repeat a row.
+    const PAGE = 1000;
+    const data = [];
+    for (let offset = 0; ; offset += PAGE) {
+      const { data: page, error } = await supabase
+        .from('runs')
+        .select('id, started_at, distance_m, area_m2, duration_s, fence, raw_path, flagged, flag_reason')
+        .eq('user_id', session.user.id)
+        .order('started_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(offset, offset + PAGE - 1);
+      if (error || !page) return { ok: false, reason: 'network' };
+      data.push(...page);
+      if (page.length < PAGE) break;
+    }
 
     const fences: MyFence[] = [];
     let skipped = 0;
