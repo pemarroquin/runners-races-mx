@@ -9638,7 +9638,7 @@
       "distanceTags": [
         "10K"
       ],
-      "city": "Guadalajara",
+      "city": "Zapopan",
       "state": "Jalisco",
       "venue": "Calle Misión San Lorenzo, Zapopan, Jalisco",
       "organizer": "Hub Sports",
@@ -9648,7 +9648,7 @@
       "confidence": "medium",
       "notes": "New 10K in the adidas Splits series, presented by Samsung. $780 MXN. Capped at 4,500 runners. Kit pickup on Saturday 28 November at PALCCO, Zapopan.",
       "notesEs": "Nuevo 10K de la serie adidas Splits, presentado por Samsung. $780 MXN. Cupo de 4,500 corredores. Entrega de kits el sábado 28 de noviembre en PALCCO, Zapopan.",
-      "sourceNotes": "Official Hub Sports page + runera say Sunday 2026-11-29; tritour.org calendar and Feb 2026 Crónica press (launch calendar) say Dec 6 — official page wins, recorded here. Start/finish 'por confirmar'. Registration 'INSCRIPCIONES ABIERTAS'. | Re-checked 2026-11-23: hubsports.mx's own event page now gives the start/finish street as Calle Misión San Lorenzo, Zapopan (no exact number/route map posted yet) — venue field updated. The Nov 29 vs Dec 6 date conflict persists and has grown: running.life, playersoflife, and a HubSports PDF passport ('último circuito del año... en el mes de diciembre') all say Dec 6, while hubsports.mx's own live event page still clearly states Nov 29. Kept Nov 29 as the better-evidenced value (organizer's own current page beats aggregators/a PDF), confidence lowered to medium given the unresolved conflict. No cancellation notice found.",
+      "sourceNotes": "Official Hub Sports page + runera say Sunday 2026-11-29; tritour.org calendar and Feb 2026 Crónica press (launch calendar) say Dec 6 — official page wins, recorded here. Start/finish 'por confirmar'. Registration 'INSCRIPCIONES ABIERTAS'. | Re-checked 2026-11-23: hubsports.mx's own event page now gives the start/finish street as Calle Misión San Lorenzo, Zapopan (no exact number/route map posted yet) — venue field updated. The Nov 29 vs Dec 6 date conflict persists and has grown: running.life, playersoflife, and a HubSports PDF passport ('último circuito del año... en el mes de diciembre') all say Dec 6, while hubsports.mx's own live event page still clearly states Nov 29. Kept Nov 29 as the better-evidenced value (organizer's own current page beats aggregators/a PDF), confidence lowered to medium given the unresolved conflict. No cancellation notice found. | 2026-11-25 audit: city set to Zapopan to match the venue the 2026-11-23 sweep confirmed (Calle Misión San Lorenzo, Zapopan); the sweep had updated venue only.",
       "status": "ok",
       "lastVerified": "2026-11-23"
     },
