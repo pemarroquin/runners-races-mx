@@ -115,6 +115,10 @@ export interface Race {
   state: string;
   venue: string | null;
   organizer: string | null;
+  /** Ticketing/registration site, derived from the URLs by
+   *  scripts/derive-platform.mjs ("asdeporte", "tritour", ...). Optional:
+   *  an older cached payload has none. */
+  platform?: string | null;
   signupUrl: string | null;
   sourceUrl: string;
   confidence: Confidence;

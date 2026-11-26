@@ -23,6 +23,8 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
+import { platformOf } from './lib/platforms.mjs';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_PATH = 'assets/data/races.json';
 
@@ -104,6 +106,11 @@ for (const r of races) {
   if (typeof r.city !== 'string') err(id, 'city must be a string');
   if (typeof r.state !== 'string') err(id, 'state must be a string');
   if (!str(r.sourceUrl)) err(id, 'sourceUrl is required — no race without a fetched source');
+  // `platform` is derived from the URLs (scripts/lib/platforms.mjs), so a
+  // hand edit or a changed signupUrl that wasn't re-derived is caught here.
+  if (r.platform !== platformOf(r)) {
+    err(id, `platform is ${JSON.stringify(r.platform)} but its URLs say ${JSON.stringify(platformOf(r))} — run npm run derive-platform`);
+  }
   // A non-http(s) URL here is a live sink, not a typo: these values are handed
   // to a WebView, an iframe and Linking.openURL. `isValidRace` drops a race
   // with an unsafe sourceUrl and nulls an unsafe signupUrl at
