@@ -62,7 +62,9 @@ example
 /android
 
 # Claude Code worktree metadata (local tooling, never source)
-.claude/
+# Local Claude state stays out; the path-scoped rules CLAUDE.md points to are shared.
+.claude/*
+!.claude/rules/
 
 # Generated one-off data backfills (npm run convert-tile-res). Regenerable
 # from the live database at any time, and they embed a person's own location
