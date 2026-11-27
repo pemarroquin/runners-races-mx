@@ -1173,8 +1173,8 @@
         "lng": -100.2819848
       },
       "status": "ok",
-      "sourceNotes": "Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Grúa Portal/Parque Fundidora, 5K+10K, start times 07:00 (10K)/07:20 (5K) consistent with record. No cancellation/postponement signal found.",
-      "lastVerified": "2026-11-23"
+      "sourceNotes": "Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Grúa Portal/Parque Fundidora, 5K+10K, start times 07:00 (10K)/07:20 (5K) consistent with record. No cancellation/postponement signal found. | Re-checked 2026-11-27 via asdeporte.com: same date/venue/times; registration now sold out (capacity, not cancellation). No cancellation/postponement news found.",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "barbie-run-monterrey-2026",
@@ -2835,9 +2835,9 @@
         "30K",
         "Ultra"
       ],
-      "sourceNotes": "Official page says 27-28 Nov 2026 without per-distance start days; tritour lists 28 Nov, running.life 27-28 Nov. Date set to 28 Nov (tritour); which distances run on the 27th is unconfirmed. Signup is the Active Endurance link from the official page's Inscripciones button. (Earlier: Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published.) | Re-checked 2026-11-20. Organizer page (ultrailmexicoseries.com) confirms venue San Mateo Acatitlan, Valle de Bravo, matching record, and gives the overall event window as 27-28/NOVIEMBRE/2026 across four distances (49K Alba, 31K Monarca, 22K Capasuri, 10K Caudal); the day-by-distance schedule is only in an unreadable program image, so which exact day this record's distance runs on could not be confirmed beyond 'within the 27-28 Nov window'. No postponement/cancellation found via WebSearch. signupUrl (endurancecui.active.com) redirected through a go.active.com tracking link that returned no renderable content on repeated fetches -- unreachable via WebFetch, not evidence of a change, so left as-is. | Light re-check 2026-11-23: ultrailmexicoseries.com unchanged, still shows 27-28 Nov 2026 window, San Mateo Acatitlán venue, registration open. No new cancellation/postponement news.",
+      "sourceNotes": "Official page says 27-28 Nov 2026 without per-distance start days; tritour lists 28 Nov, running.life 27-28 Nov. Date set to 28 Nov (tritour); which distances run on the 27th is unconfirmed. Signup is the Active Endurance link from the official page's Inscripciones button. (Earlier: Announced 'PRÓXIMAMENTE' for 2026; date and distances not yet published.) | Re-checked 2026-11-20. Organizer page (ultrailmexicoseries.com) confirms venue San Mateo Acatitlan, Valle de Bravo, matching record, and gives the overall event window as 27-28/NOVIEMBRE/2026 across four distances (49K Alba, 31K Monarca, 22K Capasuri, 10K Caudal); the day-by-distance schedule is only in an unreadable program image, so which exact day this record's distance runs on could not be confirmed beyond 'within the 27-28 Nov window'. No postponement/cancellation found via WebSearch. signupUrl (endurancecui.active.com) redirected through a go.active.com tracking link that returned no renderable content on repeated fetches -- unreachable via WebFetch, not evidence of a change, so left as-is. | Light re-check 2026-11-23: ultrailmexicoseries.com unchanged, still shows 27-28 Nov 2026 window, San Mateo Acatitlán venue, registration open. No new cancellation/postponement news. | Re-checked 2026-11-27: unchanged, now sold out (capacity, not cancellation). No new cancellation/postponement news. signupUrl (active.com) still unreachable via fetch, as in prior checks — not evidence of change.",
       "notesEs": "Fin de semana de trail, 27 y 28 de noviembre. Cuatro distancias: Caudal 10K (350 m D+), Capasuri 22K (950 m D+), Monarca 29K (1,200 m D+) y Alba 49K (2,050 m D+). Lugares por orden de inscripción, sin lista de espera.",
-      "lastVerified": "2026-11-23",
+      "lastVerified": "2026-11-27",
       "status": "ok"
     },
     {
@@ -3174,7 +3174,7 @@
       "sourceNotes": "Previously conflicting sources gave Nov 15 / Nov 29 / Dec 6, so date/distances were left null. Resolved via web search 2026-09-14: multiple sources (42Cal race profile, general Puebla fall-marathon coverage) describe it as run on the last Sunday of November at the Zócalo, and Nov 29, 2026 is in fact the last Sunday of that month — the one candidate date consistent with the race's own stated pattern. Distances (42.195K/21K/10K/5K per 42Cal) still not confirmed on an official IMDP/organizer page (only a third-party profile), so distances/distanceTags are left as-is (TBD) rather than asserted from that single source. | Re-checked 2026-11-23: milenio.com (prior sourceUrl) now returns 403. grupoanimal.mx (2026-10-28) and riotimesonline.com independently confirm Sun Nov 29 2026, Zócalo de Puebla start/finish, distances 5K/10K/21K/42.195K, registration via asdeporte.com (from Oct 30) and entusmarcas.com (from Oct 29), in-person at CAR Mario Vázquez Raña/Parque Ecológico/Polideportivo San Andrés Cholula/Mr. Tenis, cap 20,000, closes Sat Nov 28 13:00 or earlier if sold out. No direct event-page URL found on asdeporte/entusmarcas despite targeted search, so signupUrl stays null. Distinct from the separate Medio Maratón Puebla 21K held Oct 18 2026. sourceUrl updated to grupoanimal.mx.",
       "status": "ok",
       "statusNote": "Date resolved: last Sunday of November — Sunday, November 29, 2026.",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "c-de-las-estaciones-verano-guadalajara-2026",
@@ -3785,8 +3785,8 @@
       "notes": "From $869 MXN. Cap 2,500. Distinct from Barbie Run MTY/CDMX/Puebla/GDL.",
       "notesEs": "Desde $869 MXN. Cupo de 2,500. Es distinta de Barbie Run MTY/CDMX/Puebla/GDL.",
       "status": "ok",
-      "sourceNotes": "Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Plaza Gran Cué El Pueblito, 3K/5K/10K, start ~6:30am. Registration now shows sold out on the organizer page (capacity status, not a date/venue/cancellation change). No cancellation/postponement news found.",
-      "lastVerified": "2026-11-23"
+      "sourceNotes": "Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Plaza Gran Cué El Pueblito, 3K/5K/10K, start ~6:30am. Registration now shows sold out on the organizer page (capacity status, not a date/venue/cancellation change). No cancellation/postponement news found. | Re-checked 2026-11-27: same date/venue/time; event-card shows a stray \"12:30 h\" (UTC display artifact, body text \"6:30 a.m.\" kept). No cancellation/postponement news found.",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "kilometros-por-mexico-2026",
@@ -5077,7 +5077,9 @@
       "confidence": "high",
       "notes": "Closing leg of the 9-race serial. Runs Saturday evening into Sunday noon.",
       "notesEs": "Etapa de cierre de la serie de 9 carreras. Se corre el sábado por la tarde y continúa hasta el mediodía del domingo.",
-      "sourceNotes": "Official INPODE event page. Distances are the serial's overall set; per-leg split not published. No online registration link found."
+      "sourceNotes": "Official INPODE event page. Distances are the serial's overall set; per-leg split not published. No online registration link found. | First full verification, 2026-11-27: stored sourceUrl (inpode.slp.gob.mx) now returns 404. One third-party article (liderempresarial) names Nov 7-8 as the series \"final\" in Rioverde/Soledad, conflicting with the stored Dec 5 date, but other INPODE stage pages suggest that Nov 7-8 slot was actually \"Rutas y Pueblos Mágicos,\" a different stage — and a broader calendar check corroborates Soledad on Dec 5-6. Kept Dec 5 as better-evidenced; flagging for a follow-up check closer to the date since the primary source URL is currently dead and no replacement URL was found. No registration link found online.",
+      "status": "ok",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "carrera-juntos-avanzamos-2027",
@@ -6555,7 +6557,7 @@
       "id": "womanup-run-2026",
       "name": "WomanUp Run 2026",
       "date": "2026-11-29",
-      "time": "06:45",
+      "time": "06:30",
       "distances": [
         "5K",
         "10K",
@@ -6574,16 +6576,18 @@
       "signupUrl": "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento",
       "sourceUrl": "https://www.asdeporte.com/evento/womanup-run-2026-ge8/datos-del-evento",
       "confidence": "high",
-      "notes": "15K individual, pairs or relay at 6:45; 10K at 7:00; 5K is recreational. From $550.",
-      "notesEs": "15K individual, parejas o relevos a las 6:45; 10K a las 7:00; la 5K es recreativa. Desde $550.",
-      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, same venue, staggered starts 06:45(15K)/07:00(10K)/07:15(5K). No cancellation/postponement news found.",
+      "notes": "15K individual, pairs or relay at 6:30; 10K at 6:35; 5K recreational at 6:40. From $550.",
+      "notesEs": "15K individual, parejas o relevos a las 6:30; 10K a las 6:35; la 5K recreativa a las 6:40. Desde $550.",
+      "sourceNotes": "Asdeporte convocatoria + runera.mx agree. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, same venue, staggered starts 06:45(15K)/07:00(10K)/07:15(5K). No cancellation/postponement news found. | Re-checked 2026-11-27 via asdeporte.com: the page's \"Horarios de salida\" section now lists earlier starts — 15K 6:30, 10K 6:35, 5K 6:40 — down from 6:45/7:00/7:15 recorded on 2026-11-23. Independently re-fetched and confirmed; updated time/notes/notesEs to match. Page carries a standing disclaimer that times are subject to change without notice. Registration shows sold out (AGOTADA), not a cancellation signal. No cancellation/postponement news found.",
       "start": {
         "lat": 19.41325695984699,
         "lng": -99.20077510953979,
         "approx": true
       },
-      "status": "ok",
-      "lastVerified": "2026-11-23"
+      "status": "changed",
+      "statusNote": "Asdeporte's event page now lists earlier start times: 15K at 6:30 a.m., 10K at 6:35 a.m., and 5K at 6:40 a.m. (previously 6:45, 7:00, and 7:15). Plan to arrive earlier than before. The organizer notes these times can still change without notice, so check again close to race day.",
+      "statusNoteEs": "La página de Asdeporte ahora indica horarios de salida más tempranos: 15K a las 6:30 a.m., 10K a las 6:35 a.m. y 5K a las 6:40 a.m. (antes 6:45, 7:00 y 7:15). Planea llegar más temprano que antes. El organizador señala que estos horarios pueden cambiar sin previo aviso, así que confirma de nuevo cerca de la fecha.",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "carrera-del-ring-2026",
@@ -6608,14 +6612,14 @@
       "confidence": "high",
       "notes": "Ends with a special lucha libre show. Capped at 4,000. 10K 6:30. From $550.",
       "notesEs": "Termina con una función especial de lucha libre. Cupo de 4,000. 10K 6:30. Desde $550.",
-      "sourceNotes": "Asdeporte convocatoria (5K start \"por definir\") + runera.mx + adn40 article. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Monumento a la Revolución. Page gives distance-specific gun times (10K 6:15, 5K 6:35); record's single 06:30 sits between them, kept as-is. No cancellation/postponement news found.",
+      "sourceNotes": "Asdeporte convocatoria (5K start \"por definir\") + runera.mx + adn40 article. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Monumento a la Revolución. Page gives distance-specific gun times (10K 6:15, 5K 6:35); record's single 06:30 sits between them, kept as-is. No cancellation/postponement news found. | Re-checked 2026-11-27: asdeporte.com and ADN40 article both unchanged, confirm Nov 29 2026, Monumento a la Revolución, same gun times. No cancellation/postponement news found.",
       "start": {
         "lat": 19.4361328,
         "lng": -99.154658,
         "approx": true
       },
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "carrera-platano-run-2026",
@@ -6640,9 +6644,9 @@
       "confidence": "high",
       "notes": "Banana-themed run on Reforma. $699, $799 late fee.",
       "notesEs": "Carrera temática de plátano por Reforma. $699, cuota extemporánea $799.",
-      "sourceNotes": "Emoción Deportiva + runera.mx agree. | Re-checked 2026-11-23 via emociondeportiva.com: confirms Nov 29 2026, 06:15, same venue. No cancellation/postponement news found.",
+      "sourceNotes": "Emoción Deportiva + runera.mx agree. | Re-checked 2026-11-23 via emociondeportiva.com: confirms Nov 29 2026, 06:15, same venue. No cancellation/postponement news found. | Re-checked 2026-11-27: emociondeportiva.com unchanged, confirms Nov 29 2026, 06:15, same venue. No race-specific WebSearch results (niche event, not indexed) and no cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "circuito-de-las-estaciones-invierno-penafiel",
@@ -7383,8 +7387,8 @@
       "confidence": "high",
       "notes": "12-hour team relay (06:30 to 18:30) for teams of three on a 6K trail loop or 4K hike loop; most total kilometres wins. $1,590 MXN per person.",
       "notesEs": "Relevo de 12 horas (06:30 a 18:30) en equipos de tres, en un circuito trail de 6K o de senderismo de 4K; gana el equipo con más kilómetros. $1,590 MXN por persona.",
-      "sourceNotes": "Also on tritour (28 Nov 2026) and emociondeportiva listing. Remaining spots not stated. | Re-checked 2026-11-20 via totems.mx: confirms '28 DE NOVIEMBRE 2026', start 6:30am ('arranca a las 6:30 am y cierra a las 6:30 pm'), venue 'Valle de la Tortuga, La Marquesa, Edomex' -- all match the record. No postponement/cancellation found via WebSearch. | Light re-check 2026-11-23: totems.mx unchanged (Nov 28 2026, 6:30am-6:30pm, Valle de la Tortuga). Registration now shows closed (expected this close to race day, not a cancellation signal). No new cancellation/postponement news.",
-      "lastVerified": "2026-11-23",
+      "sourceNotes": "Also on tritour (28 Nov 2026) and emociondeportiva listing. Remaining spots not stated. | Re-checked 2026-11-20 via totems.mx: confirms '28 DE NOVIEMBRE 2026', start 6:30am ('arranca a las 6:30 am y cierra a las 6:30 pm'), venue 'Valle de la Tortuga, La Marquesa, Edomex' -- all match the record. No postponement/cancellation found via WebSearch. | Light re-check 2026-11-23: totems.mx unchanged (Nov 28 2026, 6:30am-6:30pm, Valle de la Tortuga). Registration now shows closed (expected this close to race day, not a cancellation signal). No new cancellation/postponement news. | Re-checked 2026-11-27: totems.mx unchanged; pre-existing 28-vs-29-Nov header/FAQ inconsistency persists, unresolved (kept 28 Nov per prior reasoning). No cancellation/postponement news found.",
+      "lastVerified": "2026-11-27",
       "status": "ok"
     },
     {
@@ -7412,13 +7416,13 @@
       "confidence": "medium",
       "notes": "Night neon run: 7K and 10K plus a 1K kids' race. From $350 MXN.",
       "notesEs": "Carrera nocturna neón: 7K y 10K, además de 1K infantil. Desde $350 MXN.",
-      "sourceNotes": "Page conflicts: intro says 28 Nov 2026 at 20:00; 'Datos del evento' says 'Sábado 8 de noviembre' (typo; 8 Nov is a Sunday); header shows 29 Nov 02:00 UTC = 28 Nov 20:00 local. Used 28 Nov. running.life places it in 'Monte Calvario'. Coords 19.1037465,-99.5916652. | Re-checked 2026-11-20. The asdeporte page is still internally inconsistent (header/listing says '29 de noviembre', 'Datos del evento' section has an apparent typo 'Sabado 8 de noviembre' -- Nov 8 2026 is actually a Sunday, not Saturday, confirming it's a typo -- while the event description text says 'el proximo 28 de Noviembre de 2026'). This was cross-checked against running.life, which independently lists the race as 'sab. 28 nov 2026' (Saturday), consistent with the description text and with the stored date, and inconsistent with both the '29 noviembre' header and the '8 noviembre' typo. Treating the two independent, internally-consistent 28-Nov sources as better evidence: the stored date of 2026-11-28 is confirmed and the conflict is resolved in its favor; no date field change made. Separately, running.life names the venue as 'Monte Calvario, Mexico', conflicting with asdeporte's and the stored 'Palacio Municipal de Tenango del Valle' -- this venue conflict (already flagged in prior sourceNotes) remains unresolved; kept the organizer-page venue since asdeporte is the event's own registration page and the stronger source. Start time 20:00 (8pm) confirmed via asdeporte 'Datos del evento' ('20:00 h') and description ('a las 8:00 pm'), matching the record; the page's separate '02:00 h' listing field is UTC-equivalent noise, not a conflicting local time. No postponement/cancellation news found via WebSearch (no results at all for this event name). The asdeporte 'inscripcion' signup subpage rendered only generic site navigation with no event-specific form content -- inconclusive (likely JS-rendered), not treated as evidence of a broken signup link. | Re-checked 2026-11-23: asdeporte.com page still internally inconsistent on date (29 nov header vs 28 nov description vs a stray '8 de noviembre' typo); day-of-week check confirms 28 Nov 2026 is a Saturday (matching description) so date stands. Venue conflict (Monte Calvario vs Palacio Municipal de Tenango del Valle) remains unresolved despite another search attempt — no decisive new source found; kept organizer-page venue as the stronger source. No cancellation/postponement news found.",
+      "sourceNotes": "Page conflicts: intro says 28 Nov 2026 at 20:00; 'Datos del evento' says 'Sábado 8 de noviembre' (typo; 8 Nov is a Sunday); header shows 29 Nov 02:00 UTC = 28 Nov 20:00 local. Used 28 Nov. running.life places it in 'Monte Calvario'. Coords 19.1037465,-99.5916652. | Re-checked 2026-11-20. The asdeporte page is still internally inconsistent (header/listing says '29 de noviembre', 'Datos del evento' section has an apparent typo 'Sabado 8 de noviembre' -- Nov 8 2026 is actually a Sunday, not Saturday, confirming it's a typo -- while the event description text says 'el proximo 28 de Noviembre de 2026'). This was cross-checked against running.life, which independently lists the race as 'sab. 28 nov 2026' (Saturday), consistent with the description text and with the stored date, and inconsistent with both the '29 noviembre' header and the '8 noviembre' typo. Treating the two independent, internally-consistent 28-Nov sources as better evidence: the stored date of 2026-11-28 is confirmed and the conflict is resolved in its favor; no date field change made. Separately, running.life names the venue as 'Monte Calvario, Mexico', conflicting with asdeporte's and the stored 'Palacio Municipal de Tenango del Valle' -- this venue conflict (already flagged in prior sourceNotes) remains unresolved; kept the organizer-page venue since asdeporte is the event's own registration page and the stronger source. Start time 20:00 (8pm) confirmed via asdeporte 'Datos del evento' ('20:00 h') and description ('a las 8:00 pm'), matching the record; the page's separate '02:00 h' listing field is UTC-equivalent noise, not a conflicting local time. No postponement/cancellation news found via WebSearch (no results at all for this event name). The asdeporte 'inscripcion' signup subpage rendered only generic site navigation with no event-specific form content -- inconclusive (likely JS-rendered), not treated as evidence of a broken signup link. | Re-checked 2026-11-23: asdeporte.com page still internally inconsistent on date (29 nov header vs 28 nov description vs a stray '8 de noviembre' typo); day-of-week check confirms 28 Nov 2026 is a Saturday (matching description) so date stands. Venue conflict (Monte Calvario vs Palacio Municipal de Tenango del Valle) remains unresolved despite another search attempt — no decisive new source found; kept organizer-page venue as the stronger source. No cancellation/postponement news found. | Re-checked 2026-11-27: asdeporte.com page unchanged, same pre-existing date/venue conflicts as before (resolved per prior reasoning, kept as-is). No cancellation/postponement news found.",
       "start": {
         "lat": 19.1037465,
         "lng": -99.5916652,
         "approx": true
       },
-      "lastVerified": "2026-11-23",
+      "lastVerified": "2026-11-27",
       "status": "ok"
     },
     {
@@ -7448,14 +7452,14 @@
       "confidence": "high",
       "notes": "Unicorn-themed family fun run. 5K at 7:30, 3K walk at 7:35, kids' races around 8:00. Costumes welcome. From $499 MXN.",
       "notesEs": "Carrera familiar temática de unicornios. 5K a las 7:30, caminata de 3K a las 7:35 e infantiles alrededor de las 8:00. Ven disfrazado. Desde $499 MXN.",
-      "sourceNotes": "Distance header lists 6km but body says 5K start; kept header distances. Coords 19.4940897,-99.2418927. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Parque Naucalli, same distances/times. signupUrl (inscripcion subpage) still an unreachable JS shell — not evidence of change. No cancellation/postponement news found.",
+      "sourceNotes": "Distance header lists 6km but body says 5K start; kept header distances. Coords 19.4940897,-99.2418927. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, Parque Naucalli, same distances/times. signupUrl (inscripcion subpage) still an unreachable JS shell — not evidence of change. No cancellation/postponement news found. | Re-checked 2026-11-27 via asdeporte.com: still confirms Nov 29 2026, Parque Naucalli. No cancellation/postponement news found.",
       "start": {
         "lat": 19.4940897,
         "lng": -99.2418927,
         "approx": true
       },
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "el-sendero-oscuro-de-malinalxochitl-2026",
@@ -8427,14 +8431,14 @@
       "confidence": "high",
       "notes": "All categories start 7:15. From $400 MXN; registration until Nov 27 at 15:00 or until sold out. Cash prizes for the 10K overall podium.",
       "notesEs": "Todas las categorías salen a las 7:15. Desde $400 MXN; inscripciones hasta el 27 de noviembre a las 15:00 o hasta agotar cupo. Premios en efectivo para el podio general del 10K.",
-      "sourceNotes": "Asdeporte page: header shows 13:15 h (UTC); body text says 07:15 hrs — used body. Tritour agrees (2026-11-29, 07:15). León 2026 calendar press (Estado Luz/deportedigital) called it '(2do) Medio Maratón Flexi', but the 2026 event page lists only 10K and 5K. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, 07:15 all categories (explicit line in 'Datos del evento'; a separate '13:15' header is a display artifact). No cancellation/postponement news found.",
+      "sourceNotes": "Asdeporte page: header shows 13:15 h (UTC); body text says 07:15 hrs — used body. Tritour agrees (2026-11-29, 07:15). León 2026 calendar press (Estado Luz/deportedigital) called it '(2do) Medio Maratón Flexi', but the 2026 event page lists only 10K and 5K. | Re-checked 2026-11-23 via asdeporte.com: confirms Nov 29 2026, 07:15 all categories (explicit line in 'Datos del evento'; a separate '13:15' header is a display artifact). No cancellation/postponement news found. | Re-checked 2026-11-27 via asdeporte.com: still confirms Nov 29 2026, 07:15, same venue. No cancellation/postponement news found.",
       "start": {
         "lat": 21.108634,
         "lng": -101.6588614,
         "approx": true
       },
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "carrera-el-sol-del-bajio-san-miguel-de-allende",
@@ -8459,7 +8463,9 @@
       "confidence": "low",
       "notes": "Saturday race in San Miguel de Allende with 5K and 10K options.",
       "notesEs": "Carrera en sábado en San Miguel de Allende con opciones de 5K y 10K.",
-      "sourceNotes": "Single aggregator (running.life, 2026-12-05). It links an OEM article (oem.com.mx/running/incoming/carrera-san-miguel-de-allende-2026-32497369) that returned 403 to fetch — could not confirm time, venue, price or signup."
+      "sourceNotes": "Single aggregator (running.life, 2026-12-05). It links an OEM article (oem.com.mx/running/incoming/carrera-san-miguel-de-allende-2026-32497369) that returned 403 to fetch — could not confirm time, venue, price or signup. | First full verification 2026-11-27: running.life unchanged (Dec 5 2026, San Miguel de Allende, 5K/10K). OEM article still returns 403 on fetch and WebSearch found no independent source for venue/time/signup — unreachable source is not evidence of a change, so venue/time/signupUrl stay null. No cancellation/postponement news found.",
+      "status": "ok",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "69-carrera-de-los-barrios-guiar-2027",
@@ -8770,9 +8776,9 @@
       "confidence": "medium",
       "notes": "10K, 5K, a 3K walk and a kids' race. 380 pesos until October 31, 400 from November 1.",
       "notesEs": "10K, 5K, caminata de 3K e infantil. 380 pesos hasta el 31 de octubre, 400 desde el 1 de noviembre.",
-      "sourceNotes": "Tri Tour only. | Re-checked 2026-11-23 via tritour.org: confirms Nov 29 2026, 06:00, Universidad Marista as host venue; the page itself names 'Volaré' as operator/timing company rather than the university (likely a host-vs-operator nuance, not an error — left organizer unchanged). signupUrl (dashport.run) rendered empty on fetch — unreachable, not evidence of change. Still only confirmable via Tri Tour; no second source found despite search. No cancellation/postponement news found.",
+      "sourceNotes": "Tri Tour only. | Re-checked 2026-11-23 via tritour.org: confirms Nov 29 2026, 06:00, Universidad Marista as host venue; the page itself names 'Volaré' as operator/timing company rather than the university (likely a host-vs-operator nuance, not an error — left organizer unchanged). signupUrl (dashport.run) rendered empty on fetch — unreachable, not evidence of change. Still only confirmable via Tri Tour; no second source found despite search. No cancellation/postponement news found. | Re-checked 2026-11-27 via tritour.org: still confirms Nov 29 2026, 06:00, Universidad Marista. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "20-carrera-y-caminata-centro-guadalupano",
@@ -9208,9 +9214,9 @@
       "confidence": "high",
       "notes": "Benefits Comenzar de Nuevo (eating disorders and mental health). General $450; VIP \"Corredor con Valor\" $1,000. Same day as the Circuito de las Estaciones Invierno.",
       "notesEs": "A beneficio de Comenzar de Nuevo (trastornos de la conducta alimentaria y salud mental). General $450; VIP Corredor con Valor $1,000. Coincide con el Circuito de las Estaciones Invierno.",
-      "sourceNotes": "Tritour event page (distances, prices) + runera detail (date/time/venue, no distances listed) agree. running.life lists 5K/10K only. | Re-checked 2026-11-23 via tritour.org + trotime.com.mx: confirms Nov 29 2026, 07:30, Museo Metropolitano de Monterrey, 1K/5K/10K, kit pickup Nov 28 at Innovasport Humberto Lobo. No cancellation/postponement news found.",
+      "sourceNotes": "Tritour event page (distances, prices) + runera detail (date/time/venue, no distances listed) agree. running.life lists 5K/10K only. | Re-checked 2026-11-23 via tritour.org + trotime.com.mx: confirms Nov 29 2026, 07:30, Museo Metropolitano de Monterrey, 1K/5K/10K, kit pickup Nov 28 at Innovasport Humberto Lobo. No cancellation/postponement news found. | Re-checked 2026-11-27 via tritour.org: still confirms Nov 29 2026, 07:30, Museo Metropolitano de Monterrey. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "corremos-contigo-conchita-2026-2-edicion",
@@ -9648,9 +9654,9 @@
       "confidence": "medium",
       "notes": "New 10K in the adidas Splits series, presented by Samsung. $780 MXN. Capped at 4,500 runners. Kit pickup on Saturday 28 November at PALCCO, Zapopan.",
       "notesEs": "Nuevo 10K de la serie adidas Splits, presentado por Samsung. $780 MXN. Cupo de 4,500 corredores. Entrega de kits el sábado 28 de noviembre en PALCCO, Zapopan.",
-      "sourceNotes": "Official Hub Sports page + runera say Sunday 2026-11-29; tritour.org calendar and Feb 2026 Crónica press (launch calendar) say Dec 6 — official page wins, recorded here. Start/finish 'por confirmar'. Registration 'INSCRIPCIONES ABIERTAS'. | Re-checked 2026-11-23: hubsports.mx's own event page now gives the start/finish street as Calle Misión San Lorenzo, Zapopan (no exact number/route map posted yet) — venue field updated. The Nov 29 vs Dec 6 date conflict persists and has grown: running.life, playersoflife, and a HubSports PDF passport ('último circuito del año... en el mes de diciembre') all say Dec 6, while hubsports.mx's own live event page still clearly states Nov 29. Kept Nov 29 as the better-evidenced value (organizer's own current page beats aggregators/a PDF), confidence lowered to medium given the unresolved conflict. No cancellation notice found.",
+      "sourceNotes": "Official Hub Sports page + runera say Sunday 2026-11-29; tritour.org calendar and Feb 2026 Crónica press (launch calendar) say Dec 6 — official page wins, recorded here. Start/finish 'por confirmar'. Registration 'INSCRIPCIONES ABIERTAS'. | Re-checked 2026-11-23: hubsports.mx's own event page now gives the start/finish street as Calle Misión San Lorenzo, Zapopan (no exact number/route map posted yet) — venue field updated. The Nov 29 vs Dec 6 date conflict persists and has grown: running.life, playersoflife, and a HubSports PDF passport ('último circuito del año... en el mes de diciembre') all say Dec 6, while hubsports.mx's own live event page still clearly states Nov 29. Kept Nov 29 as the better-evidenced value (organizer's own current page beats aggregators/a PDF), confidence lowered to medium given the unresolved conflict. No cancellation notice found. | Re-checked 2026-11-27: hubsports.mx's own live page still confirms Nov 29 2026, 06:30, same venue. The Dec-6 sources found this round (running.life, Crónica, a HubSports PDF) describe a '15K/30K' edition and appear to be a separate distance in the same adidas Splits GDL series, not this 10K — kept Nov 29 on the organizer's own 10K page. No cancellation/postponement news.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "carrera-mvs-radio-guadalajara-2026",
@@ -9675,9 +9681,9 @@
       "confidence": "high",
       "notes": "10K at 6:30 and 5K at 6:45. $550 MXN plus fees. Capped at 2,000. Registration until Friday 27 November, no race-day registration.",
       "notesEs": "10K a las 6:30 y 5K a las 6:45. $550 MXN más comisión. Cupo de 2,000. Inscripciones hasta el viernes 27 de noviembre, sin registro el día de la carrera.",
-      "sourceNotes": "Márcate event page; runera + tritour agree on date. | Re-checked 2026-11-23: marcate.com.mx blocked direct fetch (403) but confirmed via proxy — Nov 29 2026, 10K 06:30/5K 06:45, same venue, registration closes Fri Nov 27 14:00, no race-day registration. No cancellation/postponement news found.",
+      "sourceNotes": "Márcate event page; runera + tritour agree on date. | Re-checked 2026-11-23: marcate.com.mx blocked direct fetch (403) but confirmed via proxy — Nov 29 2026, 10K 06:30/5K 06:45, same venue, registration closes Fri Nov 27 14:00, no race-day registration. No cancellation/postponement news found. | Re-checked 2026-11-27: marcate.com.mx again blocked direct fetch (403, consistent with needing a proxy); WebSearch found no mention of this race or any cancellation/postponement notice.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "13-carrera-hecho-udg-2026",
@@ -10467,9 +10473,9 @@
       "confidence": "medium",
       "notes": "Third edition. 300 MXN presale, 320 MXN general. Shirt, medal and four barbacoa tacos at the finish. Kit pickup Saturday 28 November, 10:00 to 14:00 at the Metroból branch.",
       "notesEs": "Tercera edición. Preventa 300 MXN, venta 320 MXN. Incluye playera, medalla y cuatro tacos de barbacoa al final. Entrega de kits el sábado 28 de noviembre de 10:00 a 14:00 en la sucursal Metroból.",
-      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Registration is Chronosport dashport evento_1423 (SPA, not rendered). | Re-checked 2026-11-23: the Chronosport/Dashport registration page now renders (via proxy) and confirms 1K/5K/10K at $320 MXN each, matching Tri Tour's price — signupUrl added. Page's countdown timer reads all zeros (ambiguous display artifact); Tri Tour itself shows no cancellation/postponement and gives full matching details independently. Still no organizer-owned site/social account found beyond Tri Tour and this registration platform.",
+      "sourceNotes": "Single-calendar source (Tri Tour event page); not independently confirmed on the organizer's own page, which is a poster image. Registration is Chronosport dashport evento_1423 (SPA, not rendered). | Re-checked 2026-11-23: the Chronosport/Dashport registration page now renders (via proxy) and confirms 1K/5K/10K at $320 MXN each, matching Tri Tour's price — signupUrl added. Page's countdown timer reads all zeros (ambiguous display artifact); Tri Tour itself shows no cancellation/postponement and gives full matching details independently. Still no organizer-owned site/social account found beyond Tri Tour and this registration platform. | Re-checked 2026-11-27 via tritour.org: confirms Nov 29 2026, 07:30, same venue, Chronosport registration open at $320 MXN. No cancellation/postponement news found.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "campanitas-navidenas-2026",
@@ -10572,9 +10578,9 @@
       "confidence": "medium",
       "notes": "Part of the Circuito Running OEM 2026. Fee 400 pesos from Sep 16 to Nov 28. Register at El Sol de San Luis offices and authorized points in the city; questions to running@oem.com.mx. Total purse 150,000 pesos. Kit includes a Nemik shirt and a finisher medal. Chip timing.",
       "notesEs": "Parte del Circuito Running OEM 2026. Cuota de 400 pesos del 16 de septiembre al 28 de noviembre. Inscríbete en las oficinas de El Sol de San Luis y en puntos autorizados de la ciudad; dudas a running@oem.com.mx. Bolsa total de 150 mil pesos. El kit incluye playera Nemik y medalla para quienes terminen. Cronometraje con chip.",
-      "sourceNotes": "Source is a Plano Informativo article dated 2026-08-04 (fetched); a web search summary reported the same date, distances and a 2,500-runner cap, but only the one article was loaded. In-person registration only found; no online signup URL. A search snippet mentioned a cap of 2,500 runners (not loaded from the page, so not in notes). | Re-checked 2026-11-23: same Plano Informativo article still the only source; confirms Nov 29 2026, 08:00, same venue, 3K/10K, in-person-only registration (closes Nov 28). No newer article, cancellation, or postponement notice found.",
+      "sourceNotes": "Source is a Plano Informativo article dated 2026-08-04 (fetched); a web search summary reported the same date, distances and a 2,500-runner cap, but only the one article was loaded. In-person registration only found; no online signup URL. A search snippet mentioned a cap of 2,500 runners (not loaded from the page, so not in notes). | Re-checked 2026-11-23: same Plano Informativo article still the only source; confirms Nov 29 2026, 08:00, same venue, 3K/10K, in-person-only registration (closes Nov 28). No newer article, cancellation, or postponement notice found. | Re-checked 2026-11-27: WebSearch still shows only the same Plano Informativo coverage for Nov 29 2026, 08:00, same venue; a '6ta edición, Nov 30' hit found this round is explicitly a prior year's article, not 2026. No newer article or cancellation/postponement notice found.",
       "status": "ok",
-      "lastVerified": "2026-11-23"
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "celebremos-la-vida-5k-y-10k-2026",
@@ -10726,11 +10732,13 @@
       "confidence": "high",
       "notes": "Evening race: marathon starts at 18:00, half marathon at 18:15 and 10K at 18:30. Entry from $490 MXN.",
       "notesEs": "Carrera nocturna: el maratón sale a las 18:00, el medio maratón a las 18:15 y los 10K a las 18:30. Inscripción desde $490 MXN.",
-      "sourceNotes": "Asdeporte header says 6 Dec with 00:00 placeholder time; details say Sat 5 Dec; tritour also 5 Dec; used 5 Dec. Slug says night-marathon. Maps coords 21.1470553,-86.8174276. Endorsed by Mundo de Atletismo en México A.C.; organizer not named.",
+      "sourceNotes": "Asdeporte header says 6 Dec with 00:00 placeholder time; details say Sat 5 Dec; tritour also 5 Dec; used 5 Dec. Slug says night-marathon. Maps coords 21.1470553,-86.8174276. Endorsed by Mundo de Atletismo en México A.C.; organizer not named. | First full verification 2026-11-27: date conflict (asdeporte header '6 Dec' vs. body/riotimesonline/marathontours 'Sat 5 Dec') resolved in favor of Dec 5 — it's the only weekday-consistent date (Dec 5, 2026 is a Saturday) and has two independent sources; a third-cluster 'Dec 1' listing (running.life/marathon-index/Race Roster) looks like a mismatched aggregator entry and wasn't given weight. Time (18:00/18:15/18:30) and venue (Av. Rambla Fonatur esq. Yum-Balam) confirmed via asdeporte.com. No cancellation/postponement news found.",
       "start": {
         "lat": 21.1470553,
         "lng": -86.8174276
-      }
+      },
+      "status": "ok",
+      "lastVerified": "2026-11-27"
     },
     {
       "id": "medio-maraton-playa-del-carmen-2027",
